@@ -60,16 +60,18 @@ import javax.script.SimpleScriptContext;
  * Embedded scripts are text streams containing a mix of script code, which is
  * embedded between special delimiters, and plain text. During the parsing
  * stage, which happens only once in the constructor, the entire text stream is
- * converted into script code, with the non-delimited plain text being sent to
- * standard output via whatever method is appropriate for the scripting engine
- * (see {@link EmbeddedScriptParsingHelper}). The exception to this is text
- * streams beginning with plain text -- in such cases, just that first section
- * is sent to your specified output in pure Java. The reason is that no script
- * engine has been specified yet. Also, if the entire file is just plain text,
- * this causes it to be sent only via Java, without invoking any scripting
- * engine.
+ * converted into script code. When the script is run, non-delimited plain text
+ * being sent to output via whatever method is appropriate for the scripting
+ * engine (see {@link EmbeddedScriptParsingHelper}). The exception to this is
+ * text streams beginning with plain text -- in such cases, just that first
+ * section is sent to your specified output in pure Java. The reasons for this
+ * are two: first, that no script engine has been specified yet, so we can't be
+ * sure which to use, and second, that sending in pure Java is probably a bit
+ * faster than sending in script. If the entire text stream is just plain text,
+ * it is simply sent to output without invoking any script engine. In such
+ * cases, {@link #getTrivial()} would return the content of the text stream.
  * <p>
- * Text streams are often provided by an implementation {@link ScriptSource},
+ * Text streams are often provided by an implementation of {@link ScriptSource},
  * though your environment can use its own method.
  * <p>
  * Embedded scripts can easily be abused, becoming hard to read and hard to
@@ -84,14 +86,14 @@ import javax.script.SimpleScriptContext;
  * file.
  * <p>
  * This class can support multiple script languages and engines within the same
- * text. Each embedded script segment can specify which engine it uses
+ * text. Each delimited script segment can specify which engine it uses
  * explicitly at the opening delimiter. If the engine is not specified, whatever
  * engine was previously used in the file will be used. If no engine was
  * previously specified, a default value is used (supplied in the constructor).
  * <p>
- * This class support either the JSP/ASP style of delimiting script code (using
- * percentage signs), or the PHP style (using question marks). However, each
- * embedded script file must adhere to only one style throughout.
+ * Two delimiting styles are supported: JSP/ASP style (using percentage signs),
+ * and the PHP style (using question marks). However, each text stream must
+ * adhere to only one style throughout.
  * <p>
  * In addition to embedded scripts, this class supports a shorthand for embedded
  * script expressions. These are internally just sent to standard output.
@@ -102,7 +104,7 @@ import javax.script.SimpleScriptContext;
  * to the script, which would then process the include as is appropriate to your
  * environment. To make this available, you can set the "container" global
  * variable by supplied a {@link ScriptContextController} when you call
- * {@link #run(Writer, Writer, Map, ScriptContextController, boolean)} . Note
+ * {@link #run(Writer, Writer, Map, ScriptContextController, boolean)}. Note
  * this name can be changed via {@link #containerVariableName}.
  * <p>
  * Examples:
@@ -183,8 +185,8 @@ public class EmbeddedScript
 	public static String delimiterInclude = "&";
 
 	/**
-	 * The default variable name for the {@link Script} instance. Defaults to
-	 * "script".
+	 * The default variable name for the {@link EmbeddedScriptScript} instance.
+	 * Defaults to "script".
 	 */
 	public static String scriptVariableName = "script";
 
@@ -194,101 +196,6 @@ public class EmbeddedScript
 	 * "container".
 	 */
 	public static String containerVariableName = "container";
-
-	//
-	// Types
-	//
-
-	/**
-	 * This is the type of the "script" variable exposed to the script. The name
-	 * is set according to {@link EmbeddedScript#scriptVariableName}.
-	 */
-	public static class Script
-	{
-		//
-		// Attributes
-		//
-
-		/**
-		 * Setting this to something greater than 0 enables caching of the
-		 * script results for a maximum number of milliseconds. By default
-		 * cacheDuration is 0, so that each request causes the script to be
-		 * evaluated. This class does not handle caching itself. Caching can be
-		 * provided by your environment if appropriate.
-		 * 
-		 * @return The cache duration in milliseconds
-		 * @see #setCacheDuration(long)
-		 * @see EmbeddedScript#cacheDuration
-		 */
-		public long getCacheDuration()
-		{
-			return cacheDuration.get();
-		}
-
-		/**
-		 * @param cacheDuration
-		 *        The cache duration in milliseconds
-		 * @see #getCacheDuration()
-		 */
-		public void setCacheDuration( long cacheDuration )
-		{
-			this.cacheDuration.set( cacheDuration );
-		}
-
-		/**
-		 * This is the {@link ScriptEngine} used by the script. Scripts may use
-		 * it to get information about the engine's capabilities.
-		 * 
-		 * @return The script engine
-		 */
-		public ScriptEngine getScriptEngine()
-		{
-			return scriptEngine;
-		}
-
-		/**
-		 * This {@link Map} provides a convenient location for global values
-		 * shared by all scripts, run by all engines. Note that it is not thread
-		 * safe! In anything but the most trivial application, you will need to
-		 * synchronize access to script.statics. For this reason,
-		 * script.staticsLock is provided.
-		 * 
-		 * @return The statics
-		 * @see #getStaticsLock()
-		 */
-		public Map<String, Object> getStatics()
-		{
-			return ScriptStatics.statics;
-		}
-
-		/**
-		 * A {@link ReadWriteLock} meant to be used for the script.statics map,
-		 * though exact use is up to your application. It can be used to
-		 * synchronize access to the statics across threads. Note that if more
-		 * locks are needed for your applications, they can be created and
-		 * stored as values within script.statics!
-		 * 
-		 * @return The statics lock
-		 * @see #getStatics()
-		 */
-		public ReadWriteLock getStaticsLock()
-		{
-			return ScriptStatics.staticsLock;
-		}
-
-		// //////////////////////////////////////////////////////////////////////////
-		// Private
-
-		private final AtomicLong cacheDuration;
-
-		private final ScriptEngine scriptEngine;
-
-		private Script( AtomicLong cacheDuration, ScriptEngine scriptEngine )
-		{
-			this.cacheDuration = cacheDuration;
-			this.scriptEngine = scriptEngine;
-		}
-	}
 
 	/**
 	 * A map of script engine names to their {@link EmbeddedScriptParsingHelper}
@@ -384,7 +291,7 @@ public class EmbeddedScript
 	 * the script engines.
 	 * 
 	 * @param text
-	 *        The embedded script
+	 *        The teaxt stream
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
@@ -649,7 +556,8 @@ public class EmbeddedScript
 	 * does not handle caching itself. Caching can be provided by your
 	 * environment if appropriate.
 	 * <p>
-	 * This is the same instance provided for Script#getCacheDuration().
+	 * This is the same instance provided for
+	 * EmbeddedScriptScript#getCacheDuration().
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
@@ -767,7 +675,7 @@ public class EmbeddedScript
 					}
 
 					Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-					scriptContext.setAttribute( scriptVariableName, new Script( cacheDuration, scriptEngine ), ScriptContext.ENGINE_SCOPE );
+					scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( cacheDuration, scriptEngine ), ScriptContext.ENGINE_SCOPE );
 
 					// Note that some script engines (such as Rhino) expect a
 					// PrintWriter, even though the spec defines just a Writer
@@ -854,7 +762,7 @@ public class EmbeddedScript
 		ScriptContext scriptContext = scriptEngine.getContext();
 
 		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( scriptVariableName, new Script( cacheDuration, scriptEngine ), ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( cacheDuration, scriptEngine ), ScriptContext.ENGINE_SCOPE );
 
 		if( scriptContextController != null )
 			scriptContextController.initialize( scriptContext );
@@ -872,7 +780,7 @@ public class EmbeddedScript
 				if( scriptEngine instanceof Invocable )
 					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
 				else
-					throw new ScriptException( "Script engine does not support invocations" );
+					throw new ScriptException( "EmbeddedScriptScript engine does not support invocations" );
 			}
 			else
 				return scriptEngine.eval( program, scriptContext );
