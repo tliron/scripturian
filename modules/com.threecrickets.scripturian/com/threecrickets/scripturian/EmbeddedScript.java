@@ -352,6 +352,7 @@ public class EmbeddedScript
 					line = reader.readLine();
 				}
 				stream.close();
+				reader.close();
 			}
 		}
 		catch( IOException x )
