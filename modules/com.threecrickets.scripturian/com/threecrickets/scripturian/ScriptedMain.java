@@ -130,15 +130,12 @@ public class ScriptedMain
 	 */
 	public static ScriptContextController scriptContextController;
 
-	//
-	// Types
-	//
-
 	/**
 	 * Delegates to an {@link EmbeddedScript} file specified by the first
 	 * argument, or to {@link ScriptedMain#defaultPath} if not specified.
 	 * 
 	 * @param arguments
+	 *        Supplied arguments (usually from a command line)
 	 */
 	public static void main( String[] arguments )
 	{

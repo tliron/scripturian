@@ -34,7 +34,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Used as global space for sharing objects between scripts.
+ * Used as global space for sharing objects between scripts. Statics will stay
+ * alive for the duration of the Java virtual machine. Any object can be stored
+ * here.
  * 
  * @author Tal Liron
  */
@@ -44,8 +46,15 @@ public abstract class ScriptStatics
 	// Static attributes
 	//
 
+	/**
+	 * Any object can be stored here. Note that this implementation is not
+	 * synchronized! You should synchronize access using {@link #staticsLock}.
+	 */
 	public static final Map<String, Object> statics = new HashMap<String, Object>();
 
+	/**
+	 * Meant for synchronizing access to {@link #statics}.
+	 */
 	public static final ReadWriteLock staticsLock = new ReentrantReadWriteLock();
 
 	// //////////////////////////////////////////////////////////////////////////

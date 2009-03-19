@@ -43,8 +43,19 @@ import java.io.StringWriter;
  */
 public abstract class EmbeddedScriptUtil
 {
-	public static final int BUFFER_SIZE = 1024 * 1024;
+	/**
+	 * Size (in bytes) of the buffer used by {@link #getString(File)}.
+	 */
+	public static int bufferSize = 1024 * 1024;
 
+	/**
+	 * Reads a reader into a string.
+	 * 
+	 * @param reader
+	 *        The reader
+	 * @return The string read from the reader
+	 * @throws IOException
+	 */
 	public static String getString( Reader reader ) throws IOException
 	{
 		StringWriter writer = new StringWriter();
@@ -61,9 +72,17 @@ public abstract class EmbeddedScriptUtil
 		return writer.toString();
 	}
 
+	/**
+	 * Reads a file into a string. Uses a buffer (see {@link #bufferSize}).
+	 * 
+	 * @param file
+	 *        The file
+	 * @return The string read from the file
+	 * @throws IOException
+	 */
 	public static String getString( File file ) throws IOException
 	{
-		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFER_SIZE );
+		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), bufferSize );
 		return getString( reader );
 	}
 

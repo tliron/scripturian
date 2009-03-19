@@ -97,8 +97,8 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	/**
 	 * This implementation caches the script descriptor, including the script
 	 * instance stored in it. The cached descriptor will be reset if the script
-	 * file is updated since the last all. In order to avoid checking this every
-	 * time this method is called, use
+	 * file is updated since the last call. In order to avoid checking this
+	 * every time this method is called, use
 	 * {@link #setMinimumTimeBetweenValidityChecks(long)}.
 	 * 
 	 * @see com.threecrickets.scripturian.ScriptSource#getScriptDescriptor(java.lang.String)

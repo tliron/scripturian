@@ -42,14 +42,21 @@ import javax.script.ScriptException;
 public interface ScriptContextController
 {
 	/**
+	 * Called when the script is initialized.
+	 * 
 	 * @param scriptContext
+	 *        The script context
 	 * @throws ScriptException
+	 *         If you throw an exception here, the script will not run
 	 */
 	public void initialize( ScriptContext scriptContext ) throws ScriptException;
 
 	/**
+	 * Called when the script finalizes. This is a good place to clean up
+	 * resources you set up during {@link #initialize(ScriptContext)}.
+	 * 
 	 * @param scriptContext
-	 * @throws ScriptException
+	 *        The script context
 	 */
 	public void finalize( ScriptContext scriptContext );
 }
