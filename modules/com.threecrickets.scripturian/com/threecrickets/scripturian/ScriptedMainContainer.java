@@ -46,7 +46,7 @@ import javax.script.ScriptException;
  * @author Tal Liron
  * @see ScriptedMain
  */
-public class ScriptedMainContainer
+class ScriptedMainContainer
 {
 	//
 	// Operations

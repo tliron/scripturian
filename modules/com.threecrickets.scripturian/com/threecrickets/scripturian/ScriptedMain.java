@@ -170,8 +170,8 @@ public class ScriptedMain implements Runnable
 	}
 
 	/**
-	 * The default variable name for the {@link ScriptedMainContainer} instance.
-	 * Defaults to "container".
+	 * The default variable name for the container instance. Defaults to
+	 * "container".
 	 * 
 	 * @return The default container variable name
 	 */
