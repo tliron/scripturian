@@ -45,22 +45,26 @@ public interface EmbeddedScriptParsingHelper
 	 * The header is inserted at the beginning of every script. It is useful for
 	 * appropriately setting up the script's environment.
 	 * 
+	 * @param embeddedScript
+	 *        The embedded script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @return The header or null
 	 */
-	public String getScriptHeader( ScriptEngine scriptEngine );
+	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine );
 
 	/**
 	 * The footer is appended to the end of every script. It is useful for
 	 * cleaning up resources created in the header.
 	 * 
+	 * @param embeddedScript
+	 *        The embedded script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @return The footer or null
-	 * @see #getScriptHeader(ScriptEngine)
+	 * @see #getScriptHeader(EmbeddedScript, ScriptEngine)
 	 */
-	public String getScriptFooter( ScriptEngine scriptEngine );
+	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine );
 
 	/**
 	 * Turns text into a command or series of commands to print the text to
@@ -68,13 +72,15 @@ public interface EmbeddedScriptParsingHelper
 	 * multiple lines, and include arbitrary characters. The parsing helper
 	 * makes sure to escape special characters, partition long text, etc.
 	 * 
+	 * @param embeddedScript
+	 *        The embedded script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
 	 *        The content
 	 * @return A command or series of commands to print the content
 	 */
-	public String getTextAsProgram( ScriptEngine scriptEngine, String content );
+	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Turns an expression into a command or series of commands to print the
@@ -82,13 +88,15 @@ public interface EmbeddedScriptParsingHelper
 	 * simply involves wrapping the expression in something like a print
 	 * command.
 	 * 
+	 * @param embeddedScript
+	 *        The embedded script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
 	 *        The content
 	 * @return A command or series of commands to print the expression
 	 */
-	public String getExpressionAsProgram( ScriptEngine scriptEngine, String content );
+	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Turns an expression into a command or series of commands to include the
@@ -97,6 +105,8 @@ public interface EmbeddedScriptParsingHelper
 	 * {@link EmbeddedScript#containerVariableName}, and that this object must
 	 * have a method named "include".
 	 * 
+	 * @param embeddedScript
+	 *        The embedded script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
@@ -105,13 +115,15 @@ public interface EmbeddedScriptParsingHelper
 	 *         the expression
 	 * @see EmbeddedScript#containerVariableName
 	 */
-	public String getExpressionAsInclude( ScriptEngine scriptEngine, String content );
+	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Creates a command or series of commands to invoke an entry point
 	 * (function, method, closure, etc.) in the script. Note that for engines
 	 * that implement {@link Invocable} you must return null.
 	 * 
+	 * @param embeddedScript
+	 *        The embedded script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
@@ -119,5 +131,5 @@ public interface EmbeddedScriptParsingHelper
 	 * @return A command or series of commands to call the entry point, or null
 	 *         to signify that {@link Invocable} should be used
 	 */
-	public String getInvocationAsProgram( ScriptEngine scriptEngine, String content );
+	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
 }

@@ -35,7 +35,6 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -93,11 +92,11 @@ public class ScriptedMainContainer
 	{
 		String text = EmbeddedScriptUtil.getString( new File( name ) );
 		if( scriptEngineName != null )
-			text = EmbeddedScript.delimiter1Start + scriptEngineName + " " + text + EmbeddedScript.delimiter1End;
+			text = EmbeddedScript.DEFAULT_DELIMITER1_START + scriptEngineName + " " + text + EmbeddedScript.DEFAULT_DELIMITER1_END;
 
-		EmbeddedScript script = new EmbeddedScript( text, ScriptedMain.scriptEngineManager, ScriptedMain.defaultEngineName, ScriptedMain.allowCompilation );
+		EmbeddedScript script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultScriptEngineName(), scriptedMain.isAllowCompilation(), null );
 
-		script.run( writer, errorWriter, scriptEngines, controller, false );
+		script.run( writer, errorWriter, scriptEngines, new ScriptedMainScriptContextController( script.getContainerVariableName(), this, scriptedMain.getScriptContextController() ), false );
 	}
 
 	//
@@ -111,7 +110,29 @@ public class ScriptedMainContainer
 	 */
 	public String[] getArguments()
 	{
-		return arguments;
+		return scriptedMain.getArguments();
+	}
+
+	/**
+	 * The default script engine name to be used if the script doesn't specify
+	 * one. Defaults to "js".
+	 * 
+	 * @return The default script engine name
+	 * @see #setDefaultScriptEngineName(String)
+	 */
+	public String getDefaultScriptEngineName()
+	{
+		return defaultScriptEngineName;
+	}
+
+	/**
+	 * @param defaultScriptEngineName
+	 *        The default script engine name
+	 * @see #getDefaultScriptEngineName()
+	 */
+	public void setDefaultScriptEngineName( String defaultScriptEngineName )
+	{
+		this.defaultScriptEngineName = defaultScriptEngineName;
 	}
 
 	/**
@@ -147,21 +168,21 @@ public class ScriptedMainContainer
 	 */
 	public ScriptEngineManager getScriptEngineManager()
 	{
-		return ScriptedMain.scriptEngineManager;
+		return scriptedMain.getScriptEngineManager();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
-	protected ScriptedMainContainer( String[] arguments )
+	protected ScriptedMainContainer( ScriptedMain scriptedMain )
 	{
-		this.arguments = arguments;
+		this.scriptedMain = scriptedMain;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final String[] arguments;
+	private final ScriptedMain scriptedMain;
 
 	private final Map<String, ScriptEngine> scriptEngines = new HashMap<String, ScriptEngine>();
 
@@ -169,22 +190,5 @@ public class ScriptedMainContainer
 
 	private final Writer errorWriter = new OutputStreamWriter( System.err );
 
-	private final Controller controller = new Controller();
-
-	private class Controller implements ScriptContextController
-	{
-		public void initialize( ScriptContext scriptContext ) throws ScriptException
-		{
-			scriptContext.setAttribute( ScriptedMain.containerVariableName, ScriptedMainContainer.this, ScriptContext.ENGINE_SCOPE );
-
-			if( ScriptedMain.scriptContextController != null )
-				ScriptedMain.scriptContextController.initialize( scriptContext );
-		}
-
-		public void finalize( ScriptContext scriptContext )
-		{
-			if( ScriptedMain.scriptContextController != null )
-				ScriptedMain.scriptContextController.finalize( scriptContext );
-		}
-	}
+	private String defaultScriptEngineName = "js";
 }

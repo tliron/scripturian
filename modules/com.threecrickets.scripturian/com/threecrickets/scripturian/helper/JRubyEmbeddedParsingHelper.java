@@ -71,34 +71,34 @@ public class JRubyEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 	// EmbeddedParsingHelper
 	//
 
-	public String getScriptHeader( ScriptEngine scriptEngine )
+	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getScriptFooter( ScriptEngine scriptEngine )
+	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
 		return "print(\"" + content + "\");";
 	}
 
-	public String getExpressionAsProgram( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return "$" + EmbeddedScript.containerVariableName + ".include(" + content + ");";
+		return "$" + embeddedScript.getContainerVariableName() + ".include(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		// return "$invocable.send(:" + content + ");";
 		return "$" + content + ".call;";

@@ -37,31 +37,17 @@ import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.EmbeddedScriptUtil;
-import com.threecrickets.scripturian.ScriptContextController;
 import com.threecrickets.scripturian.ScriptSource;
 
 /**
  * Reads script files stored in files under a base directory. The file contents
  * are cached, and checked for validity according to their modification
  * timestamps.
- * <p>
- * As a {@link ScriptContextController}, this class adds the "basePath" global
- * variable to the script's context. It is of the Java {@link File} class. The
- * name can be changed via the {@link #basePathVariableName};
  * 
  * @author Tal Liron
  */
 public class ScriptFileSource<S> implements ScriptSource<S>
 {
-	//
-	// Static attributes
-	//
-
-	/**
-	 * The default variable name for the base path. Defaults to "basePath".
-	 */
-	public static final String basePathVariableName = "basePath";
-
 	//
 	// Construction
 	//
@@ -88,6 +74,43 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		this.defaultName = defaultName;
 		this.defaultExtension = defaultExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
+	}
+
+	//
+	// Attributes
+	//
+
+	/**
+	 * The base path.
+	 * 
+	 * @return The base path
+	 */
+	public File getBasePath()
+	{
+		return basePath;
+	}
+
+	/**
+	 * If the name used in {@link #getScriptDescriptor(String)} points to a
+	 * directory, then this file name in that directory will be used instead
+	 * 
+	 * @return The default name
+	 */
+	public String getDefaultName()
+	{
+		return defaultName;
+	}
+
+	/**
+	 * If the name used in {@link #getScriptDescriptor(String)} does not point
+	 * to a valid file or directory, then this extension will be added and the
+	 * name will be tested for again
+	 * 
+	 * @return The default extension
+	 */
+	public String getDefaultExtension()
+	{
+		return defaultExtension;
 	}
 
 	//
@@ -137,7 +160,6 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 	public void initialize( ScriptContext scriptContext ) throws ScriptException
 	{
-		scriptContext.setAttribute( basePathVariableName, basePath, ScriptContext.ENGINE_SCOPE );
 	}
 
 	public void finalize( ScriptContext scriptContext )

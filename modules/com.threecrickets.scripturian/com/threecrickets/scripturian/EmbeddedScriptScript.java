@@ -1,14 +1,13 @@
 package com.threecrickets.scripturian;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.script.ScriptEngine;
 
 /**
  * This is the type of the "script" variable exposed to the script. The name is
- * set according to {@link EmbeddedScript#scriptVariableName}.
+ * set according to {@link EmbeddedScript#getScriptVariableName()}.
  * 
  * @author Tal Liron
  * @see EmbeddedScript
@@ -32,7 +31,7 @@ public class EmbeddedScriptScript
 	 */
 	public long getCacheDuration()
 	{
-		return cacheDuration.get();
+		return embeddedScript.getCacheDuration();
 	}
 
 	/**
@@ -42,7 +41,17 @@ public class EmbeddedScriptScript
 	 */
 	public void setCacheDuration( long cacheDuration )
 	{
-		this.cacheDuration.set( cacheDuration );
+		embeddedScript.setCacheDuration( cacheDuration );
+	}
+
+	/**
+	 * The source of the script.
+	 * 
+	 * @return The script source
+	 */
+	public Object getSource()
+	{
+		return embeddedScript.getSource();
 	}
 
 	/**
@@ -89,16 +98,16 @@ public class EmbeddedScriptScript
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
-	protected EmbeddedScriptScript( AtomicLong cacheDuration, ScriptEngine scriptEngine )
+	protected EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
-		this.cacheDuration = cacheDuration;
+		this.embeddedScript = embeddedScript;
 		this.scriptEngine = scriptEngine;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final AtomicLong cacheDuration;
+	private final EmbeddedScript embeddedScript;
 
 	private final ScriptEngine scriptEngine;
 

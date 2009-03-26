@@ -50,36 +50,36 @@ public class RhinoEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 	// EmbeddedParsingHelper
 	//
 
-	public String getScriptHeader( ScriptEngine scriptEngine )
+	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		// Rhino's default implementation of print() is annoyingly a println().
 		// This will fix it.
 		return "print=function(str){context.writer.print(String(str));};";
 	}
 
-	public String getScriptFooter( ScriptEngine scriptEngine )
+	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\'", "\\\\'" );
 		return "print('" + content + "');";
 	}
 
-	public String getExpressionAsProgram( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return EmbeddedScript.containerVariableName + ".include(" + content + ");";
+		return embeddedScript.getContainerVariableName() + ".include(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}

@@ -46,15 +46,14 @@ import javax.script.ScriptException;
  * <p>
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
- * "container". This name can be changed via {@link #containerVariableName},
- * though if you want the embedded script include tag to work, you must also set
- * {@link EmbeddedScript#containerVariableName} to be the same. For some other
- * global variables available to scripts, see {@link EmbeddedScript}.
+ * "container" (or anything else returned by
+ * {@link EmbeddedScript#getContainerVariableName()}). For some other global
+ * variables available to scripts, see {@link EmbeddedScript}.
  * <p>
  * Operations:
  * <ul>
- * <li><b>container.include(name)</b>: This powerful method allows scripts to
- * execute other scripts in place, and is useful for creating large,
+ * <li><code>container.include(name)</code>: This powerful method allows scripts
+ * to execute other scripts in place, and is useful for creating large,
  * maintainable applications based on scripts. Included scripts can act as a
  * library or toolkit and can even be shared among many applications. The
  * included script does not have to be in the same language or use the same
@@ -64,21 +63,25 @@ import javax.script.ScriptException;
  * JRuby, every script is run in its own scope, so that sharing would have to be
  * done explicitly in the global scope. See the included embedded Ruby script
  * example for a discussion of various ways to do this.</li>
- * <li><b>container.include(name, engineName)</b>: As the above, except that the
- * script is not embedded. As such, you must explicitly specify the name of the
- * scripting engine that should evaluate it.</li>
+ * <li><code>container.include(name, engineName)</code>: As the above, except
+ * that the script is not embedded. As such, you must explicitly specify the
+ * name of the scripting engine that should evaluate it.</li>
  * </ul>
  * Read-only attributes:
  * <ul>
- * <li><b>container.arguments</b>: The arguments sent to main().</li>
- * <li><b>container.writer</b>: Allows the script direct access to the
+ * <li><code>container.arguments</code>: An array of the string arguments sent
+ * to {@link #main(String[])}</li>
+ * <li><code>container.defaultScriptEngineName</code>: The default script engine
+ * name to be used if the script doesn't specify one. Defaults to "js". Scripts
+ * can change this value.</li>
+ * <li><code>container.writer</code>: Allows the script direct access to the
  * {@link Writer}. This should rarely be necessary, because by default the
  * standard output for your scripting engine would be directed to it, and the
  * scripting platform's native method for printing should be preferred. However,
  * some scripting platforms may not provide adequate access or may otherwise be
  * broken.</li>
- * <li><b>container.errorWriter</b>: Same as above, for standard error.</li>
- * <li><b>container.scriptEngineManager</b>: This is the
+ * <li><code>container.errorWriter</code>: Same as above, for standard error.</li>
+ * <li><code>container.scriptEngineManager</code>: This is the
  * {@link ScriptEngineManager} used to create the script engine. Scripts may use
  * it to get information about what other engines are available.</li>
  * </ul>
@@ -88,47 +91,11 @@ import javax.script.ScriptException;
  * 
  * @author Tal Liron
  */
-public class ScriptedMain
+public class ScriptedMain implements Runnable
 {
 	//
-	// Static attributes
+	// Static operations
 	//
-
-	/**
-	 * The {@link ScriptEngineManager} used to create the script engines for the
-	 * scripts. Uses a default instance, but can be set to something else.
-	 */
-	public static ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
-
-	/**
-	 * Whether or not compilation is attempted for script engines that support
-	 * it. Defaults to true.
-	 */
-	public static boolean allowCompilation = true;
-
-	/**
-	 * If the path to the script to run is not supplied as the first argument to
-	 * {@link #main(String[])}, this is used instead, Defaults to "main.script".
-	 */
-	public static String defaultPath = "main.script";
-
-	/**
-	 * The default script engine name to be used if the script doesn't specify
-	 * one. Defaults to "js".
-	 */
-	public static String defaultEngineName = "js";
-
-	/**
-	 * The default variable name for the {@link ScriptedMainContainer} instance.
-	 * Defaults to "container".
-	 */
-	public static String containerVariableName = "container";
-
-	/**
-	 * An optional {@link ScriptContextController} to be used with the scripts.
-	 * Useful for adding your own global variables to the script.
-	 */
-	public static ScriptContextController scriptContextController;
 
 	/**
 	 * Delegates to an {@link EmbeddedScript} file specified by the first
@@ -139,6 +106,107 @@ public class ScriptedMain
 	 */
 	public static void main( String[] arguments )
 	{
+		new ScriptedMain( arguments ).run();
+	}
+
+	//
+	// Construction
+	//
+
+	public ScriptedMain( String[] arguments )
+	{
+		this.arguments = arguments;
+		scriptEngineManager = new ScriptEngineManager();
+		allowCompilation = false;
+		defaultPath = "main.script";
+		containerVariableName = "container";
+	}
+
+	//
+	// Attributes
+	//
+
+	/**
+	 * The arguments sent to {@link ScriptedMain#main(String[])}.
+	 * 
+	 * @return The arguments
+	 */
+	public String[] getArguments()
+	{
+		return arguments;
+	}
+
+	/**
+	 * The {@link ScriptEngineManager} used to create the script engines for the
+	 * scripts. Uses a default instance, but can be set to something else.
+	 * 
+	 * @return The script engine manager
+	 */
+	public ScriptEngineManager getScriptEngineManager()
+	{
+		return scriptEngineManager;
+	}
+
+	/**
+	 * Whether or not compilation is attempted for script engines that support
+	 * it. Defaults to false.
+	 * 
+	 * @return Whether to allow compilation
+	 */
+	public boolean isAllowCompilation()
+	{
+		return allowCompilation;
+	}
+
+	/**
+	 * If the path to the script to run is not supplied as the first argument to
+	 * {@link #main(String[])}, this is used instead, Defaults to "main.script".
+	 * 
+	 * @return The default path
+	 */
+	public String getDefaultPath()
+	{
+		return defaultPath;
+	}
+
+	/**
+	 * The default variable name for the {@link ScriptedMainContainer} instance.
+	 * Defaults to "container".
+	 * 
+	 * @return The default container variable name
+	 */
+	public String getContainerVariableName()
+	{
+		return containerVariableName;
+	}
+
+	/**
+	 * An optional {@link ScriptContextController} to be used with the scripts.
+	 * Useful for adding your own global variables to the script.
+	 * 
+	 * @return The script context controller
+	 * @see #setScriptContextController(ScriptContextController)
+	 */
+	public ScriptContextController getScriptContextController()
+	{
+		return scriptContextController;
+	}
+
+	/**
+	 * @param scriptContextController
+	 * @see #getScriptContextController()
+	 */
+	public void setScriptContextController( ScriptContextController scriptContextController )
+	{
+		this.scriptContextController = scriptContextController;
+	}
+
+	//
+	// Runnable
+	//
+
+	public void run()
+	{
 		String name;
 		if( arguments.length > 0 )
 			name = arguments[0];
@@ -147,7 +215,7 @@ public class ScriptedMain
 
 		try
 		{
-			ScriptedMainContainer container = new ScriptedMainContainer( arguments );
+			ScriptedMainContainer container = new ScriptedMainContainer( this );
 			container.include( name );
 			container.getWriter().flush();
 			container.getErrorWriter().flush();
@@ -161,4 +229,19 @@ public class ScriptedMain
 			System.err.println( "Error in script \"" + name + "\", error: " + x.getMessage() );
 		}
 	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	private final String[] arguments;
+
+	private final ScriptEngineManager scriptEngineManager;
+
+	private final boolean allowCompilation;
+
+	private final String defaultPath;
+
+	private final String containerVariableName;
+
+	private ScriptContextController scriptContextController;
 }

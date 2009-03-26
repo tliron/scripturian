@@ -47,34 +47,34 @@ public class JavaEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 	// EmbeddedParsingHelper
 	//
 
-	public String getScriptHeader( ScriptEngine scriptEngine )
+	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		return "class Text { private static javax.script.ScriptContext scriptContext; public static void setScriptContext(javax.script.ScriptContext sc) { scriptContext = sc; } public static void main(String arguments[]) throws Exception {";
 	}
 
-	public String getScriptFooter( ScriptEngine scriptEngine )
+	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		return "}}";
 	}
 
-	public String getTextAsProgram( ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\"", "\\\\\"" );
 		return "scriptContext.getWriter().write(\"" + content + "\");";
 	}
 
-	public String getExpressionAsProgram( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		return "scriptContext.getWriter().write((" + content + ").toString());";
 	}
 
-	public String getExpressionAsInclude( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return EmbeddedScript.containerVariableName + ".include((" + content + ").toString());";
+		return embeddedScript.getContainerVariableName() + ".include((" + content + ").toString());";
 	}
 
-	public String getInvocationAsProgram( ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		return content + "();";
 	}

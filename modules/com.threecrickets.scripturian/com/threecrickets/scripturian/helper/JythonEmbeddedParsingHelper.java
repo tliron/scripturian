@@ -42,8 +42,8 @@ import com.threecrickets.scripturian.ScriptEngines;
  * Note that Jython does not correctly redirect its standard output to that
  * provided by the {@link ScriptContext}. For that reason, this parsing helper
  * does so in script. For this to work, a global variable named
- * {@link EmbeddedScript#containerVariableName} must be set with fields named
- * "writer" and "standardWriter".
+ * {@link EmbeddedScript#getContainerVariableName()} must be set with fields
+ * named "writer" and "standardWriter".
  * 
  * @author Tal Liron
  */
@@ -57,7 +57,7 @@ public class JythonEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 	// EmbeddedParsingHelper
 	//
 
-	public String getScriptHeader( ScriptEngine scriptEngine )
+	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		// Apparently the Java Scripting support for Jython (version 2.2.1) does
 		// not correctly redirect stdout and stderr. Luckily, the Python
@@ -66,29 +66,29 @@ public class JythonEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 		return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
 	}
 
-	public String getScriptFooter( ScriptEngine scriptEngine )
+	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
 		return "sys.stdout.write(\"" + content + "\"),;";
 	}
 
-	public String getExpressionAsProgram( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return EmbeddedScript.containerVariableName + ".include(" + content + ");";
+		return embeddedScript.getContainerVariableName() + ".include(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}

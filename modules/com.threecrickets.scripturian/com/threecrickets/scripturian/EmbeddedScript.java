@@ -37,11 +37,11 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.net.URL;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -109,15 +109,16 @@ import javax.script.SimpleScriptContext;
  * <p>
  * Examples:
  * <ul>
- * <li><b>JSP/ASP-style delimiters</b>: &lt;% print('Hello World'); %&gt;</li>
- * <li><b>PHP-style delimiters</b>: &lt;? script.cacheDuration.set 5000 ?&gt;</li>
- * <li><b>Specifying engine name</b>: &lt;%groovy print myVariable %&gt;
- * &lt;?php container.include(lib_name); ?&gt;</li>
- * <li><b>Output expression</b>: &lt;?= 15 * 6 ?&gt;</li>
- * <li><b>Output expression with specifying engine name</b>: &lt;?=js
- * sqrt(myVariable) ?&gt;</li>
- * <li><b>Include</b>: &lt;%& 'library.js' %&gt; &lt;?& 'language-' +
- * myObject.getLang + '-support.py' %&gt;</li>
+ * <li><b>JSP/ASP-style delimiters</b>: <code>&lt;% print('Hello World'); %&gt;</code></li>
+ * <li><b>PHP-style delimiters</b>: <code>&lt;? script.cacheDuration.set 5000
+ * ?&gt;</code></li>
+ * <li><b>Specifying engine name</b>:
+ * <code>&lt;%groovy print myVariable %&gt; &lt;?php container.include(lib_name); ?&gt;</code>
+ * </li>
+ * <li><b>Output expression</b>: <code>&lt;?= 15 * 6 ?&gt;</code></li>
+ * <li><b>Output expression with specifying engine name</b>:
+ * <code>&lt;?=js sqrt(myVariable) ?&gt;</code></li>
+ * <li><b>Include</b>: <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' %&gt;</code></li>
  * </ul>
  * <p>
  * A special container environment is created for scripts, with some useful
@@ -125,24 +126,26 @@ import javax.script.SimpleScriptContext;
  * (this name can be changed via {@link #scriptVariableName}).
  * <p>
  * <ul>
- * <li><b>script.cacheDuration</b>: Setting this to something greater than 0
- * enables caching of the script results for a maximum number of milliseconds.
+ * <li><code>script.cacheDuration</code>: Setting this to something greater than
+ * 0 enables caching of the script results for a maximum number of milliseconds.
  * By default cacheDuration is 0, so that each request causes the script to be
  * evaluated. This class does not handle caching itself. Caching can be provided
  * by your environment if appropriate.</li>
- * <li><b>script.scriptEngine</b>: This is the {@link ScriptEngine} used by the
- * script. Scripts may use it to get information about the engine's
+ * <li><code>script.scriptEngine</code>: This is the {@link ScriptEngine} used
+ * by the script. Scripts may use it to get information about the engine's
  * capabilities.</li>
- * <li><b>script.statics</b>: This {@link Map} provides a convenient location
- * for global values shared by all scripts, run by all engines. Note that it is
- * not thread safe! In anything but the most trivial application, you will need
- * to synchronize access to script.statics. For this reason, script.staticsLock
- * is provided (see below).</li>
- * <li><b>script.staticsLock</b>: A {@link ReadWriteLock} meant to be used for
- * the script.statics map, though exact use is up to your application. It can be
- * used to synchronize access to the statics across threads. Note that if more
- * locks are needed for your applications, they can be created and stored as
- * values within script.statics!</li>
+ * <li><code>script.source</code>: This is an arbitrary object set as the
+ * script's source. It might be null if none was provided.</li>
+ * <li><code>script.statics</code>: This {@link Map} provides a convenient
+ * location for global values shared by all scripts, run by all engines. Note
+ * that it is not thread safe! In anything but the most trivial application, you
+ * will need to synchronize access to script.statics. For this reason,
+ * script.staticsLock is provided (see below).</li>
+ * <li><code>script.staticsLock</code>: A {@link ReadWriteLock} meant to be used
+ * for the script.statics map, though exact use is up to your application. It
+ * can be used to synchronize access to the statics across threads. Note that if
+ * more locks are needed for your applications, they can be created and stored
+ * as values within script.statics!</li>
  * </ul>
  * 
  * @author Tal Liron
@@ -151,51 +154,53 @@ import javax.script.SimpleScriptContext;
 public class EmbeddedScript
 {
 	//
-	// Static attributes
+	// Constants
 	//
 
 	/**
-	 * The start delimiter (first option).
+	 * The default start delimiter (first option): &lt;%
 	 */
-	public static String delimiter1Start = "<%";
+	public static final String DEFAULT_DELIMITER1_START = "<%";
 
 	/**
-	 * The end delimiter (first option).
+	 * The default end delimiter (first option): %&gt;
 	 */
-	public static String delimiter1End = "%>";
+	public static final String DEFAULT_DELIMITER1_END = "%>";
 
 	/**
-	 * The start delimiter (second option).
+	 * The default start delimiter (second option): &lt;?
 	 */
-	public static String delimiter2Start = "<?";
+	public static final String DEFAULT_DELIMITER2_START = "<?";
 
 	/**
-	 * The end delimiter (second option).
+	 * The default end delimiter (second option): ?&gt;
 	 */
-	public static String delimiter2End = "?>";
+	public static final String DEFAULT_DELIMITER2_END = "?>";
 
 	/**
-	 * The addition to the start delimiter to specify an expression tag.
+	 * The default addition to the start delimiter to specify an expression tag:
+	 * =
 	 */
-	public static String delimiterExpression = "=";
+	public static final String DEFAULT_DELIMITER_EXPRESSION = "=";
 
 	/**
-	 * The addition to the start delimiter to specify an include tag.
+	 * The default addition to the start delimiter to specify an include tag: &
 	 */
-	public static String delimiterInclude = "&";
+	public static final String DEFAULT_DELIMITER_INCLUDE = "&";
 
 	/**
-	 * The default variable name for the {@link EmbeddedScriptScript} instance.
-	 * Defaults to "script".
+	 * The default script variable name: "script"
 	 */
-	public static String scriptVariableName = "script";
+	public static final String DEFAULT_SCRIPT_VARIABLE_NAME = "script";
 
 	/**
-	 * The default variable name for the container. Used for include tags by
-	 * implementations of {@link EmbeddedScriptParsingHelper}. Defaults to
-	 * "container".
+	 * The default container variable name: "container"
 	 */
-	public static String containerVariableName = "container";
+	public static final String DEFAULT_CONTAINER_VARIABLE_NAME = "container";
+
+	//
+	// Static attributes
+	//
 
 	/**
 	 * A map of script engine names to their {@link EmbeddedScriptParsingHelper}
@@ -216,7 +221,7 @@ public class EmbeddedScript
 	 * The default implementation of this library already contains a few useful
 	 * parsing helpers, under the com.threecrickets.scripturian.helper package.
 	 */
-	public static Map<String, EmbeddedScriptParsingHelper> embeddedScriptParsingHelpers = new HashMap<String, EmbeddedScriptParsingHelper>();
+	public static Map<String, EmbeddedScriptParsingHelper> embeddedScriptParsingHelpers = new ConcurrentHashMap<String, EmbeddedScriptParsingHelper>();
 
 	{
 		// Initialize embeddedScriptParsingHelpers (look for them in META-INF)
@@ -291,7 +296,7 @@ public class EmbeddedScript
 	 * the script engines.
 	 * 
 	 * @param text
-	 *        The teaxt stream
+	 *        The taxt stream
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
@@ -301,17 +306,68 @@ public class EmbeddedScript
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
+	 * @param scriptSource
+	 *        The script source (can be null)
+	 * @throws ScriptException
+	 *         In case of a parsing error
+	 */
+	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation, Object scriptSource ) throws ScriptException
+	{
+		this( text, scriptEngineManager, defaultEngineName, allowCompilation, scriptSource, DEFAULT_SCRIPT_VARIABLE_NAME, DEFAULT_CONTAINER_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
+			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE );
+	}
+
+	/**
+	 * Parses a text stream containing plan text and embedded script segments
+	 * into a compact, optimized script. Parsing requires the appropriate
+	 * {@link EmbeddedScriptParsingHelper} implementations to be installed for
+	 * the script engines.
+	 * 
+	 * @param text
+	 *        The text stream
+	 * @param scriptEngineManager
+	 *        The script engine manager used to create script engines
+	 * @param defaultEngineName
+	 *        If a script engine name isn't explicitly specified in the embedded
+	 *        script file, this one will be used
+	 * @param allowCompilation
+	 *        Whether script segments will be compiled (note that compilation
+	 *        will only happen if the script engine supports it, and that what
+	 *        compilation exactly means is left up to the script engine)
+	 * @param scriptSource
+	 *        The script source (can be null)
+	 * @param scriptVariableName
+	 *        The script variable name
+	 * @param containerVariableName
+	 *        The container variable name
+	 * @param delimiter1Start
+	 *        The start delimiter (first option)
+	 * @param delimiter1End
+	 *        The end delimiter (first option)
+	 * @param delimiter2Start
+	 *        The start delimiter (second option)
+	 * @param delimiter2End
+	 *        The end delimiter (second option)
+	 * @param delimiterExpression
+	 *        The default addition to the start delimiter to specify an
+	 *        expression tag
+	 * @param delimiterInclude
+	 *        The default addition to the start delimiter to specify an include
+	 *        tag
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 * @see EmbeddedScriptParsingHelper
 	 */
-	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation ) throws ScriptException
+	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation, Object scriptSource, String scriptVariableName, String containerVariableName,
+		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude ) throws ScriptException
 	{
 		this.scriptEngineManager = scriptEngineManager;
+		this.scriptSource = scriptSource;
+		this.scriptVariableName = scriptVariableName;
+		this.containerVariableName = containerVariableName;
+
 		String lastEngineName = defaultEngineName;
 
-		String delimiterStart = null;
-		String delimiterEnd = null;
 		int delimiterStartLength = 0;
 		int delimiterEndLength = 0;
 		int expressionLength = delimiterExpression.length();
@@ -335,6 +391,12 @@ public class EmbeddedScript
 				delimiterEnd = delimiter2End;
 				delimiterStartLength = delimiterStart.length();
 				delimiterEndLength = delimiterEnd.length();
+			}
+			else
+			{
+				// No delimiters used
+				delimiterStart = null;
+				delimiterEnd = null;
 			}
 		}
 
@@ -401,10 +463,10 @@ public class EmbeddedScript
 								throw new ScriptException( "Embedded script parsing helper not available for script engine: " + scriptEngineName );
 
 							if( isExpression )
-								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsProgram( scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
 							else
 								// if( isInclude )
-								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsInclude( scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
 						}
 						else
 							segments.add( new Segment( text.substring( start, end ), true, scriptEngineName ) );
@@ -485,7 +547,7 @@ public class EmbeddedScript
 						// scriptEngine,
 						// current.text ) ) );
 
-						previous.text += embeddedScriptParsingHelper.getTextAsProgram( scriptEngine, current.text );
+						previous.text += embeddedScriptParsingHelper.getTextAsProgram( this, scriptEngine, current.text );
 					}
 
 					current = previous;
@@ -510,12 +572,12 @@ public class EmbeddedScript
 						throw new ScriptException( "Embedded script parsing helper not available for script engine: " + segment.scriptEngineName );
 
 					// Add header
-					String header = embeddedScriptParsingHelper.getScriptHeader( scriptEngine );
+					String header = embeddedScriptParsingHelper.getScriptHeader( this, scriptEngine );
 					if( header != null )
 						segment.text = header + segment.text;
 
 					// Add footer
-					String footer = embeddedScriptParsingHelper.getScriptFooter( scriptEngine );
+					String footer = embeddedScriptParsingHelper.getScriptFooter( this, scriptEngine );
 					if( footer != null )
 						segment.text += footer;
 
@@ -530,6 +592,55 @@ public class EmbeddedScript
 	//
 
 	/**
+	 * The start delimiter used.
+	 * 
+	 * @return The start delimiter, or null if none was used
+	 * @see #getDelimiterEnd()
+	 */
+	public String getDelimiterStart()
+	{
+		return delimiterStart;
+	}
+
+	/**
+	 * The end delimiter used.
+	 * 
+	 * @return The end delimiter, or null if none was used
+	 * @see #getDelimiterStart()
+	 */
+	public String getDelimiterEnd()
+	{
+		return delimiterEnd;
+	}
+
+	/**
+	 * The source of the script.
+	 * 
+	 * @return The source of the script, or null if none was set
+	 */
+	public Object getSource()
+	{
+		return scriptSource;
+	}
+
+	/**
+	 * The default variable name for the {@link EmbeddedScriptScript} instance.
+	 */
+	public String getScriptVariableName()
+	{
+		return scriptVariableName;
+	}
+
+	/**
+	 * The default variable name for the container. Used for include tags by
+	 * implementations of {@link EmbeddedScriptParsingHelper}.
+	 */
+	public String getContainerVariableName()
+	{
+		return containerVariableName;
+	}
+
+	/**
 	 * Timestamp of when the script last finished running successfully.
 	 * 
 	 * @return The timestamp
@@ -537,6 +648,16 @@ public class EmbeddedScript
 	public long getLastRun()
 	{
 		return lastRun;
+	}
+
+	/**
+	 * The {@link ScriptEngineManager} used to create the script engines.
+	 * 
+	 * @return The script engine manager
+	 */
+	public ScriptEngineManager getScriptEngineManager()
+	{
+		return scriptEngineManager;
 	}
 
 	/**
@@ -552,15 +673,17 @@ public class EmbeddedScript
 	/**
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
-	 * 0, so that each request causes the script to be evaluated. This class
-	 * does not handle caching itself. Caching can be provided by your
-	 * environment if appropriate.
+	 * 0, so that each call to
+	 * {@link #run(Writer, Writer, Map, ScriptContextController, boolean)}
+	 * causes the script to be run. This class does not handle caching itself.
+	 * Caching can be provided by your environment if appropriate.
 	 * <p>
 	 * This is the same instance provided for
 	 * EmbeddedScriptScript#getCacheDuration().
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
+	 * @see #getLastRun()
 	 */
 	public long getCacheDuration()
 	{
@@ -638,9 +761,7 @@ public class EmbeddedScript
 			for( Segment segment : segments )
 			{
 				if( !segment.isScript )
-				{
 					writer.write( segment.text );
-				}
 				else
 				{
 					ScriptContext scriptContext;
@@ -670,12 +791,10 @@ public class EmbeddedScript
 						scriptEngines.put( scriptEngineName, scriptEngine );
 					}
 					else
-					{
 						scriptContext = scriptEngine.getContext();
-					}
 
 					Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-					scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( cacheDuration, scriptEngine ), ScriptContext.ENGINE_SCOPE );
+					scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine ), ScriptContext.ENGINE_SCOPE );
 
 					// Note that some script engines (such as Rhino) expect a
 					// PrintWriter, even though the spec defines just a Writer
@@ -688,9 +807,7 @@ public class EmbeddedScript
 					try
 					{
 						if( segment.compiledScript != null )
-						{
 							segment.compiledScript.eval( scriptContext );
-						}
 						else
 						{
 							// Note that we are wrapping our text with a
@@ -762,7 +879,7 @@ public class EmbeddedScript
 		ScriptContext scriptContext = scriptEngine.getContext();
 
 		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( cacheDuration, scriptEngine ), ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine ), ScriptContext.ENGINE_SCOPE );
 
 		if( scriptContextController != null )
 			scriptContextController.initialize( scriptContext );
@@ -774,7 +891,7 @@ public class EmbeddedScript
 			if( embeddedScriptParsingHelper == null )
 				throw new ScriptException( "Embedded script parsing helper not available for script engine: " + scriptEngineName );
 
-			String program = embeddedScriptParsingHelper.getInvocationAsProgram( scriptEngine, entryPointName );
+			String program = embeddedScriptParsingHelper.getInvocationAsProgram( this, scriptEngine, entryPointName );
 			if( program == null )
 			{
 				if( scriptEngine instanceof Invocable )
@@ -802,7 +919,17 @@ public class EmbeddedScript
 
 	private final List<Segment> segments = new LinkedList<Segment>();
 
+	private final String delimiterStart;
+
+	private final String delimiterEnd;
+
+	private final String scriptVariableName;
+
+	private final String containerVariableName;
+
 	private final ScriptEngineManager scriptEngineManager;
+
+	private final Object scriptSource;
 
 	private final AtomicLong cacheDuration = new AtomicLong();
 
