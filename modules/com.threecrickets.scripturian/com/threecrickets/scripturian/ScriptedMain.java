@@ -34,6 +34,8 @@ import java.io.Writer;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import com.threecrickets.scripturian.internal.ScriptedMainContainer;
+
 /**
  * Delegates the main() call to an {@link EmbeddedScript}, in effect using a
  * script as the entry point to a Java platform application. The path to the

@@ -42,8 +42,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -53,6 +53,9 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
+
+import com.threecrickets.scripturian.internal.EmbeddedScriptScript;
+import com.threecrickets.scripturian.internal.StaticScope;
 
 /**
  * Handles the parsing, optional compilation and running of embedded scripts.
@@ -104,8 +107,8 @@ import javax.script.SimpleScriptContext;
  * to the script, which would then process the include as is appropriate to your
  * environment. To make this available, you can set the "container" global
  * variable by supplied a {@link ScriptContextController} when you call
- * {@link #run(Writer, Writer, Map, ScriptContextController, boolean)}. Note
- * this name can be changed via {@link #containerVariableName}.
+ * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
+ * . Note this name can be changed via {@link #containerVariableName}.
  * <p>
  * Examples:
  * <ul>
@@ -136,20 +139,13 @@ import javax.script.SimpleScriptContext;
  * capabilities.</li>
  * <li><code>script.source</code>: This is an arbitrary object set as the
  * script's source. It might be null if none was provided.</li>
- * <li><code>script.statics</code>: This {@link Map} provides a convenient
- * location for global values shared by all scripts, run by all engines. Note
- * that it is not thread safe! In anything but the most trivial application, you
- * will need to synchronize access to script.statics. For this reason,
- * script.staticsLock is provided (see below).</li>
- * <li><code>script.staticsLock</code>: A {@link ReadWriteLock} meant to be used
- * for the script.statics map, though exact use is up to your application. It
- * can be used to synchronize access to the statics across threads. Note that if
- * more locks are needed for your applications, they can be created and stored
- * as values within script.statics!</li>
+ * <li><code>script.staticScope</code>: This {@link ConcurrentMap} provides a
+ * convenient location for global values shared by all scripts, run by all
+ * engines.</li>
  * </ul>
  * 
  * @author Tal Liron
- * @see ScriptStatics
+ * @see StaticScope
  */
 public class EmbeddedScript
 {
@@ -415,7 +411,7 @@ public class EmbeddedScript
 
 				int end = text.indexOf( delimiterEnd, start );
 				if( end == -1 )
-					throw new RuntimeException( "ScriptDescriptor block does not have an ending delimiter" );
+					throw new RuntimeException( "Script block does not have an ending delimiter" );
 
 				if( start + 1 != end )
 				{
@@ -647,7 +643,7 @@ public class EmbeddedScript
 	 */
 	public long getLastRun()
 	{
-		return lastRun;
+		return lastRun.get();
 	}
 
 	/**
@@ -674,7 +670,7 @@ public class EmbeddedScript
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
-	 * {@link #run(Writer, Writer, Map, ScriptContextController, boolean)}
+	 * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
 	 * causes the script to be run. This class does not handle caching itself.
 	 * Caching can be provided by your environment if appropriate.
 	 * <p>
@@ -704,8 +700,8 @@ public class EmbeddedScript
 	 * Trivial embedded script objects have no embedded scripts, meaning that
 	 * they are pure text. Identifying such scripts can save you from making
 	 * unnecessary calls to
-	 * {@link #run(Writer, Writer, Map, ScriptContextController, boolean)} in
-	 * some situations.
+	 * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
+	 * in some situations.
 	 * 
 	 * @return The script content if it's trivial, null if not
 	 */
@@ -748,10 +744,10 @@ public class EmbeddedScript
 	 *         cached output is expected to be used instead
 	 * @throws ScriptException
 	 */
-	public boolean run( Writer writer, Writer errorWriter, Map<String, ScriptEngine> scriptEngines, ScriptContextController scriptContextController, boolean checkCache ) throws ScriptException, IOException
+	public boolean run( Writer writer, Writer errorWriter, ConcurrentMap<String, ScriptEngine> scriptEngines, ScriptContextController scriptContextController, boolean checkCache ) throws ScriptException, IOException
 	{
 		long now = System.currentTimeMillis();
-		if( checkCache && ( now - lastRun < cacheDuration.get() ) )
+		if( checkCache && ( now - lastRun.get() < cacheDuration.get() ) )
 		{
 			// We didn't run this time
 			return false;
@@ -788,7 +784,12 @@ public class EmbeddedScript
 						if( scriptContext.getBindings( ScriptContext.GLOBAL_SCOPE ) == null )
 							scriptContext.setBindings( scriptEngine.createBindings(), ScriptContext.GLOBAL_SCOPE );
 
-						scriptEngines.put( scriptEngineName, scriptEngine );
+						// Note: another thread might have put a scriptEngine
+						// here in the meantime... we'll make sure there is no
+						// duplication
+						ScriptEngine old = scriptEngines.putIfAbsent( scriptEngineName, scriptEngine );
+						if( old != null )
+							scriptEngine = old;
 					}
 					else
 						scriptContext = scriptEngine.getContext();
@@ -841,7 +842,7 @@ public class EmbeddedScript
 				}
 			}
 
-			lastRun = now;
+			lastRun.set( now );
 			return true;
 		}
 	}
@@ -853,10 +854,10 @@ public class EmbeddedScript
 	 * {@link EmbeddedScriptParsingHelper} implementation to be installed for
 	 * the script engine. Most likely, the script engine supports the
 	 * {@link Invocable} interface. Running the script first (via
-	 * {@link #run(Writer, Writer, Map, ScriptContextController, boolean)} ) is
-	 * not absolutely required, but probably will be necessary in most useful
-	 * scenarios, where running the script causes useful entry point to be
-	 * defined.
+	 * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
+	 * ) is not absolutely required, but probably will be necessary in most
+	 * useful scenarios, where running the script causes useful entry point to
+	 * be defined.
 	 * <p>
 	 * Note that this call does not support sending arguments. If you need to
 	 * pass data to the script, use a global variable, which you can set via the
@@ -872,7 +873,7 @@ public class EmbeddedScript
 	 * @throws NoSuchMethodException
 	 *         Note that this exception will only be thrown if the script engine
 	 *         supports the {@link Invocable} interface; otherwise a
-	 *         {@link ScriptException} if the method is not found
+	 *         {@link ScriptException} is thrown if the method is not found
 	 */
 	public Object invoke( String entryPointName, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
 	{
@@ -897,7 +898,7 @@ public class EmbeddedScript
 				if( scriptEngine instanceof Invocable )
 					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
 				else
-					throw new ScriptException( "EmbeddedScriptScript engine does not support invocations" );
+					throw new ScriptException( "tScript engine does not support invocations" );
 			}
 			else
 				return scriptEngine.eval( program, scriptContext );
@@ -933,7 +934,7 @@ public class EmbeddedScript
 
 	private final AtomicLong cacheDuration = new AtomicLong();
 
-	private long lastRun = 0;
+	private final AtomicLong lastRun = new AtomicLong();
 
 	private ScriptEngine scriptEngine;
 

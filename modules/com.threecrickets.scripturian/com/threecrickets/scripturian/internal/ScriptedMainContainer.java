@@ -26,18 +26,21 @@
  * at http://www.threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.internal;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+
+import com.threecrickets.scripturian.EmbeddedScript;
+import com.threecrickets.scripturian.ScriptedMain;
 
 /**
  * This is the type of the "container" variable exposed to the script. The name
@@ -48,6 +51,15 @@ import javax.script.ScriptException;
  */
 public class ScriptedMainContainer
 {
+	//
+	// Construction
+	//
+
+	public ScriptedMainContainer( ScriptedMain scriptedMain )
+	{
+		this.scriptedMain = scriptedMain;
+	}
+
 	//
 	// Operations
 	//
@@ -90,7 +102,7 @@ public class ScriptedMainContainer
 	 */
 	public void include( String name, String scriptEngineName ) throws IOException, ScriptException
 	{
-		String text = EmbeddedScriptUtil.getString( new File( name ) );
+		String text = ScripturianUtil.getString( new File( name ) );
 		if( scriptEngineName != null )
 			text = EmbeddedScript.DEFAULT_DELIMITER1_START + scriptEngineName + " " + text + EmbeddedScript.DEFAULT_DELIMITER1_END;
 
@@ -172,19 +184,11 @@ public class ScriptedMainContainer
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
-	// Protected
-
-	protected ScriptedMainContainer( ScriptedMain scriptedMain )
-	{
-		this.scriptedMain = scriptedMain;
-	}
-
-	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	private final ScriptedMain scriptedMain;
 
-	private final Map<String, ScriptEngine> scriptEngines = new HashMap<String, ScriptEngine>();
+	private final ConcurrentMap<String, ScriptEngine> scriptEngines = new ConcurrentHashMap<String, ScriptEngine>();
 
 	private final Writer writer = new OutputStreamWriter( System.out );
 

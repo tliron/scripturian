@@ -1,10 +1,12 @@
 /**
  * 
  */
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.internal;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
+
+import com.threecrickets.scripturian.ScriptContextController;
 
 /**
  * @author Tal Liron

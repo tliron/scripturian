@@ -36,8 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.EmbeddedScriptUtil;
 import com.threecrickets.scripturian.ScriptSource;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * Reads script files stored in files under a base directory. The file contents
@@ -229,7 +229,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 		private FiledScriptDescriptor( File file ) throws IOException
 		{
-			content = EmbeddedScriptUtil.getString( file );
+			content = ScripturianUtil.getString( file );
 
 			String name = file.getName();
 			int dot = name.lastIndexOf( '.' );

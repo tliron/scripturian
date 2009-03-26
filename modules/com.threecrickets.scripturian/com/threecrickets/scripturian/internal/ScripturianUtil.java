@@ -26,7 +26,7 @@
  * at http://www.threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.internal;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,12 +41,12 @@ import java.io.StringWriter;
  * 
  * @author Tal Liron
  */
-public abstract class EmbeddedScriptUtil
+public abstract class ScripturianUtil
 {
 	/**
 	 * Size (in bytes) of the buffer used by {@link #getString(File)}.
 	 */
-	public static int bufferSize = 1024 * 1024;
+	public static final int BUFFFER_SIZE = 1024 * 1024;
 
 	/**
 	 * Reads a reader into a string.
@@ -73,7 +73,7 @@ public abstract class EmbeddedScriptUtil
 	}
 
 	/**
-	 * Reads a file into a string. Uses a buffer (see {@link #bufferSize}).
+	 * Reads a file into a string. Uses a buffer (see {@link #BUFFFER_SIZE}).
 	 * 
 	 * @param file
 	 *        The file
@@ -82,14 +82,14 @@ public abstract class EmbeddedScriptUtil
 	 */
 	public static String getString( File file ) throws IOException
 	{
-		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), bufferSize );
+		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFFER_SIZE );
 		return getString( reader );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private EmbeddedScriptUtil()
+	private ScripturianUtil()
 	{
 	}
 }

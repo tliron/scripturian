@@ -1,9 +1,10 @@
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.internal;
 
-import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.script.ScriptEngine;
+
+import com.threecrickets.scripturian.EmbeddedScript;
 
 /**
  * This is the type of the "script" variable exposed to the script. The name is
@@ -14,6 +15,16 @@ import javax.script.ScriptEngine;
  */
 public class EmbeddedScriptScript
 {
+	//
+	// Construction
+	//
+
+	public EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	{
+		this.embeddedScript = embeddedScript;
+		this.scriptEngine = scriptEngine;
+	}
+
 	//
 	// Attributes
 	//
@@ -66,42 +77,14 @@ public class EmbeddedScriptScript
 	}
 
 	/**
-	 * This {@link Map} provides a convenient location for global values shared
-	 * by all scripts, run by all engines. Note that it is not thread safe! In
-	 * anything but the most trivial application, you will need to synchronize
-	 * access to script.statics. For this reason, script.staticsLock is
-	 * provided.
+	 * This {@link ConcurrentMap} provides a convenient location for global
+	 * values shared by all scripts, run by all engines.
 	 * 
-	 * @return The statics
-	 * @see #getStaticsLock()
+	 * @return The values
 	 */
-	public Map<String, Object> getStatics()
+	public ConcurrentMap<String, Object> getStaticScope()
 	{
-		return ScriptStatics.statics;
-	}
-
-	/**
-	 * A {@link ReadWriteLock} meant to be used for the script.statics map,
-	 * though exact use is up to your application. It can be used to synchronize
-	 * access to the statics across threads. Note that if more locks are needed
-	 * for your applications, they can be created and stored as values within
-	 * script.statics!
-	 * 
-	 * @return The statics lock
-	 * @see #getStatics()
-	 */
-	public ReadWriteLock getStaticsLock()
-	{
-		return ScriptStatics.staticsLock;
-	}
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Protected
-
-	protected EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
-	{
-		this.embeddedScript = embeddedScript;
-		this.scriptEngine = scriptEngine;
+		return StaticScope.getInstance().getValues();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

@@ -26,12 +26,10 @@
  * at http://www.threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.internal;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Used as global space for sharing objects between scripts. Statics will stay
@@ -40,27 +38,33 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * 
  * @author Tal Liron
  */
-public abstract class ScriptStatics
+public class StaticScope
 {
 	//
 	// Static attributes
 	//
 
-	/**
-	 * Any object can be stored here. Note that this implementation is not
-	 * synchronized! You should synchronize access using {@link #staticsLock}.
-	 */
-	public static final Map<String, Object> statics = new HashMap<String, Object>();
+	public static StaticScope getInstance()
+	{
+		return instance;
+	}
 
 	/**
-	 * Meant for synchronizing access to {@link #statics}.
+	 * Any object can be stored here.
 	 */
-	public static final ReadWriteLock staticsLock = new ReentrantReadWriteLock();
+	public ConcurrentMap<String, Object> getValues()
+	{
+		return values;
+	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private ScriptStatics()
+	private final static StaticScope instance = new StaticScope();
+
+	private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
+
+	private StaticScope()
 	{
 	}
 }
