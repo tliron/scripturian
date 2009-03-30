@@ -3,6 +3,7 @@ package com.threecrickets.scripturian.internal;
 import java.io.Writer;
 import java.util.concurrent.ConcurrentMap;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
@@ -21,12 +22,11 @@ public class EmbeddedScriptScript
 	// Construction
 	//
 
-	public EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, Writer writer, Writer errorWriter )
+	public EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, ScriptContext scriptContext )
 	{
 		this.embeddedScript = embeddedScript;
 		this.scriptEngine = scriptEngine;
-		this.writer = writer;
-		this.errorWriter = errorWriter;
+		this.scriptContext = scriptContext;
 	}
 
 	//
@@ -104,27 +104,15 @@ public class EmbeddedScriptScript
 	}
 
 	/**
-	 * Allows the script direct access to the {@link Writer}. This should rarely
-	 * be necessary, because by default the standard output for your scripting
-	 * engine would be directed to it, and the scripting platform's native
-	 * method for printing should be preferred. However, some scripting
-	 * platforms may not provide adequate access or may otherwise be broken.
+	 * This is the {@link ScriptContext} used by the script. Scripts may use it
+	 * to get access to the {@link Writer} objects used for standard output and
+	 * standard error.
 	 * 
-	 * @return The writer
+	 * @return The script context
 	 */
-	public Writer getWriter()
+	public ScriptContext getContext()
 	{
-		return writer;
-	}
-
-	/**
-	 * Same as {@link #getWriter()}, for standard error.
-	 * 
-	 * @return The error writer
-	 */
-	public Writer getErrorWriter()
-	{
-		return errorWriter;
+		return scriptContext;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -134,7 +122,5 @@ public class EmbeddedScriptScript
 
 	private final ScriptEngine scriptEngine;
 
-	private final Writer writer;
-
-	private final Writer errorWriter;
+	private final ScriptContext scriptContext;
 }
