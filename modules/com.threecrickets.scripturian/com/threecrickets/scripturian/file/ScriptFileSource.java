@@ -30,8 +30,8 @@ package com.threecrickets.scripturian.file;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.script.ScriptContext;
@@ -196,7 +196,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final Map<String, FiledScriptDescriptor> scriptDescriptors = new ConcurrentHashMap<String, FiledScriptDescriptor>();
+	private final ConcurrentMap<String, FiledScriptDescriptor> scriptDescriptors = new ConcurrentHashMap<String, FiledScriptDescriptor>();
 
 	private final File basePath;
 

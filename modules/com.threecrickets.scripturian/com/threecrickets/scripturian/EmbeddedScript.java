@@ -137,7 +137,14 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * <li><code>script.engine</code>: This is the {@link ScriptEngine} used by the
  * script. Scripts may use it to get information about the engine's
  * capabilities.</li>
- * <li><code>container.engineManager</code>: This is the
+ * <li><code>script.writer</code>: Allows the script direct access to the
+ * {@link Writer}. This should rarely be necessary, because by default the
+ * standard output for your scripting engine would be directed to it, and the
+ * scripting platform's native method for printing should be preferred. However,
+ * some scripting platforms may not provide adequate access or may otherwise be
+ * broken.</li>
+ * <li><code>script.errorWriter</code>: Same as above, for standard error.</li>
+ * <li><code>script.engineManager</code>: This is the
  * {@link ScriptEngineManager} used to create the script engine. Scripts may use
  * it to get information about what other engines are available.</li>
  * <li><code>script.source</code>: This is an arbitrary object set as the
@@ -798,13 +805,16 @@ public class EmbeddedScript
 					else
 						scriptContext = scriptEngine.getContext();
 
-					Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-					scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine ), ScriptContext.ENGINE_SCOPE );
-
 					// Note that some script engines (such as Rhino) expect a
 					// PrintWriter, even though the spec defines just a Writer
-					scriptContext.setWriter( new PrintWriter( writer ) );
-					scriptContext.setErrorWriter( new PrintWriter( errorWriter ) );
+					writer = new PrintWriter( writer );
+					errorWriter = new PrintWriter( errorWriter );
+
+					scriptContext.setWriter( writer );
+					scriptContext.setErrorWriter( errorWriter );
+
+					Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
+					scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine, writer, errorWriter ), ScriptContext.ENGINE_SCOPE );
 
 					if( scriptContextController != null )
 						scriptContextController.initialize( scriptContext );
@@ -884,7 +894,7 @@ public class EmbeddedScript
 		ScriptContext scriptContext = scriptEngine.getContext();
 
 		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine ), ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine, scriptContext.getWriter(), scriptContext.getErrorWriter() ), ScriptContext.ENGINE_SCOPE );
 
 		if( scriptContextController != null )
 			scriptContextController.initialize( scriptContext );

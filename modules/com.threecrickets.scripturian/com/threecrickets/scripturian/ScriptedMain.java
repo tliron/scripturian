@@ -29,6 +29,7 @@
 package com.threecrickets.scripturian;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 import javax.script.ScriptEngineManager;
@@ -76,13 +77,6 @@ import com.threecrickets.scripturian.internal.ScriptedMainContainer;
  * <li><code>container.defaultScriptEngineName</code>: The default script engine
  * name to be used if the script doesn't specify one. Defaults to "js". Scripts
  * can change this value.</li>
- * <li><code>container.writer</code>: Allows the script direct access to the
- * {@link Writer}. This should rarely be necessary, because by default the
- * standard output for your scripting engine would be directed to it, and the
- * scripting platform's native method for printing should be preferred. However,
- * some scripting platforms may not provide adequate access or may otherwise be
- * broken.</li>
- * <li><code>container.errorWriter</code>: Same as above, for standard error.</li>
  * </ul>
  * <p>
  * In addition to the above, a {@link #scriptContextController} can be set to
@@ -119,6 +113,8 @@ public class ScriptedMain implements Runnable
 		allowCompilation = false;
 		defaultPath = "main.script";
 		containerVariableName = "container";
+		writer = new OutputStreamWriter( System.out );
+		errorWriter = new OutputStreamWriter( System.err );
 	}
 
 	//
@@ -180,6 +176,26 @@ public class ScriptedMain implements Runnable
 	}
 
 	/**
+	 * The writer to use for {@link EmbeddedScript}.
+	 * 
+	 * @return The writer
+	 */
+	public Writer getWriter()
+	{
+		return writer;
+	}
+
+	/**
+	 * As {@link #getWriter()}, for error.
+	 * 
+	 * @return The error writer
+	 */
+	public Writer getErrorWriter()
+	{
+		return errorWriter;
+	}
+
+	/**
 	 * An optional {@link ScriptContextController} to be used with the scripts.
 	 * Useful for adding your own global variables to the script.
 	 * 
@@ -216,8 +232,8 @@ public class ScriptedMain implements Runnable
 		{
 			ScriptedMainContainer container = new ScriptedMainContainer( this );
 			container.include( name );
-			container.getWriter().flush();
-			container.getErrorWriter().flush();
+			writer.flush();
+			errorWriter.flush();
 		}
 		catch( IOException x )
 		{
@@ -241,6 +257,10 @@ public class ScriptedMain implements Runnable
 	private final String defaultPath;
 
 	private final String containerVariableName;
+
+	private final Writer writer;
+
+	private final Writer errorWriter;
 
 	private ScriptContextController scriptContextController;
 }

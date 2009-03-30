@@ -1,5 +1,6 @@
 package com.threecrickets.scripturian.internal;
 
+import java.io.Writer;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.script.ScriptEngine;
@@ -20,10 +21,12 @@ public class EmbeddedScriptScript
 	// Construction
 	//
 
-	public EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	public EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, Writer writer, Writer errorWriter )
 	{
 		this.embeddedScript = embeddedScript;
 		this.scriptEngine = scriptEngine;
+		this.writer = writer;
+		this.errorWriter = errorWriter;
 	}
 
 	//
@@ -100,6 +103,30 @@ public class EmbeddedScriptScript
 		return MetaScope.getInstance().getValues();
 	}
 
+	/**
+	 * Allows the script direct access to the {@link Writer}. This should rarely
+	 * be necessary, because by default the standard output for your scripting
+	 * engine would be directed to it, and the scripting platform's native
+	 * method for printing should be preferred. However, some scripting
+	 * platforms may not provide adequate access or may otherwise be broken.
+	 * 
+	 * @return The writer
+	 */
+	public Writer getWriter()
+	{
+		return writer;
+	}
+
+	/**
+	 * Same as {@link #getWriter()}, for standard error.
+	 * 
+	 * @return The error writer
+	 */
+	public Writer getErrorWriter()
+	{
+		return errorWriter;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
@@ -107,4 +134,7 @@ public class EmbeddedScriptScript
 
 	private final ScriptEngine scriptEngine;
 
+	private final Writer writer;
+
+	private final Writer errorWriter;
 }

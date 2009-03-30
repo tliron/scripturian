@@ -30,8 +30,6 @@ package com.threecrickets.scripturian.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -107,7 +105,8 @@ public class ScriptedMainContainer
 
 		EmbeddedScript script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultScriptEngineName(), scriptedMain.isAllowCompilation(), null );
 
-		script.run( writer, errorWriter, scriptEngines, new ScriptedMainScriptContextController( script.getContainerVariableName(), this, scriptedMain.getScriptContextController() ), false );
+		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), scriptEngines, new ScriptedMainScriptContextController( script.getContainerVariableName(), this, scriptedMain.getScriptContextController() ),
+			false );
 	}
 
 	//
@@ -146,40 +145,12 @@ public class ScriptedMainContainer
 		this.defaultScriptEngineName = defaultScriptEngineName;
 	}
 
-	/**
-	 * Allows the script direct access to the {@link Writer}. This should rarely
-	 * be necessary, because by default the standard output for your scripting
-	 * engine would be directed to it, and the scripting platform's native
-	 * method for printing should be preferred. However, some scripting
-	 * platforms may not provide adequate access or may otherwise be broken.
-	 * 
-	 * @return The writer
-	 */
-	public Writer getWriter()
-	{
-		return writer;
-	}
-
-	/**
-	 * Same as {@link #getWriter()}, for standard error.
-	 * 
-	 * @return The error writer
-	 */
-	public Writer getErrorWriter()
-	{
-		return errorWriter;
-	}
-
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	private final ScriptedMain scriptedMain;
 
 	private final ConcurrentMap<String, ScriptEngine> scriptEngines = new ConcurrentHashMap<String, ScriptEngine>();
-
-	private final Writer writer = new OutputStreamWriter( System.out );
-
-	private final Writer errorWriter = new OutputStreamWriter( System.err );
 
 	private String defaultScriptEngineName = "js";
 }
