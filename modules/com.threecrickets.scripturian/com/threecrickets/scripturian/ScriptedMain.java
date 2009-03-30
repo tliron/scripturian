@@ -83,9 +83,6 @@ import com.threecrickets.scripturian.internal.ScriptedMainContainer;
  * some scripting platforms may not provide adequate access or may otherwise be
  * broken.</li>
  * <li><code>container.errorWriter</code>: Same as above, for standard error.</li>
- * <li><code>container.scriptEngineManager</code>: This is the
- * {@link ScriptEngineManager} used to create the script engine. Scripts may use
- * it to get information about what other engines are available.</li>
  * </ul>
  * <p>
  * In addition to the above, a {@link #scriptContextController} can be set to

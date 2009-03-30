@@ -55,7 +55,7 @@ import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
 import com.threecrickets.scripturian.internal.EmbeddedScriptScript;
-import com.threecrickets.scripturian.internal.StaticScope;
+import com.threecrickets.scripturian.internal.MetaScope;
 
 /**
  * Handles the parsing, optional compilation and running of embedded scripts.
@@ -134,18 +134,22 @@ import com.threecrickets.scripturian.internal.StaticScope;
  * By default cacheDuration is 0, so that each request causes the script to be
  * evaluated. This class does not handle caching itself. Caching can be provided
  * by your environment if appropriate.</li>
- * <li><code>script.scriptEngine</code>: This is the {@link ScriptEngine} used
- * by the script. Scripts may use it to get information about the engine's
+ * <li><code>script.engine</code>: This is the {@link ScriptEngine} used by the
+ * script. Scripts may use it to get information about the engine's
  * capabilities.</li>
+ * <li><code>container.engineManager</code>: This is the
+ * {@link ScriptEngineManager} used to create the script engine. Scripts may use
+ * it to get information about what other engines are available.</li>
  * <li><code>script.source</code>: This is an arbitrary object set as the
- * script's source. It might be null if none was provided.</li>
- * <li><code>script.staticScope</code>: This {@link ConcurrentMap} provides a
+ * script's source. It may be an implementation of {@link ScriptSource}, but it
+ * doesn't have to be. It might even be null if none was provided.</li>
+ * <li><code>script.meta</code>: This {@link ConcurrentMap} provides a
  * convenient location for global values shared by all scripts, run by all
  * engines.</li>
  * </ul>
  * 
  * @author Tal Liron
- * @see StaticScope
+ * @see MetaScope
  */
 public class EmbeddedScript
 {

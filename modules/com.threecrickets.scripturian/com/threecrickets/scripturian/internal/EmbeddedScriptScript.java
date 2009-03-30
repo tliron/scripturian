@@ -3,6 +3,7 @@ package com.threecrickets.scripturian.internal;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
 
 import com.threecrickets.scripturian.EmbeddedScript;
 
@@ -71,9 +72,21 @@ public class EmbeddedScriptScript
 	 * 
 	 * @return The script engine
 	 */
-	public ScriptEngine getScriptEngine()
+	public ScriptEngine getEngine()
 	{
 		return scriptEngine;
+	}
+
+	/**
+	 * This is the {@link ScriptEngineManager} used to create the script engine.
+	 * Scripts may use it to get information about what other engines are
+	 * available.
+	 * 
+	 * @return The script engine manager
+	 */
+	public ScriptEngineManager getEngineManager()
+	{
+		return embeddedScript.getScriptEngineManager();
 	}
 
 	/**
@@ -82,9 +95,9 @@ public class EmbeddedScriptScript
 	 * 
 	 * @return The values
 	 */
-	public ConcurrentMap<String, Object> getStaticScope()
+	public ConcurrentMap<String, Object> getMeta()
 	{
-		return StaticScope.getInstance().getValues();
+		return MetaScope.getInstance().getValues();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

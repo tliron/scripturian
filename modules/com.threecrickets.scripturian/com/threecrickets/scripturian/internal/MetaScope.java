@@ -38,13 +38,13 @@ import java.util.concurrent.ConcurrentMap;
  * 
  * @author Tal Liron
  */
-public class StaticScope
+public class MetaScope
 {
 	//
 	// Static attributes
 	//
 
-	public static StaticScope getInstance()
+	public static MetaScope getInstance()
 	{
 		return instance;
 	}
@@ -60,11 +60,11 @@ public class StaticScope
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final static StaticScope instance = new StaticScope();
+	private final static MetaScope instance = new MetaScope();
 
 	private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
 
-	private StaticScope()
+	private MetaScope()
 	{
 	}
 }

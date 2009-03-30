@@ -36,7 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.EmbeddedScript;
@@ -169,18 +168,6 @@ public class ScriptedMainContainer
 	public Writer getErrorWriter()
 	{
 		return errorWriter;
-	}
-
-	/**
-	 * This is the {@link ScriptEngineManager} used to create the script engine.
-	 * Scripts may use it to get information about what other engines are
-	 * available.
-	 * 
-	 * @return The script engine manager
-	 */
-	public ScriptEngineManager getScriptEngineManager()
-	{
-		return scriptedMain.getScriptEngineManager();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

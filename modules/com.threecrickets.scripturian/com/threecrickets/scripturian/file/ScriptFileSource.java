@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -73,7 +74,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		this.basePath = basePath;
 		this.defaultName = defaultName;
 		this.defaultExtension = defaultExtension;
-		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
+		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
 	}
 
 	//
@@ -180,7 +181,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	 */
 	public long getMinimumTimeBetweenValidityChecks()
 	{
-		return minimumTimeBetweenValidityChecks;
+		return minimumTimeBetweenValidityChecks.get();
 	}
 
 	/**
@@ -189,7 +190,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	 */
 	public void setMinimumTimeBetweenValidityChecks( long minimumTimeBetweenValidityChecks )
 	{
-		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
+		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -203,7 +204,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 	private final String defaultExtension;
 
-	private long minimumTimeBetweenValidityChecks;
+	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
 	private class FiledScriptDescriptor implements ScriptDescriptor<S>
 	{
@@ -244,9 +245,9 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		private boolean isValid( File file )
 		{
 			long now = System.currentTimeMillis();
-			if( now - lastValidityCheck > minimumTimeBetweenValidityChecks )
+			if( now - lastValidityCheck.get() > minimumTimeBetweenValidityChecks.get() )
 			{
-				lastValidityCheck = now;
+				lastValidityCheck.set( now );
 				return file.lastModified() <= timestamp;
 			}
 			else
@@ -258,7 +259,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 		private final long timestamp;
 
-		private long lastValidityCheck = 0;
+		private final AtomicLong lastValidityCheck = new AtomicLong();
 
 		private final String content;
 
