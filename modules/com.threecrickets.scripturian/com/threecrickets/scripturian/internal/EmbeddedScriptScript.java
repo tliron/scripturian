@@ -60,13 +60,15 @@ public class EmbeddedScriptScript
 	}
 
 	/**
-	 * The source of the script.
+	 * This is the {@link ScriptContext} used by the script. Scripts may use it
+	 * to get access to the {@link Writer} objects used for standard output and
+	 * standard error.
 	 * 
-	 * @return The script source
+	 * @return The script context
 	 */
-	public Object getSource()
+	public ScriptContext getContext()
 	{
-		return embeddedScript.getSource();
+		return scriptContext;
 	}
 
 	/**
@@ -93,6 +95,16 @@ public class EmbeddedScriptScript
 	}
 
 	/**
+	 * The source of the script.
+	 * 
+	 * @return The script source
+	 */
+	public Object getSource()
+	{
+		return embeddedScript.getSource();
+	}
+
+	/**
 	 * This {@link ConcurrentMap} provides a convenient location for global
 	 * values shared by all scripts, run by all engines.
 	 * 
@@ -101,18 +113,6 @@ public class EmbeddedScriptScript
 	public ConcurrentMap<String, Object> getMeta()
 	{
 		return MetaScope.getInstance().getValues();
-	}
-
-	/**
-	 * This is the {@link ScriptContext} used by the script. Scripts may use it
-	 * to get access to the {@link Writer} objects used for standard output and
-	 * standard error.
-	 * 
-	 * @return The script context
-	 */
-	public ScriptContext getContext()
-	{
-		return scriptContext;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

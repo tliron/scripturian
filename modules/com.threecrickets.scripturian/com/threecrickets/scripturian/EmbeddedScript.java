@@ -134,12 +134,12 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * By default cacheDuration is 0, so that each request causes the script to be
  * evaluated. This class does not handle caching itself. Caching can be provided
  * by your environment if appropriate.</li>
- * <li><code>script.engine</code>: This is the {@link ScriptEngine} used by the
- * script. Scripts may use it to get information about the engine's
- * capabilities.</li>
  * <li><code>script.context</code>: This is the {@link ScriptContext} used by
  * the script. Scripts may use it to get access to the {@link Writer} objects
  * used for standard output and standard error.</li>
+ * <li><code>script.engine</code>: This is the {@link ScriptEngine} used by the
+ * script. Scripts may use it to get information about the engine's
+ * capabilities.</li>
  * <li><code>script.engineManager</code>: This is the
  * {@link ScriptEngineManager} used to create the script engine. Scripts may use
  * it to get information about what other engines are available.</li>
