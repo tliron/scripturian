@@ -107,7 +107,7 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * to the script, which would then process the include as is appropriate to your
  * environment. To make this available, you can set the "container" global
  * variable by supplied a {@link ScriptContextController} when you call
- * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
+ * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
  * . Note this name can be changed via {@link #containerVariableName}.
  * <p>
  * Examples:
@@ -677,7 +677,7 @@ public class EmbeddedScript
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
-	 * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
+	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
 	 * causes the script to be run. This class does not handle caching itself.
 	 * Caching can be provided by your environment if appropriate.
 	 * <p>
@@ -707,7 +707,7 @@ public class EmbeddedScript
 	 * Trivial embedded script objects have no embedded scripts, meaning that
 	 * they are pure text. Identifying such scripts can save you from making
 	 * unnecessary calls to
-	 * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
+	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
 	 * in some situations.
 	 * 
 	 * @return The script content if it's trivial, null if not
@@ -739,6 +739,8 @@ public class EmbeddedScript
 	 *        Standard output
 	 * @param errorWriter
 	 *        Standard error output
+	 * @param flushLines
+	 *        Whether to flush the writers after every line
 	 * @param scriptEngines
 	 *        A cache of script engines by engine name
 	 * @param scriptContextController
@@ -751,7 +753,8 @@ public class EmbeddedScript
 	 *         cached output is expected to be used instead
 	 * @throws ScriptException
 	 */
-	public boolean run( Writer writer, Writer errorWriter, ConcurrentMap<String, ScriptEngine> scriptEngines, ScriptContextController scriptContextController, boolean checkCache ) throws ScriptException, IOException
+	public boolean run( Writer writer, Writer errorWriter, boolean flushLines, ConcurrentMap<String, ScriptEngine> scriptEngines, ScriptContextController scriptContextController, boolean checkCache )
+		throws ScriptException, IOException
 	{
 		long now = System.currentTimeMillis();
 		if( checkCache && ( now - lastRun.get() < cacheDuration.get() ) )
@@ -803,8 +806,8 @@ public class EmbeddedScript
 
 					// Note that some script engines (such as Rhino) expect a
 					// PrintWriter, even though the spec defines just a Writer
-					writer = new PrintWriter( writer );
-					errorWriter = new PrintWriter( errorWriter );
+					writer = new PrintWriter( writer, flushLines );
+					errorWriter = new PrintWriter( errorWriter, flushLines );
 
 					scriptContext.setWriter( writer );
 					scriptContext.setErrorWriter( errorWriter );
@@ -864,7 +867,7 @@ public class EmbeddedScript
 	 * {@link EmbeddedScriptParsingHelper} implementation to be installed for
 	 * the script engine. Most likely, the script engine supports the
 	 * {@link Invocable} interface. Running the script first (via
-	 * {@link #run(Writer, Writer, ConcurrentMap, ScriptContextController, boolean)}
+	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
 	 * ) is not absolutely required, but probably will be necessary in most
 	 * useful scenarios, where running the script causes useful entry point to
 	 * be defined.

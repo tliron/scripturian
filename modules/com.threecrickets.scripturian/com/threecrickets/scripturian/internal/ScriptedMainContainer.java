@@ -105,8 +105,8 @@ public class ScriptedMainContainer
 
 		EmbeddedScript script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultScriptEngineName(), scriptedMain.isAllowCompilation(), null );
 
-		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), scriptEngines, new ScriptedMainScriptContextController( script.getContainerVariableName(), this, scriptedMain.getScriptContextController() ),
-			false );
+		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, scriptEngines, new ScriptedMainScriptContextController( script.getContainerVariableName(), this, scriptedMain
+			.getScriptContextController() ), false );
 	}
 
 	//
