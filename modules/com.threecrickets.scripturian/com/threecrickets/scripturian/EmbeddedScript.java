@@ -40,7 +40,6 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,7 +53,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
-import com.threecrickets.scripturian.internal.EmbeddedScriptScript;
+import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
 import com.threecrickets.scripturian.internal.MetaScope;
 
 /**
@@ -103,12 +102,9 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * However, they can allow for slightly more compact and cleaner code.
  * <p>
  * Another shorthand exists for including other script files. However, for it to
- * work, you must make sure that a container.include(name) method is available
- * to the script, which would then process the include as is appropriate to your
- * environment. To make this available, you can set the "container" global
- * variable by supplied a {@link ScriptContextController} when you call
- * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
- * . Note this name can be changed via {@link #containerVariableName}.
+ * work, you must make sure that a <code>script.container.include(name)</code>
+ * method is available to the script, which would then process the include as is
+ * appropriate to your environment.
  * <p>
  * Examples:
  * <ul>
@@ -116,7 +112,7 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * <li><b>PHP-style delimiters</b>: <code>&lt;? script.cacheDuration.set 5000
  * ?&gt;</code></li>
  * <li><b>Specifying engine name</b>:
- * <code>&lt;%groovy print myVariable %&gt; &lt;?php container.include(lib_name); ?&gt;</code>
+ * <code>&lt;%groovy print myVariable %&gt; &lt;?php $script->container->include(lib_name); ?&gt;</code>
  * </li>
  * <li><b>Output expression</b>: <code>&lt;?= 15 * 6 ?&gt;</code></li>
  * <li><b>Output expression with specifying engine name</b>:
@@ -125,15 +121,16 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * </ul>
  * <p>
  * A special container environment is created for scripts, with some useful
- * services. It is available to the script as a global variable named "script"
- * (this name can be changed via {@link #scriptVariableName}).
+ * services. It is available to the script as a global variable named
+ * <code>script</code> (this name can be changed via the
+ * {@link #EmbeddedScript(String, ScriptEngineManager, String, boolean, String, String, String, String, String, String, String)}
+ * constructor).
  * <p>
+ * Read-only attributes:
  * <ul>
- * <li><code>script.cacheDuration</code>: Setting this to something greater than
- * 0 enables caching of the script results for a maximum number of milliseconds.
- * By default cacheDuration is 0, so that each request causes the script to be
- * evaluated. This class does not handle caching itself. Caching can be provided
- * by your environment if appropriate.</li>
+ * <li><code>script.container</code>: This is an arbitrary object set by the
+ * script's container environment for access to container-specific services. It
+ * might be null if none was provided.</li>
  * <li><code>script.context</code>: This is the {@link ScriptContext} used by
  * the script. Scripts may use it to get access to the {@link Writer} objects
  * used for standard output and standard error.</li>
@@ -143,12 +140,17 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * <li><code>script.engineManager</code>: This is the
  * {@link ScriptEngineManager} used to create the script engine. Scripts may use
  * it to get information about what other engines are available.</li>
- * <li><code>script.source</code>: This is an arbitrary object set as the
- * script's source. It may be an implementation of {@link ScriptSource}, but it
- * doesn't have to be. It might even be null if none was provided.</li>
  * <li><code>script.meta</code>: This {@link ConcurrentMap} provides a
  * convenient location for global values shared by all scripts, run by all
  * engines.</li>
+ * </ul>
+ * Modifiable attributes:
+ * <ul>
+ * <li><code>script.cacheDuration</code>: Setting this to something greater than
+ * 0 enables caching of the script results for a maximum number of milliseconds.
+ * By default cacheDuration is 0, so that each request causes the script to be
+ * evaluated. This class does not handle caching itself. Caching can be provided
+ * by your environment if appropriate.</li>
  * </ul>
  * 
  * @author Tal Liron
@@ -196,11 +198,6 @@ public class EmbeddedScript
 	 */
 	public static final String DEFAULT_SCRIPT_VARIABLE_NAME = "script";
 
-	/**
-	 * The default container variable name: "container"
-	 */
-	public static final String DEFAULT_CONTAINER_VARIABLE_NAME = "container";
-
 	//
 	// Static attributes
 	//
@@ -224,7 +221,7 @@ public class EmbeddedScript
 	 * The default implementation of this library already contains a few useful
 	 * parsing helpers, under the com.threecrickets.scripturian.helper package.
 	 */
-	public static Map<String, EmbeddedScriptParsingHelper> embeddedScriptParsingHelpers = new ConcurrentHashMap<String, EmbeddedScriptParsingHelper>();
+	public static ConcurrentMap<String, EmbeddedScriptParsingHelper> embeddedScriptParsingHelpers = new ConcurrentHashMap<String, EmbeddedScriptParsingHelper>();
 
 	{
 		// Initialize embeddedScriptParsingHelpers (look for them in META-INF)
@@ -299,7 +296,7 @@ public class EmbeddedScript
 	 * the script engines.
 	 * 
 	 * @param text
-	 *        The taxt stream
+	 *        The text stream
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
@@ -309,15 +306,13 @@ public class EmbeddedScript
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
-	 * @param scriptSource
-	 *        The script source (can be null)
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 */
-	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation, Object scriptSource ) throws ScriptException
+	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation ) throws ScriptException
 	{
-		this( text, scriptEngineManager, defaultEngineName, allowCompilation, scriptSource, DEFAULT_SCRIPT_VARIABLE_NAME, DEFAULT_CONTAINER_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
-			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE );
+		this( text, scriptEngineManager, defaultEngineName, allowCompilation, DEFAULT_SCRIPT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END,
+			DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE );
 	}
 
 	/**
@@ -337,12 +332,8 @@ public class EmbeddedScript
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
-	 * @param scriptSource
-	 *        The script source (can be null)
 	 * @param scriptVariableName
 	 *        The script variable name
-	 * @param containerVariableName
-	 *        The container variable name
 	 * @param delimiter1Start
 	 *        The start delimiter (first option)
 	 * @param delimiter1End
@@ -361,13 +352,11 @@ public class EmbeddedScript
 	 *         In case of a parsing error
 	 * @see EmbeddedScriptParsingHelper
 	 */
-	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation, Object scriptSource, String scriptVariableName, String containerVariableName,
-		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude ) throws ScriptException
+	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation, String scriptVariableName, String delimiter1Start, String delimiter1End,
+		String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude ) throws ScriptException
 	{
 		this.scriptEngineManager = scriptEngineManager;
-		this.scriptSource = scriptSource;
 		this.scriptVariableName = scriptVariableName;
-		this.containerVariableName = containerVariableName;
 
 		String lastEngineName = defaultEngineName;
 
@@ -617,30 +606,11 @@ public class EmbeddedScript
 	}
 
 	/**
-	 * The source of the script.
-	 * 
-	 * @return The source of the script, or null if none was set
-	 */
-	public Object getSource()
-	{
-		return scriptSource;
-	}
-
-	/**
-	 * The default variable name for the {@link EmbeddedScriptScript} instance.
+	 * The default variable name for the {@link ExposedEmbeddedScript} instance.
 	 */
 	public String getScriptVariableName()
 	{
 		return scriptVariableName;
-	}
-
-	/**
-	 * The default variable name for the container. Used for include tags by
-	 * implementations of {@link EmbeddedScriptParsingHelper}.
-	 */
-	public String getContainerVariableName()
-	{
-		return containerVariableName;
 	}
 
 	/**
@@ -677,12 +647,12 @@ public class EmbeddedScript
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
-	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
+	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, Object, ScriptContextController, boolean)}
 	 * causes the script to be run. This class does not handle caching itself.
 	 * Caching can be provided by your environment if appropriate.
 	 * <p>
 	 * This is the same instance provided for
-	 * EmbeddedScriptScript#getCacheDuration().
+	 * ExposedEmbeddedScript#getCacheDuration().
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
@@ -707,7 +677,7 @@ public class EmbeddedScript
 	 * Trivial embedded script objects have no embedded scripts, meaning that
 	 * they are pure text. Identifying such scripts can save you from making
 	 * unnecessary calls to
-	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
+	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, Object, ScriptContextController, boolean)}
 	 * in some situations.
 	 * 
 	 * @return The script content if it's trivial, null if not
@@ -741,8 +711,10 @@ public class EmbeddedScript
 	 *        Standard error output
 	 * @param flushLines
 	 *        Whether to flush the writers after every line
-	 * @param scriptEngines
-	 *        A cache of script engines by engine name
+	 * @param scriptContexts
+	 *        A cache of script contexts by engine name
+	 * @param container
+	 *        The container (can be null)
 	 * @param scriptContextController
 	 *        An optional {@link ScriptContextController} to be applied to the
 	 *        script context
@@ -753,7 +725,7 @@ public class EmbeddedScript
 	 *         cached output is expected to be used instead
 	 * @throws ScriptException
 	 */
-	public boolean run( Writer writer, Writer errorWriter, boolean flushLines, ConcurrentMap<String, ScriptEngine> scriptEngines, ScriptContextController scriptContextController, boolean checkCache )
+	public boolean run( Writer writer, Writer errorWriter, boolean flushLines, ConcurrentMap<String, ScriptContext> scriptContexts, Object container, ScriptContextController scriptContextController, boolean checkCache )
 		throws ScriptException, IOException
 	{
 		long now = System.currentTimeMillis();
@@ -770,39 +742,12 @@ public class EmbeddedScript
 					writer.write( segment.text );
 				else
 				{
-					ScriptContext scriptContext;
 					scriptEngineName = segment.scriptEngineName;
-					scriptEngine = scriptEngines.get( scriptEngineName );
+					scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 					if( scriptEngine == null )
-					{
-						scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
+						throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
 
-						if( scriptEngine == null )
-							throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
-
-						// We absolutely need a new script context here!
-						// Otherwise, we might end up using a context
-						// already in use by another thread.
-						// (Also, note that some script engines do not even
-						// provide a default context -- Jepp, for example -- so
-						// it's generally a good idea to explicitly create one)
-						scriptContext = new SimpleScriptContext();
-						scriptEngine.setContext( scriptContext );
-
-						if( scriptContext.getBindings( ScriptContext.ENGINE_SCOPE ) == null )
-							scriptContext.setBindings( scriptEngine.createBindings(), ScriptContext.ENGINE_SCOPE );
-						if( scriptContext.getBindings( ScriptContext.GLOBAL_SCOPE ) == null )
-							scriptContext.setBindings( scriptEngine.createBindings(), ScriptContext.GLOBAL_SCOPE );
-
-						// Note: another thread might have put a scriptEngine
-						// here in the meantime... we'll make sure there is no
-						// duplication
-						ScriptEngine old = scriptEngines.putIfAbsent( scriptEngineName, scriptEngine );
-						if( old != null )
-							scriptEngine = old;
-					}
-					else
-						scriptContext = scriptEngine.getContext();
+					setScriptContext( scriptEngineName, scriptContexts );
 
 					// Note that some script engines (such as Rhino) expect a
 					// PrintWriter, even though the spec defines just a Writer
@@ -813,7 +758,7 @@ public class EmbeddedScript
 					scriptContext.setErrorWriter( errorWriter );
 
 					Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-					scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine, scriptContext ), ScriptContext.ENGINE_SCOPE );
+					scriptContext.setAttribute( scriptVariableName, new ExposedEmbeddedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
 
 					if( scriptContextController != null )
 						scriptContextController.initialize( scriptContext );
@@ -867,7 +812,7 @@ public class EmbeddedScript
 	 * {@link EmbeddedScriptParsingHelper} implementation to be installed for
 	 * the script engine. Most likely, the script engine supports the
 	 * {@link Invocable} interface. Running the script first (via
-	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, ScriptContextController, boolean)}
+	 * {@link #run(Writer, Writer, boolean, ConcurrentMap, Object, ScriptContextController, boolean)}
 	 * ) is not absolutely required, but probably will be necessary in most
 	 * useful scenarios, where running the script causes useful entry point to
 	 * be defined.
@@ -878,6 +823,10 @@ public class EmbeddedScript
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
+	 * @param scriptContexts
+	 *        A cache of script contexts by engine name
+	 * @param container
+	 *        The container (can be null)
 	 * @param scriptContextController
 	 *        An optional {@link ScriptContextController} to be applied to the
 	 *        script context
@@ -888,12 +837,10 @@ public class EmbeddedScript
 	 *         supports the {@link Invocable} interface; otherwise a
 	 *         {@link ScriptException} is thrown if the method is not found
 	 */
-	public Object invoke( String entryPointName, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
+	public Object invoke( String entryPointName, ConcurrentMap<String, ScriptContext> scriptContexts, Object container, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
 	{
-		ScriptContext scriptContext = scriptEngine.getContext();
-
 		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( scriptVariableName, new EmbeddedScriptScript( this, scriptEngine, scriptContext ), ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( scriptVariableName, new ExposedEmbeddedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
 
 		if( scriptContextController != null )
 			scriptContextController.initialize( scriptContext );
@@ -909,9 +856,12 @@ public class EmbeddedScript
 			if( program == null )
 			{
 				if( scriptEngine instanceof Invocable )
+				{
+					scriptEngine.setContext( scriptContext );
 					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
+				}
 				else
-					throw new ScriptException( "tScript engine does not support invocations" );
+					throw new ScriptException( "Script engine does not support invocations" );
 			}
 			else
 				return scriptEngine.eval( program, scriptContext );
@@ -939,17 +889,15 @@ public class EmbeddedScript
 
 	private final String scriptVariableName;
 
-	private final String containerVariableName;
-
 	private final ScriptEngineManager scriptEngineManager;
-
-	private final Object scriptSource;
 
 	private final AtomicLong cacheDuration = new AtomicLong();
 
 	private final AtomicLong lastRun = new AtomicLong();
 
 	private ScriptEngine scriptEngine;
+
+	private ScriptContext scriptContext;
 
 	private String scriptEngineName;
 
@@ -969,5 +917,29 @@ public class EmbeddedScript
 		public boolean isScript;
 
 		public String scriptEngineName;
+	}
+
+	private void setScriptContext( String scriptEngineName, ConcurrentMap<String, ScriptContext> scriptContexts )
+	{
+		scriptContext = scriptContexts.get( scriptEngineName );
+		if( scriptContext == null )
+		{
+			// We absolutely need a new script context here!
+			// Otherwise, we might end up using a context
+			// already in use by another thread.
+			// (Also, note that some script engines do not even
+			// provide a default context -- Jepp, for example -- so
+			// it's generally a good idea to explicitly create one)
+			scriptContext = new SimpleScriptContext();
+			if( scriptContext.getBindings( ScriptContext.ENGINE_SCOPE ) == null )
+				scriptContext.setBindings( scriptEngine.createBindings(), ScriptContext.ENGINE_SCOPE );
+
+			// Note: another thread might have put a ScriptEngine
+			// here in the meantime... we'll make sure there is no
+			// duplication
+			ScriptContext existing = scriptContexts.putIfAbsent( scriptEngineName, scriptContext );
+			if( existing != null )
+				scriptContext = existing;
+		}
 	}
 }

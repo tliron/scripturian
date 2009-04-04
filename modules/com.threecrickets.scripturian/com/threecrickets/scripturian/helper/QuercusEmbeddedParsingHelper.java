@@ -41,8 +41,8 @@ import com.threecrickets.scripturian.ScriptEngines;
  * Note the peculiarity of the "include" implementation -- due to limitations of
  * the Quercus engine, it must use the internal PHP include. For this to work,
  * it is expected that a variable under
- * {@link EmbeddedScript#getScriptVariableName()}.source.basePath be set to the
- * base path for all includes.
+ * <code>script.container.source.basePath</code> be set to the base path for all
+ * includes.
  * 
  * @author Tal Liron
  */
@@ -80,7 +80,7 @@ public class QuercusEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 
 	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return "include $" + embeddedScript.getScriptVariableName() + "->source->basePath . '/' . " + content + ";";
+		return "include $" + embeddedScript.getScriptVariableName() + "->container->source->basePath . '/' . " + content + ";";
 	}
 
 	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )

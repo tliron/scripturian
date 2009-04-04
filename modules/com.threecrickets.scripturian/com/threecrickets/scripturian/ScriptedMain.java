@@ -35,7 +35,7 @@ import java.io.Writer;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.internal.ScriptedMainContainer;
+import com.threecrickets.scripturian.internal.ExposedScriptedMainContainer;
 
 /**
  * Delegates the main() call to an {@link EmbeddedScript}, in effect using a
@@ -49,14 +49,13 @@ import com.threecrickets.scripturian.internal.ScriptedMainContainer;
  * <p>
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
- * "container" (or anything else returned by
- * {@link EmbeddedScript#getContainerVariableName()}). For some other global
- * variables available to scripts, see {@link EmbeddedScript}.
+ * <code>script.container</code>. For some other global variables available to
+ * scripts, see {@link EmbeddedScript}.
  * <p>
  * Operations:
  * <ul>
- * <li><code>container.include(name)</code>: This powerful method allows scripts
- * to execute other scripts in place, and is useful for creating large,
+ * <li><code>script.container.include(name)</code>: This powerful method allows
+ * scripts to execute other scripts in place, and is useful for creating large,
  * maintainable applications based on scripts. Included scripts can act as a
  * library or toolkit and can even be shared among many applications. The
  * included script does not have to be in the same language or use the same
@@ -66,17 +65,20 @@ import com.threecrickets.scripturian.internal.ScriptedMainContainer;
  * JRuby, every script is run in its own scope, so that sharing would have to be
  * done explicitly in the global scope. See the included embedded Ruby script
  * example for a discussion of various ways to do this.</li>
- * <li><code>container.include(name, engineName)</code>: As the above, except
- * that the script is not embedded. As such, you must explicitly specify the
- * name of the scripting engine that should evaluate it.</li>
+ * <li><code>script.container.include(name, engineName)</code>: As the above,
+ * except that the script is not embedded. As such, you must explicitly specify
+ * the name of the scripting engine that should evaluate it.</li>
  * </ul>
  * Read-only attributes:
  * <ul>
- * <li><code>container.arguments</code>: An array of the string arguments sent
- * to {@link #main(String[])}</li>
- * <li><code>container.defaultScriptEngineName</code>: The default script engine
- * name to be used if the script doesn't specify one. Defaults to "js". Scripts
- * can change this value.</li>
+ * <li><code>script.container.arguments</code>: An array of the string arguments
+ * sent to {@link #main(String[])}</li>
+ * </ul>
+ * Modifiable attributes:
+ * <ul>
+ * <li><code>script.container.defaultEngineName</code>: The default script
+ * engine name to be used if the script doesn't specify one. Defaults to "js".
+ * Scripts can change this value.</li>
  * </ul>
  * <p>
  * In addition to the above, a {@link #scriptContextController} can be set to
@@ -112,7 +114,6 @@ public class ScriptedMain implements Runnable
 		scriptEngineManager = new ScriptEngineManager();
 		allowCompilation = false;
 		defaultPath = "main.script";
-		containerVariableName = "container";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
 	}
@@ -162,17 +163,6 @@ public class ScriptedMain implements Runnable
 	public String getDefaultPath()
 	{
 		return defaultPath;
-	}
-
-	/**
-	 * The default variable name for the container instance. Defaults to
-	 * "container".
-	 * 
-	 * @return The default container variable name
-	 */
-	public String getContainerVariableName()
-	{
-		return containerVariableName;
 	}
 
 	/**
@@ -230,7 +220,7 @@ public class ScriptedMain implements Runnable
 
 		try
 		{
-			ScriptedMainContainer container = new ScriptedMainContainer( this );
+			ExposedScriptedMainContainer container = new ExposedScriptedMainContainer( this );
 			container.include( name );
 			writer.flush();
 			errorWriter.flush();
@@ -255,8 +245,6 @@ public class ScriptedMain implements Runnable
 	private final boolean allowCompilation;
 
 	private final String defaultPath;
-
-	private final String containerVariableName;
 
 	private final Writer writer;
 

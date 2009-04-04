@@ -34,9 +34,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptException;
-
 import com.threecrickets.scripturian.ScriptSource;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
 
@@ -125,7 +122,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	 * every time this method is called, use
 	 * {@link #setMinimumTimeBetweenValidityChecks(long)}.
 	 * 
-	 * @see com.threecrickets.scripturian.ScriptSource#getScriptDescriptor(java.lang.String)
+	 * @see ScriptSource#getScriptDescriptor(String)
 	 */
 	public ScriptDescriptor<S> getScriptDescriptor( String name ) throws IOException
 	{
@@ -149,22 +146,12 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		if( filedScriptDescriptor == null )
 		{
 			filedScriptDescriptor = new FiledScriptDescriptor( file );
-			scriptDescriptors.put( name, filedScriptDescriptor );
+			FiledScriptDescriptor existing = scriptDescriptors.putIfAbsent( name, filedScriptDescriptor );
+			if( existing != null )
+				filedScriptDescriptor = existing;
 		}
 
 		return filedScriptDescriptor;
-	}
-
-	//
-	// ScriptContextController
-	//
-
-	public void initialize( ScriptContext scriptContext ) throws ScriptException
-	{
-	}
-
-	public void finalize( ScriptContext scriptContext )
-	{
 	}
 
 	//
@@ -218,12 +205,12 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 			return extension;
 		}
 
-		public S getScript()
+		public synchronized S getScript()
 		{
 			return script;
 		}
 
-		public void setScript( S script )
+		public synchronized void setScript( S script )
 		{
 			this.script = script;
 		}

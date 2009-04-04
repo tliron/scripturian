@@ -38,7 +38,7 @@ import java.io.IOException;
  * @param <S>
  *        The script type
  */
-public interface ScriptSource<S> extends ScriptContextController
+public interface ScriptSource<S>
 {
 	/**
 	 * Access to the script descriptor.

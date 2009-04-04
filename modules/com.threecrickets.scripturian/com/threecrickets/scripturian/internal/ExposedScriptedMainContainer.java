@@ -33,26 +33,25 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.script.ScriptEngine;
+import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.EmbeddedScript;
 import com.threecrickets.scripturian.ScriptedMain;
 
 /**
- * This is the type of the "container" variable exposed to the script. The name
- * is set according to {@link ScriptedMain#containerVariableName}.
+ * This is the <code>script.container</code> variable exposed to the script.
  * 
  * @author Tal Liron
  * @see ScriptedMain
  */
-public class ScriptedMainContainer
+public class ExposedScriptedMainContainer
 {
 	//
 	// Construction
 	//
 
-	public ScriptedMainContainer( ScriptedMain scriptedMain )
+	public ExposedScriptedMainContainer( ScriptedMain scriptedMain )
 	{
 		this.scriptedMain = scriptedMain;
 	}
@@ -91,22 +90,21 @@ public class ScriptedMainContainer
 	 * 
 	 * @param name
 	 *        The script name
-	 * @param scriptEngineName
+	 * @param engineName
 	 *        The script engine name (if null, behaves identically to
 	 *        {@link #include(String)}
 	 * @throws IOException
 	 * @throws ScriptException
 	 */
-	public void include( String name, String scriptEngineName ) throws IOException, ScriptException
+	public void include( String name, String engineName ) throws IOException, ScriptException
 	{
 		String text = ScripturianUtil.getString( new File( name ) );
-		if( scriptEngineName != null )
-			text = EmbeddedScript.DEFAULT_DELIMITER1_START + scriptEngineName + " " + text + EmbeddedScript.DEFAULT_DELIMITER1_END;
+		if( engineName != null )
+			text = EmbeddedScript.DEFAULT_DELIMITER1_START + engineName + " " + text + EmbeddedScript.DEFAULT_DELIMITER1_END;
 
-		EmbeddedScript script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultScriptEngineName(), scriptedMain.isAllowCompilation(), null );
+		EmbeddedScript script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultEngineName(), scriptedMain.isAllowCompilation() );
 
-		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, scriptEngines, new ScriptedMainScriptContextController( script.getContainerVariableName(), this, scriptedMain
-			.getScriptContextController() ), false );
+		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, scriptContexts, this, scriptedMain.getScriptContextController(), false );
 	}
 
 	//
@@ -128,21 +126,21 @@ public class ScriptedMainContainer
 	 * one. Defaults to "js".
 	 * 
 	 * @return The default script engine name
-	 * @see #setDefaultScriptEngineName(String)
+	 * @see #setDefaultEngineName(String)
 	 */
-	public String getDefaultScriptEngineName()
+	public String getDefaultEngineName()
 	{
-		return defaultScriptEngineName;
+		return defaultEngineName;
 	}
 
 	/**
-	 * @param defaultScriptEngineName
+	 * @param defaultEngineName
 	 *        The default script engine name
-	 * @see #getDefaultScriptEngineName()
+	 * @see #getDefaultEngineName()
 	 */
-	public void setDefaultScriptEngineName( String defaultScriptEngineName )
+	public void setDefaultEngineName( String defaultEngineName )
 	{
-		this.defaultScriptEngineName = defaultScriptEngineName;
+		this.defaultEngineName = defaultEngineName;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -150,7 +148,7 @@ public class ScriptedMainContainer
 
 	private final ScriptedMain scriptedMain;
 
-	private final ConcurrentMap<String, ScriptEngine> scriptEngines = new ConcurrentHashMap<String, ScriptEngine>();
+	private final ConcurrentMap<String, ScriptContext> scriptContexts = new ConcurrentHashMap<String, ScriptContext>();
 
-	private String defaultScriptEngineName = "js";
+	private String defaultEngineName = "js";
 }

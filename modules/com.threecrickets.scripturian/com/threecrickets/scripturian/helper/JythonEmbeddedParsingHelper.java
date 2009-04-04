@@ -28,7 +28,6 @@
 
 package com.threecrickets.scripturian.helper;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.EmbeddedScript;
@@ -38,12 +37,6 @@ import com.threecrickets.scripturian.ScriptEngines;
 /**
  * An {@link EmbeddedScriptParsingHelper} that supports the Python scripting
  * language as implemented by <a href="http://www.jython.org/">Jython</a>.
- * <p>
- * Note that Jython does not correctly redirect its standard output to that
- * provided by the {@link ScriptContext}. For that reason, this parsing helper
- * does so in script. For this to work, a global variable named
- * {@link EmbeddedScript#getContainerVariableName()} must be set with fields
- * named "writer" and "standardWriter".
  * 
  * @author Tal Liron
  */
@@ -85,7 +78,7 @@ public class JythonEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 
 	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return embeddedScript.getContainerVariableName() + ".include(" + content + ");";
+		return embeddedScript.getScriptVariableName() + ".container.include(" + content + ");";
 	}
 
 	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )

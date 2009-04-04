@@ -71,7 +71,7 @@ public class JavaEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 
 	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return embeddedScript.getContainerVariableName() + ".include((" + content + ").toString());";
+		return embeddedScript.getScriptVariableName() + ".container.include((" + content + ").toString());";
 	}
 
 	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )

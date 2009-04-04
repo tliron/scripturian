@@ -10,23 +10,24 @@ import javax.script.ScriptEngineManager;
 import com.threecrickets.scripturian.EmbeddedScript;
 
 /**
- * This is the type of the "script" variable exposed to the script. The name is
+ * This is the <code>script</code> variable exposed to the script. The name is
  * set according to {@link EmbeddedScript#getScriptVariableName()}.
  * 
  * @author Tal Liron
  * @see EmbeddedScript
  */
-public class EmbeddedScriptScript
+public class ExposedEmbeddedScript
 {
 	//
 	// Construction
 	//
 
-	public EmbeddedScriptScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, ScriptContext scriptContext )
+	public ExposedEmbeddedScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, ScriptContext scriptContext, Object container )
 	{
 		this.embeddedScript = embeddedScript;
 		this.scriptEngine = scriptEngine;
 		this.scriptContext = scriptContext;
+		this.container = container;
 	}
 
 	//
@@ -95,13 +96,13 @@ public class EmbeddedScriptScript
 	}
 
 	/**
-	 * The source of the script.
+	 * The container.
 	 * 
-	 * @return The script source
+	 * @return The container (or null if none was provided)
 	 */
-	public Object getSource()
+	public Object getContainer()
 	{
-		return embeddedScript.getSource();
+		return container;
 	}
 
 	/**
@@ -123,4 +124,6 @@ public class EmbeddedScriptScript
 	private final ScriptEngine scriptEngine;
 
 	private final ScriptContext scriptContext;
+
+	private final Object container;
 }

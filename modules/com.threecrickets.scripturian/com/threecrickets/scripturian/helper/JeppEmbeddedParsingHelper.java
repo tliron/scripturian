@@ -28,7 +28,6 @@
 
 package com.threecrickets.scripturian.helper;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.EmbeddedScript;
@@ -38,12 +37,6 @@ import com.threecrickets.scripturian.ScriptEngines;
 /**
  * An {@link EmbeddedScriptParsingHelper} that supports the Python scripting
  * language as implemented by <a href="http://jepp.sourceforge.net/">Jepp</a>.
- * <p>
- * Note that Jepp does not correctly redirect its standard output to that
- * provided by the {@link ScriptContext}. For that reason, this parsing helper
- * does so in script. For this to work, a global variable named
- * {@link EmbeddedScript#getContainerVariableName()} must be set with fields
- * named "writer" and "errorWriter".
  * 
  * @author Tal Liron
  */
@@ -63,8 +56,7 @@ public class JeppEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 		// set global variables, not redirect stdout and stderr. Luckily, the
 		// Python interface is compatible with Java's Writer interface, so we
 		// can redirect them explicitly.
-		return embeddedScript.getContainerVariableName() + "=context.getAttribute('" + embeddedScript.getContainerVariableName() + "');" + embeddedScript.getScriptVariableName() + "=context.getAttribute('"
-			+ embeddedScript.getScriptVariableName() + "');import sys;sys.stdout=context.getWriter();sys.stderr=context.getErrorWriter();";
+		return embeddedScript.getScriptVariableName() + "=context.getAttribute('" + embeddedScript.getScriptVariableName() + "');import sys;sys.stdout=context.getWriter();sys.stderr=context.getErrorWriter();";
 	}
 
 	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
@@ -86,7 +78,7 @@ public class JeppEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 
 	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return embeddedScript.getContainerVariableName() + ".include(" + content + ");";
+		return embeddedScript.getScriptVariableName() + ".getContainer().include(" + content + ");";
 	}
 
 	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )

@@ -76,7 +76,7 @@ public class RhinoEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 
 	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
 	{
-		return embeddedScript.getContainerVariableName() + ".include(" + content + ");";
+		return embeddedScript.getScriptVariableName() + ".container.include(" + content + ");";
 	}
 
 	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
