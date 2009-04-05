@@ -101,9 +101,8 @@ public interface EmbeddedScriptParsingHelper
 	/**
 	 * Turns an expression into a command or series of commands to include the
 	 * script named for the result of the evaluation of the expression. Note
-	 * that this requires the script to have access to a global object named
-	 * {@link EmbeddedScript#containerVariableName}, and that this object must
-	 * have a method named "include".
+	 * that this requires the script to have access to a global method named
+	 * <code>script.container.include</code>.
 	 * 
 	 * @param embeddedScript
 	 *        The embedded script instance
@@ -113,7 +112,7 @@ public interface EmbeddedScriptParsingHelper
 	 *        The content
 	 * @return A command or series of commands to include the script named for
 	 *         the expression
-	 * @see EmbeddedScript#containerVariableName
+	 * @see EmbeddedScript#getScriptVariableName()
 	 */
 	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
 
