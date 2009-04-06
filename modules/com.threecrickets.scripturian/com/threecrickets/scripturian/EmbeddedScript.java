@@ -54,7 +54,6 @@ import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
 import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
-import com.threecrickets.scripturian.internal.MetaScope;
 
 /**
  * Handles the parsing, optional compilation and running of embedded scripts.
@@ -154,7 +153,6 @@ import com.threecrickets.scripturian.internal.MetaScope;
  * </ul>
  * 
  * @author Tal Liron
- * @see MetaScope
  */
 public class EmbeddedScript
 {
