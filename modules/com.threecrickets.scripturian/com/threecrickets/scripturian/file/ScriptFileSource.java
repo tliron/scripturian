@@ -139,8 +139,13 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 		if( filedScriptDescriptor != null )
 		{
+			// Make sure the existing descriptor is valid
 			if( !filedScriptDescriptor.isValid( file ) )
+			{
+				// Remove invalid descriptor if it's still there
+				scriptDescriptors.remove( name, filedScriptDescriptor );
 				filedScriptDescriptor = null;
+			}
 		}
 
 		if( filedScriptDescriptor == null )
@@ -232,7 +237,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		private boolean isValid( File file )
 		{
 			long now = System.currentTimeMillis();
-			if( now - lastValidityCheck.get() > minimumTimeBetweenValidityChecks.get() )
+			if( ( now - lastValidityCheck.get() ) > minimumTimeBetweenValidityChecks.get() )
 			{
 				lastValidityCheck.set( now );
 				return file.lastModified() <= timestamp;
