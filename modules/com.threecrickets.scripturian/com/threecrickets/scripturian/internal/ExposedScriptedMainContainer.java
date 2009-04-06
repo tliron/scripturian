@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.EmbeddedScript;
@@ -104,7 +104,7 @@ public class ExposedScriptedMainContainer
 
 		EmbeddedScript script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultEngineName(), scriptedMain.isAllowCompilation() );
 
-		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, scriptContexts, this, scriptedMain.getScriptContextController(), false );
+		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, scriptEngines, this, scriptedMain.getScriptContextController(), false );
 	}
 
 	//
@@ -148,7 +148,7 @@ public class ExposedScriptedMainContainer
 
 	private final ScriptedMain scriptedMain;
 
-	private final ConcurrentMap<String, ScriptContext> scriptContexts = new ConcurrentHashMap<String, ScriptContext>();
+	private final ConcurrentMap<String, ScriptEngine> scriptEngines = new ConcurrentHashMap<String, ScriptEngine>();
 
 	private String defaultEngineName = "js";
 }

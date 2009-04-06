@@ -711,8 +711,8 @@ public class EmbeddedScript
 	 *        Standard error output
 	 * @param flushLines
 	 *        Whether to flush the writers after every line
-	 * @param scriptContexts
-	 *        A cache of script contexts by engine name
+	 * @param scriptEngines
+	 *        A cache of script engines by engine name
 	 * @param container
 	 *        The container (can be null)
 	 * @param scriptContextController
@@ -725,7 +725,7 @@ public class EmbeddedScript
 	 *         cached output is expected to be used instead
 	 * @throws ScriptException
 	 */
-	public boolean run( Writer writer, Writer errorWriter, boolean flushLines, ConcurrentMap<String, ScriptContext> scriptContexts, Object container, ScriptContextController scriptContextController, boolean checkCache )
+	public boolean run( Writer writer, Writer errorWriter, boolean flushLines, ConcurrentMap<String, ScriptEngine> scriptEngines, Object container, ScriptContextController scriptContextController, boolean checkCache )
 		throws ScriptException, IOException
 	{
 		long now = System.currentTimeMillis();
@@ -743,11 +743,8 @@ public class EmbeddedScript
 				else
 				{
 					scriptEngineName = segment.scriptEngineName;
-					scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
-					if( scriptEngine == null )
-						throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
-
-					setScriptContext( scriptEngineName, scriptContexts );
+					setScriptEngine( scriptEngineName, scriptEngines );
+					ScriptContext scriptContext = scriptEngine.getContext();
 
 					// Note that some script engines (such as Rhino) expect a
 					// PrintWriter, even though the spec defines just a Writer
@@ -774,7 +771,7 @@ public class EmbeddedScript
 							// of javax.script (notably Jepp) interpret the
 							// String version of eval to mean only one line of
 							// code.
-							scriptEngine.eval( new StringReader( segment.text ), scriptContext );
+							scriptEngine.eval( new StringReader( segment.text ) );
 						}
 					}
 					catch( ScriptException x )
@@ -823,8 +820,6 @@ public class EmbeddedScript
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
-	 * @param scriptContexts
-	 *        A cache of script contexts by engine name
 	 * @param container
 	 *        The container (can be null)
 	 * @param scriptContextController
@@ -837,8 +832,10 @@ public class EmbeddedScript
 	 *         supports the {@link Invocable} interface; otherwise a
 	 *         {@link ScriptException} is thrown if the method is not found
 	 */
-	public Object invoke( String entryPointName, ConcurrentMap<String, ScriptContext> scriptContexts, Object container, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
+	public Object invoke( String entryPointName, Object container, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
 	{
+		ScriptContext scriptContext = scriptEngine.getContext();
+
 		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
 		scriptContext.setAttribute( scriptVariableName, new ExposedEmbeddedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
 
@@ -856,15 +853,12 @@ public class EmbeddedScript
 			if( program == null )
 			{
 				if( scriptEngine instanceof Invocable )
-				{
-					scriptEngine.setContext( scriptContext );
 					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
-				}
 				else
 					throw new ScriptException( "Script engine does not support invocations" );
 			}
 			else
-				return scriptEngine.eval( program, scriptContext );
+				return scriptEngine.eval( program );
 		}
 		finally
 		{
@@ -897,8 +891,6 @@ public class EmbeddedScript
 
 	private ScriptEngine scriptEngine;
 
-	private ScriptContext scriptContext;
-
 	private String scriptEngineName;
 
 	private static class Segment
@@ -919,27 +911,34 @@ public class EmbeddedScript
 		public String scriptEngineName;
 	}
 
-	private void setScriptContext( String scriptEngineName, ConcurrentMap<String, ScriptContext> scriptContexts )
+	private void setScriptEngine( String scriptEngineName, ConcurrentMap<String, ScriptEngine> scriptEngines ) throws ScriptException
 	{
-		scriptContext = scriptContexts.get( scriptEngineName );
-		if( scriptContext == null )
+		scriptEngine = scriptEngines.get( scriptEngineName );
+		if( scriptEngine == null )
 		{
-			// We absolutely need a new script context here!
-			// Otherwise, we might end up using a context
-			// already in use by another thread.
-			// (Also, note that some script engines do not even
-			// provide a default context -- Jepp, for example -- so
-			// it's generally a good idea to explicitly create one)
-			scriptContext = new SimpleScriptContext();
-			if( scriptContext.getBindings( ScriptContext.ENGINE_SCOPE ) == null )
-				scriptContext.setBindings( scriptEngine.createBindings(), ScriptContext.ENGINE_SCOPE );
+			scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
+			if( scriptEngine == null )
+				throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
 
 			// Note: another thread might have put a ScriptEngine
 			// here in the meantime... we'll make sure there is no
 			// duplication
-			ScriptContext existing = scriptContexts.putIfAbsent( scriptEngineName, scriptContext );
+			ScriptEngine existing = scriptEngines.putIfAbsent( scriptEngineName, scriptEngine );
 			if( existing != null )
-				scriptContext = existing;
+				scriptEngine = existing;
+			else
+			{
+				// We absolutely need a new script context here!
+				// Otherwise, we might end up using a context
+				// already in use by another thread.
+				// (Also, note that some script engines do not even
+				// provide a default context -- Jepp, for example -- so
+				// it's generally a good idea to explicitly create one)
+				ScriptContext scriptContext = new SimpleScriptContext();
+				scriptContext.setBindings( scriptEngine.createBindings(), ScriptContext.ENGINE_SCOPE );
+				scriptContext.setBindings( scriptEngine.createBindings(), ScriptContext.GLOBAL_SCOPE );
+				scriptEngine.setContext( scriptContext );
+			}
 		}
 	}
 }
