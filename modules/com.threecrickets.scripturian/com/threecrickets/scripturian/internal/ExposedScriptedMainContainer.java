@@ -37,6 +37,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.EmbeddedScript;
+import com.threecrickets.scripturian.ScriptSource;
 import com.threecrickets.scripturian.ScriptedMain;
 
 /**
@@ -102,7 +103,15 @@ public class ExposedScriptedMainContainer
 		if( engineName != null )
 			text = EmbeddedScript.DEFAULT_DELIMITER1_START + engineName + " " + text + EmbeddedScript.DEFAULT_DELIMITER1_END;
 
-		EmbeddedScript script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultEngineName(), scriptedMain.isAllowCompilation() );
+		ScriptSource.ScriptDescriptor<EmbeddedScript> scriptDescriptor = scriptedMain.getScriptSource().getScriptDescriptor( name );
+		EmbeddedScript script = scriptDescriptor.getScript();
+		if( script == null )
+		{
+			script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultEngineName(), scriptedMain.getScriptSource(), scriptedMain.isAllowCompilation() );
+			EmbeddedScript existing = scriptDescriptor.setScript( script );
+			if( existing != null )
+				script = existing;
+		}
 
 		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, scriptEngines, this, scriptedMain.getScriptContextController(), false );
 	}

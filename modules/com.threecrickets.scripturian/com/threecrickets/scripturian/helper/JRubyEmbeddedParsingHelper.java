@@ -68,7 +68,7 @@ import com.threecrickets.scripturian.ScriptEngines;
 public class JRubyEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 {
 	//
-	// EmbeddedParsingHelper
+	// EmbeddedScriptParsingHelper
 	//
 
 	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )

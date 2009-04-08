@@ -74,9 +74,10 @@ public interface ScriptSource<S>
 		/**
 		 * @param value
 		 *        The script instance
+		 * @return The existing script instance before we changed it
 		 * @see #getScript()
 		 */
-		public void setScript( S value );
+		public S setScript( S value );
 	}
 
 	/**
@@ -88,4 +89,19 @@ public interface ScriptSource<S>
 	 * @throws IOException
 	 */
 	public ScriptDescriptor<S> getScriptDescriptor( String name ) throws IOException;
+
+	/**
+	 * Allows adding or changing script descriptors.
+	 * 
+	 * @param name
+	 *        The script's name
+	 * @param text
+	 *        The text for the script
+	 * @param tag
+	 *        The tag
+	 * @param script
+	 *        The script instance
+	 * @return The existing script descriptor before we changed it
+	 */
+	public ScriptDescriptor<S> setScriptDescriptor( String name, String text, String tag, S script );
 }

@@ -42,6 +42,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.script.Compilable;
@@ -98,12 +99,19 @@ import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
  * <p>
  * In addition to embedded scripts, this class supports a shorthand for embedded
  * script expressions. These are internally just sent to standard output.
- * However, they can allow for slightly more compact and cleaner code.
+ * However, they can allow for more compact and cleaner code.
  * <p>
  * Another shorthand exists for including other script files. However, for it to
  * work, you must make sure that a <code>script.container.include(name)</code>
  * method is available to the script, which would then process the include as is
  * appropriate to your environment.
+ * <p>
+ * Finally, the in-flow shorthand works exactly like an include, but lets you
+ * place the included script into the flow of the current script. The inclusion
+ * is applied to the previously used script engine, which is then restored to
+ * being the default engine after the in-flow tag. This construct allows for
+ * very powerful and clean mixing of scripting engines, without cumbersome
+ * creation of separate scripts for inclusion.
  * <p>
  * Examples:
  * <ul>
@@ -116,7 +124,10 @@ import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
  * <li><b>Output expression</b>: <code>&lt;?= 15 * 6 ?&gt;</code></li>
  * <li><b>Output expression with specifying engine name</b>:
  * <code>&lt;?=js sqrt(myVariable) ?&gt;</code></li>
- * <li><b>Include</b>: <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' %&gt;</code></li>
+ * <li><b>Include</b>: <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' ?&gt;</code></li>
+ * <li><b>In-flow</b>:
+ * <code>&lt;%js if(isDebug) { %&gt; &lt;%:python dumpStack(); %&gt; &lt;% } %&gt;</code>
+ * </li>
  * </ul>
  * <p>
  * A special container environment is created for scripts, with some useful
@@ -192,6 +203,11 @@ public class EmbeddedScript
 	public static final String DEFAULT_DELIMITER_INCLUDE = "&";
 
 	/**
+	 * The default addition to the start delimiter to specify an in-flow tag: :
+	 */
+	public static final String DEFAULT_DELIMITER_IN_FLOW = ":";
+
+	/**
 	 * The default script variable name: "script"
 	 */
 	public static final String DEFAULT_SCRIPT_VARIABLE_NAME = "script";
@@ -207,9 +223,9 @@ public class EmbeddedScript
 	 * <p>
 	 * This map is automatically initialized when this class loads according to
 	 * resources named
-	 * META-INF/services/com.threecrickets.scripturian.EmbeddedParsingHelper.
-	 * Each resource is a simple text file with class names, one per line. Each
-	 * class listed must implement the {@link EmbeddedScriptParsingHelper}
+	 * <code>META-INF/services/com.threecrickets.scripturian.EmbeddedScriptParsingHelper</code>
+	 * . Each resource is a simple text file with class names, one per line.
+	 * Each class listed must implement the {@link EmbeddedScriptParsingHelper}
 	 * interface and specify which engine names it supports via the
 	 * {@link ScriptEngines} annotation.
 	 * <p>
@@ -300,17 +316,21 @@ public class EmbeddedScript
 	 * @param defaultEngineName
 	 *        If a script engine name isn't explicitly specified in the embedded
 	 *        script file, this one will be used
+	 * @param scriptSource
+	 *        The script source (used for in-flow tags)
 	 * @param allowCompilation
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
+	 * @param scriptSource
+	 *        The script source, used for in-flow tags
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 */
-	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation ) throws ScriptException
+	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<EmbeddedScript> scriptSource, boolean allowCompilation ) throws ScriptException
 	{
-		this( text, scriptEngineManager, defaultEngineName, allowCompilation, DEFAULT_SCRIPT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END,
-			DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE );
+		this( text, scriptEngineManager, defaultEngineName, scriptSource, allowCompilation, DEFAULT_SCRIPT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
+			DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
 	/**
@@ -326,6 +346,8 @@ public class EmbeddedScript
 	 * @param defaultEngineName
 	 *        If a script engine name isn't explicitly specified in the embedded
 	 *        script file, this one will be used
+	 * @param scriptSource
+	 *        The script source (used for in-flow tags)
 	 * @param allowCompilation
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
@@ -346,22 +368,26 @@ public class EmbeddedScript
 	 * @param delimiterInclude
 	 *        The default addition to the start delimiter to specify an include
 	 *        tag
+	 * @param delimiterInFlow
+	 *        The default addition to the start delimiter to specify an in-flow
+	 *        tag
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 * @see EmbeddedScriptParsingHelper
 	 */
-	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, boolean allowCompilation, String scriptVariableName, String delimiter1Start, String delimiter1End,
-		String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude ) throws ScriptException
+	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<EmbeddedScript> scriptSource, boolean allowCompilation, String scriptVariableName,
+		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ScriptException
 	{
 		this.scriptEngineManager = scriptEngineManager;
 		this.scriptVariableName = scriptVariableName;
 
-		String lastEngineName = defaultEngineName;
+		String lastScriptEngineName = defaultEngineName;
 
 		int delimiterStartLength = 0;
 		int delimiterEndLength = 0;
 		int expressionLength = delimiterExpression.length();
 		int includeLength = delimiterInclude.length();
+		int inFlowLength = delimiterInFlow.length();
 
 		// Detect type of delimiter
 		int start = text.indexOf( delimiter1Start );
@@ -399,7 +425,7 @@ public class EmbeddedScript
 			{
 				// Add previous non-script segment
 				if( start != last )
-					segments.add( new Segment( text.substring( last, start ), false, lastEngineName ) );
+					segments.add( new Segment( text.substring( last, start ), false, lastScriptEngineName ) );
 
 				start += delimiterStartLength;
 
@@ -409,10 +435,12 @@ public class EmbeddedScript
 
 				if( start + 1 != end )
 				{
-					String scriptEngineName = lastEngineName;
+					String scriptEngineName = lastScriptEngineName;
 
 					boolean isExpression = false;
 					boolean isInclude = false;
+					boolean isInFlow = false;
+
 					// Check if this is an expression
 					if( text.substring( start, start + expressionLength ).equals( delimiterExpression ) )
 					{
@@ -425,6 +453,12 @@ public class EmbeddedScript
 						start += includeLength;
 						isInclude = true;
 					}
+					// Check if this is an in-flow
+					else if( text.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
+					{
+						start += inFlowLength;
+						isInFlow = true;
+					}
 
 					// Get engine name if available
 					if( !Character.isWhitespace( text.charAt( start ) ) )
@@ -434,7 +468,11 @@ public class EmbeddedScript
 							endEngineName++;
 
 						scriptEngineName = text.substring( start, endEngineName );
-						lastEngineName = scriptEngineName;
+
+						// Optimization: in-flow is unnecessary if we are in the
+						// same script engine
+						if( isInFlow && lastScriptEngineName.equals( scriptEngineName ) )
+							isInFlow = false;
 
 						start = endEngineName + 1;
 					}
@@ -454,13 +492,41 @@ public class EmbeddedScript
 
 							if( isExpression )
 								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
-							else
-								// if( isInclude )
+							else if( isInclude )
 								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+						}
+						else if( isInFlow && ( scriptSource != null ) )
+						{
+							ScriptEngine lastScriptEngine = scriptEngineManager.getEngineByName( lastScriptEngineName );
+							if( lastScriptEngine == null )
+								throw new ScriptException( "Unsupported script engine: " + lastScriptEngineName );
+
+							EmbeddedScriptParsingHelper embeddedScriptParsingHelper = embeddedScriptParsingHelpers.get( lastScriptEngineName );
+							if( embeddedScriptParsingHelper == null )
+								throw new ScriptException( "Embedded script parsing helper not available for script engine: " + lastScriptEngineName );
+
+							String inFlowText = delimiterStart + scriptEngineName + " " + text.substring( start, end ) + delimiterEnd;
+							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
+
+							// Note that the in-flow embedded script is a
+							// single segment, so we can optimize parsing a
+							// bit
+							EmbeddedScript inFlowEmbeddedScript = new EmbeddedScript( inFlowText, scriptEngineManager, null, null, allowCompilation, scriptVariableName, delimiterStart, delimiterEnd, delimiterStart,
+								delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
+							scriptSource.setScriptDescriptor( inFlowName, inFlowText, "", inFlowEmbeddedScript );
+
+							// TODO: would it ever be possible to remove the
+							// dependent in-flow instances?
+
+							// Our include is in the last script engine
+							segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsInclude( this, lastScriptEngine, "'" + inFlowName + "'" ), true, lastScriptEngineName ) );
 						}
 						else
 							segments.add( new Segment( text.substring( start, end ), true, scriptEngineName ) );
 					}
+
+					if( !isInFlow )
+						lastScriptEngineName = scriptEngineName;
 				}
 
 				last = end + delimiterEndLength;
@@ -469,12 +535,12 @@ public class EmbeddedScript
 
 			// Add remaining non-script segment
 			if( last < text.length() )
-				segments.add( new Segment( text.substring( last ), false, lastEngineName ) );
+				segments.add( new Segment( text.substring( last ), false, lastScriptEngineName ) );
 		}
 		else
 		{
 			// Trivial file: does not include script
-			segments.add( new Segment( text, false, lastEngineName ) );
+			segments.add( new Segment( text, false, lastScriptEngineName ) );
 		}
 
 		// Collapse segments of same kind
@@ -872,6 +938,10 @@ public class EmbeddedScript
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private static final String IN_FLOW_PREFIX = "_IN_FLOW_";
+
+	private static final AtomicInteger inFlowCounter = new AtomicInteger();
 
 	private final List<Segment> segments = new LinkedList<Segment>();
 

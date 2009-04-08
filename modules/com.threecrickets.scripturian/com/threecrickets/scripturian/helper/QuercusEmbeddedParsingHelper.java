@@ -53,7 +53,7 @@ import com.threecrickets.scripturian.ScriptEngines;
 public class QuercusEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 {
 	//
-	// EmbeddedParsingHelper
+	// EmbeddedScriptParsingHelper
 	//
 
 	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )

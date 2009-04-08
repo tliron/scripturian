@@ -159,6 +159,23 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		return filedScriptDescriptor;
 	}
 
+	/**
+	 * @see ScriptSource#setScriptDescriptor(String, String, String, Object)
+	 */
+	public ScriptDescriptor<S> setScriptDescriptor( String name, String text, String tag, S script )
+	{
+		File file = new File( basePath, name );
+
+		if( ( defaultName != null ) && file.isDirectory() )
+			file = new File( file, defaultName );
+		else if( ( defaultExtension != null ) && !file.exists() )
+			file = new File( basePath, name + "." + defaultExtension );
+
+		name = file.getPath();
+
+		return scriptDescriptors.put( name, new FiledScriptDescriptor( text, tag, script ) );
+	}
+
 	//
 	// Attributes
 	//
@@ -166,7 +183,8 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	/**
 	 * Attempts to call {@link #getScriptDescriptor(String)} for a specific name
 	 * within less than this time from the previous call will return the cached
-	 * descriptor without checking if it is valid.
+	 * descriptor without checking if it is valid. A value of -1 disables all
+	 * validity checking.
 	 * 
 	 * @return The minimum time between validity checks in milliseconds
 	 * @see #setMinimumTimeBetweenValidityChecks(long)
@@ -202,12 +220,12 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	{
 		public String getText()
 		{
-			return content;
+			return text;
 		}
 
 		public String getTag()
 		{
-			return extension;
+			return tag;
 		}
 
 		public synchronized S getScript()
@@ -215,29 +233,49 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 			return script;
 		}
 
-		public synchronized void setScript( S script )
+		public synchronized S setScript( S script )
 		{
+			S old = this.script;
 			this.script = script;
+			return old;
+		}
+
+		private FiledScriptDescriptor( String text, String tag, S script )
+		{
+			this.text = text;
+			this.tag = tag;
+			this.script = script;
+
+			// This will disable validity checks
+			timestamp = -1;
 		}
 
 		private FiledScriptDescriptor( File file ) throws IOException
 		{
-			content = ScripturianUtil.getString( file );
+			text = ScripturianUtil.getString( file );
 
 			String name = file.getName();
 			int dot = name.lastIndexOf( '.' );
 			if( dot != -1 )
-				extension = name.substring( dot + 1 );
+				tag = name.substring( dot + 1 );
 			else
-				extension = null;
+				tag = null;
 
 			timestamp = file.lastModified();
 		}
 
 		private boolean isValid( File file )
 		{
+			if( timestamp == -1 )
+				return true;
+
+			long minimumTimeBetweenValidityChecks = ScriptFileSource.this.minimumTimeBetweenValidityChecks.get();
+			if( minimumTimeBetweenValidityChecks == -1 )
+				return true;
+
 			long now = System.currentTimeMillis();
-			if( ( now - lastValidityCheck.get() ) > minimumTimeBetweenValidityChecks.get() )
+
+			if( ( now - lastValidityCheck.get() ) > minimumTimeBetweenValidityChecks )
 			{
 				lastValidityCheck.set( now );
 				return file.lastModified() <= timestamp;
@@ -253,9 +291,9 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 		private final AtomicLong lastValidityCheck = new AtomicLong();
 
-		private final String content;
+		private final String text;
 
-		private final String extension;
+		private final String tag;
 
 		private S script;
 	}

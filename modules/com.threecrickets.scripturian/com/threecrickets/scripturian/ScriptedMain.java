@@ -28,6 +28,7 @@
 
 package com.threecrickets.scripturian;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -35,6 +36,7 @@ import java.io.Writer;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import com.threecrickets.scripturian.file.ScriptFileSource;
 import com.threecrickets.scripturian.internal.ExposedScriptedMainContainer;
 
 /**
@@ -116,6 +118,7 @@ public class ScriptedMain implements Runnable
 		defaultPath = "main.script";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
+		scriptSource = new ScriptFileSource<EmbeddedScript>( new File( "." ), "index.script", "script", -1 );
 	}
 
 	//
@@ -206,6 +209,28 @@ public class ScriptedMain implements Runnable
 		this.scriptContextController = scriptContextController;
 	}
 
+	/**
+	 * Used to load the scripts, Defaults to a {@link ScriptFileSource} set for
+	 * the current directory, with no validity checking.
+	 * 
+	 * @return The script source
+	 * @see #setScriptSource(ScriptSource)
+	 */
+	public ScriptSource<EmbeddedScript> getScriptSource()
+	{
+		return scriptSource;
+	}
+
+	/**
+	 * @param scriptSource
+	 *        The script source
+	 * @see #getScriptSource()
+	 */
+	public void setScriptSource( ScriptSource<EmbeddedScript> scriptSource )
+	{
+		this.scriptSource = scriptSource;
+	}
+
 	//
 	// Runnable
 	//
@@ -251,4 +276,6 @@ public class ScriptedMain implements Runnable
 	private final Writer errorWriter;
 
 	private ScriptContextController scriptContextController;
+
+	private ScriptSource<EmbeddedScript> scriptSource;
 }

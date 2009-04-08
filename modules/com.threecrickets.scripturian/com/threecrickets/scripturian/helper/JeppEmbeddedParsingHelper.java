@@ -47,7 +47,7 @@ import com.threecrickets.scripturian.ScriptEngines;
 public class JeppEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
 {
 	//
-	// EmbeddedParsingHelper
+	// EmbeddedScriptParsingHelper
 	//
 
 	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
