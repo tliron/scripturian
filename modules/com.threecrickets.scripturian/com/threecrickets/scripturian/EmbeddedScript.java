@@ -133,7 +133,7 @@ import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
  * <code>script</code> (this name can be changed via the
- * {@link #EmbeddedScript(String, ScriptEngineManager, String, boolean, String, String, String, String, String, String, String)}
+ * {@link #EmbeddedScript(String, ScriptEngineManager, String, ScriptSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
@@ -322,8 +322,6 @@ public class EmbeddedScript
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
-	 * @param scriptSource
-	 *        The script source, used for in-flow tags
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 */
