@@ -108,7 +108,7 @@ public class ExposedScriptedMainContainer
 		if( script == null )
 		{
 			script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultEngineName(), scriptedMain.getScriptSource(), scriptedMain.isAllowCompilation() );
-			EmbeddedScript existing = scriptDescriptor.setScript( script );
+			EmbeddedScript existing = scriptDescriptor.setScriptIfAbsent( script );
 			if( existing != null )
 				script = existing;
 		}

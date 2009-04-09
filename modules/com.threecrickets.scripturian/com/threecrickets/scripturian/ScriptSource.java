@@ -33,6 +33,9 @@ import java.io.IOException;
 /**
  * Manages retrieval of script text and caching of arbitrary script
  * implementations via descriptors.
+ * <p>
+ * Implementations are expected to be thread safe! This includes returned
+ * descriptors.
  * 
  * @author Tal Liron
  * @param <S>
@@ -78,6 +81,16 @@ public interface ScriptSource<S>
 		 * @see #getScript()
 		 */
 		public S setScript( S value );
+
+		/**
+		 * Like {@link #setScript(Object)}, with an atomic check for null.
+		 * 
+		 * @param value
+		 *        The script instance
+		 * @return The existing script instance before we changed it
+		 * @see #getScript()
+		 */
+		public S setScriptIfAbsent( S value );
 	}
 
 	/**
@@ -104,4 +117,20 @@ public interface ScriptSource<S>
 	 * @return The existing script descriptor before we changed it
 	 */
 	public ScriptDescriptor<S> setScriptDescriptor( String name, String text, String tag, S script );
+
+	/**
+	 * Allows adding or changing script descriptors, with an atomic check for
+	 * null.
+	 * 
+	 * @param name
+	 *        The script's name
+	 * @param text
+	 *        The text for the script
+	 * @param tag
+	 *        The tag
+	 * @param script
+	 *        The script instance
+	 * @return The existing script descriptor before we changed it
+	 */
+	public ScriptDescriptor<S> setScriptDescriptorIfAbsent( String name, String text, String tag, S script );
 }

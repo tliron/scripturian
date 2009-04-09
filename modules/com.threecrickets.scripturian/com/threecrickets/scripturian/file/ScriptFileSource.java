@@ -126,13 +126,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	 */
 	public ScriptDescriptor<S> getScriptDescriptor( String name ) throws IOException
 	{
-		File file = new File( basePath, name );
-
-		if( ( defaultName != null ) && file.isDirectory() )
-			file = new File( file, defaultName );
-		else if( ( defaultExtension != null ) && !file.exists() )
-			file = new File( basePath, name + "." + defaultExtension );
-
+		File file = getFileForName( name );
 		name = file.getPath();
 
 		FiledScriptDescriptor filedScriptDescriptor = scriptDescriptors.get( name );
@@ -150,6 +144,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 		if( filedScriptDescriptor == null )
 		{
+			// Create a new descriptor
 			filedScriptDescriptor = new FiledScriptDescriptor( file );
 			FiledScriptDescriptor existing = scriptDescriptors.putIfAbsent( name, filedScriptDescriptor );
 			if( existing != null )
@@ -164,16 +159,18 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	 */
 	public ScriptDescriptor<S> setScriptDescriptor( String name, String text, String tag, S script )
 	{
-		File file = new File( basePath, name );
-
-		if( ( defaultName != null ) && file.isDirectory() )
-			file = new File( file, defaultName );
-		else if( ( defaultExtension != null ) && !file.exists() )
-			file = new File( basePath, name + "." + defaultExtension );
-
-		name = file.getPath();
-
+		name = getFileForName( name ).getPath();
 		return scriptDescriptors.put( name, new FiledScriptDescriptor( text, tag, script ) );
+	}
+
+	/**
+	 * @see ScriptSource#setScriptDescriptorIfAbsent(String, String, String,
+	 *      Object)
+	 */
+	public ScriptDescriptor<S> setScriptDescriptorIfAbsent( String name, String text, String tag, S script )
+	{
+		name = getFileForName( name ).getPath();
+		return scriptDescriptors.putIfAbsent( name, new FiledScriptDescriptor( text, tag, script ) );
 	}
 
 	//
@@ -216,6 +213,18 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
+	private File getFileForName( String name )
+	{
+		File file = new File( basePath, name );
+
+		if( ( defaultName != null ) && file.isDirectory() )
+			file = new File( file, defaultName );
+		else if( ( defaultExtension != null ) && !file.exists() )
+			file = new File( basePath, name + "." + defaultExtension );
+
+		return file;
+	}
+
 	private class FiledScriptDescriptor implements ScriptDescriptor<S>
 	{
 		public String getText()
@@ -237,6 +246,14 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		{
 			S old = this.script;
 			this.script = script;
+			return old;
+		}
+
+		public synchronized S setScriptIfAbsent( S script )
+		{
+			S old = this.script;
+			if( old == null )
+				this.script = script;
 			return old;
 		}
 
