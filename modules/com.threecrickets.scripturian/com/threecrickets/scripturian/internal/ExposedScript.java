@@ -7,24 +7,24 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
-import com.threecrickets.scripturian.EmbeddedScript;
+import com.threecrickets.scripturian.CompositeScript;
 
 /**
  * This is the <code>script</code> variable exposed to the script. The name is
- * set according to {@link EmbeddedScript#getScriptVariableName()}.
+ * set according to {@link CompositeScript#getScriptVariableName()}.
  * 
  * @author Tal Liron
- * @see EmbeddedScript
+ * @see CompositeScript
  */
-public class ExposedEmbeddedScript
+public class ExposedScript
 {
 	//
 	// Construction
 	//
 
-	public ExposedEmbeddedScript( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, ScriptContext scriptContext, Object container )
+	public ExposedScript( CompositeScript compositeScript, ScriptEngine scriptEngine, ScriptContext scriptContext, Object container )
 	{
-		this.embeddedScript = embeddedScript;
+		this.compositeScript = compositeScript;
 		this.scriptEngine = scriptEngine;
 		this.scriptContext = scriptContext;
 		this.container = container;
@@ -43,11 +43,11 @@ public class ExposedEmbeddedScript
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
-	 * @see EmbeddedScript#cacheDuration
+	 * @see CompositeScript#cacheDuration
 	 */
 	public long getCacheDuration()
 	{
-		return embeddedScript.getCacheDuration();
+		return compositeScript.getCacheDuration();
 	}
 
 	/**
@@ -57,7 +57,7 @@ public class ExposedEmbeddedScript
 	 */
 	public void setCacheDuration( long cacheDuration )
 	{
-		embeddedScript.setCacheDuration( cacheDuration );
+		compositeScript.setCacheDuration( cacheDuration );
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class ExposedEmbeddedScript
 	 */
 	public ScriptEngineManager getEngineManager()
 	{
-		return embeddedScript.getScriptEngineManager();
+		return compositeScript.getScriptEngineManager();
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class ExposedEmbeddedScript
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final EmbeddedScript embeddedScript;
+	private final CompositeScript compositeScript;
 
 	private final ScriptEngine scriptEngine;
 

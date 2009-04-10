@@ -12,15 +12,15 @@ import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
 /**
- * Encapsulates context for an {@link EmbeddedScript}. Every thread calling
- * {@link EmbeddedScript#run(boolean, Writer, Writer, boolean, EmbeddedScriptContext, Object, ScriptContextController)}
+ * Encapsulates context for an {@link CompositeScript}. Every thread calling
+ * {@link CompositeScript#run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
  * must use its own context.
  * 
  * @author Tal Liron
  */
-public class EmbeddedScriptContext
+public class CompositeScriptContext
 {
-	public EmbeddedScriptContext( ScriptEngineManager scriptEngineManager )
+	public CompositeScriptContext( ScriptEngineManager scriptEngineManager )
 	{
 		this.scriptEngineManager = scriptEngineManager;
 	}

@@ -40,7 +40,7 @@ import com.threecrickets.scripturian.file.ScriptFileSource;
 import com.threecrickets.scripturian.internal.ExposedScriptedMainContainer;
 
 /**
- * Delegates the main() call to an {@link EmbeddedScript}, in effect using a
+ * Delegates the main() call to an {@link CompositeScript}, in effect using a
  * script as the entry point to a Java platform application. The path to the
  * script file can be supplied as the first argument. If it's not supplied,
  * {@link #defaultPath} is used instead.
@@ -52,7 +52,7 @@ import com.threecrickets.scripturian.internal.ExposedScriptedMainContainer;
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
  * <code>script.container</code>. For some other global variables available to
- * scripts, see {@link EmbeddedScript}.
+ * scripts, see {@link CompositeScript}.
  * <p>
  * Operations:
  * <ul>
@@ -65,10 +65,10 @@ import com.threecrickets.scripturian.internal.ExposedScriptedMainContainer;
  * methods, functions, modules, etc., could be shared. It is important to note
  * that how this works varies a lot per scripting platform. For example, in
  * JRuby, every script is run in its own scope, so that sharing would have to be
- * done explicitly in the global scope. See the included embedded Ruby script
+ * done explicitly in the global scope. See the included Ruby composite script
  * example for a discussion of various ways to do this.</li>
  * <li><code>script.container.include(name, engineName)</code>: As the above,
- * except that the script is not embedded. As such, you must explicitly specify
+ * except that the script is not composite. As such, you must explicitly specify
  * the name of the scripting engine that should evaluate it.</li>
  * </ul>
  * Read-only attributes:
@@ -84,7 +84,7 @@ import com.threecrickets.scripturian.internal.ExposedScriptedMainContainer;
  * </ul>
  * <p>
  * In addition to the above, a {@link #scriptContextController} can be set to
- * add your own global variables to each embedded script.
+ * add your own global variables to each composite script.
  * 
  * @author Tal Liron
  */
@@ -95,7 +95,7 @@ public class ScriptedMain implements Runnable
 	//
 
 	/**
-	 * Delegates to an {@link EmbeddedScript} file specified by the first
+	 * Delegates to an {@link CompositeScript} file specified by the first
 	 * argument, or to {@link ScriptedMain#defaultPath} if not specified.
 	 * 
 	 * @param arguments
@@ -118,7 +118,7 @@ public class ScriptedMain implements Runnable
 		defaultPath = "main.script";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		scriptSource = new ScriptFileSource<EmbeddedScript>( new File( "." ), "index.script", "script", -1 );
+		scriptSource = new ScriptFileSource<CompositeScript>( new File( "." ), "index.script", "script", -1 );
 	}
 
 	//
@@ -169,7 +169,7 @@ public class ScriptedMain implements Runnable
 	}
 
 	/**
-	 * The writer to use for {@link EmbeddedScript}.
+	 * The writer to use for {@link CompositeScript}.
 	 * 
 	 * @return The writer
 	 */
@@ -216,7 +216,7 @@ public class ScriptedMain implements Runnable
 	 * @return The script source
 	 * @see #setScriptSource(ScriptSource)
 	 */
-	public ScriptSource<EmbeddedScript> getScriptSource()
+	public ScriptSource<CompositeScript> getScriptSource()
 	{
 		return scriptSource;
 	}
@@ -226,7 +226,7 @@ public class ScriptedMain implements Runnable
 	 *        The script source
 	 * @see #getScriptSource()
 	 */
-	public void setScriptSource( ScriptSource<EmbeddedScript> scriptSource )
+	public void setScriptSource( ScriptSource<CompositeScript> scriptSource )
 	{
 		this.scriptSource = scriptSource;
 	}
@@ -277,5 +277,5 @@ public class ScriptedMain implements Runnable
 
 	private ScriptContextController scriptContextController;
 
-	private ScriptSource<EmbeddedScript> scriptSource;
+	private ScriptSource<CompositeScript> scriptSource;
 }

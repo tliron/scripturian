@@ -53,38 +53,38 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
+import com.threecrickets.scripturian.internal.ExposedScript;
 
 /**
- * Handles the parsing, optional compilation and running of embedded scripts.
+ * Handles the parsing, optional compilation and running of composite scripts.
  * <p>
- * Embedded scripts are text streams containing a mix of script code, which is
- * embedded between special delimiters, and plain text. During the parsing
- * stage, which happens only once in the constructor, the entire text stream is
- * converted into script code. When the script is run, non-delimited plain text
- * being sent to output via whatever method is appropriate for the scripting
- * engine (see {@link EmbeddedScriptParsingHelper}). The exception to this is
- * text streams beginning with plain text -- in such cases, just that first
- * section is sent to your specified output in pure Java. The reasons for this
- * are two: first, that no script engine has been specified yet, so we can't be
- * sure which to use, and second, that sending in pure Java is probably a bit
- * faster than sending in script. If the entire text stream is just plain text,
- * it is simply sent to output without invoking any script engine. In such
- * cases, {@link #getTrivial()} would return the content of the text stream.
+ * Composite scripts are text streams containing a mix of plain text and
+ * "scriptlets" -- script code embedded between special delimiters. During the
+ * parsing stage, which happens only once in the constructor, the entire text
+ * stream is converted into script code. When the script is run, the
+ * non-delimited plain text being sent to output via whatever method is
+ * appropriate for the scripting engine (see {@link ScriptletParsingHelper}).
+ * The exception to this is text streams beginning with plain text -- in such
+ * cases, just that first section is sent to your specified output in pure Java.
+ * The reasons for this are two: first, that no script engine has been specified
+ * yet, so we can't be sure which to use, and second, that sending in pure Java
+ * is probably a bit faster than sending in script. If the entire text stream is
+ * just plain text, it is simply sent to output without invoking any script
+ * engine. In such cases, {@link #getTrivial()} would return the content of the
+ * text stream.
  * <p>
  * Text streams are often provided by an implementation of {@link ScriptSource},
  * though your environment can use its own method.
  * <p>
- * Embedded scripts can easily be abused, becoming hard to read and hard to
+ * Composite scripts can easily be abused, becoming hard to read and hard to
  * maintain, since both code and plain text are mixed together. However, they
  * can boost productivity in environments which mostly just output plain text.
  * For example, in an application that dynamically generates HTML web pages, it
  * is likely that most files will be in HTML with only some parts of some files
- * containing embedded script. In such cases, it is easy to have a professional
- * web designer work on the HTML parts while the embedded scripts are reserved
- * for the programmer. Web design software can often recognize embedded script
- * and take care to keep it safe while the web designer makes changes to the
- * file.
+ * containing scriptlets. In such cases, it is easy to have a professional web
+ * designer work on the HTML parts while the scriptlets are reserved for the
+ * programmer. Web design software can often recognize scriptlets and take care
+ * to keep it safe while the web designer makes changes to the file.
  * <p>
  * This class can support multiple script languages and engines within the same
  * text. Each delimited script segment can specify which engine it uses
@@ -96,21 +96,22 @@ import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
  * and the PHP style (using question marks). However, each text stream must
  * adhere to only one style throughout.
  * <p>
- * In addition to embedded scripts, this class supports a shorthand for embedded
- * script expressions. These are internally just sent to standard output.
- * However, they can allow for more compact and cleaner code.
+ * In addition to scriptlets which are regular script code, this class supports
+ * shorthand for common scriptlet tasks.
  * <p>
- * Another shorthand exists for including other script files. However, for it to
- * work, you must make sure that a <code>script.container.include(name)</code>
- * method is available to the script, which would then process the include as is
- * appropriate to your environment.
+ * The expression tag causes the expression to be sent to standard output. It
+ * can allow for more compact and cleaner code.
  * <p>
- * Finally, the in-flow shorthand works exactly like an include, but lets you
- * place the included script into the flow of the current script. The inclusion
- * is applied to the previously used script engine, which is then restored to
- * being the default engine after the in-flow tag. This construct allows for
- * very powerful and clean mixing of scripting engines, without cumbersome
- * creation of separate scripts for inclusion.
+ * The include tag invokes the <code>script.container.include(name)</code>
+ * command as appropriate for the script engine. Note that you need this command
+ * to be supported by your container environment.
+ * <p>
+ * Finally, the in-flow tag works exactly like an include, but lets you place
+ * the included script into the flow of the current script. The inclusion is
+ * applied to the previously used script engine, which is then restored to being
+ * the default engine after the in-flow tag. This construct allows for very
+ * powerful and clean mixing of scripting engines, without cumbersome creation
+ * of separate scripts for inclusion.
  * <p>
  * Examples:
  * <ul>
@@ -132,7 +133,7 @@ import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
  * <code>script</code> (this name can be changed via the
- * {@link #EmbeddedScript(String, ScriptEngineManager, String, ScriptSource, boolean, String, String, String, String, String, String, String, String)}
+ * {@link #CompositeScript(String, ScriptEngineManager, String, ScriptSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
@@ -164,7 +165,7 @@ import com.threecrickets.scripturian.internal.ExposedEmbeddedScript;
  * 
  * @author Tal Liron
  */
-public class EmbeddedScript
+public class CompositeScript
 {
 	//
 	// Constants
@@ -216,15 +217,15 @@ public class EmbeddedScript
 	//
 
 	/**
-	 * A map of script engine names to their {@link EmbeddedScriptParsingHelper}
-	 * . Note that embedded scripts will not work without the appropriate
-	 * parsing helpers being installed.
+	 * A map of script engine names to their {@link ScriptletParsingHelper} .
+	 * Note that composite scripts will not work without the appropriate parsing
+	 * helpers installed.
 	 * <p>
 	 * This map is automatically initialized when this class loads according to
 	 * resources named
-	 * <code>META-INF/services/com.threecrickets.scripturian.EmbeddedScriptParsingHelper</code>
+	 * <code>META-INF/services/com.threecrickets.scripturian.ScriptletParsingHelper</code>
 	 * . Each resource is a simple text file with class names, one per line.
-	 * Each class listed must implement the {@link EmbeddedScriptParsingHelper}
+	 * Each class listed must implement the {@link ScriptletParsingHelper}
 	 * interface and specify which engine names it supports via the
 	 * {@link ScriptEngines} annotation.
 	 * <p>
@@ -234,27 +235,26 @@ public class EmbeddedScript
 	 * The default implementation of this library already contains a few useful
 	 * parsing helpers, under the com.threecrickets.scripturian.helper package.
 	 */
-	public static ConcurrentMap<String, EmbeddedScriptParsingHelper> embeddedScriptParsingHelpers = new ConcurrentHashMap<String, EmbeddedScriptParsingHelper>();
+	public static ConcurrentMap<String, ScriptletParsingHelper> scriptletParsingHelpers = new ConcurrentHashMap<String, ScriptletParsingHelper>();
 
 	{
-		// Initialize embeddedScriptParsingHelpers (look for them in META-INF)
+		// Initialize scriptletParsingHelpers (look for them in META-INF)
 
 		// For Java 6
 
 		/*
-		 * ServiceLoader<EmbeddedScriptParsingHelper> serviceLoader =
-		 * ServiceLoader.load( EmbeddedScriptParsingHelper.class ); for(
-		 * EmbeddedScriptParsingHelper embeddedScriptParsingHelper :
-		 * serviceLoader ) { ScriptEngines scriptEngines =
-		 * embeddedScriptParsingHelper.getClass().getAnnotation(
-		 * ScriptEngines.class ); if( scriptEngines != null ) for( String
-		 * scriptEngine : scriptEngines.value() )
-		 * embeddedScriptParsingHelpers.put( scriptEngine,
-		 * embeddedScriptParsingHelper ); }
+		 * ServiceLoader<ScriptletParsingHelper> serviceLoader =
+		 * ServiceLoader.load( ScriptletParsingHelper.class ); for(
+		 * ScriptletParsingHelper scriptletParsingHelper : serviceLoader ) {
+		 * ScriptEngines scriptEngines =
+		 * scriptletParsingHelper.getClass().getAnnotation( ScriptEngines.class
+		 * ); if( scriptEngines != null ) for( String scriptEngine :
+		 * scriptEngines.value() ) scriptletParsingHelpers.put( scriptEngine,
+		 * scriptletParsingHelper ); }
 		 */
 
 		// For Java 5
-		String resourceName = "META-INF/services/" + EmbeddedScriptParsingHelper.class.getCanonicalName();
+		String resourceName = "META-INF/services/" + ScriptletParsingHelper.class.getCanonicalName();
 		try
 		{
 			Enumeration<URL> resources = ClassLoader.getSystemResources( resourceName );
@@ -268,11 +268,11 @@ public class EmbeddedScript
 					line = line.trim();
 					if( ( line.length() > 0 ) && !line.startsWith( "#" ) )
 					{
-						EmbeddedScriptParsingHelper embeddedScriptParsingHelper = (EmbeddedScriptParsingHelper) Class.forName( line ).newInstance();
-						ScriptEngines scriptEngines = embeddedScriptParsingHelper.getClass().getAnnotation( ScriptEngines.class );
+						ScriptletParsingHelper scriptletParsingHelper = (ScriptletParsingHelper) Class.forName( line ).newInstance();
+						ScriptEngines scriptEngines = scriptletParsingHelper.getClass().getAnnotation( ScriptEngines.class );
 						if( scriptEngines != null )
 							for( String scriptEngine : scriptEngines.value() )
-								embeddedScriptParsingHelpers.put( scriptEngine, embeddedScriptParsingHelper );
+								scriptletParsingHelpers.put( scriptEngine, scriptletParsingHelper );
 					}
 					line = reader.readLine();
 				}
@@ -303,18 +303,18 @@ public class EmbeddedScript
 	//
 
 	/**
-	 * Parses a text stream containing plan text and embedded script segments
-	 * into a compact, optimized script. Parsing requires the appropriate
-	 * {@link EmbeddedScriptParsingHelper} implementations to be installed for
-	 * the script engines.
+	 * Parses a text stream containing plain text and scriptlets into a compact,
+	 * optimized script. Parsing requires the appropriate
+	 * {@link ScriptletParsingHelper} implementations to be installed for the
+	 * script engines.
 	 * 
 	 * @param text
 	 *        The text stream
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
-	 *        If a script engine name isn't explicitly specified in the embedded
-	 *        script file, this one will be used
+	 *        If a script engine name isn't explicitly specified in the
+	 *        composite script file, this one will be used
 	 * @param scriptSource
 	 *        The script source (used for in-flow tags)
 	 * @param allowCompilation
@@ -324,25 +324,25 @@ public class EmbeddedScript
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 */
-	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<EmbeddedScript> scriptSource, boolean allowCompilation ) throws ScriptException
+	public CompositeScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<CompositeScript> scriptSource, boolean allowCompilation ) throws ScriptException
 	{
 		this( text, scriptEngineManager, defaultEngineName, scriptSource, allowCompilation, DEFAULT_SCRIPT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
 			DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
 	/**
-	 * Parses a text stream containing plan text and embedded script segments
-	 * into a compact, optimized script. Parsing requires the appropriate
-	 * {@link EmbeddedScriptParsingHelper} implementations to be installed for
-	 * the script engines.
+	 * Parses a text stream containing plainn text and scriptlets into a
+	 * compact, optimized script. Parsing requires the appropriate
+	 * {@link ScriptletParsingHelper} implementations to be installed for the
+	 * script engines.
 	 * 
 	 * @param text
 	 *        The text stream
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
-	 *        If a script engine name isn't explicitly specified in the embedded
-	 *        script file, this one will be used
+	 *        If a script engine name isn't explicitly specified in the
+	 *        composite script file, this one will be used
 	 * @param scriptSource
 	 *        The script source (used for in-flow tags)
 	 * @param allowCompilation
@@ -370,9 +370,9 @@ public class EmbeddedScript
 	 *        tag
 	 * @throws ScriptException
 	 *         In case of a parsing error
-	 * @see EmbeddedScriptParsingHelper
+	 * @see ScriptletParsingHelper
 	 */
-	public EmbeddedScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<EmbeddedScript> scriptSource, boolean allowCompilation, String scriptVariableName,
+	public CompositeScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<CompositeScript> scriptSource, boolean allowCompilation, String scriptVariableName,
 		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ScriptException
 	{
 		this.scriptEngineManager = scriptEngineManager;
@@ -483,14 +483,14 @@ public class EmbeddedScript
 							if( scriptEngine == null )
 								throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
 
-							EmbeddedScriptParsingHelper embeddedScriptParsingHelper = embeddedScriptParsingHelpers.get( scriptEngineName );
-							if( embeddedScriptParsingHelper == null )
-								throw new ScriptException( "Embedded script parsing helper not available for script engine: " + scriptEngineName );
+							ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( scriptEngineName );
+							if( scriptletParsingHelper == null )
+								throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
 
 							if( isExpression )
-								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new Segment( scriptletParsingHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
 							else if( isInclude )
-								segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new Segment( scriptletParsingHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
 						}
 						else if( isInFlow && ( scriptSource != null ) )
 						{
@@ -498,25 +498,25 @@ public class EmbeddedScript
 							if( lastScriptEngine == null )
 								throw new ScriptException( "Unsupported script engine: " + lastScriptEngineName );
 
-							EmbeddedScriptParsingHelper embeddedScriptParsingHelper = embeddedScriptParsingHelpers.get( lastScriptEngineName );
-							if( embeddedScriptParsingHelper == null )
-								throw new ScriptException( "Embedded script parsing helper not available for script engine: " + lastScriptEngineName );
+							ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( lastScriptEngineName );
+							if( scriptletParsingHelper == null )
+								throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + lastScriptEngineName );
 
 							String inFlowText = delimiterStart + scriptEngineName + " " + text.substring( start, end ) + delimiterEnd;
 							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
 
-							// Note that the in-flow embedded script is a
+							// Note that the in-flow scriptlet is a
 							// single segment, so we can optimize parsing a
 							// bit
-							EmbeddedScript inFlowEmbeddedScript = new EmbeddedScript( inFlowText, scriptEngineManager, null, null, allowCompilation, scriptVariableName, delimiterStart, delimiterEnd, delimiterStart,
+							CompositeScript inFlowScript = new CompositeScript( inFlowText, scriptEngineManager, null, null, allowCompilation, scriptVariableName, delimiterStart, delimiterEnd, delimiterStart,
 								delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
-							scriptSource.setScriptDescriptor( inFlowName, inFlowText, "", inFlowEmbeddedScript );
+							scriptSource.setScriptDescriptor( inFlowName, inFlowText, "", inFlowScript );
 
 							// TODO: would it ever be possible to remove the
 							// dependent in-flow instances?
 
 							// Our include is in the last script engine
-							segments.add( new Segment( embeddedScriptParsingHelper.getExpressionAsInclude( this, lastScriptEngine, "'" + inFlowName + "'" ), true, lastScriptEngineName ) );
+							segments.add( new Segment( scriptletParsingHelper.getExpressionAsInclude( this, lastScriptEngine, "'" + inFlowName + "'" ), true, lastScriptEngineName ) );
 						}
 						else
 							segments.add( new Segment( text.substring( start, end ), true, scriptEngineName ) );
@@ -588,19 +588,19 @@ public class EmbeddedScript
 						if( scriptEngine == null )
 							throw new ScriptException( "Unsupported script engine: " + current.scriptEngineName );
 
-						EmbeddedScriptParsingHelper embeddedScriptParsingHelper = embeddedScriptParsingHelpers.get( current.scriptEngineName );
-						if( embeddedScriptParsingHelper == null )
-							throw new ScriptException( "Embedded script parsing helper not available for script engine: " + current.scriptEngineName );
+						ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( current.scriptEngineName );
+						if( scriptletParsingHelper == null )
+							throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + current.scriptEngineName );
 
 						// ScriptEngineFactory factory =
 						// scriptEngine.getFactory();
 						// previous.text += factory.getProgram(
 						// factory.getOutputStatement(
-						// embeddedScriptParsingHelper.getTextAsScript(
+						// scriptletParsingHelper.getTextAsScript(
 						// scriptEngine,
 						// current.text ) ) );
 
-						previous.text += embeddedScriptParsingHelper.getTextAsProgram( this, scriptEngine, current.text );
+						previous.text += scriptletParsingHelper.getTextAsProgram( this, scriptEngine, current.text );
 					}
 
 					current = previous;
@@ -620,17 +620,17 @@ public class EmbeddedScript
 					if( scriptEngine == null )
 						throw new ScriptException( "Unsupported script engine: " + segment.scriptEngineName );
 
-					EmbeddedScriptParsingHelper embeddedScriptParsingHelper = embeddedScriptParsingHelpers.get( segment.scriptEngineName );
-					if( embeddedScriptParsingHelper == null )
-						throw new ScriptException( "Embedded script parsing helper not available for script engine: " + segment.scriptEngineName );
+					ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( segment.scriptEngineName );
+					if( scriptletParsingHelper == null )
+						throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + segment.scriptEngineName );
 
 					// Add header
-					String header = embeddedScriptParsingHelper.getScriptHeader( this, scriptEngine );
+					String header = scriptletParsingHelper.getScriptletHeader( this, scriptEngine );
 					if( header != null )
 						segment.text = header + segment.text;
 
 					// Add footer
-					String footer = embeddedScriptParsingHelper.getScriptFooter( this, scriptEngine );
+					String footer = scriptletParsingHelper.getScriptletFooter( this, scriptEngine );
 					if( footer != null )
 						segment.text += footer;
 
@@ -667,7 +667,7 @@ public class EmbeddedScript
 	}
 
 	/**
-	 * The default variable name for the {@link ExposedEmbeddedScript} instance.
+	 * The default variable name for the {@link ExposedScript} instance.
 	 */
 	public String getScriptVariableName()
 	{
@@ -698,12 +698,11 @@ public class EmbeddedScript
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
-	 * {@link #run(boolean, Writer, Writer, boolean, EmbeddedScriptContext, Object, ScriptContextController)}
+	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
 	 * causes the script to be run. This class does not handle caching itself.
 	 * Caching can be provided by your environment if appropriate.
 	 * <p>
-	 * This is the same instance provided for
-	 * ExposedEmbeddedScript#getCacheDuration().
+	 * This is the same instance provided for ExposedScript#getCacheDuration().
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
@@ -725,13 +724,13 @@ public class EmbeddedScript
 	}
 
 	/**
-	 * Trivial embedded script objects have no embedded scripts, meaning that
-	 * they are pure text. Identifying such scripts can save you from making
-	 * unnecessary calls to
-	 * {@link #run(boolean, Writer, Writer, boolean, EmbeddedScriptContext, Object, ScriptContextController)}
+	 * Trivial composite script objects have no scriptlets, meaning that they
+	 * are pure text. Identifying such composite scripts can save you from
+	 * making unnecessary calls to
+	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
 	 * in some situations.
 	 * 
-	 * @return The script content if it's trivial, null if not
+	 * @return The text content if it's trivial, null if not
 	 */
 	public String getTrivial()
 	{
@@ -770,13 +769,13 @@ public class EmbeddedScript
 	 * @param scriptContextController
 	 *        An optional {@link ScriptContextController} to be applied to the
 	 *        script context
-	 * @param embeddedScriptContext
+	 * @param compositeScriptContext
 	 *        The context
 	 * @return True if the script ran, false if it didn't run, because the
 	 *         cached output is expected to be used instead
 	 * @throws ScriptException
 	 */
-	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, EmbeddedScriptContext embeddedScriptContext, Object container, ScriptContextController scriptContextController )
+	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, CompositeScriptContext compositeScriptContext, Object container, ScriptContextController scriptContextController )
 		throws ScriptException, IOException
 	{
 		long now = System.currentTimeMillis();
@@ -787,7 +786,7 @@ public class EmbeddedScript
 		}
 		else
 		{
-			ScriptContext scriptContext = embeddedScriptContext.getScriptContext();
+			ScriptContext scriptContext = compositeScriptContext.getScriptContext();
 
 			// Note that some script engines (such as Rhino) expect a
 			// PrintWriter, even though the spec defines just a Writer
@@ -808,10 +807,10 @@ public class EmbeddedScript
 						writer.write( segment.text );
 					else
 					{
-						ScriptEngine scriptEngine = embeddedScriptContext.getScriptEngine( segment.scriptEngineName );
+						ScriptEngine scriptEngine = compositeScriptContext.getScriptEngine( segment.scriptEngineName );
 
 						Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-						scriptContext.setAttribute( scriptVariableName, new ExposedEmbeddedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
+						scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
 
 						try
 						{
@@ -856,7 +855,7 @@ public class EmbeddedScript
 					scriptContextController.finalize( scriptContext );
 			}
 
-			this.lastEmbeddedScriptContext = embeddedScriptContext;
+			this.lastCompositeScriptContext = compositeScriptContext;
 			lastRun.set( now );
 			return true;
 		}
@@ -866,10 +865,10 @@ public class EmbeddedScript
 	 * Calls an entry point in the script: a function, method, closure, etc.,
 	 * according to how the scripting engine and its language handles
 	 * invocations. If not, then this method requires the appropriate
-	 * {@link EmbeddedScriptParsingHelper} implementation to be installed for
-	 * the script engine. Most likely, the script engine supports the
+	 * {@link ScriptletParsingHelper} implementation to be installed for the
+	 * script engine. Most likely, the script engine supports the
 	 * {@link Invocable} interface. Running the script first (via
-	 * {@link #run(boolean, Writer, Writer, boolean, EmbeddedScriptContext, Object, ScriptContextController)}
+	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
 	 * ) is not absolutely required, but probably will be necessary in most
 	 * useful scenarios, where running the script causes useful entry point to
 	 * be defined.
@@ -877,6 +876,12 @@ public class EmbeddedScript
 	 * Note that this call does not support sending arguments. If you need to
 	 * pass data to the script, use a global variable, which you can set via the
 	 * optional {@link ScriptContextController}.
+	 * <p>
+	 * Important concurrency note! The invoke mechanism was designed for
+	 * multi-threaded access, so it's the responsibility of your script to be
+	 * thread-safe. Also note that internally invoke relies on the last
+	 * {@link CompositeScriptContext} used in the last call to
+	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}.
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
@@ -894,24 +899,24 @@ public class EmbeddedScript
 	 */
 	public Object invoke( String entryPointName, Object container, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
 	{
-		ScriptEngine scriptEngine = lastEmbeddedScriptContext.getLastScriptEngine();
-		ScriptContext scriptContext = lastEmbeddedScriptContext.getScriptContext();
-		String scriptEngineName = lastEmbeddedScriptContext.getLastScriptEngineName();
+		ScriptEngine scriptEngine = lastCompositeScriptContext.getLastScriptEngine();
+		ScriptContext scriptContext = lastCompositeScriptContext.getScriptContext();
+		String scriptEngineName = lastCompositeScriptContext.getLastScriptEngineName();
 
 		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( scriptVariableName, new ExposedEmbeddedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
 
 		if( scriptContextController != null )
 			scriptContextController.initialize( scriptContext );
 
 		try
 		{
-			EmbeddedScriptParsingHelper embeddedScriptParsingHelper = embeddedScriptParsingHelpers.get( scriptEngineName );
+			ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( scriptEngineName );
 
-			if( embeddedScriptParsingHelper == null )
-				throw new ScriptException( "Embedded script parsing helper not available for script engine: " + scriptEngineName );
+			if( scriptletParsingHelper == null )
+				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
 
-			String program = embeddedScriptParsingHelper.getInvocationAsProgram( this, scriptEngine, entryPointName );
+			String program = scriptletParsingHelper.getInvocationAsProgram( this, scriptEngine, entryPointName );
 			if( program == null )
 			{
 				if( scriptEngine instanceof Invocable )
@@ -955,7 +960,7 @@ public class EmbeddedScript
 
 	private final AtomicLong lastRun = new AtomicLong();
 
-	private EmbeddedScriptContext lastEmbeddedScriptContext;
+	private CompositeScriptContext lastCompositeScriptContext;
 
 	private static class Segment
 	{

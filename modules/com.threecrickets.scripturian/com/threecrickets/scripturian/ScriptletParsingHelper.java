@@ -32,39 +32,39 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 
 /**
- * This interface handles additional scripting tasks specific to the embedded
- * scripting platform, which are not covered by standard Java scripting support.
- * It must be implemented for every embedded scripting language.
+ * This interface handles additional scripting tasks specific to parsing
+ * scriptlets, which are not covered by standard Java scripting support. It must
+ * be implemented for every script engine used by {@link CompositeScript}.
  * 
  * @author Tal Liron
- * @see EmbeddedScript
+ * @see CompositeScript
  */
-public interface EmbeddedScriptParsingHelper
+public interface ScriptletParsingHelper
 {
 	/**
 	 * The header is inserted at the beginning of every script. It is useful for
 	 * appropriately setting up the script's environment.
 	 * 
-	 * @param embeddedScript
-	 *        The embedded script instance
+	 * @param compositeScript
+	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @return The header or null
 	 */
-	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine );
+	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine );
 
 	/**
 	 * The footer is appended to the end of every script. It is useful for
 	 * cleaning up resources created in the header.
 	 * 
-	 * @param embeddedScript
-	 *        The embedded script instance
+	 * @param compositeScript
+	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @return The footer or null
-	 * @see #getScriptHeader(EmbeddedScript, ScriptEngine)
+	 * @see #getScriptletHeader(CompositeScript, ScriptEngine)
 	 */
-	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine );
+	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine );
 
 	/**
 	 * Turns text into a command or series of commands to print the text to
@@ -72,15 +72,15 @@ public interface EmbeddedScriptParsingHelper
 	 * multiple lines, and include arbitrary characters. The parsing helper
 	 * makes sure to escape special characters, partition long text, etc.
 	 * 
-	 * @param embeddedScript
-	 *        The embedded script instance
+	 * @param compositeScript
+	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
 	 *        The content
 	 * @return A command or series of commands to print the content
 	 */
-	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
+	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Turns an expression into a command or series of commands to print the
@@ -88,15 +88,15 @@ public interface EmbeddedScriptParsingHelper
 	 * simply involves wrapping the expression in something like a print
 	 * command.
 	 * 
-	 * @param embeddedScript
-	 *        The embedded script instance
+	 * @param compositeScript
+	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
 	 *        The content
 	 * @return A command or series of commands to print the expression
 	 */
-	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
+	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Turns an expression into a command or series of commands to include the
@@ -104,25 +104,25 @@ public interface EmbeddedScriptParsingHelper
 	 * that this requires the script to have access to a global method named
 	 * <code>script.container.include</code>.
 	 * 
-	 * @param embeddedScript
-	 *        The embedded script instance
+	 * @param compositeScript
+	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
 	 *        The content
 	 * @return A command or series of commands to include the script named for
 	 *         the expression
-	 * @see EmbeddedScript#getScriptVariableName()
+	 * @see CompositeScript#getScriptVariableName()
 	 */
-	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
+	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Creates a command or series of commands to invoke an entry point
 	 * (function, method, closure, etc.) in the script. Note that for engines
 	 * that implement {@link Invocable} you must return null.
 	 * 
-	 * @param embeddedScript
-	 *        The embedded script instance
+	 * @param compositeScript
+	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param content
@@ -130,5 +130,5 @@ public interface EmbeddedScriptParsingHelper
 	 * @return A command or series of commands to call the entry point, or null
 	 *         to signify that {@link Invocable} should be used
 	 */
-	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content );
+	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content );
 }

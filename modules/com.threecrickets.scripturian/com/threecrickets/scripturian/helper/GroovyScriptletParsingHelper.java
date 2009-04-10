@@ -30,56 +30,58 @@ package com.threecrickets.scripturian.helper;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.EmbeddedScript;
-import com.threecrickets.scripturian.EmbeddedScriptParsingHelper;
+import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
 /**
- * An {@link EmbeddedScriptParsingHelper} that supports the JavaScript scripting
- * language as implemented by <a href="http://www.mozilla.org/rhino/">Rhino</a>.
+ * An {@link ScriptletParsingHelper} that supports the <a
+ * href="http://groovy.codehaus.org/">Groovy</a> scripting language.
  * 
  * @author Tal Liron
  */
 @ScriptEngines(
 {
-	"js", "javascript", "JavaScript", "ecmascript", "ECMAScript", "rhino", "rhino-nonjdk"
+	"groovy", "Groovy"
 })
-public class RhinoEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
+public class GroovyScriptletParsingHelper implements ScriptletParsingHelper
 {
 	//
-	// EmbeddedScriptParsingHelper
+	// ScriptletParsingHelper
 	//
 
-	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
-		// Rhino's default implementation of print() is annoyingly a println().
-		// This will fix it.
-		return "print=function(str){context.writer.print(String(str));};";
+		// There's a bug in Groovy's script engine implementation (as of version
+		// 1.6) that makes it lose the connection between the script's output
+		// and our script context writer in some cases. This makes sure that
+		// they are connected.
+		return "out=context.writer;";
 	}
 
-	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\'", "\\\\'" );
 		return "print('" + content + "');";
 	}
 
-	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		return embeddedScript.getScriptVariableName() + ".container.include(" + content + ");";
+		return compositeScript.getScriptVariableName() + ".container.include(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}

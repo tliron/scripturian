@@ -33,8 +33,8 @@ import java.io.IOException;
 
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.EmbeddedScript;
-import com.threecrickets.scripturian.EmbeddedScriptContext;
+import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.CompositeScriptContext;
 import com.threecrickets.scripturian.ScriptSource;
 import com.threecrickets.scripturian.ScriptedMain;
 
@@ -53,7 +53,7 @@ public class ExposedScriptedMainContainer
 	public ExposedScriptedMainContainer( ScriptedMain scriptedMain )
 	{
 		this.scriptedMain = scriptedMain;
-		embeddedScriptContext = new EmbeddedScriptContext( scriptedMain.getScriptEngineManager() );
+		compositeScriptContext = new CompositeScriptContext( scriptedMain.getScriptEngineManager() );
 	}
 
 	//
@@ -70,7 +70,7 @@ public class ExposedScriptedMainContainer
 	 * modules, etc., could be shared. It is important to note that how this
 	 * works varies a lot per scripting platform. For example, in JRuby, every
 	 * script is run in its own scope, so that sharing would have to be done
-	 * explicitly in the global scope. See the included embedded Ruby script
+	 * explicitly in the global scope. See the included Ruby composite script
 	 * example for a discussion of various ways to do this.
 	 * 
 	 * @param name
@@ -84,7 +84,7 @@ public class ExposedScriptedMainContainer
 	}
 
 	/**
-	 * As {@link #include(String)}, except that the script is not embedded. As
+	 * As {@link #include(String)}, except that the script is not composite. As
 	 * such, you must explicitly specify the name of the scripting engine that
 	 * should evaluate it.
 	 * 
@@ -100,19 +100,19 @@ public class ExposedScriptedMainContainer
 	{
 		String text = ScripturianUtil.getString( new File( name ) );
 		if( engineName != null )
-			text = EmbeddedScript.DEFAULT_DELIMITER1_START + engineName + " " + text + EmbeddedScript.DEFAULT_DELIMITER1_END;
+			text = CompositeScript.DEFAULT_DELIMITER1_START + engineName + " " + text + CompositeScript.DEFAULT_DELIMITER1_END;
 
-		ScriptSource.ScriptDescriptor<EmbeddedScript> scriptDescriptor = scriptedMain.getScriptSource().getScriptDescriptor( name );
-		EmbeddedScript script = scriptDescriptor.getScript();
+		ScriptSource.ScriptDescriptor<CompositeScript> scriptDescriptor = scriptedMain.getScriptSource().getScriptDescriptor( name );
+		CompositeScript script = scriptDescriptor.getScript();
 		if( script == null )
 		{
-			script = new EmbeddedScript( text, scriptedMain.getScriptEngineManager(), getDefaultEngineName(), scriptedMain.getScriptSource(), scriptedMain.isAllowCompilation() );
-			EmbeddedScript existing = scriptDescriptor.setScriptIfAbsent( script );
+			script = new CompositeScript( text, scriptedMain.getScriptEngineManager(), getDefaultEngineName(), scriptedMain.getScriptSource(), scriptedMain.isAllowCompilation() );
+			CompositeScript existing = scriptDescriptor.setScriptIfAbsent( script );
 			if( existing != null )
 				script = existing;
 		}
 
-		script.run( false, scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, embeddedScriptContext, this, scriptedMain.getScriptContextController() );
+		script.run( false, scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, compositeScriptContext, this, scriptedMain.getScriptContextController() );
 	}
 
 	//
@@ -156,7 +156,7 @@ public class ExposedScriptedMainContainer
 
 	private final ScriptedMain scriptedMain;
 
-	private final EmbeddedScriptContext embeddedScriptContext;
+	private final CompositeScriptContext compositeScriptContext;
 
 	private String defaultEngineName = "js";
 }

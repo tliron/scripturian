@@ -34,7 +34,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used for {@link EmbeddedScriptParsingHelper} implementations to mark
+ * Used for {@link ScriptletParsingHelper} implementations to mark
  * supported script engine names.
  * 
  * @author Tal Liron

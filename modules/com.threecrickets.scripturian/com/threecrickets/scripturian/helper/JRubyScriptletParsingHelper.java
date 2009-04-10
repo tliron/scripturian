@@ -30,12 +30,12 @@ package com.threecrickets.scripturian.helper;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.EmbeddedScript;
-import com.threecrickets.scripturian.EmbeddedScriptParsingHelper;
+import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
 /**
- * An {@link EmbeddedScriptParsingHelper} that supports the Ruby scripting
+ * An {@link ScriptletParsingHelper} that supports the Ruby scripting
  * language as implemented by <a href="http://jruby.codehaus.org/">JRuby</a>.
  * <p>
  * Note that JRuby internally embeds each script in a "main" object, so that
@@ -65,40 +65,40 @@ import com.threecrickets.scripturian.ScriptEngines;
 {
 	"ruby", "jruby"
 })
-public class JRubyEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
+public class JRubyScriptletParsingHelper implements ScriptletParsingHelper
 {
 	//
-	// EmbeddedScriptParsingHelper
+	// ScriptletParsingHelper
 	//
 
-	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
 		return "print(\"" + content + "\");";
 	}
 
-	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		return "$" + embeddedScript.getScriptVariableName() + ".container.include(" + content + ");";
+		return "$" + compositeScript.getScriptVariableName() + ".container.include(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		// return "$invocable.send(:" + content + ");";
 		return "$" + content + ".call;";

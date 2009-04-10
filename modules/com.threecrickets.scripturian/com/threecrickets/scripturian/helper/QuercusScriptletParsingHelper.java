@@ -30,12 +30,12 @@ package com.threecrickets.scripturian.helper;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.EmbeddedScript;
-import com.threecrickets.scripturian.EmbeddedScriptParsingHelper;
+import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
 /**
- * An {@link EmbeddedScriptParsingHelper} that supports the PHP scripting
+ * An {@link ScriptletParsingHelper} that supports the PHP scripting
  * language as implemented by <a href="http://quercus.caucho.com/">Quercus</a>.
  * <p>
  * Note the peculiarity of the "include" implementation -- due to limitations of
@@ -50,40 +50,40 @@ import com.threecrickets.scripturian.ScriptEngines;
 {
 	"php", "quercus"
 })
-public class QuercusEmbeddedParsingHelper implements EmbeddedScriptParsingHelper
+public class QuercusScriptletParsingHelper implements ScriptletParsingHelper
 {
 	//
-	// EmbeddedScriptParsingHelper
+	// ScriptletParsingHelper
 	//
 
-	public String getScriptHeader( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		return "<?php";
 	}
 
-	public String getScriptFooter( EmbeddedScript embeddedScript, ScriptEngine scriptEngine )
+	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		return "?>";
 	}
 
-	public String getTextAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
 		return "print(\"" + content + "\");";
 	}
 
-	public String getExpressionAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		return "include $" + embeddedScript.getScriptVariableName() + "->container->source->basePath . '/' . " + content + ";";
+		return "include $" + compositeScript.getScriptVariableName() + "->container->source->basePath . '/' . " + content + ";";
 	}
 
-	public String getInvocationAsProgram( EmbeddedScript embeddedScript, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
 		return "<?php " + content + "(); ?>";
 	}
