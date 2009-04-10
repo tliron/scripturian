@@ -30,13 +30,11 @@ package com.threecrickets.scripturian.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.EmbeddedScript;
+import com.threecrickets.scripturian.EmbeddedScriptContext;
 import com.threecrickets.scripturian.ScriptSource;
 import com.threecrickets.scripturian.ScriptedMain;
 
@@ -55,6 +53,7 @@ public class ExposedScriptedMainContainer
 	public ExposedScriptedMainContainer( ScriptedMain scriptedMain )
 	{
 		this.scriptedMain = scriptedMain;
+		embeddedScriptContext = new EmbeddedScriptContext( scriptedMain.getScriptEngineManager() );
 	}
 
 	//
@@ -113,7 +112,7 @@ public class ExposedScriptedMainContainer
 				script = existing;
 		}
 
-		script.run( scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, scriptEngines, this, scriptedMain.getScriptContextController(), false );
+		script.run( false, scriptedMain.getWriter(), scriptedMain.getErrorWriter(), true, embeddedScriptContext, this, scriptedMain.getScriptContextController() );
 	}
 
 	//
@@ -157,7 +156,7 @@ public class ExposedScriptedMainContainer
 
 	private final ScriptedMain scriptedMain;
 
-	private final ConcurrentMap<String, ScriptEngine> scriptEngines = new ConcurrentHashMap<String, ScriptEngine>();
+	private final EmbeddedScriptContext embeddedScriptContext;
 
 	private String defaultEngineName = "js";
 }
