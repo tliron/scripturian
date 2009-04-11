@@ -8,6 +8,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
 import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.CompositeScriptContext;
 
 /**
  * This is the <code>script</code> variable exposed to the script. The name is
@@ -22,11 +23,11 @@ public class ExposedScript
 	// Construction
 	//
 
-	public ExposedScript( CompositeScript compositeScript, ScriptEngine scriptEngine, ScriptContext scriptContext, Object container )
+	public ExposedScript( CompositeScript compositeScript, CompositeScriptContext compositeScriptContext, ScriptEngine scriptEngine, Object container )
 	{
 		this.compositeScript = compositeScript;
+		this.compositeScriptContext = compositeScriptContext;
 		this.scriptEngine = scriptEngine;
-		this.scriptContext = scriptContext;
 		this.container = container;
 	}
 
@@ -69,7 +70,7 @@ public class ExposedScript
 	 */
 	public ScriptContext getContext()
 	{
-		return scriptContext;
+		return compositeScriptContext.getScriptContext();
 	}
 
 	/**
@@ -92,7 +93,7 @@ public class ExposedScript
 	 */
 	public ScriptEngineManager getEngineManager()
 	{
-		return compositeScript.getScriptEngineManager();
+		return compositeScriptContext.getScriptEngineManager();
 	}
 
 	/**
@@ -121,9 +122,9 @@ public class ExposedScript
 
 	private final CompositeScript compositeScript;
 
-	private final ScriptEngine scriptEngine;
+	private final CompositeScriptContext compositeScriptContext;
 
-	private final ScriptContext scriptContext;
+	private final ScriptEngine scriptEngine;
 
 	private final Object container;
 }

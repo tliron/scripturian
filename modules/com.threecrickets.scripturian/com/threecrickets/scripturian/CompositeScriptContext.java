@@ -20,9 +20,33 @@ import javax.script.SimpleScriptContext;
  */
 public class CompositeScriptContext
 {
+	//
+	// Construction
+	//
+
+	/**
+	 * Creates a context for a specific script engine manager.
+	 * 
+	 * @param scriptEngineManager
+	 *        A script engine manager
+	 */
 	public CompositeScriptContext( ScriptEngineManager scriptEngineManager )
 	{
 		this.scriptEngineManager = scriptEngineManager;
+	}
+
+	//
+	// Attributes
+	//
+
+	/**
+	 * The script engine manager used for {@link #getScriptEngine(String)}.
+	 * 
+	 * @return The script engine manager
+	 */
+	public ScriptEngineManager getScriptEngineManager()
+	{
+		return scriptEngineManager;
 	}
 
 	/**

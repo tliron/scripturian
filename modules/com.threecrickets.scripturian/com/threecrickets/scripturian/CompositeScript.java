@@ -375,7 +375,6 @@ public class CompositeScript
 	public CompositeScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<CompositeScript> scriptSource, boolean allowCompilation, String scriptVariableName,
 		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ScriptException
 	{
-		this.scriptEngineManager = scriptEngineManager;
 		this.scriptVariableName = scriptVariableName;
 
 		String lastScriptEngineName = defaultEngineName;
@@ -412,6 +411,8 @@ public class CompositeScript
 				delimiterEnd = null;
 			}
 		}
+
+		List<Segment> segments = new LinkedList<Segment>();
 
 		// Parse segments
 		if( start != -1 )
@@ -537,7 +538,11 @@ public class CompositeScript
 		else
 		{
 			// Trivial file: does not include script
-			segments.add( new Segment( text, false, lastScriptEngineName ) );
+			this.segments = new Segment[]
+			{
+				new Segment( text, false, lastScriptEngineName )
+			};
+			return;
 		}
 
 		// Collapse segments of same kind
@@ -612,6 +617,7 @@ public class CompositeScript
 
 		// Compiles segments if possible
 		if( allowCompilation )
+		{
 			for( Segment segment : segments )
 			{
 				if( segment.isScript )
@@ -638,6 +644,10 @@ public class CompositeScript
 						segment.compiledScript = ( (Compilable) scriptEngine ).compile( segment.text );
 				}
 			}
+		}
+
+		this.segments = new Segment[segments.size()];
+		segments.toArray( this.segments );
 	}
 
 	//
@@ -685,16 +695,6 @@ public class CompositeScript
 	}
 
 	/**
-	 * The {@link ScriptEngineManager} used to create the script engines.
-	 * 
-	 * @return The script engine manager
-	 */
-	public ScriptEngineManager getScriptEngineManager()
-	{
-		return scriptEngineManager;
-	}
-
-	/**
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
@@ -734,13 +734,24 @@ public class CompositeScript
 	 */
 	public String getTrivial()
 	{
-		if( segments.size() == 1 )
+		if( segments.length == 1 )
 		{
-			Segment sole = segments.get( 0 );
+			Segment sole = segments[0];
 			if( !sole.isScript )
 				return sole.text;
 		}
 		return null;
+	}
+
+	/**
+	 * The composite script context to be used for calls to
+	 * {@link #invoke(String, Object, ScriptContextController)}.
+	 * 
+	 * @return The composite script context
+	 */
+	public CompositeScriptContext getCompositeScriptContextForInvocations()
+	{
+		return compositeScriptContextForInvocations;
 	}
 
 	//
@@ -754,6 +765,10 @@ public class CompositeScript
 	 * signify that the script did not run and the cached output should be used
 	 * instead. In such cases, it is up to your running environment to interpret
 	 * this accordingly if you wish to support caching.
+	 * <p>
+	 * If you intend to run the script multiple times from the same thread, it
+	 * is recommended that you use the same {@link CompositeScriptContext} for
+	 * each call for better performance.
 	 * 
 	 * @param checkCache
 	 *        Whether or not to check for caching versus the value of
@@ -764,16 +779,17 @@ public class CompositeScript
 	 *        Standard error output
 	 * @param flushLines
 	 *        Whether to flush the writers after every line
+	 * @param compositeScriptContext
+	 *        The context
 	 * @param container
 	 *        The container (can be null)
 	 * @param scriptContextController
 	 *        An optional {@link ScriptContextController} to be applied to the
 	 *        script context
-	 * @param compositeScriptContext
-	 *        The context
 	 * @return True if the script ran, false if it didn't run, because the
 	 *         cached output is expected to be used instead
 	 * @throws ScriptException
+	 * @throws IOException
 	 */
 	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, CompositeScriptContext compositeScriptContext, Object container, ScriptContextController scriptContextController )
 		throws ScriptException, IOException
@@ -810,7 +826,7 @@ public class CompositeScript
 						ScriptEngine scriptEngine = compositeScriptContext.getScriptEngine( segment.scriptEngineName );
 
 						Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-						scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
+						scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, compositeScriptContext, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
 
 						try
 						{
@@ -820,11 +836,9 @@ public class CompositeScript
 							{
 								// Note that we are wrapping our text with a
 								// StringReader. Why? Because some
-								// implementations
-								// of javax.script (notably Jepp) interpret the
-								// String version of eval to mean only one line
-								// of
-								// code.
+								// implementations of javax.script (notably
+								// Jepp) interpret the String version of eval to
+								// mean only one line of code.
 								scriptEngine.eval( new StringReader( segment.text ) );
 							}
 						}
@@ -835,8 +849,7 @@ public class CompositeScript
 						catch( Exception x )
 						{
 							// Some script engines (notably Quercus) throw their
-							// own
-							// special exceptions
+							// own special exceptions
 							throw new ScriptException( x );
 						}
 						finally
@@ -855,7 +868,7 @@ public class CompositeScript
 					scriptContextController.finalize( scriptContext );
 			}
 
-			this.lastCompositeScriptContext = compositeScriptContext;
+			this.compositeScriptContextForInvocations = compositeScriptContext;
 			lastRun.set( now );
 			return true;
 		}
@@ -877,11 +890,12 @@ public class CompositeScript
 	 * pass data to the script, use a global variable, which you can set via the
 	 * optional {@link ScriptContextController}.
 	 * <p>
-	 * Important concurrency note! The invoke mechanism was designed for
-	 * multi-threaded access, so it's the responsibility of your script to be
-	 * thread-safe. Also note that internally invoke relies on the last
-	 * {@link CompositeScriptContext} used in the last call to
-	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}.
+	 * Concurrency note: The invoke mechanism allows for multi-threaded access,
+	 * so it's the responsibility of your script to be thread-safe. Also note
+	 * that, internally, invoke relies on the {@link CompositeScriptContext}
+	 * from {@link #getCompositeScriptContextForInvocations()}. This is set to
+	 * be the one used in the last call to
+	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
@@ -899,12 +913,12 @@ public class CompositeScript
 	 */
 	public Object invoke( String entryPointName, Object container, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
 	{
-		ScriptEngine scriptEngine = lastCompositeScriptContext.getLastScriptEngine();
-		ScriptContext scriptContext = lastCompositeScriptContext.getScriptContext();
-		String scriptEngineName = lastCompositeScriptContext.getLastScriptEngineName();
+		ScriptEngine scriptEngine = compositeScriptContextForInvocations.getLastScriptEngine();
+		ScriptContext scriptContext = compositeScriptContextForInvocations.getScriptContext();
+		String scriptEngineName = compositeScriptContextForInvocations.getLastScriptEngineName();
 
 		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, scriptEngine, scriptContext, container ), ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, compositeScriptContextForInvocations, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
 
 		if( scriptContextController != null )
 			scriptContextController.initialize( scriptContext );
@@ -946,7 +960,7 @@ public class CompositeScript
 
 	private static final AtomicInteger inFlowCounter = new AtomicInteger();
 
-	private final List<Segment> segments = new LinkedList<Segment>();
+	private final Segment[] segments;
 
 	private final String delimiterStart;
 
@@ -954,13 +968,11 @@ public class CompositeScript
 
 	private final String scriptVariableName;
 
-	private final ScriptEngineManager scriptEngineManager;
-
 	private final AtomicLong cacheDuration = new AtomicLong();
 
 	private final AtomicLong lastRun = new AtomicLong();
 
-	private CompositeScriptContext lastCompositeScriptContext;
+	private CompositeScriptContext compositeScriptContextForInvocations;
 
 	private static class Segment
 	{
