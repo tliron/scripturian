@@ -913,6 +913,9 @@ public class CompositeScript
 	 */
 	public Object invoke( String entryPointName, Object container, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
 	{
+		if( compositeScriptContextForInvocations == null )
+			throw new ScriptException( "Script must be run at least once before calling invoke" );
+
 		ScriptEngine scriptEngine = compositeScriptContextForInvocations.getLastScriptEngine();
 		ScriptContext scriptContext = compositeScriptContextForInvocations.getScriptContext();
 		String scriptEngineName = compositeScriptContextForInvocations.getLastScriptEngineName();
