@@ -830,16 +830,26 @@ public class CompositeScript
 
 						try
 						{
+							Object value;
 							if( segment.compiledScript != null )
-								segment.compiledScript.eval( scriptContext );
+								value = segment.compiledScript.eval( scriptContext );
 							else
-							{
 								// Note that we are wrapping our text with a
 								// StringReader. Why? Because some
 								// implementations of javax.script (notably
 								// Jepp) interpret the String version of eval to
 								// mean only one line of code.
-								scriptEngine.eval( new StringReader( segment.text ) );
+								value = scriptEngine.eval( new StringReader( segment.text ) );
+
+							if( value != null )
+							{
+								ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( segment.scriptEngineName );
+
+								if( scriptletParsingHelper == null )
+									throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + segment.scriptEngineName );
+
+								if( scriptletParsingHelper.isPrintOnEval() )
+									writer.write( value.toString() );
 							}
 						}
 						catch( ScriptException x )

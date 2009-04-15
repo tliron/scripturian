@@ -35,16 +35,16 @@ import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the Python scripting
- * language as implemented by <a href="http://www.jython.org/">Jython</a>.
+ * An {@link ScriptletParsingHelper} that supports the <a
+ * href="http://velocity.apache.org/">Velocity</a> templating language.
  * 
  * @author Tal Liron
  */
 @ScriptEngines(
 {
-	"python", "jython"
+	"velocity", "Velocity"
 })
-public class JythonScriptletParsingHelper implements ScriptletParsingHelper
+public class VelocityScriptletParsingHelper implements ScriptletParsingHelper
 {
 	//
 	// ScriptletParsingHelper
@@ -57,11 +57,7 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
-		// Apparently the Java Scripting support for Jython (version 2.2.1) does
-		// not correctly redirect stdout and stderr. Luckily, the Python
-		// interface is compatible with Java's Writer interface, so we can
-		// redirect them explicitly.
-		return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
+		return "#set($_d='$')#set($_h='#')";
 	}
 
 	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
@@ -71,19 +67,27 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		content = content.replaceAll( "\\n", "\\\\n" );
-		content = content.replaceAll( "\\\"", "\\\\\"" );
-		return "sys.stdout.write(\"" + content + "\"),;";
+		// 
+		//content = content.replaceAll( "\\#", "\\\\#" );
+		//content = content.replaceAll( "\\$", "\\\\\\$" );
+		
+		content = content.replaceAll( "\\$", "\\${_d}" );
+		content = content.replaceAll( "\\#", "\\${_h}" );
+		return content;
+		
+		//content = content.replaceAll( "\\#end", "\n#end\n#literal()\n" );
+		//content = content.replaceAll( "\\#\\#", "FIUSH" );
+		//return "\n#literal()\n" + content + "\n#end\n";
 	}
 
 	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		return "sys.stdout.write(" + content + ");";
+		return "${" + content.trim() + "}";
 	}
 
 	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		return compositeScript.getScriptVariableName() + ".container.include(" + content + ");";
+		return "#if($" + compositeScript.getScriptVariableName() + ".container.include(" + content + "))#end ";
 	}
 
 	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )

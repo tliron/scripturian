@@ -42,6 +42,15 @@ import javax.script.ScriptEngine;
 public interface ScriptletParsingHelper
 {
 	/**
+	 * Some languages support their own printing facilities, while others don't.
+	 * Returning true here will delegate print handling to
+	 * {@link CompositeScript}.
+	 * 
+	 * @return True if should print on eval
+	 */
+	public boolean isPrintOnEval();
+
+	/**
 	 * The header is inserted at the beginning of every script. It is useful for
 	 * appropriately setting up the script's environment.
 	 * 

@@ -35,16 +35,16 @@ import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the Python scripting
- * language as implemented by <a href="http://www.jython.org/">Jython</a>.
+ * An {@link ScriptletParsingHelper} that supports the <a
+ * href="http://juel.sourceforge.net/">JUEL</a> expression language.
  * 
  * @author Tal Liron
  */
 @ScriptEngines(
 {
-	"python", "jython"
+	"juel"
 })
-public class JythonScriptletParsingHelper implements ScriptletParsingHelper
+public class JUELScriptletParsingHelper implements ScriptletParsingHelper
 {
 	//
 	// ScriptletParsingHelper
@@ -52,16 +52,12 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 
 	public boolean isPrintOnEval()
 	{
-		return false;
+		return true;
 	}
 
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
-		// Apparently the Java Scripting support for Jython (version 2.2.1) does
-		// not correctly redirect stdout and stderr. Luckily, the Python
-		// interface is compatible with Java's Writer interface, so we can
-		// redirect them explicitly.
-		return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
+		return null;
 	}
 
 	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
@@ -71,19 +67,17 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		content = content.replaceAll( "\\n", "\\\\n" );
-		content = content.replaceAll( "\\\"", "\\\\\"" );
-		return "sys.stdout.write(\"" + content + "\"),;";
+		return content;
 	}
 
 	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		return "sys.stdout.write(" + content + ");";
+		return "${" + content.trim() + "}";
 	}
 
 	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
 	{
-		return compositeScript.getScriptVariableName() + ".container.include(" + content + ");";
+		return null;
 	}
 
 	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )

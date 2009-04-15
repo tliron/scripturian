@@ -47,6 +47,11 @@ public class JavaScriptletParsingHelper implements ScriptletParsingHelper
 	// ScriptletParsingHelper
 	//
 
+	public boolean isPrintOnEval()
+	{
+		return false;
+	}
+
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		return "class Text { private static javax.script.ScriptContext scriptContext; public static void setScriptContext(javax.script.ScriptContext sc) { scriptContext = sc; } public static void main(String arguments[]) throws Exception {";

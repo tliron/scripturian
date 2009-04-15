@@ -50,6 +50,11 @@ public class JeppScriptletParsingHelper implements ScriptletParsingHelper
 	// ScriptletParsingHelper
 	//
 
+	public boolean isPrintOnEval()
+	{
+		return false;
+	}
+
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		// Apparently the Java Scripting support for Jepp does not correctly

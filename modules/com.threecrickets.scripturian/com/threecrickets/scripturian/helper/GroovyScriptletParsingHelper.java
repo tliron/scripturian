@@ -50,6 +50,11 @@ public class GroovyScriptletParsingHelper implements ScriptletParsingHelper
 	// ScriptletParsingHelper
 	//
 
+	public boolean isPrintOnEval()
+	{
+		return false;
+	}
+
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		// There's a bug in Groovy's script engine implementation (as of version

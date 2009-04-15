@@ -50,6 +50,11 @@ public class RhinoScriptletParsingHelper implements ScriptletParsingHelper
 	// ScriptletParsingHelper
 	//
 
+	public boolean isPrintOnEval()
+	{
+		return false;
+	}
+
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		// Rhino's default implementation of print() is annoyingly a println().

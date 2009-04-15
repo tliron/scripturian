@@ -71,6 +71,11 @@ public class JRubyScriptletParsingHelper implements ScriptletParsingHelper
 	// ScriptletParsingHelper
 	//
 
+	public boolean isPrintOnEval()
+	{
+		return false;
+	}
+
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
 		return null;
