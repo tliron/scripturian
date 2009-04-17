@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc" name="Scripturian Documentation">
+	<target name="javadoc">
+		<javadoc access="protected" author="true" classpath="/Depot/Collaborative/Scripturian/trunk/libraries/jsr223/jsr223-api.jar" excludepackagenames="**.internal.*" destdir="javadoc" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="com.threecrickets.scripturian.helper,com.threecrickets.scripturian.file,com.threecrickets.scripturian" source="1.5" sourcepath="/Depot/Collaborative/Scripturian/trunk/modules/com.threecrickets.scripturian" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
+			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+			<link href="http://java.sun.com/javase/6/docs/api/" />
+			<bottom>
+				<![CDATA[<i>Copyright &#169; 2009 <a target="_top" href="http://www.threecrickets.com/">Three Crickets</a>.</i>]]>
+			</bottom>
+	</javadoc>
+</target>
+</project>
