@@ -3,8 +3,9 @@
 	
 	<property name="src" value="../modules/com.threecrickets.scripturian/src" />
 	<property name="lib" value="../libraries" />
+	<property name="deploy" value="../modules/com.threecrickets.scripturian/deploy" />
 	<property name="dist" value="./distribution" />
-	<property name="content" value="${dist}/files" />
+	<property name="content" value="${dist}/content" />
 	<property name="tmp" value="./tmp" />
 
 	<target name="compile" description="Compile Scripturian code">
@@ -17,7 +18,7 @@
 	</target>
 
 	<target name="javadoc">
-		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
+		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/web/static/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<link href="http://java.sun.com/javase/6/docs/api/" />
 			<classpath>
@@ -31,12 +32,12 @@
 	
 	<target name="jar" depends="compile" description="Create Scripturian jar">
 		<mkdir dir="${content}/lib" />
-		<jar destfile="${content}/lib/com.threecrickets.scripturian-1.0RC3.jar" basedir="${tmp}" />
+		<jar destfile="${content}/lib/com.threecrickets.scripturian.jar" basedir="${tmp}" />
 	</target>
 	
 	<target name="licenses" description="Fetch licences">
-		<copy todir="${content}/licenses">
-			<fileset dir="${lib}" includes="jsr223/doc/*" />
+		<copy todir="${content}/licenses/jsr223">
+			<fileset dir="${lib}/jsr223/doc" />
 		</copy>
 	</target>
 	
@@ -46,7 +47,13 @@
 		</copy>
 	</target>
 	
-	<target name="package" depends="libraries, javadoc, licenses" description="Create zip">
+	<target name="deploy" description="Fetch deployment">
+		<copy todir="${content}">
+			<fileset dir="${deploy}" />
+		</copy>
+	</target>
+	
+	<target name="package" depends="libraries, licenses, deploy, javadoc" description="Create zip">
 		<zip destfile="${dist}/scripturian.zip" basedir="${content}" includes="*.txt, lib/, doc/, licenses/" />
 	</target>
 	

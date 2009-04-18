@@ -1,4 +1,27 @@
-Copyright 2009 Three Crickets.
+
+================
+Copyright notice
+================
+
+
+Version 1.0, April 2009
+
+This software distribution is covered by this copyright notice.
+  
+All third-party libraries redistributed with this software remain the property 
+of their respective copyright owners and are subject to separate license 
+agreements. For questions, please contact the copyright holder:
+   
+    Three Crickets LLC
+    3021 W. Wilson Ave. #3
+    Chicago, IL 60625
+    USA
+	http://www.threecrickets.com/
+    mailto:legal@threecrickets.com
+
+________________________________________________________________________________
+
+Copyright 2009 Three Crickets LLC.
 
 The contents of this file are subject to the terms of one of the following
 open source licenses: LGPL 3.0 or LGPL 2.1 or CDDL 1.0 or EPL 1.0 (the
@@ -19,7 +42,7 @@ http://www.opensource.org/licenses/eclipse-1.0.php
 
 See the Licenses for the specific language governing permissions and
 limitations under the Licenses.
-
+ 
 Alternatively, you can obtain a royalty free commercial license with less
-limitations, transferable or non-transferable, directly from Three Crickets
-at http://www.threecrickets.com/
+limitations, transferable or non-transferable, directly at
+http://www.threecrickets.com/
