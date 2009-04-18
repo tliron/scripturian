@@ -17,8 +17,8 @@
 		</javac>
 	</target>
 
-	<target name="javadoc">
-		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/web/static/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
+	<target name="javadoc" description="Create Scripturian API docs">
+		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/web/static/javadoc" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<link href="http://java.sun.com/javase/6/docs/api/" />
 			<classpath>
@@ -53,19 +53,17 @@
 		</copy>
 	</target>
 	
-	<target name="package" depends="libraries, licenses, deploy, javadoc" description="Create zip">
-		<zip destfile="${dist}/scripturian.zip" basedir="${content}" includes="*.txt, lib/, doc/, licenses/" />
+	<target name="package" depends="libraries, licenses, deploy, javadoc" description="Create Scripturian zip">
+		<zip destfile="${dist}/scripturian.zip" basedir="${content}" includes="**/*" />
 	</target>
 	
-	<target name="build" depends="package" description="Build distribution">
-	</target>
+	<target name="build" depends="package" description="Build distribution" />
 	
 	<target name="clean" description="Clean">
 		<delete dir="${tmp}" />
 		<delete dir="${dist}" />
 	</target>
 	
-	<target name="rebuild" depends="clean, build" description="Clean and build distribution">
-	</target>
+	<target name="rebuild" depends="clean, build" description="Clean and build distribution" />
 
 </project>
