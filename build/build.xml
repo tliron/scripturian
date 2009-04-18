@@ -37,7 +37,7 @@
 	
 	<target name="licenses" description="Fetch licences">
 		<copy todir="${content}/licenses/jsr223">
-			<fileset dir="${lib}/jsr223/doc" />
+			<fileset dir="${lib}/jsr223/license" />
 		</copy>
 	</target>
 	
