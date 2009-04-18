@@ -1,12 +1,64 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="javadoc" name="Scripturian Documentation">
+<?xml version="1.0"?>
+<project name="Scripturian" default="build">
+	
+	<property name="src" value="../modules/com.threecrickets.scripturian/src" />
+	<property name="lib" value="../libraries" />
+	<property name="dist" value="./distribution" />
+	<property name="content" value="${dist}/files" />
+	<property name="tmp" value="./tmp" />
+
+	<target name="compile" description="Compile Scripturian code">
+		<mkdir dir="${tmp}" />
+		<javac srcdir="${src}" destdir="${tmp}" target="1.5">
+			<classpath>
+				<fileset dir="${lib}/jsr223/lib" />
+			</classpath>
+		</javac>
+	</target>
+
 	<target name="javadoc">
-		<javadoc access="protected" author="true" classpath="../libraries/jsr223/jsr223-api.jar" excludepackagenames="**.internal.*" destdir="distribution/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="com.threecrickets.scripturian.helper,com.threecrickets.scripturian.file,com.threecrickets.scripturian" source="1.5" sourcepath="/Depot/Collaborative/Scripturian/trunk/modules/com.threecrickets.scripturian" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
+		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<link href="http://java.sun.com/javase/6/docs/api/" />
+			<classpath>
+				<fileset dir="${lib}/jsr223/lib" />
+			</classpath>
 			<bottom>
-				<![CDATA[<i>Copyright &#169; 2009 <a target="_top" href="http://www.threecrickets.com/">Three Crickets</a>.</i>]]>
+				<![CDATA[<i>Copyright &#169; 2009 <a target="_top" href="http://www.threecrickets.com/">Three Crickets LLC</a>.</i>]]>
 			</bottom>
-	</javadoc>
-</target>
+		</javadoc>
+	</target>
+	
+	<target name="jar" depends="compile" description="Create Scripturian jar">
+		<mkdir dir="${content}/lib" />
+		<jar destfile="${content}/lib/com.threecrickets.scripturian-1.0RC3.jar" basedir="${tmp}" />
+	</target>
+	
+	<target name="licenses" description="Fetch licences">
+		<copy todir="${content}/licenses">
+			<fileset dir="${lib}" includes="jsr223/doc/*" />
+		</copy>
+	</target>
+	
+	<target name="libraries" depends="jar" description="Fetch libraries">
+		<copy todir="${content}/lib">
+			<fileset dir="${lib}/jsr223/lib" />
+		</copy>
+	</target>
+	
+	<target name="package" depends="libraries, javadoc, licenses" description="Create zip">
+		<zip destfile="${dist}/scripturian.zip" basedir="${content}" includes="*.txt, lib/, doc/, licenses/" />
+	</target>
+	
+	<target name="build" depends="package" description="Build distribution">
+	</target>
+	
+	<target name="clean" description="Clean">
+		<delete dir="${tmp}" />
+		<delete dir="${dist}" />
+	</target>
+	
+	<target name="rebuild" depends="clean, build" description="Clean and build distribution">
+	</target>
+
 </project>
