@@ -5,7 +5,7 @@ License agreement
 
 Version 1.0, April 2009
 
-This software distribution is provided to you under either the LGPL license
+This software distribution is provided to you under the LGPL license
 version 3.0.
 
 In addition, we want to expressly mention that Three Crickets LLC, the only
