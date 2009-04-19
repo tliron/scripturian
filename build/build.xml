@@ -47,13 +47,19 @@
 		</copy>
 	</target>
 	
-	<target name="deploy" description="Fetch deployment">
+	<target name="src" description="Fetch Scripturian source">
+		<copy todir="${content}/src">
+			<fileset dir="${src}" />
+		</copy>
+	</target>
+
+	<target name="deploy" depends="src, javadoc" description="Fetch deployment">
 		<copy todir="${content}">
 			<fileset dir="${deploy}" />
 		</copy>
 	</target>
 	
-	<target name="package" depends="libraries, licenses, deploy, javadoc" description="Create Scripturian zip">
+	<target name="package" depends="libraries, licenses, deploy" description="Create Scripturian zip">
 		<zip destfile="${dist}/scripturian.zip" basedir="${content}" includes="**/*" />
 	</target>
 	
