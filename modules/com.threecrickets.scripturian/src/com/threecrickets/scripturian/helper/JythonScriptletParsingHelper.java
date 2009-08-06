@@ -18,8 +18,8 @@ import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the Python scripting
- * language as implemented by <a href="http://www.jython.org/">Jython</a>.
+ * An {@link ScriptletParsingHelper} that supports the Python scripting language
+ * as implemented by <a href="http://www.jython.org/">Jython</a>.
  * 
  * @author Tal Liron
  */
@@ -44,7 +44,14 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 		// not correctly redirect stdout and stderr. Luckily, the Python
 		// interface is compatible with Java's Writer interface, so we can
 		// redirect them explicitly.
-		return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
+		String version = scriptEngine.getFactory().getEngineVersion();
+		String[] split = version.split( "\\." );
+		int major = Integer.parseInt( split[0] );
+		int minor = Integer.parseInt( split[1] );
+		if( ( major >= 2 ) && ( minor >= 5 ) )
+			return "import sys;";
+		else
+			return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
 	}
 
 	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
