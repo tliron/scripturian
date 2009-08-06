@@ -40,10 +40,6 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
 	{
-		// Apparently the Java Scripting support for Jython (version 2.2.1) does
-		// not correctly redirect stdout and stderr. Luckily, the Python
-		// interface is compatible with Java's Writer interface, so we can
-		// redirect them explicitly.
 		String version = scriptEngine.getFactory().getEngineVersion();
 		String[] split = version.split( "\\." );
 		int major = Integer.parseInt( split[0] );
@@ -51,6 +47,10 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 		if( ( major >= 2 ) && ( minor >= 5 ) )
 			return "import sys;";
 		else
+			// Apparently the Java Scripting support for Jython (version 2.2.1)
+			// does not correctly redirect stdout and stderr. Luckily, the
+			// Python interface is compatible with Java's Writer interface, so
+			// we can redirect them explicitly.
 			return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
 	}
 
