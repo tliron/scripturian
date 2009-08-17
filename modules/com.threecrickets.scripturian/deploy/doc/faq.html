@@ -75,9 +75,35 @@ The debug information is:
 <p>
 We are using JavaScript to do our main coding. However, we would like to use a facility in Velocity to dump our actual debug
 information. Without using the in-flow tag for the Velocity scriptlet, we would be getting a JavaScript syntax error. Why?
-Because Scripturian normally separates scriptlets according to scripting languages. Without the in-flow tag, it would attempt to run the first
-JavaScript scriptlet, then the Velocity scriptlet, and finally the last JavaScript scriptlet. However, both JavaScript segments in this
-case are incomplete and un-runnable. The in-flow tag solves this by keeping us in the flow of JavaScript, so that we are
+Because Scripturian by necessity separates scriptlets according to scripting languages. Without the in-flow tag, it would attempt to run the first
+JavaScript scriptlet, then the Velocity scriptlet, and finally the last JavaScript scriptlet, as so:
+</p>
+
+<p>First segment:</p>
+<pre>
+&lt;%js if(isDebug) { %&gt;
+</pre>
+
+<p>Second segment:</p>
+<pre>
+&lt;%velocity
+#foreach($line in $log)
+	$line.date: $line.message
+#end
+%&gt;
+</pre>
+
+<p>Third segment:</p>
+<pre>
+&lt;%js } %&gt;
+</pre>
+
+<p>
+As you can see, both JavaScript segments in this
+case are fragmentary and un-runnable.
+</p>
+
+The in-flow tag solves this problem by keeping us in the flow of JavaScript, so that we are
 dealing with a single JavaScript scriptlet.
 </p>
 <p>
@@ -90,7 +116,7 @@ The debug information is: &lt;%& 'dump.fragment' %&gt;
 </pre>
 <p>Where the 'dump.fragment' file is:</p>
 <pre>
-&lt;%:velocity
+&lt;%velocity
 #foreach($line in $log)
 	$line.date: $line.message
 #end
@@ -98,7 +124,7 @@ The debug information is: &lt;%& 'dump.fragment' %&gt;
 </pre>
 <p>
 The in-flow tag saves you from creating separate files for such uses. Note that the entire separation process occurs only during
-parsing, and is generally very fast. All scriptlets will be compiled for maximum performance if you request it.
+parsing, and is generally very fast. Additionally, all scriptlets will be pre-compiled for maximum performance if you request it.
 Also note that parsing automatically detects cases in which you are using an "in-flow" scriptlet in the same language,
 and optimizes by treating the in-flow scriptlet as a regular scriptlet.
 </p>
