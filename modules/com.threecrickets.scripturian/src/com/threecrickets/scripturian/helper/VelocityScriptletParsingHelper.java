@@ -13,7 +13,7 @@ package com.threecrickets.scripturian.helper;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
@@ -38,42 +38,42 @@ public class VelocityScriptletParsingHelper implements ScriptletParsingHelper
 		return false;
 	}
 
-	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		return "#set($_d='$')#set($_h='#')";
 	}
 
-	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
+	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		// 
-		//content = content.replaceAll( "\\#", "\\\\#" );
-		//content = content.replaceAll( "\\$", "\\\\\\$" );
-		
+		// content = content.replaceAll( "\\#", "\\\\#" );
+		// content = content.replaceAll( "\\$", "\\\\\\$" );
+
 		content = content.replaceAll( "\\$", "\\${_d}" );
 		content = content.replaceAll( "\\#", "\\${_h}" );
 		return content;
-		
-		//content = content.replaceAll( "\\#end", "\n#end\n#literal()\n" );
-		//content = content.replaceAll( "\\#\\#", "FIUSH" );
-		//return "\n#literal()\n" + content + "\n#end\n";
+
+		// content = content.replaceAll( "\\#end", "\n#end\n#literal()\n" );
+		// content = content.replaceAll( "\\#\\#", "FIUSH" );
+		// return "\n#literal()\n" + content + "\n#end\n";
 	}
 
-	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "${" + content.trim() + "}";
 	}
 
-	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return "#if($" + compositeScript.getScriptVariableName() + ".container.include(" + content + "))#end ";
+		return "#if($" + document.getDocumentVariableName() + ".container.include(" + content + "))#end ";
 	}
 
-	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}

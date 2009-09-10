@@ -16,26 +16,25 @@ import javax.script.ScriptException;
 
 /**
  * Used in order to add specialized initialization and finalization for
- * scripting engines. For example, to add extra global variables or to perform
- * cleanup of resources provided by the script environment or created by the
- * script.
+ * scriptlets. For example, to add extra global variables or to perform cleanup
+ * of resources.
  * 
  * @author Tal Liron
  */
-public interface ScriptContextController
+public interface ScriptletController
 {
 	/**
-	 * Called when the script is initialized.
+	 * Called when a scriptlet is initialized.
 	 * 
 	 * @param scriptContext
 	 *        The script context
 	 * @throws ScriptException
-	 *         If you throw an exception here, the script will not run
+	 *         If you throw an exception here, the scriptlet will not run
 	 */
 	public void initialize( ScriptContext scriptContext ) throws ScriptException;
 
 	/**
-	 * Called when the script finalizes. This is a good place to clean up
+	 * Called when a scriptlet finalizes. This is a good place to clean up
 	 * resources you set up during {@link #initialize(ScriptContext)}.
 	 * 
 	 * @param scriptContext

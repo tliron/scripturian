@@ -7,7 +7,7 @@
 <body>
 	<table width="100%" cellspacing="20">
 		<tr valign="top">
-			<td width="33%">
+			<td width="25%">
 
 				<h1>Scripturian</h1>
 				
@@ -15,53 +15,52 @@
 					<ul>
 						<li><a href=".">About</a></li>
 						<li><a href="legal.html">License</a></li>
-						<li><a href="requirements.html">Requirements</a></li>
 						<li><a href="download.html">Download</a></li>
+						<li><span class="heading">Documentation</span>
+							<ul>
+								<li><a href="requirements.html">Requirements</a></li>
+								<li><a href="languages.html">Supported Languages</a></li>
+								<li><a href="faq.html">FAQ</a></li>
+								<li><a href="http://www.threecrickets.com/scripturian/api/">API</a></li>
+							</ul>
+						</li>
 						<li><a href="http://scripturian.tigris.org/">Community and Support</a></li>
-						<li><a href="http://www.threecrickets.com/scripturian/api/">API Documentation</a></li>
-						<li><a href="faq.html">FAQ</a></li>
 						<li><a href="links.html" class="closed">Similar Projects</a></li>
 					</ul>
 				</div>
 
 			</td>
-			<td width="34%" id="main">
+			<td width="50%" id="main">
 			
 
 
 <h2>About Scripturian</h2>
 <p>
-This open source library can make it very easy to integrate scripting and templating into your Java-based product:
+Scripturian is an open source library that makes it easy to integrate programming and templating languages into your JVM-based software:
 </p>
 
-<h3>1. Composite Scripts</h3>
+<h3>1. Embed Scriptlets Into Text Documents</h3>
 <p>
-It provides <a href="http://www.threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/CompositeScript.html">composite script</a> support,
-allowing you to mix plain text and embedded "scriptlets," in the style of PHP, JSP and ASP. At the minimum this can serve as a powerful
-templating solution for generating text and textual formats (such as HTML and XML), but at the maximum it's a platform for building complex
-user interfaces using dynamic scripting languages.
-</p>
-<p>
-For example, a blogging or content management application can use it to give users complete control over
-theming/skinning, or it can be used to generate the entire HTML-based user interface. Couple this with scripting languages running on the client-side
-(JavaScript in Browsers, or ActiveScript in Flash) and you can create very rich user interfaces entirely in script. Scripturian has powerful facilities for
-mixing scriptlets of multiple languages in a single composite script.
+Scripturian <a href="http://www.threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/Document.html">documents</a>
+allow you to mix plain text and "scriptlets," in the style of PHP, JSP and ASP. This can serve as a powerful
+templating solution for generating text and textual formats, such as HTML and XML. Scripturian has powerful facilities for
+mixing scriptlets of multiple programming and templating languages in a single document.
 </p>
 
-<h3>2. Automatic Configuration of Scripting Engines</h3>
+<h3>2. Automatic Configuration and Starting of Language Engines</h3>
 <p>
-It's not always easy to configure and start scripting engines in Java. Scripturian does it all for you. For example, any file
-with <span style="font-family: monospace;">&lt;%python</span> at the beginning will start the appropriate script engine. It's a straightforward equivalent of the
-<span style="font-family: monospace;">#!/</span> used by shells.
+Scripturian does it all for you. For example, any document
+with <span style="font-family: monospace;">&lt;%python</span> at the beginning will start the Jython engine and run the code.
+It's a straightforward equivalent of the <span style="font-family: monospace;">#!/</span> used by shells.
 </p>
 
 <h3>3. Bootstrapping Applications</h3>
 <p>
-Scripturian allows you to <a href="http://www.threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/ScriptedMain.html">boot strap</a> Java
-applications using a script, which makes it easy to quickly configure and make changes in how your applications start up without re-compilation.
+Scripturian allows you to <a href="http://www.threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/MainDocument.html">boot strap</a> JVM
+applications using any of the supported languages, which makes it easy to quickly configure and make changes in how your applications start up without re-compilation.
 </p>
 
-<h3>Scripting Languages Supported</h3>
+<h3>Programming Languages Supported</h3>
 <ul>
 <li>JavaScript (via <a href="http://www.mozilla.org/rhino/">Rhino</a>)</li>
 <li>PHP (via <a href="http://quercus.caucho.com/">Quercus</a>)</li>
@@ -76,8 +75,16 @@ applications using a script, which makes it easy to quickly configure and make c
 <li><a href="http://velocity.apache.org/">Velocity</a></li>
 </ul>
 
+<h3>Other Lnguages</h3>
+<p>
+To add a new language to Scripturian, you will first need to create an <a href="http://www.threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/ScriptletParsingHelper.html">ScriptletParsingHelper</a>
+for it. This is a small and usually very straightforward class, and can be used to solve problems with the Java scripting standard implementation.  
+Our experience has shown that adherence to the Java scripting standard is inconsistent.
+In fact, all script engines currently supported by Scripturian required special workarounds.
+</p>
+
 			</td>
-			<td width="33%" align="right">
+			<td width="25%" align="right">
 				<a href="http://www.threecrickets.com/" class="neutral"><img src="http://www.threecrickets.com/static/images/three-crickets-small.png" border="0" /></a>
 			</td>
 		</tr>

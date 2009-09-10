@@ -18,26 +18,26 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
-import com.threecrickets.scripturian.CompositeScript;
-import com.threecrickets.scripturian.CompositeScriptContext;
+import com.threecrickets.scripturian.Document;
+import com.threecrickets.scripturian.DocumentContext;
 
 /**
- * This is the <code>script</code> variable exposed to the script. The name is
- * set according to {@link CompositeScript#getScriptVariableName()}.
+ * This is the <code>document</code> variable exposed to scriptlets. The name is
+ * set according to {@link Document#getDocumentVariableName()}.
  * 
  * @author Tal Liron
- * @see CompositeScript
+ * @see Document
  */
-public class ExposedScript
+public class ExposedDocument
 {
 	//
 	// Construction
 	//
 
-	public ExposedScript( CompositeScript compositeScript, CompositeScriptContext compositeScriptContext, ScriptEngine scriptEngine, Object container )
+	public ExposedDocument( Document document, DocumentContext documentContext, ScriptEngine scriptEngine, Object container )
 	{
-		this.compositeScript = compositeScript;
-		this.compositeScriptContext = compositeScriptContext;
+		this.document = document;
+		this.documentContext = documentContext;
 		this.scriptEngine = scriptEngine;
 		this.container = container;
 	}
@@ -47,19 +47,19 @@ public class ExposedScript
 	//
 
 	/**
-	 * Setting this to something greater than 0 enables caching of the script
-	 * results for a maximum number of milliseconds. By default cacheDuration is
-	 * 0, so that each request causes the script to be evaluated. This class
-	 * does not handle caching itself. Caching can be provided by your
-	 * environment if appropriate.
+	 * Setting this to something greater than 0 enables caching of the
+	 * document's output for a maximum number of milliseconds. By default
+	 * cacheDuration is 0, so that each request causes the document to be run.
+	 * This class does not handle caching itself. Caching can be provided by
+	 * your environment if appropriate.
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
-	 * @see CompositeScript#cacheDuration
+	 * @see Document#cacheDuration
 	 */
 	public long getCacheDuration()
 	{
-		return compositeScript.getCacheDuration();
+		return document.getCacheDuration();
 	}
 
 	/**
@@ -69,24 +69,24 @@ public class ExposedScript
 	 */
 	public void setCacheDuration( long cacheDuration )
 	{
-		compositeScript.setCacheDuration( cacheDuration );
+		document.setCacheDuration( cacheDuration );
 	}
 
 	/**
-	 * This is the {@link ScriptContext} used by the script. Scripts may use it
-	 * to get access to the {@link Writer} objects used for standard output and
-	 * standard error.
+	 * This is the {@link ScriptContext} used by the document. Scriptlets may
+	 * use it to get access to the {@link Writer} objects used for standard
+	 * output and standard error.
 	 * 
 	 * @return The script context
 	 */
 	public ScriptContext getContext()
 	{
-		return compositeScriptContext.getScriptContext();
+		return documentContext.getScriptContext();
 	}
 
 	/**
-	 * This is the {@link ScriptEngine} used by the script. Scripts may use it
-	 * to get information about the engine's capabilities.
+	 * This is the {@link ScriptEngine} used by the scriptlet. Scriptlets may
+	 * use it to get information about the engine's capabilities.
 	 * 
 	 * @return The script engine
 	 */
@@ -96,15 +96,15 @@ public class ExposedScript
 	}
 
 	/**
-	 * This is the {@link ScriptEngineManager} used to create the script engine.
-	 * Scripts may use it to get information about what other engines are
-	 * available.
+	 * This is the {@link ScriptEngineManager} used to create all script engines
+	 * in the document. Scriptlets may use it to get information about what
+	 * other engines are available.
 	 * 
 	 * @return The script engine manager
 	 */
 	public ScriptEngineManager getEngineManager()
 	{
-		return compositeScriptContext.getScriptEngineManager();
+		return documentContext.getScriptEngineManager();
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class ExposedScript
 
 	/**
 	 * This {@link ConcurrentMap} provides a convenient location for global
-	 * values shared by all scripts, run by all engines.
+	 * values shared by all scriptlets in all documents.
 	 * 
 	 * @return The values
 	 */
@@ -131,9 +131,9 @@ public class ExposedScript
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final CompositeScript compositeScript;
+	private final Document document;
 
-	private final CompositeScriptContext compositeScriptContext;
+	private final DocumentContext documentContext;
 
 	private final ScriptEngine scriptEngine;
 

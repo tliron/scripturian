@@ -36,30 +36,33 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.internal.ExposedScript;
+import com.threecrickets.scripturian.internal.ExposedDocument;
 
 /**
- * Handles the parsing, optional compilation and running of composite scripts.
+ * Handles the parsing, optional compilation and running of Scripturian
+ * documents.
  * <p>
- * Composite scripts are text streams containing a mix of plain text and
- * "scriptlets" -- script code embedded between special delimiters. During the
- * parsing stage, which happens only once in the constructor, the entire text
- * stream is converted into script code. When the script is run, the
- * non-delimited plain text being sent to output via whatever method is
- * appropriate for the scripting engine (see {@link ScriptletParsingHelper}).
- * The exception to this is text streams beginning with plain text -- in such
- * cases, just that first section is sent to your specified output in pure Java.
- * The reasons for this are two: first, that no script engine has been specified
- * yet, so we can't be sure which to use, and second, that sending in pure Java
- * is probably a bit faster than sending in script. If the entire text stream is
- * just plain text, it is simply sent to output without invoking any script
- * engine. In such cases, {@link #getTrivial()} would return the content of the
- * text stream.
+ * Scripturian documents are text streams containing a mix of plain text and
+ * "scriptlets" -- script code embedded between special delimiters with an
+ * optional specification of which engine to use. During the parsing stage,
+ * which happens only once in the constructor, the entire document is converted
+ * into code and optionally compiled. When the code is run, the non-delimited
+ * plain text segments are sent to output via whatever method is appropriate for
+ * the scripting engine (see {@link ScriptletParsingHelper}).
  * <p>
- * Text streams are often provided by an implementation of {@link ScriptSource},
- * though your environment can use its own method.
+ * The exception to this is documents beginning with plain text -- in such
+ * cases, just that first section is sent directly to your specified output. The
+ * reasons for this are two: first, that no script engine has been specified
+ * yet, so we can't be sure which to use, and second, that sending in directly
+ * is probably a bit faster than sending via a scriptlet. If the entire text
+ * stream is just plain text, it is simply sent directly to output without
+ * invoking any scriptlet. In such cases, {@link #getTrivial()} would return the
+ * content of the text stream.
  * <p>
- * Composite scripts can easily be abused, becoming hard to read and hard to
+ * Documents are often provided by an implementation of {@link DocumentSource},
+ * though your environment can use its own system.
+ * <p>
+ * Scripturian documents can be abused, becoming hard to read and hard to
  * maintain, since both code and plain text are mixed together. However, they
  * can boost productivity in environments which mostly just output plain text.
  * For example, in an application that dynamically generates HTML web pages, it
@@ -69,25 +72,25 @@ import com.threecrickets.scripturian.internal.ExposedScript;
  * programmer. Web design software can often recognize scriptlets and take care
  * to keep it safe while the web designer makes changes to the file.
  * <p>
- * This class can support multiple script languages and engines within the same
- * text. Each delimited script segment can specify which engine it uses
+ * Scripturian documents can support scriptlets in multiple languages and
+ * engines within the same text. Each scriptlet can specify which engine it uses
  * explicitly at the opening delimiter. If the engine is not specified, whatever
  * engine was previously used in the file will be used. If no engine was
  * previously specified, a default value is used (supplied in the constructor).
  * <p>
- * Two delimiting styles are supported: JSP/ASP style (using percentage signs),
- * and the PHP style (using question marks). However, each text stream must
- * adhere to only one style throughout.
+ * Two scriptlet delimiting styles are supported: JSP/ASP style (using
+ * percentage signs), and the PHP style (using question marks). However, each
+ * document must adhere to only one style throughout.
  * <p>
- * In addition to scriptlets which are regular script code, this class supports
- * shorthand for common scriptlet tasks.
+ * In addition to scriptlets, which are regular code, Scriptuarian documents
+ * support a few shorthands for common scriptlet tasks.
  * <p>
  * The expression tag causes the expression to be sent to standard output. It
  * can allow for more compact and cleaner code.
  * <p>
- * The include tag invokes the <code>script.container.include(name)</code>
- * command as appropriate for the script engine. Note that you need this command
- * to be supported by your container environment.
+ * The include tag invokes the <code>document.container.include(name)</code>
+ * command as appropriate for the engine. Note that you need this command to be
+ * supported by your container environment.
  * <p>
  * Finally, the in-flow tag works exactly like an include, but lets you place
  * the included script into the flow of the current script. The inclusion is
@@ -99,10 +102,10 @@ import com.threecrickets.scripturian.internal.ExposedScript;
  * Examples:
  * <ul>
  * <li><b>JSP/ASP-style delimiters</b>: <code>&lt;% print('Hello World'); %&gt;</code></li>
- * <li><b>PHP-style delimiters</b>: <code>&lt;? script.cacheDuration.set 5000
+ * <li><b>PHP-style delimiters</b>: <code>&lt;? document.cacheDuration.set 5000
  * ?&gt;</code></li>
  * <li><b>Specifying engine name</b>:
- * <code>&lt;%groovy print myVariable %&gt; &lt;?php $script->container->include(lib_name); ?&gt;</code>
+ * <code>&lt;%groovy print myVariable %&gt; &lt;?php $document->container->include(lib_name); ?&gt;</code>
  * </li>
  * <li><b>Output expression</b>: <code>&lt;?= 15 * 6 ?&gt;</code></li>
  * <li><b>Output expression with specifying engine name</b>:
@@ -115,40 +118,41 @@ import com.threecrickets.scripturian.internal.ExposedScript;
  * <p>
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
- * <code>script</code> (this name can be changed via the
- * {@link #CompositeScript(String, ScriptEngineManager, String, ScriptSource, boolean, String, String, String, String, String, String, String, String)}
+ * <code>document</code> (this name can be changed via the
+ * {@link #Document(String, ScriptEngineManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
  * <ul>
- * <li><code>script.container</code>: This is an arbitrary object set by the
- * script's container environment for access to container-specific services. It
- * might be null if none was provided.</li>
- * <li><code>script.context</code>: This is the {@link ScriptContext} used by
- * the script. Scripts may use it to get access to the {@link Writer} objects
- * used for standard output and standard error.</li>
- * <li><code>script.engine</code>: This is the {@link ScriptEngine} used by the
- * script. Scripts may use it to get information about the engine's
+ * <li><code>document.container</code>: This is an arbitrary object set by the
+ * document's container environment for access to container-specific services.
+ * It might be null if none was provided.</li>
+ * <li><code>document.context</code>: This is the {@link ScriptContext} used by
+ * the document. Scriptlets may use it to get access to the {@link Writer}
+ * objects used for standard output and standard error.</li>
+ * <li><code>document.engine</code>: This is the {@link ScriptEngine} used by
+ * the scriptlet. Scriptlets may use it to get information about the engine's
  * capabilities.</li>
- * <li><code>script.engineManager</code>: This is the
- * {@link ScriptEngineManager} used to create the script engine. Scripts may use
- * it to get information about what other engines are available.</li>
- * <li><code>script.meta</code>: This {@link ConcurrentMap} provides a
- * convenient location for global values shared by all scripts, run by all
- * engines.</li>
+ * <li><code>document.engineManager</code>: This is the
+ * {@link ScriptEngineManager} used to create all script engines in the
+ * document. Scriptlets may use it to get information about what other engines
+ * are available.</li>
+ * <li><code>document.meta</code>: This {@link ConcurrentMap} provides a
+ * convenient location for global values shared by all scriptlets in all
+ * documents.</li>
  * </ul>
  * Modifiable attributes:
  * <ul>
- * <li><code>script.cacheDuration</code>: Setting this to something greater than
- * 0 enables caching of the script results for a maximum number of milliseconds.
- * By default cacheDuration is 0, so that each request causes the script to be
- * evaluated. This class does not handle caching itself. Caching can be provided
- * by your environment if appropriate.</li>
+ * <li><code>document.cacheDuration</code>: Setting this to something greater
+ * than 0 enables caching of the document's output for a maximum number of
+ * milliseconds. By default cacheDuration is 0, so that each request causes the
+ * document to be run. This class does not handle caching itself. Caching can be
+ * provided by your environment if appropriate.</li>
  * </ul>
  * 
  * @author Tal Liron
  */
-public class CompositeScript
+public class Document
 {
 	//
 	// Constants
@@ -191,9 +195,9 @@ public class CompositeScript
 	public static final String DEFAULT_DELIMITER_IN_FLOW = ":";
 
 	/**
-	 * The default script variable name: "script"
+	 * The default document variable name: "document"
 	 */
-	public static final String DEFAULT_SCRIPT_VARIABLE_NAME = "script";
+	public static final String DEFAULT_DOCUMENT_VARIABLE_NAME = "document";
 
 	//
 	// Static attributes
@@ -201,8 +205,8 @@ public class CompositeScript
 
 	/**
 	 * A map of script engine names to their {@link ScriptletParsingHelper} .
-	 * Note that composite scripts will not work without the appropriate parsing
-	 * helpers installed.
+	 * Note that Scripturian documents will not work without the appropriate
+	 * parsing helpers installed.
 	 * <p>
 	 * This map is automatically initialized when this class loads according to
 	 * resources named
@@ -287,7 +291,7 @@ public class CompositeScript
 
 	/**
 	 * Parses a text stream containing plain text and scriptlets into a compact,
-	 * optimized script. Parsing requires the appropriate
+	 * optimized document. Parsing requires the appropriate
 	 * {@link ScriptletParsingHelper} implementations to be installed for the
 	 * script engines.
 	 * 
@@ -296,10 +300,10 @@ public class CompositeScript
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
-	 *        If a script engine name isn't explicitly specified in the
-	 *        composite script file, this one will be used
-	 * @param scriptSource
-	 *        The script source (used for in-flow tags)
+	 *        If a script engine name isn't explicitly specified in the first
+	 *        scriptlet, this one will be used
+	 * @param documentSource
+	 *        The document source (used for in-flow tags)
 	 * @param allowCompilation
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
@@ -307,15 +311,15 @@ public class CompositeScript
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 */
-	public CompositeScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<CompositeScript> scriptSource, boolean allowCompilation ) throws ScriptException
+	public Document( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation ) throws ScriptException
 	{
-		this( text, scriptEngineManager, defaultEngineName, scriptSource, allowCompilation, DEFAULT_SCRIPT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
+		this( text, scriptEngineManager, defaultEngineName, documentSource, allowCompilation, DEFAULT_DOCUMENT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
 			DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
 	/**
-	 * Parses a text stream containing plainn text and scriptlets into a
-	 * compact, optimized script. Parsing requires the appropriate
+	 * Parses a text stream containing plain text and scriptlets into a compact,
+	 * optimized document. Parsing requires the appropriate
 	 * {@link ScriptletParsingHelper} implementations to be installed for the
 	 * script engines.
 	 * 
@@ -324,16 +328,16 @@ public class CompositeScript
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
-	 *        If a script engine name isn't explicitly specified in the
-	 *        composite script file, this one will be used
-	 * @param scriptSource
-	 *        The script source (used for in-flow tags)
+	 *        If a script engine name isn't explicitly specified in the first
+	 *        scriptlet, this one will be used
+	 * @param documentSource
+	 *        The document source (used for in-flow tags)
 	 * @param allowCompilation
-	 *        Whether script segments will be compiled (note that compilation
-	 *        will only happen if the script engine supports it, and that what
+	 *        Whether scriptlets will be compiled (note that compilation will
+	 *        only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
-	 * @param scriptVariableName
-	 *        The script variable name
+	 * @param documentVariableName
+	 *        The document variable name
 	 * @param delimiter1Start
 	 *        The start delimiter (first option)
 	 * @param delimiter1End
@@ -355,10 +359,10 @@ public class CompositeScript
 	 *         In case of a parsing error
 	 * @see ScriptletParsingHelper
 	 */
-	public CompositeScript( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, ScriptSource<CompositeScript> scriptSource, boolean allowCompilation, String scriptVariableName,
+	public Document( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation, String documentVariableName,
 		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ScriptException
 	{
-		this.scriptVariableName = scriptVariableName;
+		this.documentVariableName = documentVariableName;
 
 		String lastScriptEngineName = defaultEngineName;
 
@@ -476,7 +480,7 @@ public class CompositeScript
 							else if( isInclude )
 								segments.add( new Segment( scriptletParsingHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
 						}
-						else if( isInFlow && ( scriptSource != null ) )
+						else if( isInFlow && ( documentSource != null ) )
 						{
 							ScriptEngine lastScriptEngine = scriptEngineManager.getEngineByName( lastScriptEngineName );
 							if( lastScriptEngine == null )
@@ -492,9 +496,9 @@ public class CompositeScript
 							// Note that the in-flow scriptlet is a
 							// single segment, so we can optimize parsing a
 							// bit
-							CompositeScript inFlowScript = new CompositeScript( inFlowText, scriptEngineManager, null, null, allowCompilation, scriptVariableName, delimiterStart, delimiterEnd, delimiterStart,
-								delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
-							scriptSource.setScriptDescriptor( inFlowName, inFlowText, "", inFlowScript );
+							Document inFlowScript = new Document( inFlowText, scriptEngineManager, null, null, allowCompilation, documentVariableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd,
+								delimiterExpression, delimiterInclude, delimiterInFlow );
+							documentSource.setDocumentDescriptor( inFlowName, inFlowText, "", inFlowScript );
 
 							// TODO: would it ever be possible to remove the
 							// dependent in-flow instances?
@@ -537,7 +541,7 @@ public class CompositeScript
 
 			if( previous != null )
 			{
-				if( previous.isScript == current.isScript )
+				if( previous.isScriptlet == current.isScriptlet )
 				{
 					if( current.scriptEngineName.equals( previous.scriptEngineName ) )
 					{
@@ -560,7 +564,7 @@ public class CompositeScript
 		{
 			current = i.next();
 
-			if( ( previous != null ) && previous.isScript )
+			if( ( previous != null ) && previous.isScriptlet )
 			{
 				if( previous.scriptEngineName.equals( current.scriptEngineName ) )
 				{
@@ -568,7 +572,7 @@ public class CompositeScript
 					// (converting to script if necessary)
 					i.remove();
 
-					if( current.isScript )
+					if( current.isScriptlet )
 						previous.text += current.text;
 					else
 					{
@@ -603,7 +607,7 @@ public class CompositeScript
 		{
 			for( Segment segment : segments )
 			{
-				if( segment.isScript )
+				if( segment.isScriptlet )
 				{
 					ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( segment.scriptEngineName );
 					if( scriptEngine == null )
@@ -660,11 +664,11 @@ public class CompositeScript
 	}
 
 	/**
-	 * The default variable name for the {@link ExposedScript} instance.
+	 * The default variable name for the {@link ExposedDocument} instance.
 	 */
-	public String getScriptVariableName()
+	public String getDocumentVariableName()
 	{
-		return scriptVariableName;
+		return documentVariableName;
 	}
 
 	/**
@@ -681,7 +685,7 @@ public class CompositeScript
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
-	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
+	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * causes the script to be run. This class does not handle caching itself.
 	 * Caching can be provided by your environment if appropriate.
 	 * <p>
@@ -707,10 +711,9 @@ public class CompositeScript
 	}
 
 	/**
-	 * Trivial composite script objects have no scriptlets, meaning that they
-	 * are pure text. Identifying such composite scripts can save you from
-	 * making unnecessary calls to
-	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
+	 * Trivial documents have no scriptlets, meaning that they are pure text.
+	 * Identifying such documents can save you from making unnecessary calls to
+	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * in some situations.
 	 * 
 	 * @return The text content if it's trivial, null if not
@@ -720,21 +723,21 @@ public class CompositeScript
 		if( segments.length == 1 )
 		{
 			Segment sole = segments[0];
-			if( !sole.isScript )
+			if( !sole.isScriptlet )
 				return sole.text;
 		}
 		return null;
 	}
 
 	/**
-	 * The composite script context to be used for calls to
-	 * {@link #invoke(String, Object, ScriptContextController)}.
+	 * The document context to be used for calls to
+	 * {@link #invoke(String, Object, ScriptletController)}.
 	 * 
-	 * @return The composite script context
+	 * @return The document context
 	 */
-	public CompositeScriptContext getCompositeScriptContextForInvocations()
+	public DocumentContext getDocumentContextForInvocations()
 	{
-		return compositeScriptContextForInvocations;
+		return documentContextForInvocations;
 	}
 
 	//
@@ -742,16 +745,16 @@ public class CompositeScript
 	//
 
 	/**
-	 * Runs the script. Optionally supports checking for output caching, by
+	 * Runs the document. Optionally supports checking for output caching, by
 	 * testing {@link #cacheDuration} versus the value of {@link #getLastRun()}.
 	 * If checking the cache is enabled, this method will return false to
 	 * signify that the script did not run and the cached output should be used
 	 * instead. In such cases, it is up to your running environment to interpret
 	 * this accordingly if you wish to support caching.
 	 * <p>
-	 * If you intend to run the script multiple times from the same thread, it
-	 * is recommended that you use the same {@link CompositeScriptContext} for
-	 * each call for better performance.
+	 * If you intend to run the document multiple times from the same thread, it
+	 * is recommended that you use the same {@link DocumentContext} for each
+	 * call for better performance.
 	 * 
 	 * @param checkCache
 	 *        Whether or not to check for caching versus the value of
@@ -762,20 +765,20 @@ public class CompositeScript
 	 *        Standard error output
 	 * @param flushLines
 	 *        Whether to flush the writers after every line
-	 * @param compositeScriptContext
+	 * @param documentContext
 	 *        The context
 	 * @param container
 	 *        The container (can be null)
-	 * @param scriptContextController
-	 *        An optional {@link ScriptContextController} to be applied to the
+	 * @param scriptletController
+	 *        An optional {@link ScriptletController} to be applied to the
 	 *        script context
 	 * @return True if the script ran, false if it didn't run, because the
 	 *         cached output is expected to be used instead
 	 * @throws ScriptException
 	 * @throws IOException
 	 */
-	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, CompositeScriptContext compositeScriptContext, Object container, ScriptContextController scriptContextController )
-		throws ScriptException, IOException
+	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, DocumentContext documentContext, Object container, ScriptletController scriptletController ) throws ScriptException,
+		IOException
 	{
 		long now = System.currentTimeMillis();
 		if( checkCache && ( now - lastRun.get() < cacheDuration.get() ) )
@@ -785,7 +788,7 @@ public class CompositeScript
 		}
 		else
 		{
-			ScriptContext scriptContext = compositeScriptContext.getScriptContext();
+			ScriptContext scriptContext = documentContext.getScriptContext();
 
 			// Note that some script engines (such as Rhino) expect a
 			// PrintWriter, even though the spec defines just a Writer
@@ -795,21 +798,21 @@ public class CompositeScript
 			scriptContext.setWriter( writer );
 			scriptContext.setErrorWriter( errorWriter );
 
-			if( scriptContextController != null )
-				scriptContextController.initialize( scriptContext );
+			if( scriptletController != null )
+				scriptletController.initialize( scriptContext );
 
 			try
 			{
 				for( Segment segment : segments )
 				{
-					if( !segment.isScript )
+					if( !segment.isScriptlet )
 						writer.write( segment.text );
 					else
 					{
-						ScriptEngine scriptEngine = compositeScriptContext.getScriptEngine( segment.scriptEngineName );
+						ScriptEngine scriptEngine = documentContext.getScriptEngine( segment.scriptEngineName );
 
-						Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-						scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, compositeScriptContext, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
+						Object oldExposedDocument = scriptContext.getAttribute( documentVariableName, ScriptContext.ENGINE_SCOPE );
+						scriptContext.setAttribute( documentVariableName, new ExposedDocument( this, documentContext, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
 
 						try
 						{
@@ -849,75 +852,75 @@ public class CompositeScript
 						{
 							// Restore old script value (this is desirable for
 							// scripts that run other scripts)
-							if( oldScript != null )
-								scriptContext.setAttribute( scriptVariableName, oldScript, ScriptContext.ENGINE_SCOPE );
+							if( oldExposedDocument != null )
+								scriptContext.setAttribute( documentVariableName, oldExposedDocument, ScriptContext.ENGINE_SCOPE );
 						}
 					}
 				}
 			}
 			finally
 			{
-				if( scriptContextController != null )
-					scriptContextController.finalize( scriptContext );
+				if( scriptletController != null )
+					scriptletController.finalize( scriptContext );
 			}
 
-			this.compositeScriptContextForInvocations = compositeScriptContext;
+			this.documentContextForInvocations = documentContext;
 			lastRun.set( now );
 			return true;
 		}
 	}
 
 	/**
-	 * Calls an entry point in the script: a function, method, closure, etc.,
-	 * according to how the scripting engine and its language handles
-	 * invocations. If not, then this method requires the appropriate
+	 * Calls an entry point in the document: a function, method, closure, etc.,
+	 * according to how the script engine and its language handles invocations.
+	 * If not, then this method requires the appropriate
 	 * {@link ScriptletParsingHelper} implementation to be installed for the
 	 * script engine. Most likely, the script engine supports the
 	 * {@link Invocable} interface. Running the script first (via
-	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
+	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * ) is not absolutely required, but probably will be necessary in most
 	 * useful scenarios, where running the script causes useful entry point to
 	 * be defined.
 	 * <p>
 	 * Note that this call does not support sending arguments. If you need to
 	 * pass data to the script, use a global variable, which you can set via the
-	 * optional {@link ScriptContextController}.
+	 * optional {@link ScriptletController}.
 	 * <p>
 	 * Concurrency note: The invoke mechanism allows for multi-threaded access,
 	 * so it's the responsibility of your script to be thread-safe. Also note
-	 * that, internally, invoke relies on the {@link CompositeScriptContext}
-	 * from {@link #getCompositeScriptContextForInvocations()}. This is set to
-	 * be the one used in the last call to
-	 * {@link #run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
+	 * that, internally, invoke relies on the {@link DocumentContext} from
+	 * {@link #getDocumentContextForInvocations()}. This is set to be the one
+	 * used in the last call to
+	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
 	 * @param container
 	 *        The container (can be null)
-	 * @param scriptContextController
-	 *        An optional {@link ScriptContextController} to be applied to the
+	 * @param scriptletController
+	 *        An optional {@link ScriptletController} to be applied to the
 	 *        script context
-	 * @return The value returned by the script call
+	 * @return The value returned by the invocation
 	 * @throws ScriptException
 	 * @throws NoSuchMethodException
 	 *         Note that this exception will only be thrown if the script engine
 	 *         supports the {@link Invocable} interface; otherwise a
 	 *         {@link ScriptException} is thrown if the method is not found
 	 */
-	public Object invoke( String entryPointName, Object container, ScriptContextController scriptContextController ) throws ScriptException, NoSuchMethodException
+	public Object invoke( String entryPointName, Object container, ScriptletController scriptletController ) throws ScriptException, NoSuchMethodException
 	{
-		if( compositeScriptContextForInvocations == null )
-			throw new ScriptException( "Script must be run at least once before calling invoke" );
+		if( documentContextForInvocations == null )
+			throw new ScriptException( "Document must be run at least once before calling invoke" );
 
-		ScriptEngine scriptEngine = compositeScriptContextForInvocations.getLastScriptEngine();
-		ScriptContext scriptContext = compositeScriptContextForInvocations.getScriptContext();
-		String scriptEngineName = compositeScriptContextForInvocations.getLastScriptEngineName();
+		ScriptEngine scriptEngine = documentContextForInvocations.getLastScriptEngine();
+		ScriptContext scriptContext = documentContextForInvocations.getScriptContext();
+		String scriptEngineName = documentContextForInvocations.getLastScriptEngineName();
 
-		Object oldScript = scriptContext.getAttribute( scriptVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( scriptVariableName, new ExposedScript( this, compositeScriptContextForInvocations, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
+		Object oldExposedDocument = scriptContext.getAttribute( documentVariableName, ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( documentVariableName, new ExposedDocument( this, documentContextForInvocations, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
 
-		if( scriptContextController != null )
-			scriptContextController.initialize( scriptContext );
+		if( scriptletController != null )
+			scriptletController.initialize( scriptContext );
 
 		try
 		{
@@ -939,13 +942,13 @@ public class CompositeScript
 		}
 		finally
 		{
-			if( scriptContextController != null )
-				scriptContextController.finalize( scriptContext );
+			if( scriptletController != null )
+				scriptletController.finalize( scriptContext );
 
 			// Restore old script value (this is desirable for scripts that run
 			// other scripts)
-			if( oldScript != null )
-				scriptContext.setAttribute( scriptVariableName, oldScript, ScriptContext.ENGINE_SCOPE );
+			if( oldExposedDocument != null )
+				scriptContext.setAttribute( documentVariableName, oldExposedDocument, ScriptContext.ENGINE_SCOPE );
 		}
 	}
 
@@ -962,20 +965,20 @@ public class CompositeScript
 
 	private final String delimiterEnd;
 
-	private final String scriptVariableName;
+	private final String documentVariableName;
 
 	private final AtomicLong cacheDuration = new AtomicLong();
 
 	private final AtomicLong lastRun = new AtomicLong();
 
-	private CompositeScriptContext compositeScriptContextForInvocations;
+	private DocumentContext documentContextForInvocations;
 
 	private static class Segment
 	{
-		public Segment( String text, boolean isScript, String scriptEngineName )
+		public Segment( String text, boolean isScriptlet, String scriptEngineName )
 		{
 			this.text = text;
-			this.isScript = isScript;
+			this.isScriptlet = isScriptlet;
 			this.scriptEngineName = scriptEngineName;
 		}
 
@@ -983,7 +986,7 @@ public class CompositeScript
 
 		public CompiledScript compiledScript;
 
-		public boolean isScript;
+		public boolean isScriptlet;
 
 		public String scriptEngineName;
 	}

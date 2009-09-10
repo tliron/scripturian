@@ -13,13 +13,13 @@ package com.threecrickets.scripturian.helper;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the Python scripting
- * language as implemented by <a href="http://jepp.sourceforge.net/">Jepp</a>.
+ * An {@link ScriptletParsingHelper} that supports the Python scripting language
+ * as implemented by <a href="http://jepp.sourceforge.net/">Jepp</a>.
  * 
  * @author Tal Liron
  */
@@ -38,38 +38,38 @@ public class JeppScriptletParsingHelper implements ScriptletParsingHelper
 		return false;
 	}
 
-	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		// Apparently the Java Scripting support for Jepp does not correctly
 		// set global variables, not redirect stdout and stderr. Luckily, the
 		// Python interface is compatible with Java's Writer interface, so we
 		// can redirect them explicitly.
-		return compositeScript.getScriptVariableName() + "=context.getAttribute('" + compositeScript.getScriptVariableName() + "');import sys;sys.stdout=context.getWriter();sys.stderr=context.getErrorWriter();";
+		return document.getDocumentVariableName() + "=context.getAttribute('" + document.getDocumentVariableName() + "');import sys;sys.stdout=context.getWriter();sys.stderr=context.getErrorWriter();";
 	}
 
-	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
+	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
 		return "sys.stdout.write(\"" + content + "\"),;";
 	}
 
-	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return compositeScript.getScriptVariableName() + ".getContainer().include(" + content + ");";
+		return document.getDocumentVariableName() + ".getContainer().include(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 		// return content + "();";

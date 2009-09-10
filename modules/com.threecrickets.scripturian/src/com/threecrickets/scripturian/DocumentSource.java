@@ -21,10 +21,10 @@ import java.io.IOException;
  * descriptors.
  * 
  * @author Tal Liron
- * @param <S>
+ * @param <D>
  *        The script type
  */
-public interface ScriptSource<S>
+public interface DocumentSource<D>
 {
 	/**
 	 * Access to the script descriptor.
@@ -32,7 +32,7 @@ public interface ScriptSource<S>
 	 * @param <S>
 	 *        The script type
 	 */
-	public interface ScriptDescriptor<S>
+	public interface DocumentDescriptor<S>
 	{
 		/**
 		 * The text for the script.
@@ -51,29 +51,29 @@ public interface ScriptSource<S>
 
 		/**
 		 * The script instance. Should be null by default, as it is intended to
-		 * be set by the user of the {@link ScriptSource},
+		 * be set by the user of the {@link DocumentSource},
 		 * 
 		 * @return The script instance
 		 */
-		public S getScript();
+		public S getDocument();
 
 		/**
 		 * @param value
 		 *        The script instance
 		 * @return The existing script instance before we changed it
-		 * @see #getScript()
+		 * @see #getDocument()
 		 */
-		public S setScript( S value );
+		public S setDocument( S value );
 
 		/**
-		 * Like {@link #setScript(Object)}, with an atomic check for null.
+		 * Like {@link #setDocument(Object)}, with an atomic check for null.
 		 * 
 		 * @param value
 		 *        The script instance
 		 * @return The existing script instance before we changed it
-		 * @see #getScript()
+		 * @see #getDocument()
 		 */
-		public S setScriptIfAbsent( S value );
+		public S setDocumentIfAbsent( S value );
 	}
 
 	/**
@@ -84,7 +84,7 @@ public interface ScriptSource<S>
 	 * @return The script descriptor
 	 * @throws IOException
 	 */
-	public ScriptDescriptor<S> getScriptDescriptor( String name ) throws IOException;
+	public DocumentDescriptor<D> getDocumentDescriptor( String name ) throws IOException;
 
 	/**
 	 * Allows adding or changing script descriptors.
@@ -99,7 +99,7 @@ public interface ScriptSource<S>
 	 *        The script instance
 	 * @return The existing script descriptor before we changed it
 	 */
-	public ScriptDescriptor<S> setScriptDescriptor( String name, String text, String tag, S script );
+	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D script );
 
 	/**
 	 * Allows adding or changing script descriptors, with an atomic check for
@@ -115,5 +115,5 @@ public interface ScriptSource<S>
 	 *        The script instance
 	 * @return The existing script descriptor before we changed it
 	 */
-	public ScriptDescriptor<S> setScriptDescriptorIfAbsent( String name, String text, String tag, S script );
+	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D script );
 }

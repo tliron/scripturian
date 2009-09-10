@@ -7,7 +7,7 @@
 <body>
 	<table width="100%" cellspacing="20">
 		<tr valign="top">
-			<td width="33%">
+			<td width="25%">
 
 				<h1>Scripturian</h1>
 				
@@ -15,52 +15,57 @@
 					<ul>
 						<li><a href=".">About</a></li>
 						<li><a href="legal.html">License</a></li>
-						<li><a href="requirements.html">Requirements</a></li>
-						<li><a href="">Download</a></li>
+						<li><a href="download.html">Download</a></li>
+						<li><span class="heading">Documentation</span>
+							<ul>
+								<li><a href="requirements.html">Requirements</a></li>
+								<li><a href="languages.html">Supported Languages</a></li>
+								<li><a href="faq.html">FAQ</a></li>
+								<li><a href="http://www.threecrickets.com/scripturian/api/">API</a></li>
+							</ul>
+						</li>
 						<li><a href="http://scripturian.tigris.org/">Community and Support</a></li>
-						<li><a href="http://www.threecrickets.com/scripturian/api/">API Documentation</a></li>
-						<li><a href="faq.html">FAQ</a></li>
 						<li><a href="links.html" class="closed">Similar Projects</a></li>
 					</ul>
 				</div>
 
 			</td>
-			<td width="34%" id="main">
+			<td width="50%" id="main">
 
 
 <h2>Frequently Asked Questions</h2>
 
-<h3>Why does Scripturian provide its own "include" facility, and why would I prefer it over that provided by the scripting language?</h3>
+<h3>Why does Scripturian provide its own "include" facility, and why would I prefer it over that provided by the programming language?</h3>
 <p>
-You are absolutely free to use the scripting language's facilities, which in some cases could be very powerful.
-Scripturian's facility offers you two advantages:
+	You are absolutely free to use your programming language's facilities, which in some cases could be very powerful.
+	Scripturian's optional facility offers you two advantages:
 </p>
 <p>
-First, in that your container environment can work with specialized <a href="http://www.threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/ScriptSource.html">ScriptSource</a> implementations.
-For example, you might
-want to implement a ScriptSource that reads all its scripts from a zip file. This would be great if you're using
-Scipturian for enabling plugins to your application, in which case a plugin could be provided via a single zip file.
-Internally, you may wants scripts to include each other. Using Scripturian's include facility, you can guarantee
-that scripts can include each other no matter how the scripts are actually stored.
+	First, in that your container environment can work with specialized <a href="http://www.threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/DocumentSource.html">DocumentSource</a> implementations.
+	For example, you might
+	have a DocumentSource that reads all its documents from a zip file. This would be great if you're using
+	Scipturian for enabling plugins to your application, in which case a plugin could be provided via a single zip file.
+	Internally, your plugin can be composed of many documents. Using Scripturian's include facility, you can guarantee
+	that documents can include each other no matter how they are actually stored.
 </p>
 <p>
-Second, because Scripturian allows you to mix scripting languages, it would be possible to include scripts in any language.
-As to why you might want to do this, see the question below.
-</p>
-
-<h3>Why does Scripturian support mixing scriptlets in different languages in the same script?</h3>
-<p>
-Scripting languages differ widely in performance, capabilities, and security considerations. For example, let's say you
-are using a very scalable and flexible templating language, but it does not support higher-level programming, which you need.
-On the other, a higher-level language would do a poor job at the kind of templating work you need.
-With Scripturian, you are able to have one scriptlet in the templating language, and others in, say, Ruby. Scripturian lets
-you cleanly get the benefits of both in the same composite script.
+	Second, Scripturian allows you to include documents which include scriptlets in other programming or templating languages.
+	As to why you would want to do mix languages, see the FAQ below.
 </p>
 
-<h3>What are "in-flow" scriptlets for?</h3>
+<h3>Why does Scripturian support mixing scriptlets in different languages in the same document?</h3>
 <p>
-These scriptlets are only useful in composite scripts which contain scriptlets in different languages, in which case the "in-flow" tag
-lets you insert one scriptlet "into the flow" of the other. Consider this example:
+	Programming languages differ widely in performance, capabilities, and security considerations. For example, let's say you
+	are using a very scalable and flexible language, but it does not support some higher-level programming structures, which you need.
+	On the other hand, a higher-level language would do a poor, slow job at the kind of templating work you need.
+	With Scripturian, you are able to have one scriptlet in a templating language, such as Velocity, and others in a higher language, such as Ruby.
+	Scripturian lets you cleanly get the benefits of both in the same document.
+</p>
+
+<h3>What is the "in-flow" tag for?</h3>
+<p>
+	These scriptlets are only useful in documents which contain scriptlets in more than one language, in which case the "in-flow" tag
+	lets you insert one scriptlet "into the flow" of the other. Consider this example:
 </p>
 <pre>
 &lt;%js if(isDebug) { %&gt;
@@ -73,10 +78,10 @@ The debug information is:
 &lt;% } %&gt;
 </pre>
 <p>
-We are using JavaScript to do our main coding. However, we would like to use a facility in Velocity to dump our actual debug
-information. Without using the in-flow tag for the Velocity scriptlet, we would be getting a JavaScript syntax error. Why?
-Because Scripturian by necessity separates scriptlets according to scripting languages. Without the in-flow tag, it would attempt to run the first
-JavaScript scriptlet, then the Velocity scriptlet, and finally the last JavaScript scriptlet, as so:
+	We are using JavaScript to do our main coding. However, we would like to use a facility in Velocity to dump our actual debug
+	information. Without using the in-flow tag for the Velocity scriptlet, we would be getting a JavaScript syntax error. Why?
+	Because Scripturian by necessity separates scriptlets according to languages, and executes them in order.
+	Without the in-flow tag, it would attempt to run the first JavaScript scriptlet, then the Velocity scriptlet, and finally the last JavaScript scriptlet, as so:
 </p>
 
 <p>First segment:</p>
@@ -99,16 +104,16 @@ JavaScript scriptlet, then the Velocity scriptlet, and finally the last JavaScri
 </pre>
 
 <p>
-As you can see, both JavaScript segments in this
-case are fragmentary and un-runnable.
-</p>
-
-The in-flow tag solves this problem by keeping us in the flow of JavaScript, so that we are
-dealing with a single JavaScript scriptlet.
+	As you can see, both JavaScript segments in this
+	case are fragmentary and un-runnable.
 </p>
 <p>
-How is this possible? Behind the scenes, Scripturian uses its include facility to handle in-flow scriptlets. In this case the Velocity
-scriptlet is extracted into an in-memory script file. The above would then be equivalent to:
+	The in-flow tag solves this problem by keeping us in the flow of JavaScript, so that we are
+	dealing with a single JavaScript scriptlet.
+</p>
+<p>
+	How is this possible? Behind the scenes, Scripturian uses its include facility to handle in-flow scriptlets. In this case the Velocity
+	scriptlet is extracted into an in-memory script file. The above would then be equivalent to:
 <pre>
 &lt;%js if(isDebug) { %&gt;
 The debug information is: &lt;%& 'dump.fragment' %&gt;
@@ -123,16 +128,16 @@ The debug information is: &lt;%& 'dump.fragment' %&gt;
 %&gt;
 </pre>
 <p>
-The in-flow tag saves you from creating separate files for such uses. Note that the entire separation process occurs only during
-parsing, and is generally very fast. Additionally, all scriptlets will be pre-compiled for maximum performance if you request it.
-Also note that parsing automatically detects cases in which you are using an "in-flow" scriptlet in the same language,
-and optimizes by treating the in-flow scriptlet as a regular scriptlet.
+	The in-flow tag saves you from creating separate files for such uses. Note that the entire separation process occurs only during
+	parsing, and is generally very fast. Additionally, all scriptlets will be pre-compiled for maximum performance if you request it.
+	Also note that parsing automatically detects cases in which you are using an "in-flow" scriptlet in the same language,
+	and optimizes by treating the in-flow scriptlet as a regular scriptlet.
 </p>
 
 
 
 			</td>
-			<td width="33%" align="right">
+			<td width="25%" align="right">
 				<a href="http://www.threecrickets.com/" class="neutral"><img src="http://www.threecrickets.com/static/images/three-crickets-small.png" border="0" /></a>
 			</td>
 		</tr>

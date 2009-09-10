@@ -23,13 +23,13 @@ import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
 /**
- * Encapsulates context for an {@link CompositeScript}. Every thread calling
- * {@link CompositeScript#run(boolean, Writer, Writer, boolean, CompositeScriptContext, Object, ScriptContextController)}
+ * Encapsulates context for an {@link Document}. Every thread calling
+ * {@link Document#run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
  * must use its own context.
  * 
  * @author Tal Liron
  */
-public class CompositeScriptContext
+public class DocumentContext
 {
 	//
 	// Construction
@@ -41,7 +41,7 @@ public class CompositeScriptContext
 	 * @param scriptEngineManager
 	 *        A script engine manager
 	 */
-	public CompositeScriptContext( ScriptEngineManager scriptEngineManager )
+	public DocumentContext( ScriptEngineManager scriptEngineManager )
 	{
 		this.scriptEngineManager = scriptEngineManager;
 	}
@@ -61,7 +61,7 @@ public class CompositeScriptContext
 	}
 
 	/**
-	 * A cached script engine. All script engines will have the same
+	 * A cached script engine. All script engines will use the same
 	 * {@link ScriptContext}.
 	 * 
 	 * @param scriptEngineName
@@ -96,7 +96,7 @@ public class CompositeScriptContext
 	}
 
 	/**
-	 * The single script context used by all script engines.
+	 * The single script context used by all scriptlets in the document.
 	 * 
 	 * @return The script context
 	 */
@@ -112,7 +112,7 @@ public class CompositeScriptContext
 	}
 
 	/**
-	 * The last {@link ScriptEngine} used in the last run of the script.
+	 * The last {@link ScriptEngine} used in the last run of the document.
 	 * 
 	 * @return The last script engine
 	 */
@@ -122,7 +122,8 @@ public class CompositeScriptContext
 	}
 
 	/**
-	 * The name of the {@link ScriptEngine} used in the last run of the script.
+	 * The name of the {@link ScriptEngine} used in the last run of the
+	 * document.
 	 * 
 	 * @return The last script engine name
 	 */

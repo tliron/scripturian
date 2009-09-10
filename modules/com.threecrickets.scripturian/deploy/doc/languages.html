@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Scripturian - Three Crickets</title>
+	<link rel="stylesheet" type="text/css" href="scripturian.css" />
+</head>
+<body>
+	<table width="100%" cellspacing="20">
+		<tr valign="top">
+			<td width="25%">
+
+				<h1>Scripturian</h1>
+				
+				<div class="navigation">
+					<ul>
+						<li><a href=".">About</a></li>
+						<li><a href="legal.html">License</a></li>
+						<li><a href="download.html">Download</a></li>
+						<li><span class="heading">Documentation</span>
+							<ul>
+								<li><a href="requirements.html">Requirements</a></li>
+								<li><a href="languages.html">Supported Languages</a></li>
+								<li><a href="faq.html">FAQ</a></li>
+								<li><a href="http://www.threecrickets.com/scripturian/api/">API</a></li>
+							</ul>
+						</li>
+						<li><a href="http://scripturian.tigris.org/">Community and Support</a></li>
+						<li><a href="links.html" class="closed">Similar Projects</a></li>
+					</ul>
+				</div>
+
+			</td>
+			<td width="50%" id="main">
+
+
+<table width="100%" cellpadding="10" cellspacing="0"><tr valign="top">
+	<td width="50%">
+		<h2>Supported Languages</h2>
+
+		<h3>JavaScript</h3>
+		<p>
+			Your distribution of Java may already have JavaScript support built in, in which case you're already good to go.
+			This is true for Sun's JDK and OpenJDK. Otherwise, JavaScript is implemented by Mozilla's <a href="http://www.mozilla.org/rhino/">Rhino</a>.
+		</p>
+		<p>
+			Note that Sun and OpenJDK's built-in JavaScript support is a simplified version of Rhino, which may limit the power of Scripturian, so that
+			Mozilla's version is recommended. If you have both versions installed, use the "rhino-nonjdk" name to circumvent the built-in Rhino
+			(see demo JavaScript source code).
+		</p>
+		<p>
+			Mozilla's Rhino requires a small library for
+			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
+			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. (This was true for version 1.7R1.)
+			See the <a href="requirements.page">requirement notes</a> if you are using Java 5.
+		</p>
+		
+		<h3>PHP</h3>
+		<p>
+			PHP5 is implemented by Caucho's <a href="http://quercus.caucho.com/">Quercus</a>.
+		</p>
+		<p>
+			Note that Scripturian
+			replaces PHP's scriptlet scheme with its own. Usage and performance should be identical, but Scripturian's scheme is more powerful than PHP's,
+			because it allows for mixing languages in one file.
+		</p>
+
+	</td>
+	<td width="50%">
+
+		<h3>Python</h3>
+		<p>
+			Two implementations exist for Python: <a href="http://www.jython.org/">Jython</a> and <a href="http://jepp.sourceforge.net/">Jepp</a>.
+			The former is 100% Java, while the latter uses a Java bridge to a natively compiled CPython of your choice, and is generally more complicated to install.
+		</p>
+		<p>
+			Jython requires a small library for
+			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
+			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. (This was true for version 2.2.1.)
+			See the <a href="requirements.page">requirement notes</a> if you are using Java 5.
+		</p>
+		
+		<h3>Ruby</h3>
+		<p>
+			Ruby is implemented by <a href="http://jruby.codehaus.org/">JRuby</a>. Note that you also need a small library for
+			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
+			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. (This was true for version 1.3.1.)
+			See the <a href="requirements.page">requirement notes</a> if you are using Java 5.
+		</p> 
+		
+		<h3>Groovy</h3>
+		<p>
+			Groovy is implemented by, well, <a href="http://groovy.codehaus.org/">Groovy</a>.
+		</p>
+
+		<h3>Succinct</h3>
+		<p>
+			<a href="http://www.threecrickets.com/succinct/">Succinct</a> is currently the only language with built-in Scripturian support! 
+		</p>
+
+		<h3>Velocity</h3>
+		<p>
+			Get Velocity <a href="http://velocity.apache.org/">here</a>. Note that you also need a small library for
+			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
+			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. 
+		</p>
+
+	</td>
+</tr></table>
+
+
+
+
+			</td>
+			<td width="25%" align="right">
+				<a href="http://www.threecrickets.com/" class="neutral"><img src="http://www.threecrickets.com/static/images/three-crickets-small.png" border="0" /></a>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>

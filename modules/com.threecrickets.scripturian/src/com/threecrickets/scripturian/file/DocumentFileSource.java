@@ -17,39 +17,38 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.threecrickets.scripturian.ScriptSource;
+import com.threecrickets.scripturian.DocumentSource;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
- * Reads script files stored in files under a base directory. The file contents
- * are cached, and checked for validity according to their modification
- * timestamps.
+ * Reads document stored in files under a base directory. The file contents are
+ * cached, and checked for validity according to their modification timestamps.
  * 
  * @author Tal Liron
  */
-public class ScriptFileSource<S> implements ScriptSource<S>
+public class DocumentFileSource<D> implements DocumentSource<D>
 {
 	//
 	// Construction
 	//
 
 	/**
-	 * Constructs a script file source.
+	 * Constructs a document file source.
 	 * 
 	 * @param basePath
 	 *        The base path
 	 * @param defaultName
-	 *        If the name used in {@link #getScriptDescriptor(String)} points to
-	 *        a directory, then this file name in that directory will be used
+	 *        If the name used in {@link #getDocumentDescriptor(String)} points
+	 *        to a directory, then this file name in that directory will be used
 	 *        instead
 	 * @param defaultExtension
-	 *        If the name used in {@link #getScriptDescriptor(String)} does not
-	 *        point to a valid file or directory, then this extension will be
-	 *        added and the name will be tested for again
+	 *        If the name used in {@link #getDocumentDescriptor(String)} does
+	 *        not point to a valid file or directory, then this extension will
+	 *        be added and the name will be tested for again
 	 * @param minimumTimeBetweenValidityChecks
 	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
-	public ScriptFileSource( File basePath, String defaultName, String defaultExtension, long minimumTimeBetweenValidityChecks )
+	public DocumentFileSource( File basePath, String defaultName, String defaultExtension, long minimumTimeBetweenValidityChecks )
 	{
 		this.basePath = basePath;
 		this.defaultName = defaultName;
@@ -72,7 +71,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	}
 
 	/**
-	 * If the name used in {@link #getScriptDescriptor(String)} points to a
+	 * If the name used in {@link #getDocumentDescriptor(String)} points to a
 	 * directory, then this file name in that directory will be used instead
 	 * 
 	 * @return The default name
@@ -83,7 +82,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	}
 
 	/**
-	 * If the name used in {@link #getScriptDescriptor(String)} does not point
+	 * If the name used in {@link #getDocumentDescriptor(String)} does not point
 	 * to a valid file or directory, then this extension will be added and the
 	 * name will be tested for again
 	 * 
@@ -95,65 +94,65 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	}
 
 	//
-	// ScriptSource
+	// DocumentSource
 	//
 
 	/**
-	 * This implementation caches the script descriptor, including the script
-	 * instance stored in it. The cached descriptor will be reset if the script
-	 * file is updated since the last call. In order to avoid checking this
-	 * every time this method is called, use
+	 * This implementation caches the document descriptor, including the
+	 * document instance stored in it. The cached descriptor will be reset if
+	 * the document file is updated since the last call. In order to avoid
+	 * checking this every time this method is called, use
 	 * {@link #setMinimumTimeBetweenValidityChecks(long)}.
 	 * 
-	 * @see ScriptSource#getScriptDescriptor(String)
+	 * @see DocumentSource#getDocumentDescriptor(String)
 	 */
-	public ScriptDescriptor<S> getScriptDescriptor( String name ) throws IOException
+	public DocumentDescriptor<D> getDocumentDescriptor( String name ) throws IOException
 	{
 		File file = getFileForName( name );
 		name = file.getPath();
 
-		FiledScriptDescriptor filedScriptDescriptor = scriptDescriptors.get( name );
+		FiledDocumentDescriptor filedDocumentDescriptor = documentDescriptors.get( name );
 
-		if( filedScriptDescriptor != null )
+		if( filedDocumentDescriptor != null )
 		{
 			// Make sure the existing descriptor is valid
-			if( !filedScriptDescriptor.isValid( file ) )
+			if( !filedDocumentDescriptor.isValid( file ) )
 			{
 				// Remove invalid descriptor if it's still there
-				scriptDescriptors.remove( name, filedScriptDescriptor );
-				filedScriptDescriptor = null;
+				documentDescriptors.remove( name, filedDocumentDescriptor );
+				filedDocumentDescriptor = null;
 			}
 		}
 
-		if( filedScriptDescriptor == null )
+		if( filedDocumentDescriptor == null )
 		{
 			// Create a new descriptor
-			filedScriptDescriptor = new FiledScriptDescriptor( file );
-			FiledScriptDescriptor existing = scriptDescriptors.putIfAbsent( name, filedScriptDescriptor );
+			filedDocumentDescriptor = new FiledDocumentDescriptor( file );
+			FiledDocumentDescriptor existing = documentDescriptors.putIfAbsent( name, filedDocumentDescriptor );
 			if( existing != null )
-				filedScriptDescriptor = existing;
+				filedDocumentDescriptor = existing;
 		}
 
-		return filedScriptDescriptor;
+		return filedDocumentDescriptor;
 	}
 
 	/**
-	 * @see ScriptSource#setScriptDescriptor(String, String, String, Object)
+	 * @see DocumentSource#setDocumentDescriptor(String, String, String, Object)
 	 */
-	public ScriptDescriptor<S> setScriptDescriptor( String name, String text, String tag, S script )
+	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D script )
 	{
 		name = getFileForName( name ).getPath();
-		return scriptDescriptors.put( name, new FiledScriptDescriptor( text, tag, script ) );
+		return documentDescriptors.put( name, new FiledDocumentDescriptor( text, tag, script ) );
 	}
 
 	/**
-	 * @see ScriptSource#setScriptDescriptorIfAbsent(String, String, String,
+	 * @see DocumentSource#setDocumentDescriptorIfAbsent(String, String, String,
 	 *      Object)
 	 */
-	public ScriptDescriptor<S> setScriptDescriptorIfAbsent( String name, String text, String tag, S script )
+	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D script )
 	{
 		name = getFileForName( name ).getPath();
-		return scriptDescriptors.putIfAbsent( name, new FiledScriptDescriptor( text, tag, script ) );
+		return documentDescriptors.putIfAbsent( name, new FiledDocumentDescriptor( text, tag, script ) );
 	}
 
 	//
@@ -161,10 +160,10 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	//
 
 	/**
-	 * Attempts to call {@link #getScriptDescriptor(String)} for a specific name
-	 * within less than this time from the previous call will return the cached
-	 * descriptor without checking if it is valid. A value of -1 disables all
-	 * validity checking.
+	 * Attempts to call {@link #getDocumentDescriptor(String)} for a specific
+	 * name within less than this time from the previous call will return the
+	 * cached descriptor without checking if it is valid. A value of -1 disables
+	 * all validity checking.
 	 * 
 	 * @return The minimum time between validity checks in milliseconds
 	 * @see #setMinimumTimeBetweenValidityChecks(long)
@@ -186,7 +185,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final ConcurrentMap<String, FiledScriptDescriptor> scriptDescriptors = new ConcurrentHashMap<String, FiledScriptDescriptor>();
+	private final ConcurrentMap<String, FiledDocumentDescriptor> documentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor>();
 
 	private final File basePath;
 
@@ -208,7 +207,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 		return file;
 	}
 
-	private class FiledScriptDescriptor implements ScriptDescriptor<S>
+	private class FiledDocumentDescriptor implements DocumentDescriptor<D>
 	{
 		public String getText()
 		{
@@ -220,37 +219,37 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 			return tag;
 		}
 
-		public synchronized S getScript()
+		public synchronized D getDocument()
 		{
-			return script;
+			return document;
 		}
 
-		public synchronized S setScript( S script )
+		public synchronized D setDocument( D document )
 		{
-			S old = this.script;
-			this.script = script;
+			D old = this.document;
+			this.document = document;
 			return old;
 		}
 
-		public synchronized S setScriptIfAbsent( S script )
+		public synchronized D setDocumentIfAbsent( D document )
 		{
-			S old = this.script;
+			D old = this.document;
 			if( old == null )
-				this.script = script;
+				this.document = document;
 			return old;
 		}
 
-		private FiledScriptDescriptor( String text, String tag, S script )
+		private FiledDocumentDescriptor( String text, String tag, D document )
 		{
 			this.text = text;
 			this.tag = tag;
-			this.script = script;
+			this.document = document;
 
 			// This will disable validity checks
 			timestamp = -1;
 		}
 
-		private FiledScriptDescriptor( File file ) throws IOException
+		private FiledDocumentDescriptor( File file ) throws IOException
 		{
 			text = ScripturianUtil.getString( file );
 
@@ -269,7 +268,7 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 			if( timestamp == -1 )
 				return true;
 
-			long minimumTimeBetweenValidityChecks = ScriptFileSource.this.minimumTimeBetweenValidityChecks.get();
+			long minimumTimeBetweenValidityChecks = DocumentFileSource.this.minimumTimeBetweenValidityChecks.get();
 			if( minimumTimeBetweenValidityChecks == -1 )
 				return true;
 
@@ -295,6 +294,6 @@ public class ScriptFileSource<S> implements ScriptSource<S>
 
 		private final String tag;
 
-		private S script;
+		private D document;
 	}
 }

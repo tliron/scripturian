@@ -13,7 +13,7 @@ package com.threecrickets.scripturian.helper;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.CompositeScript;
+import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
@@ -38,7 +38,7 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 		return false;
 	}
 
-	public String getScriptletHeader( CompositeScript compositeScript, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		String version = scriptEngine.getFactory().getEngineVersion();
 		String[] split = version.split( "\\." );
@@ -54,29 +54,29 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 			return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
 	}
 
-	public String getScriptletFooter( CompositeScript compositeScript, ScriptEngine scriptEngine )
+	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
 
-	public String getTextAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
 		return "sys.stdout.write(\"" + content + "\"),;";
 	}
 
-	public String getExpressionAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(" + content + ");";
 	}
 
-	public String getExpressionAsInclude( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return compositeScript.getScriptVariableName() + ".container.include(" + content + ");";
+		return document.getDocumentVariableName() + ".container.include(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( CompositeScript compositeScript, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}
