@@ -42,7 +42,7 @@ public class RhinoScriptletParsingHelper implements ScriptletParsingHelper
 	{
 		// Rhino's default implementation of print() is annoyingly a println().
 		// This will fix it.
-		return "print=function(str){context.writer.print(String(str));};";
+		return "print=function(s){context.writer.print(String(s));context.writer.flush();};";
 	}
 
 	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
@@ -64,7 +64,7 @@ public class RhinoScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".container.include(" + content + ");";
+		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )

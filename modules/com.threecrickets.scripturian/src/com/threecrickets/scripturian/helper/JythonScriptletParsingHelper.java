@@ -73,7 +73,7 @@ public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".container.include(" + content + ");";
+		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )

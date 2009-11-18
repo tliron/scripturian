@@ -35,7 +35,7 @@ public abstract class ScripturianUtil
 	/**
 	 * Size (in bytes) of the buffer used by {@link #getString(File)}.
 	 */
-	public static final int BUFFFER_SIZE = 1024 * 1024;
+	public static final int BUFFER_SIZE = 1024 * 1024;
 
 	public static ConcurrentMap<String, String> scriptEngineNamesByExtension = new ConcurrentHashMap<String, String>();
 
@@ -69,7 +69,7 @@ public abstract class ScripturianUtil
 	}
 
 	/**
-	 * Reads a file into a string. Uses a buffer (see {@link #BUFFFER_SIZE}).
+	 * Reads a file into a string. Uses a buffer (see {@link #BUFFER_SIZE}).
 	 * 
 	 * @param file
 	 *        The file
@@ -78,7 +78,7 @@ public abstract class ScripturianUtil
 	 */
 	public static String getString( File file ) throws IOException
 	{
-		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFFER_SIZE );
+		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFER_SIZE );
 		return getString( reader );
 	}
 
@@ -107,8 +107,8 @@ public abstract class ScripturianUtil
 				throw new ScriptException( "Script engine has no names: " + scriptEngine );
 			}
 		}
-
-		return engineName;
+		else
+			return engineName;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

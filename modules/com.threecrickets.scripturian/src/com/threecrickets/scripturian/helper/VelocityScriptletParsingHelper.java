@@ -70,7 +70,7 @@ public class VelocityScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return "#if($" + document.getDocumentVariableName() + ".container.include(" + content + "))#end ";
+		return "#if($" + document.getDocumentVariableName() + ".container.includeDocument(" + content + "))#end ";
 	}
 
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )

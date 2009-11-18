@@ -59,7 +59,7 @@ public class JavaScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".container.include((" + content + ").toString());";
+		return document.getDocumentVariableName() + ".container.includeDocument((" + content + ").toString());";
 	}
 
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
