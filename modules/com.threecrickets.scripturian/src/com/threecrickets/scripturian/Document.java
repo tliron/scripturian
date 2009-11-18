@@ -224,6 +224,7 @@ public class Document
 	 */
 	public static ConcurrentMap<String, ScriptletParsingHelper> scriptletParsingHelpers = new ConcurrentHashMap<String, ScriptletParsingHelper>();
 
+	static
 	{
 		// Initialize scriptletParsingHelpers (look for them in META-INF)
 
@@ -297,6 +298,9 @@ public class Document
 	 * 
 	 * @param text
 	 *        The text stream
+	 * @param isScript
+	 *        If true, the text will be parsed as a single script for
+	 *        defaultEngineName
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
@@ -311,9 +315,9 @@ public class Document
 	 * @throws ScriptException
 	 *         In case of a parsing error
 	 */
-	public Document( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation ) throws ScriptException
+	public Document( String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation ) throws ScriptException
 	{
-		this( text, scriptEngineManager, defaultEngineName, documentSource, allowCompilation, DEFAULT_DOCUMENT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
+		this( text, isScript, scriptEngineManager, defaultEngineName, documentSource, allowCompilation, DEFAULT_DOCUMENT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
 			DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
@@ -325,6 +329,9 @@ public class Document
 	 * 
 	 * @param text
 	 *        The text stream
+	 * @param isScript
+	 *        If true, the text will be parsed as a single script for
+	 *        defaultEngineName
 	 * @param scriptEngineManager
 	 *        The script engine manager used to create script engines
 	 * @param defaultEngineName
@@ -359,10 +366,24 @@ public class Document
 	 *         In case of a parsing error
 	 * @see ScriptletParsingHelper
 	 */
-	public Document( String text, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation, String documentVariableName,
+	public Document( String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation, String documentVariableName,
 		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ScriptException
 	{
 		this.documentVariableName = documentVariableName;
+
+		if( isScript )
+		{
+			Segment segment = new Segment( text, true, defaultEngineName );
+			segments = new Segment[]
+			{
+				segment
+			};
+			if( allowCompilation )
+				segment.compile( this, scriptEngineManager );
+			delimiterStart = null;
+			delimiterEnd = null;
+			return;
+		}
 
 		String lastScriptEngineName = defaultEngineName;
 
@@ -496,7 +517,7 @@ public class Document
 							// Note that the in-flow scriptlet is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Document inFlowScript = new Document( inFlowText, scriptEngineManager, null, null, allowCompilation, documentVariableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd,
+							Document inFlowScript = new Document( inFlowText, false, scriptEngineManager, null, null, allowCompilation, documentVariableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd,
 								delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocumentDescriptor( inFlowName, inFlowText, "", inFlowScript );
 
@@ -608,28 +629,7 @@ public class Document
 			for( Segment segment : segments )
 			{
 				if( segment.isScriptlet )
-				{
-					ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( segment.scriptEngineName );
-					if( scriptEngine == null )
-						throw new ScriptException( "Unsupported script engine: " + segment.scriptEngineName );
-
-					ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( segment.scriptEngineName );
-					if( scriptletParsingHelper == null )
-						throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + segment.scriptEngineName );
-
-					// Add header
-					String header = scriptletParsingHelper.getScriptletHeader( this, scriptEngine );
-					if( header != null )
-						segment.text = header + segment.text;
-
-					// Add footer
-					String footer = scriptletParsingHelper.getScriptletFooter( this, scriptEngine );
-					if( footer != null )
-						segment.text += footer;
-
-					if( scriptEngine instanceof Compilable )
-						segment.compiledScript = ( (Compilable) scriptEngine ).compile( segment.text );
-				}
+					segment.compile( this, scriptEngineManager );
 			}
 		}
 
@@ -989,5 +989,29 @@ public class Document
 		public boolean isScriptlet;
 
 		public String scriptEngineName;
+
+		private void compile( Document document, ScriptEngineManager scriptEngineManager ) throws ScriptException
+		{
+			ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
+			if( scriptEngine == null )
+				throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
+
+			ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( scriptEngineName );
+			if( scriptletParsingHelper == null )
+				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
+
+			// Add header
+			String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );
+			if( header != null )
+				text = header + text;
+
+			// Add footer
+			String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
+			if( footer != null )
+				text += footer;
+
+			if( scriptEngine instanceof Compilable )
+				compiledScript = ( (Compilable) scriptEngine ).compile( text );
+		}
 	}
 }

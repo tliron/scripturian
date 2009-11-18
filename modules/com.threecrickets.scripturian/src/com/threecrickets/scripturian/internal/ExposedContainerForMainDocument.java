@@ -62,35 +62,43 @@ public class ExposedContainerForMainDocument
 	 * @throws IOException
 	 * @throws ScriptException
 	 */
-	public void include( String name ) throws IOException, ScriptException
+	public void includeDocument( String name ) throws IOException, ScriptException
 	{
-		include( name, null );
-	}
-
-	/**
-	 * As {@link #include(String)}, except that the document is parsed as a
-	 * single, non-delimited scriptlet. As such, you must explicitly specify the
-	 * name of the scripting engine that should evaluate it.
-	 * 
-	 * @param name
-	 *        The document name
-	 * @param engineName
-	 *        The script engine name (if null, behaves identically to
-	 *        {@link #include(String)}
-	 * @throws IOException
-	 * @throws ScriptException
-	 */
-	public void include( String name, String engineName ) throws IOException, ScriptException
-	{
-		String text = ScripturianUtil.getString( new File( name ) );
-		if( engineName != null )
-			text = Document.DEFAULT_DELIMITER1_START + engineName + " " + text + Document.DEFAULT_DELIMITER1_END;
-
 		DocumentSource.DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
 		Document document = documentDescriptor.getDocument();
 		if( document == null )
 		{
-			document = new Document( text, mainDocument.getScriptEngineManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+			String text = ScripturianUtil.getString( new File( name ) );
+			document = new Document( text, false, mainDocument.getScriptEngineManager(), getDefaultScriptEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+
+			Document existing = documentDescriptor.setDocumentIfAbsent( document );
+			if( existing != null )
+				document = existing;
+		}
+
+		document.run( false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, documentContext, this, mainDocument.getScriptletController() );
+	}
+
+	/**
+	 * As {@link #includeDocument(String)}, except that the document is parsed
+	 * as a single, non-delimited script with the engine name derived from
+	 * name's extension.
+	 * 
+	 * @param name
+	 *        The document name
+	 * @throws IOException
+	 * @throws ScriptException
+	 */
+	public void include( String name ) throws IOException, ScriptException
+	{
+		DocumentSource.DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
+		Document document = documentDescriptor.getDocument();
+		if( document == null )
+		{
+			String scriptEngineName = ScripturianUtil.getScriptEngineNameByExtension( name, mainDocument.getScriptEngineManager() );
+			String text = ScripturianUtil.getString( new File( name ) );
+			document = new Document( text, true, mainDocument.getScriptEngineManager(), scriptEngineName, mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+
 			Document existing = documentDescriptor.setDocumentIfAbsent( document );
 			if( existing != null )
 				document = existing;
@@ -120,19 +128,19 @@ public class ExposedContainerForMainDocument
 	 * @return The default script engine name
 	 * @see #setDefaultEngineName(String)
 	 */
-	public String getDefaultEngineName()
+	public String getDefaultScriptEngineName()
 	{
-		return defaultEngineName;
+		return defaultScriptEngineName;
 	}
 
 	/**
-	 * @param defaultEngineName
+	 * @param defaultScriptEngineName
 	 *        The default script engine name
-	 * @see #getDefaultEngineName()
+	 * @see #getDefaultScriptEngineName()
 	 */
-	public void setDefaultEngineName( String defaultEngineName )
+	public void setDefaultScriptEngineName( String defaultScriptEngineName )
 	{
-		this.defaultEngineName = defaultEngineName;
+		this.defaultScriptEngineName = defaultScriptEngineName;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -142,5 +150,5 @@ public class ExposedContainerForMainDocument
 
 	private final DocumentContext documentContext;
 
-	private String defaultEngineName = "js";
+	private String defaultScriptEngineName = "js";
 }

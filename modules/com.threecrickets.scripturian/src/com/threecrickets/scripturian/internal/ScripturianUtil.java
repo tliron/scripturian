@@ -18,6 +18,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 /**
  * Utility methods.
@@ -30,6 +36,13 @@ public abstract class ScripturianUtil
 	 * Size (in bytes) of the buffer used by {@link #getString(File)}.
 	 */
 	public static final int BUFFFER_SIZE = 1024 * 1024;
+
+	public static ConcurrentMap<String, String> scriptEngineNamesByExtension = new ConcurrentHashMap<String, String>();
+
+	static
+	{
+		scriptEngineNamesByExtension.put( "py", "python" );
+	}
 
 	/**
 	 * Reads a reader into a string.
@@ -67,6 +80,35 @@ public abstract class ScripturianUtil
 	{
 		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFFER_SIZE );
 		return getString( reader );
+	}
+
+	public static String getScriptEngineNameByExtension( String name, ScriptEngineManager scriptEngineManager ) throws ScriptException
+	{
+		int dot = name.lastIndexOf( '.' );
+		if( dot == -1 )
+			throw new ScriptException( "Name must have an extension: " + name );
+		String extension = name.substring( dot + 1 );
+
+		// Try our mapping first
+		String engineName = scriptEngineNamesByExtension.get( extension );
+
+		if( engineName == null )
+		{
+			// Try script engine factory's mappings
+			ScriptEngine scriptEngine = scriptEngineManager.getEngineByExtension( extension );
+			if( scriptEngine == null )
+				throw new ScriptException( "Name's extension is not recognized by any script engine: " + extension );
+			try
+			{
+				return scriptEngine.getFactory().getNames().get( 0 );
+			}
+			catch( IndexOutOfBoundsException x )
+			{
+				throw new ScriptException( "Script engine has no names: " + scriptEngine );
+			}
+		}
+
+		return engineName;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
