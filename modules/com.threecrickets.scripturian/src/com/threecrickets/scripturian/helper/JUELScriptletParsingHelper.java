@@ -38,6 +38,11 @@ public class JUELScriptletParsingHelper implements ScriptletParsingHelper
 		return true;
 	}
 
+	public boolean isCompilable()
+	{
+		return true;
+	}
+
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		return null;

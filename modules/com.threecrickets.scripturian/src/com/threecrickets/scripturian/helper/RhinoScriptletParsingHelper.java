@@ -38,6 +38,11 @@ public class RhinoScriptletParsingHelper implements ScriptletParsingHelper
 		return false;
 	}
 
+	public boolean isCompilable()
+	{
+		return true;
+	}
+
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		// Rhino's default implementation of print() is annoyingly a println().

@@ -38,6 +38,11 @@ public class JeppScriptletParsingHelper implements ScriptletParsingHelper
 		return false;
 	}
 
+	public boolean isCompilable()
+	{
+		return true;
+	}
+
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		// Apparently the Java Scripting support for Jepp does not correctly

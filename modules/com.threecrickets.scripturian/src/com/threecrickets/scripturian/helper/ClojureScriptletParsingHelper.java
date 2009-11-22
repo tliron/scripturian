@@ -19,15 +19,15 @@ import com.threecrickets.scripturian.ScriptEngines;
 
 /**
  * An {@link ScriptletParsingHelper} that supports the <a
- * href="http://groovy.codehaus.org/">Groovy</a> scripting language.
+ * href="http://clojure.org/">Clojure</a> scripting language.
  * 
  * @author Tal Liron
  */
 @ScriptEngines(
 {
-	"groovy", "Groovy"
+	"Clojure"
 })
-public class GroovyScriptletParsingHelper implements ScriptletParsingHelper
+public class ClojureScriptletParsingHelper implements ScriptletParsingHelper
 {
 	//
 	// ScriptletParsingHelper
@@ -40,16 +40,16 @@ public class GroovyScriptletParsingHelper implements ScriptletParsingHelper
 
 	public boolean isCompilable()
 	{
-		return true;
+		// The developers of Clojure's JSR-223 support seem to have
+		// misunderstood the use of the Compilable interface,
+		// and have implemented it so that it expects a library name, rather
+		// than plain Clojure code. We will have to disable support for it.
+		return false;
 	}
 
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
-		// There's a bug in Groovy's script engine implementation (as of version
-		// 1.6) that makes it lose the connection between the script's output
-		// and our script context writer in some cases. This makes sure that
-		// they are connected.
-		return "out=context.writer;";
+		return null;
 	}
 
 	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
@@ -60,18 +60,18 @@ public class GroovyScriptletParsingHelper implements ScriptletParsingHelper
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
-		content = content.replaceAll( "\\'", "\\\\'" );
-		return "print('" + content + "');";
+		content = content.replaceAll( "\\\"", "\\\\\"" );
+		return "(print \"" + content + "\")";
 	}
 
 	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return "print(" + content + ");";
+		return "(print " + content + ")";
 	}
 
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
+		return "(.includeDocument (.getContainer " + document.getDocumentVariableName() + ") " + content + ")";
 	}
 
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )

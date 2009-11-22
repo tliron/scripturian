@@ -11,6 +11,7 @@
 
 package com.threecrickets.scripturian;
 
+import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 
@@ -31,6 +32,15 @@ public interface ScriptletParsingHelper
 	 * @return True if should print on eval
 	 */
 	public boolean isPrintOnEval();
+
+	/**
+	 * Though some scripting engines support {@link Compilable}, their
+	 * implementation is broken for our purposes. This allows us to bypass
+	 * compilation.
+	 * 
+	 * @return True if compilation is allowed
+	 */
+	public boolean isCompilable();
 
 	/**
 	 * The header is inserted at the beginning of every script. It is useful for
@@ -93,7 +103,7 @@ public interface ScriptletParsingHelper
 	 * Turns an expression into a command or series of commands to include the
 	 * script named for the result of the evaluation of the expression. Note
 	 * that this requires the script to have access to a global method named
-	 * <code>documentnt.container.include</code>.
+	 * <code>documentnt.container.includeDocument</code>.
 	 * 
 	 * @param document
 	 *        The composite script instance

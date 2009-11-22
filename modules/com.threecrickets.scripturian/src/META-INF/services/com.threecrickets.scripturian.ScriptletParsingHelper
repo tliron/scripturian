@@ -1,3 +1,4 @@
+com.threecrickets.scripturian.helper.ClojureScriptletParsingHelper
 com.threecrickets.scripturian.helper.GroovyScriptletParsingHelper
 com.threecrickets.scripturian.helper.JavaScriptletParsingHelper
 com.threecrickets.scripturian.helper.JeppScriptletParsingHelper

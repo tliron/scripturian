@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.file;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -72,7 +73,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	/**
 	 * If the name used in {@link #getDocumentDescriptor(String)} points to a
-	 * directory, then this file name in that directory will be used instead
+	 * directory, then this file name in that directory will be used instead.
 	 * 
 	 * @return The default name
 	 */
@@ -84,7 +85,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * If the name used in {@link #getDocumentDescriptor(String)} does not point
 	 * to a valid file or directory, then this extension will be added and the
-	 * name will be tested for again
+	 * name will be tested for again.
 	 * 
 	 * @return The default extension
 	 */
@@ -195,16 +196,33 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
+	private class StartsWithFilter implements FilenameFilter
+	{
+		public boolean accept( File dir, String name )
+		{
+			return name.startsWith( defaultName );
+		}
+	}
+
+	private final StartsWithFilter filter = new StartsWithFilter();
+
 	private File getFileForName( String name )
 	{
 		File file = new File( basePath, name );
 
 		if( ( defaultName != null ) && file.isDirectory() )
-			file = new File( file, defaultName );
+		{
+			File[] files = file.listFiles( filter );
+			if( ( files != null ) && ( files.length > 0 ) )
+				// Return the first file that starts with the default name
+				return files[0];
+			else
+				return new File( file, defaultName );
+		}
 		else if( ( defaultExtension != null ) && !file.exists() )
-			file = new File( basePath, name + "." + defaultExtension );
-
-		return file;
+			return new File( basePath, name + "." + defaultExtension );
+		else
+			return file;
 	}
 
 	private class FiledDocumentDescriptor implements DocumentDescriptor<D>

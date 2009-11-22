@@ -44,6 +44,11 @@ public class QuercusScriptletParsingHelper implements ScriptletParsingHelper
 		return false;
 	}
 
+	public boolean isCompilable()
+	{
+		return true;
+	}
+
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		return "<?php";

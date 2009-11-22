@@ -1000,18 +1000,20 @@ public class Document
 			if( scriptletParsingHelper == null )
 				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
 
-			// Add header
-			String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );
-			if( header != null )
-				text = header + text;
+			if( ( scriptEngine instanceof Compilable ) && scriptletParsingHelper.isCompilable() )
+			{
+				// Add header
+				String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );
+				if( header != null )
+					text = header + text;
 
-			// Add footer
-			String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
-			if( footer != null )
-				text += footer;
+				// Add footer
+				String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
+				if( footer != null )
+					text += footer;
 
-			if( scriptEngine instanceof Compilable )
 				compiledScript = ( (Compilable) scriptEngine ).compile( text );
+			}
 		}
 	}
 }

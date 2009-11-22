@@ -35,6 +35,11 @@ public class JavaScriptletParsingHelper implements ScriptletParsingHelper
 		return false;
 	}
 
+	public boolean isCompilable()
+	{
+		return true;
+	}
+
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		return "class Text { private static javax.script.ScriptContext scriptContext; public static void setScriptContext(javax.script.ScriptContext sc) { scriptContext = sc; } public static void main(String arguments[]) throws Exception {";

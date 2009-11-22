@@ -41,6 +41,7 @@ public abstract class ScripturianUtil
 
 	static
 	{
+		scriptEngineNamesByExtension.put( "js", "rhino-nonjdk" );
 		scriptEngineNamesByExtension.put( "py", "python" );
 	}
 
@@ -82,12 +83,12 @@ public abstract class ScripturianUtil
 		return getString( reader );
 	}
 
-	public static String getScriptEngineNameByExtension( String name, ScriptEngineManager scriptEngineManager ) throws ScriptException
+	public static String getScriptEngineNameByExtension( String name, String def, ScriptEngineManager scriptEngineManager ) throws ScriptException
 	{
 		int dot = name.lastIndexOf( '.' );
-		if( dot == -1 )
+		String extension = dot != -1 ? name.substring( dot + 1 ) : def;
+		if( extension == null )
 			throw new ScriptException( "Name must have an extension: " + name );
-		String extension = name.substring( dot + 1 );
 
 		// Try our mapping first
 		String engineName = scriptEngineNamesByExtension.get( extension );
@@ -97,7 +98,9 @@ public abstract class ScripturianUtil
 			// Try script engine factory's mappings
 			ScriptEngine scriptEngine = scriptEngineManager.getEngineByExtension( extension );
 			if( scriptEngine == null )
+			{
 				throw new ScriptException( "Name's extension is not recognized by any script engine: " + extension );
+			}
 			try
 			{
 				return scriptEngine.getFactory().getNames().get( 0 );

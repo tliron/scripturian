@@ -95,7 +95,7 @@ public class ExposedContainerForMainDocument
 		Document document = documentDescriptor.getDocument();
 		if( document == null )
 		{
-			String scriptEngineName = ScripturianUtil.getScriptEngineNameByExtension( name, mainDocument.getScriptEngineManager() );
+			String scriptEngineName = ScripturianUtil.getScriptEngineNameByExtension( name, documentDescriptor.getTag(), mainDocument.getScriptEngineManager() );
 			String text = ScripturianUtil.getString( new File( name ) );
 			document = new Document( text, true, mainDocument.getScriptEngineManager(), scriptEngineName, mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
