@@ -119,7 +119,7 @@ import com.threecrickets.scripturian.internal.ExposedDocument;
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
  * <code>document</code> (this name can be changed via the
- * {@link #Document(String, ScriptEngineManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
+ * {@link #Document(String, boolean, ScriptEngineManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
