@@ -11,7 +11,6 @@
 
 package com.threecrickets.scripturian.internal;
 
-import java.io.File;
 import java.io.IOException;
 
 import javax.script.ScriptException;
@@ -68,7 +67,7 @@ public class ExposedContainerForMainDocument
 		Document document = documentDescriptor.getDocument();
 		if( document == null )
 		{
-			String text = ScripturianUtil.getString( new File( name ) );
+			String text = documentDescriptor.getText();
 			document = new Document( text, false, mainDocument.getScriptEngineManager(), getDefaultScriptEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
 			Document existing = documentDescriptor.setDocumentIfAbsent( document );
@@ -96,7 +95,7 @@ public class ExposedContainerForMainDocument
 		if( document == null )
 		{
 			String scriptEngineName = ScripturianUtil.getScriptEngineNameByExtension( name, documentDescriptor.getTag(), mainDocument.getScriptEngineManager() );
-			String text = ScripturianUtil.getString( new File( name ) );
+			String text = documentDescriptor.getText();
 			document = new Document( text, true, mainDocument.getScriptEngineManager(), scriptEngineName, mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
 			Document existing = documentDescriptor.setDocumentIfAbsent( document );

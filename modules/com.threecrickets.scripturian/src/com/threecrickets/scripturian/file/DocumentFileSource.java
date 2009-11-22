@@ -14,6 +14,8 @@ package com.threecrickets.scripturian.file;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -55,6 +57,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		this.defaultName = defaultName;
 		this.defaultExtension = defaultExtension;
 		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
+		defaultNameFilter = new StartsWithFilter( defaultName );
 	}
 
 	//
@@ -109,29 +112,31 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> getDocumentDescriptor( String name ) throws IOException
 	{
-		File file = getFileForName( name );
-		name = file.getPath();
-
-		FiledDocumentDescriptor filedDocumentDescriptor = documentDescriptors.get( name );
-
+		// See if we already have a descriptor for this name
+		FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptors.get( name );
 		if( filedDocumentDescriptor != null )
-		{
-			// Make sure the existing descriptor is valid
-			if( !filedDocumentDescriptor.isValid( file ) )
-			{
-				// Remove invalid descriptor if it's still there
-				documentDescriptors.remove( name, filedDocumentDescriptor );
-				filedDocumentDescriptor = null;
-			}
-		}
+			filedDocumentDescriptor = removeIfInvalid( name, filedDocumentDescriptor );
 
 		if( filedDocumentDescriptor == null )
 		{
-			// Create a new descriptor
-			filedDocumentDescriptor = new FiledDocumentDescriptor( file );
-			FiledDocumentDescriptor existing = documentDescriptors.putIfAbsent( name, filedDocumentDescriptor );
-			if( existing != null )
-				filedDocumentDescriptor = existing;
+			File file = getFileForName( name );
+
+			// See if we already have a descriptor for this file
+			filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
+			if( filedDocumentDescriptor != null )
+				filedDocumentDescriptor = removeIfInvalid( name, filedDocumentDescriptor );
+
+			if( filedDocumentDescriptor == null )
+			{
+				// Create a new descriptor
+				filedDocumentDescriptor = new FiledDocumentDescriptor( file );
+				FiledDocumentDescriptor existing = filedDocumentDescriptors.putIfAbsent( name, filedDocumentDescriptor );
+				if( existing != null )
+					filedDocumentDescriptor = existing;
+				else
+					// This is atomically safe, because we'll only get here once
+					filedDocumentDescriptorsByFile.put( file, filedDocumentDescriptor );
+			}
 		}
 
 		return filedDocumentDescriptor;
@@ -142,8 +147,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D script )
 	{
-		name = getFileForName( name ).getPath();
-		return documentDescriptors.put( name, new FiledDocumentDescriptor( text, tag, script ) );
+		return filedDocumentDescriptors.put( name, new FiledDocumentDescriptor( text, tag, script ) );
 	}
 
 	/**
@@ -152,8 +156,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D script )
 	{
-		name = getFileForName( name ).getPath();
-		return documentDescriptors.putIfAbsent( name, new FiledDocumentDescriptor( text, tag, script ) );
+		return filedDocumentDescriptors.putIfAbsent( name, new FiledDocumentDescriptor( text, tag, script ) );
 	}
 
 	//
@@ -186,7 +189,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final ConcurrentMap<String, FiledDocumentDescriptor> documentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor>();
+	private final ConcurrentMap<String, FiledDocumentDescriptor> filedDocumentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor>();
+
+	private final Map<File, FiledDocumentDescriptor> filedDocumentDescriptorsByFile = new HashMap<File, FiledDocumentDescriptor>();
 
 	private final File basePath;
 
@@ -196,15 +201,22 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
-	private class StartsWithFilter implements FilenameFilter
+	private static class StartsWithFilter implements FilenameFilter
 	{
+		private final String name;
+
+		private StartsWithFilter( String name )
+		{
+			this.name = name + ".";
+		}
+
 		public boolean accept( File dir, String name )
 		{
-			return name.startsWith( defaultName );
+			return name.startsWith( this.name );
 		}
 	}
 
-	private final StartsWithFilter filter = new StartsWithFilter();
+	private final StartsWithFilter defaultNameFilter;
 
 	private File getFileForName( String name )
 	{
@@ -212,17 +224,41 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		if( ( defaultName != null ) && file.isDirectory() )
 		{
-			File[] files = file.listFiles( filter );
+			File[] files = file.listFiles( defaultNameFilter );
 			if( ( files != null ) && ( files.length > 0 ) )
 				// Return the first file that starts with the default name
 				return files[0];
 			else
 				return new File( file, defaultName );
 		}
-		else if( ( defaultExtension != null ) && !file.exists() )
-			return new File( basePath, name + "." + defaultExtension );
-		else
-			return file;
+		else if( !file.exists() )
+		{
+			File directory = file.getParentFile();
+			File[] files = directory.listFiles( new StartsWithFilter( file.getName() ) );
+			if( ( files != null ) && ( files.length > 0 ) )
+				// Return the first file that starts with the default name
+				return files[0];
+		}
+
+		return file;
+	}
+
+	private FiledDocumentDescriptor removeIfInvalid( String name, FiledDocumentDescriptor filedDocumentDescriptor )
+	{
+		// Make sure the existing descriptor is valid
+		if( !filedDocumentDescriptor.isValid() )
+		{
+			// Remove invalid descriptor if it's still there
+			if( filedDocumentDescriptors.remove( name, filedDocumentDescriptor ) )
+			{
+				if( filedDocumentDescriptor.file != null )
+					// This is atomically safe, because we'll only get here once
+					filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file );
+			}
+			filedDocumentDescriptor = null;
+		}
+
+		return filedDocumentDescriptor;
 	}
 
 	private class FiledDocumentDescriptor implements DocumentDescriptor<D>
@@ -257,61 +293,62 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			return old;
 		}
 
+		// //////////////////////////////////////////////////////////////////////////
+		// Private
+
+		private final File file;
+
+		private final long timestamp;
+
+		private final String text;
+
+		private final String tag;
+
+		private final AtomicLong lastValidityCheck;
+
+		private D document;
+
 		private FiledDocumentDescriptor( String text, String tag, D document )
 		{
+			file = null;
+			timestamp = -1;
 			this.text = text;
 			this.tag = tag;
+			lastValidityCheck = new AtomicLong();
 			this.document = document;
-
-			// This will disable validity checks
-			timestamp = -1;
 		}
 
-		private FiledDocumentDescriptor( File file ) throws IOException
+		private FiledDocumentDescriptor( File file) throws IOException
 		{
-			text = ScripturianUtil.getString( file );
-
-			String name = file.getName();
-			int dot = name.lastIndexOf( '.' );
-			if( dot != -1 )
-				tag = name.substring( dot + 1 );
-			else
-				tag = null;
-
+			this.file = file;
 			timestamp = file.lastModified();
+			text = ScripturianUtil.getString( file );
+			tag = ScripturianUtil.getExtension( file );
+			lastValidityCheck = new AtomicLong();
 		}
 
-		private boolean isValid( File file )
+		private boolean isValid()
 		{
-			if( timestamp == -1 )
+			if( file == null )
+				// Always valid if not built from a file
 				return true;
 
 			long minimumTimeBetweenValidityChecks = DocumentFileSource.this.minimumTimeBetweenValidityChecks.get();
 			if( minimumTimeBetweenValidityChecks == -1 )
+				// -1 means never check for validity
 				return true;
 
 			long now = System.currentTimeMillis();
 
+			// Are we in the threshold for checking for validity?
 			if( ( now - lastValidityCheck.get() ) > minimumTimeBetweenValidityChecks )
 			{
+				// Check for validity
 				lastValidityCheck.set( now );
 				return file.lastModified() <= timestamp;
 			}
 			else
 				return true;
 		}
-
-		// //////////////////////////////////////////////////////////////////////////
-		// Private
-
-		private final long timestamp;
-
-		private final AtomicLong lastValidityCheck = new AtomicLong();
-
-		private final String text;
-
-		private final String tag;
-
-		private D document;
 	}
 }

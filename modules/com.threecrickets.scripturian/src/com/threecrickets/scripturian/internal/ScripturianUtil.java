@@ -46,6 +46,24 @@ public abstract class ScripturianUtil
 	}
 
 	/**
+	 * Gets the filename extension (whatever is after the period), or null if it
+	 * doesn't have one.
+	 * 
+	 * @param file
+	 *        The file
+	 * @return The filename extension or null
+	 */
+	public static String getExtension( File file )
+	{
+		String filename = file.getName();
+		int period = filename.lastIndexOf( '.' );
+		if( period != -1 )
+			return filename.substring( period + 1 );
+		else
+			return null;
+	}
+
+	/**
 	 * Reads a reader into a string.
 	 * 
 	 * @param reader

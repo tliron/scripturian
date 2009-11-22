@@ -26,7 +26,7 @@ import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
  * Delegates the main() call to a {@link Document}, in effect using scriptlets
  * as the entry point of a Java platform application. The path to the document
  * file can be supplied as the first argument. If it's not supplied,
- * {@link #defaultPath} is used instead.
+ * {@link #defaultName} is used instead.
  * <p>
  * The scripting engine's standard output is directed to the system standard
  * output. Note that this output is not captured or buffered, and sent directly
@@ -82,7 +82,7 @@ public class MainDocument implements Runnable
 
 	/**
 	 * Delegates to an {@link Document} file specified by the first argument, or
-	 * to {@link MainDocument#defaultPath} if not specified.
+	 * to {@link MainDocument#defaultName} if not specified.
 	 * 
 	 * @param arguments
 	 *        Supplied arguments (usually from a command line)
@@ -101,10 +101,10 @@ public class MainDocument implements Runnable
 		this.arguments = arguments;
 		scriptEngineManager = new ScriptEngineManager();
 		allowCompilation = false;
-		defaultPath = "main.script";
+		defaultName = "main";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Document>( new File( "." ), "index.script", "document", -1 );
+		documentSource = new DocumentFileSource<Document>( new File( "." ), defaultName, null, -1 );
 	}
 
 	//
@@ -152,7 +152,7 @@ public class MainDocument implements Runnable
 	 */
 	public String getDefaultPath()
 	{
-		return defaultPath;
+		return defaultName;
 	}
 
 	/**
@@ -228,7 +228,7 @@ public class MainDocument implements Runnable
 		if( arguments.length > 0 )
 			name = arguments[0];
 		else
-			name = defaultPath;
+			name = defaultName;
 
 		try
 		{
@@ -256,7 +256,7 @@ public class MainDocument implements Runnable
 
 	private final boolean allowCompilation;
 
-	private final String defaultPath;
+	private final String defaultName;
 
 	private final Writer writer;
 
