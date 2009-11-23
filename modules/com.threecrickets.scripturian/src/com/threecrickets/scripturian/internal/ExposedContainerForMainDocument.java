@@ -68,7 +68,7 @@ public class ExposedContainerForMainDocument
 		if( document == null )
 		{
 			String text = documentDescriptor.getText();
-			document = new Document( text, false, mainDocument.getScriptEngineManager(), getDefaultScriptEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+			document = new Document( text, false, mainDocument.getScriptEngineManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
 			Document existing = documentDescriptor.setDocumentIfAbsent( document );
 			if( existing != null )
@@ -127,19 +127,19 @@ public class ExposedContainerForMainDocument
 	 * @return The default script engine name
 	 * @see #setDefaultEngineName(String)
 	 */
-	public String getDefaultScriptEngineName()
+	public String getDefaultEngineName()
 	{
-		return defaultScriptEngineName;
+		return defaultEngineName;
 	}
 
 	/**
-	 * @param defaultScriptEngineName
+	 * @param defaultEngineName
 	 *        The default script engine name
-	 * @see #getDefaultScriptEngineName()
+	 * @see #getDefaultEngineName()
 	 */
-	public void setDefaultScriptEngineName( String defaultScriptEngineName )
+	public void setDefaultEngineName( String defaultEngineName )
 	{
-		this.defaultScriptEngineName = defaultScriptEngineName;
+		this.defaultEngineName = defaultEngineName;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -149,5 +149,5 @@ public class ExposedContainerForMainDocument
 
 	private final DocumentContext documentContext;
 
-	private String defaultScriptEngineName = "js";
+	private String defaultEngineName = "js";
 }

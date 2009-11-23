@@ -64,9 +64,9 @@ import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
  * </ul>
  * Modifiable attributes:
  * <ul>
- * <li><code>document.container.defaultScriptEngineName</code>: The default
- * script engine name to be used if the first scriptlet doesn't specify one.
- * Defaults to "js". Scriptlets can change this value.</li>
+ * <li><code>document.container.defaultEngineName</code>: The default script
+ * engine name to be used if the first scriptlet doesn't specify one. Defaults
+ * to "js". Scriptlets can change this value.</li>
  * </ul>
  * <p>
  * In addition to the above, a {@link #scriptletController} can be set to add
@@ -101,7 +101,7 @@ public class MainDocument implements Runnable
 		this.arguments = arguments;
 		scriptEngineManager = new ScriptEngineManager();
 		allowCompilation = false;
-		defaultName = "main";
+		defaultName = "default";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
 		documentSource = new DocumentFileSource<Document>( new File( "." ), defaultName, null, -1 );

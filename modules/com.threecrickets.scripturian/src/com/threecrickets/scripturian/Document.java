@@ -378,8 +378,7 @@ public class Document
 			{
 				segment
 			};
-			if( allowCompilation )
-				segment.compile( this, scriptEngineManager );
+			segment.processScriptlet( this, scriptEngineManager, allowCompilation );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -623,15 +622,10 @@ public class Document
 			previous = current;
 		}
 
-		// Compiles segments if possible
-		if( allowCompilation )
-		{
-			for( Segment segment : segments )
-			{
-				if( segment.isScriptlet )
-					segment.compile( this, scriptEngineManager );
-			}
-		}
+		// Process scriptlets
+		for( Segment segment : segments )
+			if( segment.isScriptlet )
+				segment.processScriptlet( this, scriptEngineManager, allowCompilation );
 
 		this.segments = new Segment[segments.size()];
 		segments.toArray( this.segments );
@@ -990,7 +984,7 @@ public class Document
 
 		public String scriptEngineName;
 
-		private void compile( Document document, ScriptEngineManager scriptEngineManager ) throws ScriptException
+		private void processScriptlet( Document document, ScriptEngineManager scriptEngineManager, boolean allowCompilation ) throws ScriptException
 		{
 			ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 			if( scriptEngine == null )
@@ -1000,20 +994,18 @@ public class Document
 			if( scriptletParsingHelper == null )
 				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
 
-			if( ( scriptEngine instanceof Compilable ) && scriptletParsingHelper.isCompilable() )
-			{
-				// Add header
-				String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );
-				if( header != null )
-					text = header + text;
+			// Add header
+			String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );
+			if( header != null )
+				text = header + text;
 
-				// Add footer
-				String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
-				if( footer != null )
-					text += footer;
+			// Add footer
+			String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
+			if( footer != null )
+				text += footer;
 
+			if( allowCompilation && ( scriptEngine instanceof Compilable ) && scriptletParsingHelper.isCompilable() )
 				compiledScript = ( (Compilable) scriptEngine ).compile( text );
-			}
 		}
 	}
 }
