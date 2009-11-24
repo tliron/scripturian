@@ -43,19 +43,16 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * @param defaultName
 	 *        If the name used in {@link #getDocumentDescriptor(String)} points
 	 *        to a directory, then this file name in that directory will be used
-	 *        instead
-	 * @param defaultExtension
-	 *        If the name used in {@link #getDocumentDescriptor(String)} does
-	 *        not point to a valid file or directory, then this extension will
-	 *        be added and the name will be tested for again
+	 *        instead; note that if an extension is not specified, then the
+	 *        first file in the directory with this name, with any extension,
+	 *        will be used
 	 * @param minimumTimeBetweenValidityChecks
 	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
-	public DocumentFileSource( File basePath, String defaultName, String defaultExtension, long minimumTimeBetweenValidityChecks )
+	public DocumentFileSource( File basePath, String defaultName, long minimumTimeBetweenValidityChecks )
 	{
 		this.basePath = basePath;
 		this.defaultName = defaultName;
-		this.defaultExtension = defaultExtension;
 		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
 		defaultNameFilter = new StartsWithFilter( defaultName );
 	}
@@ -83,18 +80,6 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public String getDefaultName()
 	{
 		return defaultName;
-	}
-
-	/**
-	 * If the name used in {@link #getDocumentDescriptor(String)} does not point
-	 * to a valid file or directory, then this extension will be added and the
-	 * name will be tested for again.
-	 * 
-	 * @return The default extension
-	 */
-	public String getDefaultExtension()
-	{
-		return defaultExtension;
 	}
 
 	//
@@ -196,8 +181,6 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	private final File basePath;
 
 	private final String defaultName;
-
-	private final String defaultExtension;
 
 	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
@@ -318,7 +301,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			this.document = document;
 		}
 
-		private FiledDocumentDescriptor( File file) throws IOException
+		private FiledDocumentDescriptor( File file ) throws IOException
 		{
 			this.file = file;
 			timestamp = file.lastModified();

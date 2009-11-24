@@ -104,7 +104,7 @@ public class MainDocument implements Runnable
 		defaultName = "default";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Document>( new File( "." ), defaultName, null, -1 );
+		documentSource = new DocumentFileSource<Document>( new File( "." ), defaultName, -1 );
 	}
 
 	//
