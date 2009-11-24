@@ -43,6 +43,7 @@ public abstract class ScripturianUtil
 	{
 		scriptEngineNamesByExtension.put( "js", "rhino-nonjdk" );
 		scriptEngineNamesByExtension.put( "py", "python" );
+		scriptEngineNamesByExtension.put( "gv", "groovy" );
 	}
 
 	/**
