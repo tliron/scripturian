@@ -71,7 +71,7 @@ public class ClojureScriptletParsingHelper implements ScriptletParsingHelper
 
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return "(.. " + document.getDocumentVariableName() + " (getContainer) (includeDocument " + content + "))";
+		return "(.. " + document.getDocumentVariableName() + " getContainer (includeDocument " + content + "))";
 	}
 
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
