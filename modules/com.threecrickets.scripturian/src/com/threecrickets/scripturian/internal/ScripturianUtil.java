@@ -104,6 +104,10 @@ public abstract class ScripturianUtil
 
 	public static String getScriptEngineNameByExtension( String name, String def, ScriptEngineManager scriptEngineManager ) throws ScriptException
 	{
+		int slash = name.lastIndexOf( '/' );
+		if( slash != -1 )
+			name = name.substring( slash + 1 );
+
 		int dot = name.lastIndexOf( '.' );
 		String extension = dot != -1 ? name.substring( dot + 1 ) : def;
 		if( extension == null )
