@@ -1,5 +1,12 @@
+/******************
+ *  Soft Cricket  *
+ *                *
+ *  By Tal Liron  *
+ ******************/
+
 body {
-	background-color: #e0ffe0;
+	sbackground-color: #e0ffe0;
+	background: url(../images/background.png); /* From: http://www.eosdev.com/Backgrounds/Back_Tilework/EosTilework2h.htm */
 	font-family: Georgia, Palatino, 'Times New Roman', serif;
 }
 
@@ -11,7 +18,7 @@ h2 {
 }
 h3 {
 	font-size: 14px;
-	font-style: italic;
+	sfont-style: italic;
 }
 h4 {
 	font-size: 14px;
@@ -22,7 +29,29 @@ h4 {
 p {
 	font-size: 14px;
 	line-height: 180%;
-} 
+}
+
+div.hr {
+  height: 57px;
+  background-image: url(../images/ruler.png);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+div.hr hr {
+  display: none;
+}
+
+.note {
+	border: 1px dotted black;
+	padding: 3px 3px 3px 3px;
+}
+
+.tutorial {
+	border: 1px solid black;
+	padding: 3px 3px 3px 3px;
+}
+
 
 /* Hyperlinks */
 
@@ -31,10 +60,10 @@ a {
 }
 
 a:link {
-	color: #009911;
+	color: #b22222;
 }
 a:visited {
-	color: #009911;
+	color: #b22222;
 }
 a:hover {
 	background-color: #ffffa0;
@@ -78,8 +107,8 @@ div.navigation a, div.navigation .heading {
 	width: 200px;
 	padding: 2px 10px;
 	text-decoration: none;
-	border-left: 1px solid #aaa;
-	border-top: 1px solid #aaa;
+	border-left: 1px solid #AF868E;
+	border-top: 1px solid #AF868E;
 	font-size: 12px;
 }
 
@@ -88,13 +117,12 @@ div.navigation .heading {
 }
 
 div.navigation .closed, div.navigation .heading {
-	border-bottom: 1px solid #aaa;
+	border-bottom: 1px solid #AF868E;
 }
 
 div.navigation a:hover {
-	background-color: #ada;
-	color: #030;
-	border-right: 10px solid #6a6;
+	background-color: #ffffa0;
+	border-right: 10px solid #AF868E;
 	padding: 2px 1px 2px 10px;
 }
 
@@ -113,7 +141,7 @@ div.navigation li li a {
 	margin: 0;
 	border-top: none;
 	border-bottom: none;
-	border-left: 1px solid #aaa;
+	border-left: 1px solid #AF868E;
 	text-decoration: none;
 	font-size: 12px;
 }

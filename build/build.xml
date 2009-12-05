@@ -21,6 +21,11 @@
 	</target>
 
 	<target name="javadoc" description="Create Scripturian API docs">
+		<available file="${content}/doc/api" property="javadoc-present" />
+		<antcall target="javadoc-unless" />
+	</target>
+
+	<target name="javadoc-unless" description="Create Scripturian API docs" unless="javadoc-present">
 		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<link href="http://java.sun.com/javase/6/docs/api/" />

@@ -2,7 +2,7 @@
 <html>
 <head>
 <title>Scripturian - Three Crickets</title>
-	<link rel="stylesheet" type="text/css" href="scripturian.css" />
+	<link rel="stylesheet" type="text/css" href="style/soft-cricket.css" />
 </head>
 <body>
 	<table width="100%" cellspacing="20">
@@ -28,6 +28,9 @@
 						<li><a href="links.html" class="closed">Similar Projects</a></li>
 					</ul>
 				</div>
+				<p>
+					<a href="." class="neutral"><img src="images/kitten-small.png" border="0"></a>
+				</p>
 
 			</td>
 			<td width="50%" id="main">
@@ -36,36 +39,6 @@
 <table width="100%" cellpadding="10" cellspacing="0"><tr valign="top">
 	<td width="50%">
 		<h2>Supported Languages</h2>
-
-		<h3>JavaScript</h3>
-		<p>
-			Your distribution of Java may already have JavaScript support built in, in which case you're already good to go.
-			This is true for Sun's JDK and OpenJDK. Otherwise, JavaScript is implemented by Mozilla's <a href="http://www.mozilla.org/rhino/">Rhino</a>.
-		</p>
-		<p>
-			Note that Sun and OpenJDK's built-in JavaScript support is a simplified version of Rhino, which may limit the power of Scripturian, so that
-			Mozilla's version is recommended. If you have both versions installed, use the "rhino-nonjdk" name to circumvent the built-in Rhino
-			(see demo JavaScript source code).
-		</p>
-		<p>
-			Mozilla's Rhino requires a small library for
-			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
-			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. (This was true for version 1.7R1.)
-			See the <a href="requirements.page">requirement notes</a> if you are using Java 5.
-		</p>
-		
-		<h3>PHP</h3>
-		<p>
-			PHP5 is implemented by Caucho's <a href="http://quercus.caucho.com/">Quercus</a>.
-		</p>
-		<p>
-			Note that Scripturian
-			replaces PHP's scriptlet scheme with its own. Usage and performance should be identical, but Scripturian's scheme is more powerful than PHP's,
-			because it allows for mixing languages in one file.
-		</p>
-
-	</td>
-	<td width="50%">
 
 		<h3>Python</h3>
 		<p>
@@ -87,10 +60,43 @@
 			See the <a href="requirements.page">requirement notes</a> if you are using Java 5.
 		</p> 
 		
-		<h3>Groovy</h3>
+		<h3>Groovy and Clojure</h3>
 		<p>
-			Groovy is implemented by, well, <a href="http://groovy.codehaus.org/">Groovy</a>.
+			Both <a href="http://groovy.codehaus.org/">Groovy</a> and <a href="http://clojure.org/">Clojure</a>
+			are designed for the JVM.
 		</p>
+
+		<h3>PHP</h3>
+		<p>
+			PHP5 is implemented by Caucho's <a href="http://quercus.caucho.com/">Quercus</a>.
+		</p>
+		<p class="note">
+			Note that Scripturian
+			replaces PHP's scriptlet scheme with its own. Usage and performance should be identical, but Scripturian's scheme is more powerful than PHP's,
+			because it allows for mixing languages in one file.
+		</p>
+
+	</td>
+	<td width="50%">
+
+		<h3>JavaScript</h3>
+		<p>
+			Your distribution of Java may already have JavaScript support built in, in which case you're already good to go.
+			This is true for Sun's JDK and OpenJDK. Otherwise, JavaScript is implemented by Mozilla's <a href="http://www.mozilla.org/rhino/">Rhino</a>.
+		</p>
+		<p class="note">
+			Note that Sun and OpenJDK's built-in JavaScript support is a simplified version of Rhino, which may limit the power of Scripturian, so that
+			Mozilla's version is recommended. If you have both versions installed, use the "rhino-nonjdk" name to circumvent the built-in Rhino
+			(see demo JavaScript source code).
+		</p>
+		<p>
+			Mozilla's Rhino requires a small library for
+			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
+			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. (This was true for version 1.7R1.)
+			See the <a href="requirements.page">requirement notes</a> if you are using Java 5.
+		</p>
+
+		<div class="hr"><hr /></div>
 
 		<h3>Succinct</h3>
 		<p>
@@ -112,7 +118,7 @@
 
 			</td>
 			<td width="25%" align="right">
-				<a href="http://www.threecrickets.com/" class="neutral"><img src="http://www.threecrickets.com/images/three-crickets-small.png" border="0" /></a>
+				<a href="http://www.threecrickets.com/" class="neutral"><img src="images/three-crickets-small.png" border="0" /></a>
 			</td>
 		</tr>
 	</table>
