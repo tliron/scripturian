@@ -705,6 +705,22 @@ public class Document
 	}
 
 	/**
+	 * This is the last run plus the cache duration, or 0 if the cache duration
+	 * is 0.
+	 * 
+	 * @return The expiration timestamp or 0
+	 * @see #getLastRun()
+	 * @see #getCacheDuration()
+	 */
+	public long getExpiration()
+	{
+		// TODO: Should this be more atomic? What are the pitfalls of leaving it
+		// like this?
+		long cacheDuration = getCacheDuration();
+		return cacheDuration > 0 ? getLastRun() + cacheDuration : 0;
+	}
+
+	/**
 	 * Trivial documents have no scriptlets, meaning that they are pure text.
 	 * Identifying such documents can save you from making unnecessary calls to
 	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
