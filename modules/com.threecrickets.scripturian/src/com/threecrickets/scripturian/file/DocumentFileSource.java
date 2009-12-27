@@ -57,6 +57,25 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		defaultNameFilter = new StartsWithFilter( defaultName );
 	}
 
+	/**
+	 * Constructs a document file source.
+	 * 
+	 * @param basePath
+	 *        The base path
+	 * @param defaultName
+	 *        If the name used in {@link #getDocumentDescriptor(String)} points
+	 *        to a directory, then this file name in that directory will be used
+	 *        instead; note that if an extension is not specified, then the
+	 *        first file in the directory with this name, with any extension,
+	 *        will be used
+	 * @param minimumTimeBetweenValidityChecks
+	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
+	 */
+	public DocumentFileSource( String basePath, String defaultName, long minimumTimeBetweenValidityChecks )
+	{
+		this( new File( basePath ), defaultName, minimumTimeBetweenValidityChecks );
+	}
+
 	//
 	// Attributes
 	//
