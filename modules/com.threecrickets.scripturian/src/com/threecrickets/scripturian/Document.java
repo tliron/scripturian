@@ -11,19 +11,13 @@
 
 package com.threecrickets.scripturian;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.Writer;
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -198,93 +192,6 @@ public class Document
 	 * The default document variable name: "document"
 	 */
 	public static final String DEFAULT_DOCUMENT_VARIABLE_NAME = "document";
-
-	//
-	// Static attributes
-	//
-
-	/**
-	 * A map of script engine names to their {@link ScriptletParsingHelper} .
-	 * Note that Scripturian documents will not work without the appropriate
-	 * parsing helpers installed.
-	 * <p>
-	 * This map is automatically initialized when this class loads according to
-	 * resources named
-	 * <code>META-INF/services/com.threecrickets.scripturian.ScriptletParsingHelper</code>
-	 * . Each resource is a simple text file with class names, one per line.
-	 * Each class listed must implement the {@link ScriptletParsingHelper}
-	 * interface and specify which engine names it supports via the
-	 * {@link ScriptEngines} annotation.
-	 * <p>
-	 * You may also manipulate this map yourself, adding and removing helpers as
-	 * necessary.
-	 * <p>
-	 * The default implementation of this library already contains a few useful
-	 * parsing helpers, under the com.threecrickets.scripturian.helper package.
-	 */
-	public static ConcurrentMap<String, ScriptletParsingHelper> scriptletParsingHelpers = new ConcurrentHashMap<String, ScriptletParsingHelper>();
-
-	static
-	{
-		// Initialize scriptletParsingHelpers (look for them in META-INF)
-
-		// For Java 6
-
-		/*
-		 * ServiceLoader<ScriptletParsingHelper> serviceLoader =
-		 * ServiceLoader.load( ScriptletParsingHelper.class ); for(
-		 * ScriptletParsingHelper scriptletParsingHelper : serviceLoader ) {
-		 * ScriptEngines scriptEngines =
-		 * scriptletParsingHelper.getClass().getAnnotation( ScriptEngines.class
-		 * ); if( scriptEngines != null ) for( String scriptEngine :
-		 * scriptEngines.value() ) scriptletParsingHelpers.put( scriptEngine,
-		 * scriptletParsingHelper ); }
-		 */
-
-		// For Java 5
-		String resourceName = "META-INF/services/" + ScriptletParsingHelper.class.getCanonicalName();
-		try
-		{
-			Enumeration<URL> resources = ClassLoader.getSystemResources( resourceName );
-			while( resources.hasMoreElements() )
-			{
-				InputStream stream = resources.nextElement().openStream();
-				BufferedReader reader = new BufferedReader( new InputStreamReader( stream ) );
-				String line = reader.readLine();
-				while( line != null )
-				{
-					line = line.trim();
-					if( ( line.length() > 0 ) && !line.startsWith( "#" ) )
-					{
-						ScriptletParsingHelper scriptletParsingHelper = (ScriptletParsingHelper) Class.forName( line ).newInstance();
-						ScriptEngines scriptEngines = scriptletParsingHelper.getClass().getAnnotation( ScriptEngines.class );
-						if( scriptEngines != null )
-							for( String scriptEngine : scriptEngines.value() )
-								scriptletParsingHelpers.put( scriptEngine, scriptletParsingHelper );
-					}
-					line = reader.readLine();
-				}
-				stream.close();
-				reader.close();
-			}
-		}
-		catch( IOException x )
-		{
-			x.printStackTrace();
-		}
-		catch( InstantiationException x )
-		{
-			x.printStackTrace();
-		}
-		catch( IllegalAccessException x )
-		{
-			x.printStackTrace();
-		}
-		catch( ClassNotFoundException x )
-		{
-			x.printStackTrace();
-		}
-	}
 
 	//
 	// Construction
@@ -491,7 +398,7 @@ public class Document
 							if( scriptEngine == null )
 								throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
 
-							ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( scriptEngineName );
+							ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
 							if( scriptletParsingHelper == null )
 								throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
 
@@ -506,7 +413,7 @@ public class Document
 							if( lastScriptEngine == null )
 								throw new ScriptException( "Unsupported script engine: " + lastScriptEngineName );
 
-							ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( lastScriptEngineName );
+							ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( lastScriptEngineName );
 							if( scriptletParsingHelper == null )
 								throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + lastScriptEngineName );
 
@@ -600,7 +507,7 @@ public class Document
 						if( scriptEngine == null )
 							throw new ScriptException( "Unsupported script engine: " + current.scriptEngineName );
 
-						ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( current.scriptEngineName );
+						ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( current.scriptEngineName );
 						if( scriptletParsingHelper == null )
 							throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + current.scriptEngineName );
 
@@ -839,7 +746,7 @@ public class Document
 
 							if( value != null )
 							{
-								ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( segment.scriptEngineName );
+								ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( segment.scriptEngineName );
 
 								if( scriptletParsingHelper == null )
 									throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + segment.scriptEngineName );
@@ -934,7 +841,7 @@ public class Document
 
 		try
 		{
-			ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( scriptEngineName );
+			ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
 
 			if( scriptletParsingHelper == null )
 				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
@@ -1006,7 +913,7 @@ public class Document
 			if( scriptEngine == null )
 				throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
 
-			ScriptletParsingHelper scriptletParsingHelper = scriptletParsingHelpers.get( scriptEngineName );
+			ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
 			if( scriptletParsingHelper == null )
 				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
 

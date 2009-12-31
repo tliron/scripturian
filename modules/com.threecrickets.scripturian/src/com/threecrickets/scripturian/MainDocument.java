@@ -23,39 +23,39 @@ import com.threecrickets.scripturian.file.DocumentFileSource;
 import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
 
 /**
- * Delegates the main() call to a {@link Document}, in effect using scriptlets
- * as the entry point of a Java platform application. The path to the document
- * file can be supplied as the first argument. If it's not supplied,
- * {@link #defaultName} is used instead.
+ * Delegates the main() call to a {@link Document}, in effect using it as the
+ * entry point of a Java platform application. The path to the document file can
+ * be supplied as the first argument. If it's not supplied, {@link #defaultName}
+ * is used instead.
  * <p>
  * The scripting engine's standard output is directed to the system standard
  * output. Note that this output is not captured or buffered, and sent directly
- * as the script runs.
+ * as the document runs.
  * <p>
  * A special container environment is created for scriptlets, with some useful
- * services. It is available to scriptlets as a global variable named
- * <code>document.container</code>. For some other global variables available to
- * scriptlets, see {@link Document}.
+ * services. It is available to code as a global variable named
+ * <code>document.container</code>. For some other global variables, see
+ * {@link Document}.
  * <p>
  * Operations:
  * <ul>
  * <li><code>document.container.includeDocument(name)</code>: This powerful
- * method allows scriptlets to execute other documents in place, and is useful
+ * method allows documents to execute other documents in place, and is useful
  * for creating large, maintainable applications based on documents. Included
  * documents can act as a library or toolkit and can even be shared among many
  * applications. The included document does not have to be in the same
- * programming language or use the same engine as the calling scriptlet.
- * However, if they do use the same engine, then methods, functions, modules,
- * etc., could be shared.
+ * programming language or use the same engine as the calling code. However, if
+ * they do use the same engine, then methods, functions, modules, etc., could be
+ * shared.
  * <p>
  * It is important to note that how this works varies a lot per engine. For
  * example, in JRuby, every scriptlet is run in its own scope, so that sharing
  * would have to be done explicitly in the global scope. See the included JRuby
  * examples for a discussion of various ways to do this.
  * </li>
- * <li><code>document.container.include(name)</code>:except that the document is
- * parsed as a single, non-delimited script with the engine name derived from
- * name's extension.</li>
+ * <li><code>document.container.include(name)</code>: As above, except that the
+ * document is parsed as a single, non-delimited script with the engine name
+ * derived from the name's extension.</li>
  * </ul>
  * Read-only attributes:
  * <ul>
@@ -262,7 +262,7 @@ public class MainDocument implements Runnable
 
 	private final Writer errorWriter;
 
-	private ScriptletController scriptletController;
+	private volatile ScriptletController scriptletController;
 
-	private DocumentSource<Document> documentSource;
+	private volatile DocumentSource<Document> documentSource;
 }

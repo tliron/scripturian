@@ -14,6 +14,7 @@ package com.threecrickets.scripturian.helper;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
+import com.threecrickets.scripturian.ScriptEnginePriorityExtensions;
 import com.threecrickets.scripturian.ScriptletParsingHelper;
 import com.threecrickets.scripturian.ScriptEngines;
 
@@ -26,6 +27,10 @@ import com.threecrickets.scripturian.ScriptEngines;
 @ScriptEngines(
 {
 	"js", "javascript", "JavaScript", "ecmascript", "ECMAScript", "rhino", "rhino-nonjdk"
+})
+@ScriptEnginePriorityExtensions(
+{
+	"js"
 })
 public class RhinoScriptletParsingHelper implements ScriptletParsingHelper
 {

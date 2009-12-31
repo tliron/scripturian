@@ -14,8 +14,9 @@ package com.threecrickets.scripturian.helper;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptEnginePriorityExtensions;
 import com.threecrickets.scripturian.ScriptEngines;
+import com.threecrickets.scripturian.ScriptletParsingHelper;
 
 /**
  * An {@link ScriptletParsingHelper} that supports the Python scripting language
@@ -26,6 +27,10 @@ import com.threecrickets.scripturian.ScriptEngines;
 @ScriptEngines(
 {
 	"python", "jython"
+})
+@ScriptEnginePriorityExtensions(
+{
+	"py"
 })
 public class JythonScriptletParsingHelper implements ScriptletParsingHelper
 {

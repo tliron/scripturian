@@ -19,11 +19,13 @@ h2 {
 h3 {
 	font-size: 14px;
 	sfont-style: italic;
+	line-height: 180%;
 }
 h4 {
 	font-size: 14px;
 	font-style: italic;
 	font-weight: normal;
+	line-height: 180%;
 }
 
 p {
@@ -42,14 +44,19 @@ div.hr hr {
   display: none;
 }
 
+pre {
+	border: 1px dashed black;
+	padding: 10px 10px 10px 10px;
+}
+
 .note {
 	border: 1px dotted black;
-	padding: 3px 3px 3px 3px;
+	padding: 3px 10px 3px 10px;
 }
 
 .tutorial {
 	border: 1px solid black;
-	padding: 3px 3px 3px 3px;
+	padding: 3px 10px 3px 10px;
 }
 
 

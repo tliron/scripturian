@@ -18,12 +18,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+
+import com.threecrickets.scripturian.Scripturian;
 
 /**
  * Utility methods.
@@ -36,15 +36,6 @@ public abstract class ScripturianUtil
 	 * Size (in bytes) of the buffer used by {@link #getString(File)}.
 	 */
 	public static final int BUFFER_SIZE = 1024 * 1024;
-
-	public static ConcurrentMap<String, String> scriptEngineNamesByExtension = new ConcurrentHashMap<String, String>();
-
-	static
-	{
-		scriptEngineNamesByExtension.put( "js", "rhino-nonjdk" );
-		scriptEngineNamesByExtension.put( "py", "python" );
-		scriptEngineNamesByExtension.put( "gv", "groovy" );
-	}
 
 	/**
 	 * Gets the filename extension (whatever is after the period), or null if it
@@ -113,8 +104,8 @@ public abstract class ScripturianUtil
 		if( extension == null )
 			throw new ScriptException( "Name must have an extension: " + name );
 
-		// Try our mapping first
-		String engineName = scriptEngineNamesByExtension.get( extension );
+		// Try our priority mappings first
+		String engineName = Scripturian.scriptEngineExtensionPriorities.get( extension );
 
 		if( engineName == null )
 		{

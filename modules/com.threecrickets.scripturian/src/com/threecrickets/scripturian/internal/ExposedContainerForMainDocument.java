@@ -80,8 +80,8 @@ public class ExposedContainerForMainDocument
 
 	/**
 	 * As {@link #includeDocument(String)}, except that the document is parsed
-	 * as a single, non-delimited script with the engine name derived from
-	 * name's extension.
+	 * as a single, non-delimited script with the engine name derived from the
+	 * document descriptor's tag.
 	 * 
 	 * @param name
 	 *        The document name
