@@ -46,7 +46,7 @@ import com.threecrickets.scripturian.ScriptEngines;
  */
 @ScriptEngines(
 {
-	"ruby", "jruby"
+	"jruby", "ruby"
 })
 public class JRubyScriptletParsingHelper implements ScriptletParsingHelper
 {

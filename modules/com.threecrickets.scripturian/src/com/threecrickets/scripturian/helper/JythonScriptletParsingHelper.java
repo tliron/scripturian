@@ -26,7 +26,7 @@ import com.threecrickets.scripturian.ScriptletParsingHelper;
  */
 @ScriptEngines(
 {
-	"python", "jython"
+	"jython", "python"
 })
 @ScriptEnginePriorityExtensions(
 {

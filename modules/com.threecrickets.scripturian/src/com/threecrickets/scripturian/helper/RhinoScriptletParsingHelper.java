@@ -26,7 +26,7 @@ import com.threecrickets.scripturian.ScriptEngines;
  */
 @ScriptEngines(
 {
-	"js", "javascript", "JavaScript", "ecmascript", "ECMAScript", "rhino", "rhino-nonjdk"
+	"rhino-nonjdk", "rhino", "js", "javascript", "JavaScript", "ecmascript", "ECMAScript"
 })
 @ScriptEnginePriorityExtensions(
 {

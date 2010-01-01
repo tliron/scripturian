@@ -18,7 +18,8 @@ import java.lang.annotation.Target;
 
 /**
  * Used for {@link ScriptletParsingHelper} implementations to mark supported
- * script engine names.
+ * script engine names. Note that the first script engine listed will be
+ * considered the default name.
  * 
  * @author Tal Liron
  */

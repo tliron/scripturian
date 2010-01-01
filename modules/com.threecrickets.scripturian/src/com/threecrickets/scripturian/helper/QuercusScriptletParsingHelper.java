@@ -31,7 +31,7 @@ import com.threecrickets.scripturian.ScriptEngines;
  */
 @ScriptEngines(
 {
-	"php", "quercus"
+	"quercus", "php"
 })
 public class QuercusScriptletParsingHelper implements ScriptletParsingHelper
 {
