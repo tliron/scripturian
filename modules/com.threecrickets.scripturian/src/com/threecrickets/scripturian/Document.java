@@ -20,7 +20,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.script.Compilable;
 import javax.script.CompiledScript;
@@ -589,7 +588,7 @@ public class Document
 	 */
 	public long getLastRun()
 	{
-		return lastRun.get();
+		return lastRun;
 	}
 
 	/**
@@ -608,7 +607,7 @@ public class Document
 	 */
 	public long getCacheDuration()
 	{
-		return cacheDuration.get();
+		return cacheDuration;
 	}
 
 	/**
@@ -618,7 +617,7 @@ public class Document
 	 */
 	public void setCacheDuration( long cacheDuration )
 	{
-		this.cacheDuration.set( cacheDuration );
+		this.cacheDuration = cacheDuration;
 	}
 
 	/**
@@ -709,7 +708,7 @@ public class Document
 		throws DocumentInitializationException, DocumentRunException, IOException
 	{
 		long now = System.currentTimeMillis();
-		if( checkCache && ( now - lastRun.get() < cacheDuration.get() ) )
+		if( checkCache && ( now - lastRun < cacheDuration ) )
 		{
 			// We didn't run this time
 			return false;
@@ -793,7 +792,7 @@ public class Document
 			}
 
 			this.documentContextForInvocations = documentContext;
-			lastRun.set( now );
+			lastRun = now;
 			return true;
 		}
 	}
@@ -916,9 +915,9 @@ public class Document
 
 	private final String documentVariableName;
 
-	private final AtomicLong cacheDuration = new AtomicLong();
+	private volatile long cacheDuration = 0;
 
-	private final AtomicLong lastRun = new AtomicLong();
+	private volatile long lastRun = 0;
 
 	private DocumentContext documentContextForInvocations;
 
