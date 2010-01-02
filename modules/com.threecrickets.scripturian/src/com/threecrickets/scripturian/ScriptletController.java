@@ -12,7 +12,8 @@
 package com.threecrickets.scripturian;
 
 import javax.script.ScriptContext;
-import javax.script.ScriptException;
+
+import com.threecrickets.scripturian.exception.DocumentRunException;
 
 /**
  * Used in order to add specialized initialization and finalization for
@@ -28,10 +29,10 @@ public interface ScriptletController
 	 * 
 	 * @param scriptContext
 	 *        The script context
-	 * @throws ScriptException
+	 * @throws DocumentRunException
 	 *         If you throw an exception here, the scriptlet will not run
 	 */
-	public void initialize( ScriptContext scriptContext ) throws ScriptException;
+	public void initialize( ScriptContext scriptContext ) throws DocumentRunException;
 
 	/**
 	 * Called when a scriptlet finalizes. This is a good place to clean up

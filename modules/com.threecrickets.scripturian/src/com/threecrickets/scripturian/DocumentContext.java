@@ -18,9 +18,10 @@ import java.util.Map;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
+
+import com.threecrickets.scripturian.exception.DocumentInitializationException;
 
 /**
  * Encapsulates context for an {@link Document}. Every thread calling
@@ -67,9 +68,9 @@ public class DocumentContext
 	 * @param scriptEngineName
 	 *        The script engine name
 	 * @return The cached script engine
-	 * @throws ScriptException
+	 * @throws DocumentInitializationException
 	 */
-	public ScriptEngine getScriptEngine( String scriptEngineName ) throws ScriptException
+	public ScriptEngine getScriptEngine( String scriptEngineName ) throws DocumentInitializationException
 	{
 		if( scriptEngines == null )
 			scriptEngines = new HashMap<String, ScriptEngine>();
@@ -80,7 +81,7 @@ public class DocumentContext
 		{
 			lastScriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 			if( lastScriptEngine == null )
-				throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
+				throw DocumentInitializationException.scriptEngineNotFound( "", scriptEngineName );
 
 			// (Note that some script engines do not even
 			// provide a default context -- Jepp, for example -- so

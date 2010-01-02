@@ -17,8 +17,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
+import com.threecrickets.scripturian.exception.DocumentInitializationException;
+import com.threecrickets.scripturian.exception.DocumentRunException;
 import com.threecrickets.scripturian.file.DocumentFileSource;
 import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
 
@@ -239,11 +240,21 @@ public class MainDocument implements Runnable
 		}
 		catch( IOException x )
 		{
-			System.err.println( "Error reading document file \"" + name + "\", error: " + x.getMessage() );
+			System.err.print( "Error reading document file \"" + name + "\": " );
+			System.err.println( x.getMessage() );
 		}
-		catch( ScriptException x )
+		catch( DocumentInitializationException x )
 		{
-			System.err.println( "Error in scriptlet \"" + name + "\", error: " + x.getMessage() );
+			System.err.print( "Init error: " );
+			System.err.println( x.getMessage() );
+		}
+		catch( DocumentRunException x )
+		{
+			System.err.print( "Run error: " );
+			System.err.println( " " + x.getMessage() );
+			System.err.println( " Document: " + x.getDocumentName() );
+			System.err.println( " Line: " + x.getLineNumber() );
+			System.err.println( " Column: " + x.getColumnNumber() );
 		}
 	}
 

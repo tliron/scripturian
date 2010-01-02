@@ -13,12 +13,12 @@ package com.threecrickets.scripturian.internal;
 
 import java.io.IOException;
 
-import javax.script.ScriptException;
-
 import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.DocumentContext;
 import com.threecrickets.scripturian.DocumentSource;
 import com.threecrickets.scripturian.MainDocument;
+import com.threecrickets.scripturian.exception.DocumentInitializationException;
+import com.threecrickets.scripturian.exception.DocumentRunException;
 
 /**
  * This is the <code>document.container</code> variable exposed to scriptlets.
@@ -59,16 +59,17 @@ public class ExposedContainerForMainDocument
 	 * @param name
 	 *        The document name
 	 * @throws IOException
-	 * @throws ScriptException
+	 * @throws DocumentInitializationException
+	 * @throws DocumentRunException
 	 */
-	public void includeDocument( String name ) throws IOException, ScriptException
+	public void includeDocument( String name ) throws IOException, DocumentInitializationException, DocumentRunException
 	{
 		DocumentSource.DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
 		Document document = documentDescriptor.getDocument();
 		if( document == null )
 		{
 			String text = documentDescriptor.getText();
-			document = new Document( text, false, mainDocument.getScriptEngineManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+			document = new Document( name, text, false, mainDocument.getScriptEngineManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
 			Document existing = documentDescriptor.setDocumentIfAbsent( document );
 			if( existing != null )
@@ -86,9 +87,10 @@ public class ExposedContainerForMainDocument
 	 * @param name
 	 *        The document name
 	 * @throws IOException
-	 * @throws ScriptException
+	 * @throws DocumentInitializationException
+	 * @throws DocumentRunException
 	 */
-	public void include( String name ) throws IOException, ScriptException
+	public void include( String name ) throws IOException, DocumentInitializationException, DocumentRunException
 	{
 		DocumentSource.DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
 		Document document = documentDescriptor.getDocument();
@@ -96,7 +98,7 @@ public class ExposedContainerForMainDocument
 		{
 			String scriptEngineName = ScripturianUtil.getScriptEngineNameByExtension( name, documentDescriptor.getTag(), mainDocument.getScriptEngineManager() );
 			String text = documentDescriptor.getText();
-			document = new Document( text, true, mainDocument.getScriptEngineManager(), scriptEngineName, mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+			document = new Document( name, text, true, mainDocument.getScriptEngineManager(), scriptEngineName, mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
 			Document existing = documentDescriptor.setDocumentIfAbsent( document );
 			if( existing != null )

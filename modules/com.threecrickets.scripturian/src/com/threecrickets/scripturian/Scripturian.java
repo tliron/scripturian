@@ -11,14 +11,12 @@
 
 package com.threecrickets.scripturian;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.internal.ServiceLoader;
 
 /**
  * Shared static attributes for Scripturian.
@@ -53,9 +51,17 @@ public class Scripturian
 	public static final ConcurrentMap<String, ScriptletParsingHelper> scriptletParsingHelpers = new ConcurrentHashMap<String, ScriptletParsingHelper>();
 
 	/**
+	 * A list of scriptlet exception helpers. The are tried in order when
+	 * creating {@link DocumentRunException} instances.
+	 * 
+	 * @see DocumentRunException
+	 */
+	public static final CopyOnWriteArrayList<ScriptletExceptionHelper> scriptletExceptionHelpers = new CopyOnWriteArrayList<ScriptletExceptionHelper>();
+
+	/**
 	 * Map of extensions named to script engine names. For Scripturian, these
 	 * mappings supplement and override those extensions declared by individual
-	 * script engnies.
+	 * script engines.
 	 * <p>
 	 * This map is automatically initialized when this class loads according to
 	 * resources named
@@ -72,76 +78,29 @@ public class Scripturian
 
 	static
 	{
-		// Initialize scriptletParsingHelpers (look for them in META-INF)
-
-		// For Java 6
-
-		/*
-		 * ServiceLoader<ScriptletParsingHelper> serviceLoader =
-		 * ServiceLoader.load( ScriptletParsingHelper.class ); for(
-		 * ScriptletParsingHelper scriptletParsingHelper : serviceLoader ) {
-		 * ScriptEngines scriptEngines =
-		 * scriptletParsingHelper.getClass().getAnnotation( ScriptEngines.class
-		 * ); if( scriptEngines != null ) for( String scriptEngine :
-		 * scriptEngines.value() ) scriptletParsingHelpers.put( scriptEngine,
-		 * scriptletParsingHelper ); }
-		 */
-
-		// For Java 5
-		String resourceName = "META-INF/services/" + ScriptletParsingHelper.class.getCanonicalName();
-		try
+		// Initialize scriptletParsingHelpers
+		ServiceLoader<ScriptletParsingHelper> scriptletParsingHelperLoader = ServiceLoader.load( ScriptletParsingHelper.class );
+		for( ScriptletParsingHelper scriptletParsingHelper : scriptletParsingHelperLoader )
 		{
-			Enumeration<URL> resources = ClassLoader.getSystemResources( resourceName );
-			while( resources.hasMoreElements() )
+			ScriptEngines scriptEngines = scriptletParsingHelper.getClass().getAnnotation( ScriptEngines.class );
+			if( scriptEngines == null )
+				throw new RuntimeException( "" + scriptletParsingHelper + " does not have a ScriptEngines annotation" );
+
+			for( String scriptEngine : scriptEngines.value() )
+				scriptletParsingHelpers.put( scriptEngine, scriptletParsingHelper );
+
+			ScriptEnginePriorityExtensions scriptEngineExtensions = scriptletParsingHelper.getClass().getAnnotation( ScriptEnginePriorityExtensions.class );
+			if( scriptEngineExtensions != null )
 			{
-				InputStream stream = resources.nextElement().openStream();
-				BufferedReader reader = new BufferedReader( new InputStreamReader( stream ) );
-				String line = reader.readLine();
-				while( line != null )
-				{
-					line = line.trim();
-					if( ( line.length() > 0 ) && !line.startsWith( "#" ) )
-					{
-						ScriptletParsingHelper scriptletParsingHelper = (ScriptletParsingHelper) Class.forName( line ).newInstance();
-
-						ScriptEngines scriptEngines = scriptletParsingHelper.getClass().getAnnotation( ScriptEngines.class );
-						if( scriptEngines != null )
-						{
-							for( String scriptEngine : scriptEngines.value() )
-								scriptletParsingHelpers.put( scriptEngine, scriptletParsingHelper );
-
-							ScriptEnginePriorityExtensions scriptEngineExtensions = scriptletParsingHelper.getClass().getAnnotation( ScriptEnginePriorityExtensions.class );
-							if( scriptEngineExtensions != null )
-							{
-								String scriptEngine = scriptEngines.value()[0];
-								for( String scriptEngineExtension : scriptEngineExtensions.value() )
-									scriptEngineExtensionPriorities.put( scriptEngineExtension, scriptEngine );
-							}
-						}
-						else
-							throw new RuntimeException( "ScriptletParsingHelper \"" + line + "\" does not have a ScriptEngines annotation" );
-					}
-					line = reader.readLine();
-				}
-				stream.close();
-				reader.close();
+				String scriptEngine = scriptEngines.value()[0];
+				for( String scriptEngineExtension : scriptEngineExtensions.value() )
+					scriptEngineExtensionPriorities.put( scriptEngineExtension, scriptEngine );
 			}
 		}
-		catch( IOException x )
-		{
-			throw new RuntimeException( x );
-		}
-		catch( InstantiationException x )
-		{
-			throw new RuntimeException( x );
-		}
-		catch( IllegalAccessException x )
-		{
-			throw new RuntimeException( x );
-		}
-		catch( ClassNotFoundException x )
-		{
-			throw new RuntimeException( x );
-		}
+
+		// Initialize scriptletExceptionHelpers
+		ServiceLoader<ScriptletExceptionHelper> scriptletExceptionHelperLoader = ServiceLoader.load( ScriptletExceptionHelper.class );
+		for( ScriptletExceptionHelper scriptletExceptionHelper : scriptletExceptionHelperLoader )
+			scriptletExceptionHelpers.add( scriptletExceptionHelper );
 	}
 }

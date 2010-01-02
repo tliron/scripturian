@@ -21,9 +21,9 @@ import java.io.StringWriter;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.Scripturian;
+import com.threecrickets.scripturian.exception.DocumentInitializationException;
 
 /**
  * Utility methods.
@@ -93,7 +93,7 @@ public abstract class ScripturianUtil
 		return getString( reader );
 	}
 
-	public static String getScriptEngineNameByExtension( String name, String def, ScriptEngineManager scriptEngineManager ) throws ScriptException
+	public static String getScriptEngineNameByExtension( String name, String def, ScriptEngineManager scriptEngineManager ) throws DocumentInitializationException
 	{
 		int slash = name.lastIndexOf( '/' );
 		if( slash != -1 )
@@ -102,7 +102,7 @@ public abstract class ScripturianUtil
 		int dot = name.lastIndexOf( '.' );
 		String extension = dot != -1 ? name.substring( dot + 1 ) : def;
 		if( extension == null )
-			throw new ScriptException( "Name must have an extension: " + name );
+			throw new DocumentInitializationException( name, "Name must have an extension" );
 
 		// Try our priority mappings first
 		String engineName = Scripturian.scriptEngineExtensionPriorities.get( extension );
@@ -113,7 +113,7 @@ public abstract class ScripturianUtil
 			ScriptEngine scriptEngine = scriptEngineManager.getEngineByExtension( extension );
 			if( scriptEngine == null )
 			{
-				throw new ScriptException( "Name's extension is not recognized by any script engine: " + extension );
+				throw new DocumentInitializationException( name, "Name's extension is not recognized by any script engine: " + extension );
 			}
 			try
 			{
@@ -121,7 +121,7 @@ public abstract class ScripturianUtil
 			}
 			catch( IndexOutOfBoundsException x )
 			{
-				throw new ScriptException( "Script engine has no names: " + scriptEngine );
+				throw new DocumentInitializationException( name, "Script engine has no names: " + scriptEngine );
 			}
 		}
 		else

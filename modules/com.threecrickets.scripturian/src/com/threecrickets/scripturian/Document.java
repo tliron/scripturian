@@ -30,6 +30,9 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import com.threecrickets.scripturian.exception.DocumentCompilationException;
+import com.threecrickets.scripturian.exception.DocumentInitializationException;
+import com.threecrickets.scripturian.exception.DocumentRunException;
 import com.threecrickets.scripturian.internal.ExposedDocument;
 
 /**
@@ -203,6 +206,8 @@ public class Document
 	 * {@link ScriptletParsingHelper} implementations to be installed for the
 	 * script engines.
 	 * 
+	 * @param name
+	 *        Name used for error messages
 	 * @param text
 	 *        The text stream
 	 * @param isScript
@@ -219,12 +224,13 @@ public class Document
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
-	 * @throws ScriptException
+	 * @throws DocumentInitializationException
 	 *         In case of a parsing error
 	 */
-	public Document( String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation ) throws ScriptException
+	public Document( String name, String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation )
+		throws DocumentInitializationException
 	{
-		this( text, isScript, scriptEngineManager, defaultEngineName, documentSource, allowCompilation, DEFAULT_DOCUMENT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
+		this( name, text, isScript, scriptEngineManager, defaultEngineName, documentSource, allowCompilation, DEFAULT_DOCUMENT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
 			DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
@@ -234,6 +240,8 @@ public class Document
 	 * {@link ScriptletParsingHelper} implementations to be installed for the
 	 * script engines.
 	 * 
+	 * @param name
+	 *        Name used for error messages
 	 * @param text
 	 *        The text stream
 	 * @param isScript
@@ -269,13 +277,15 @@ public class Document
 	 * @param delimiterInFlow
 	 *        The default addition to the start delimiter to specify an in-flow
 	 *        tag
-	 * @throws ScriptException
+	 * @throws DocumentInitializationException
 	 *         In case of a parsing error
 	 * @see ScriptletParsingHelper
 	 */
-	public Document( String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation, String documentVariableName,
-		String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ScriptException
+	public Document( String name, String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation,
+		String documentVariableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
+		throws DocumentInitializationException
 	{
+		this.name = name;
 		this.documentVariableName = documentVariableName;
 
 		if( isScript )
@@ -285,7 +295,7 @@ public class Document
 			{
 				segment
 			};
-			segment.processScriptlet( this, scriptEngineManager, allowCompilation );
+			segment.initScriptlet( this, scriptEngineManager, allowCompilation );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -396,11 +406,11 @@ public class Document
 						{
 							ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 							if( scriptEngine == null )
-								throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
+								throw DocumentInitializationException.scriptEngineNotFound( name, scriptEngineName );
 
 							ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
 							if( scriptletParsingHelper == null )
-								throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
+								throw DocumentInitializationException.scriptletParsingHelperNotFound( name, scriptEngineName );
 
 							if( isExpression )
 								segments.add( new Segment( scriptletParsingHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
@@ -411,11 +421,11 @@ public class Document
 						{
 							ScriptEngine lastScriptEngine = scriptEngineManager.getEngineByName( lastScriptEngineName );
 							if( lastScriptEngine == null )
-								throw new ScriptException( "Unsupported script engine: " + lastScriptEngineName );
+								throw DocumentInitializationException.scriptEngineNotFound( name, lastScriptEngineName );
 
-							ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( lastScriptEngineName );
+							ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
 							if( scriptletParsingHelper == null )
-								throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + lastScriptEngineName );
+								throw DocumentInitializationException.scriptletParsingHelperNotFound( name, scriptEngineName );
 
 							String inFlowText = delimiterStart + scriptEngineName + " " + text.substring( start, end ) + delimiterEnd;
 							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
@@ -423,8 +433,8 @@ public class Document
 							// Note that the in-flow scriptlet is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Document inFlowScript = new Document( inFlowText, false, scriptEngineManager, null, null, allowCompilation, documentVariableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd,
-								delimiterExpression, delimiterInclude, delimiterInFlow );
+							Document inFlowScript = new Document( name + "/" + inFlowName, inFlowText, false, scriptEngineManager, null, null, allowCompilation, documentVariableName, delimiterStart, delimiterEnd,
+								delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocumentDescriptor( inFlowName, inFlowText, "", inFlowScript );
 
 							// TODO: would it ever be possible to remove the
@@ -505,11 +515,11 @@ public class Document
 					{
 						ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( current.scriptEngineName );
 						if( scriptEngine == null )
-							throw new ScriptException( "Unsupported script engine: " + current.scriptEngineName );
+							throw DocumentInitializationException.scriptEngineNotFound( name, current.scriptEngineName );
 
 						ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( current.scriptEngineName );
 						if( scriptletParsingHelper == null )
-							throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + current.scriptEngineName );
+							throw DocumentInitializationException.scriptletParsingHelperNotFound( name, current.scriptEngineName );
 
 						// ScriptEngineFactory factory =
 						// scriptEngine.getFactory();
@@ -532,7 +542,7 @@ public class Document
 		// Process scriptlets
 		for( Segment segment : segments )
 			if( segment.isScriptlet )
-				segment.processScriptlet( this, scriptEngineManager, allowCompilation );
+				segment.initScriptlet( this, scriptEngineManager, allowCompilation );
 
 		this.segments = new Segment[segments.size()];
 		segments.toArray( this.segments );
@@ -691,11 +701,12 @@ public class Document
 	 *        script context
 	 * @return True if the script ran, false if it didn't run, because the
 	 *         cached output is expected to be used instead
-	 * @throws ScriptException
+	 * @throws DocumentInitializationException
+	 * @throws DocumentRunException
 	 * @throws IOException
 	 */
-	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, DocumentContext documentContext, Object container, ScriptletController scriptletController ) throws ScriptException,
-		IOException
+	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, DocumentContext documentContext, Object container, ScriptletController scriptletController )
+		throws DocumentInitializationException, DocumentRunException, IOException
 	{
 		long now = System.currentTimeMillis();
 		if( checkCache && ( now - lastRun.get() < cacheDuration.get() ) )
@@ -757,13 +768,13 @@ public class Document
 						}
 						catch( ScriptException x )
 						{
-							throw x;
+							throw DocumentRunException.create( name, x );
 						}
 						catch( Exception x )
 						{
 							// Some script engines (notably Quercus) throw their
 							// own special exceptions
-							throw new ScriptException( x );
+							throw DocumentRunException.create( name, x );
 						}
 						finally
 						{
@@ -818,16 +829,17 @@ public class Document
 	 *        An optional {@link ScriptletController} to be applied to the
 	 *        script context
 	 * @return The value returned by the invocation
-	 * @throws ScriptException
+	 * @throws DocumentInitializationException
+	 * @throws DocumentRunException
 	 * @throws NoSuchMethodException
 	 *         Note that this exception will only be thrown if the script engine
 	 *         supports the {@link Invocable} interface; otherwise a
 	 *         {@link ScriptException} is thrown if the method is not found
 	 */
-	public Object invoke( String entryPointName, Object container, ScriptletController scriptletController ) throws ScriptException, NoSuchMethodException
+	public Object invoke( String entryPointName, Object container, ScriptletController scriptletController ) throws DocumentInitializationException, DocumentRunException, NoSuchMethodException
 	{
 		if( documentContextForInvocations == null )
-			throw new ScriptException( "Document must be run at least once before calling invoke" );
+			throw new DocumentRunException( name, "Document must be run at least once before calling invoke" );
 
 		ScriptEngine scriptEngine = documentContextForInvocations.getLastScriptEngine();
 		ScriptContext scriptContext = documentContextForInvocations.getScriptContext();
@@ -844,18 +856,36 @@ public class Document
 			ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
 
 			if( scriptletParsingHelper == null )
-				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
+				throw DocumentInitializationException.scriptletParsingHelperNotFound( name, scriptEngineName );
 
 			String program = scriptletParsingHelper.getInvocationAsProgram( this, scriptEngine, entryPointName );
 			if( program == null )
 			{
 				if( scriptEngine instanceof Invocable )
-					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
+				{
+					try
+					{
+						return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
+					}
+					catch( ScriptException x )
+					{
+						throw DocumentRunException.create( name, x );
+					}
+				}
 				else
-					throw new ScriptException( "Script engine does not support invocations" );
+					throw new DocumentRunException( name, "Script engine " + scriptEngineName + " does not support invocations" );
 			}
 			else
-				return scriptEngine.eval( program );
+			{
+				try
+				{
+					return scriptEngine.eval( program );
+				}
+				catch( ScriptException x )
+				{
+					throw DocumentRunException.create( name, x );
+				}
+			}
 		}
 		finally
 		{
@@ -875,6 +905,8 @@ public class Document
 	private static final String IN_FLOW_PREFIX = "_IN_FLOW_";
 
 	private static final AtomicInteger inFlowCounter = new AtomicInteger();
+
+	private final String name;
 
 	private final Segment[] segments;
 
@@ -907,15 +939,15 @@ public class Document
 
 		public String scriptEngineName;
 
-		private void processScriptlet( Document document, ScriptEngineManager scriptEngineManager, boolean allowCompilation ) throws ScriptException
+		private void initScriptlet( Document document, ScriptEngineManager scriptEngineManager, boolean allowCompilation ) throws DocumentInitializationException
 		{
 			ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 			if( scriptEngine == null )
-				throw new ScriptException( "Unsupported script engine: " + scriptEngineName );
+				throw DocumentInitializationException.scriptEngineNotFound( document.name, scriptEngineName );
 
 			ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
 			if( scriptletParsingHelper == null )
-				throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
+				throw DocumentInitializationException.scriptletParsingHelperNotFound( document.name, scriptEngineName );
 
 			// Add header
 			String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );
@@ -928,7 +960,16 @@ public class Document
 				text += footer;
 
 			if( allowCompilation && ( scriptEngine instanceof Compilable ) && scriptletParsingHelper.isCompilable() )
-				compiledScript = ( (Compilable) scriptEngine ).compile( text );
+			{
+				try
+				{
+					compiledScript = ( (Compilable) scriptEngine ).compile( text );
+				}
+				catch( ScriptException x )
+				{
+					throw new DocumentCompilationException( document.name, "Compilation error in " + scriptEngineName, x );
+				}
+			}
 		}
 	}
 }
