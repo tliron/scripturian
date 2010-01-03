@@ -98,7 +98,6 @@ public class DocumentRunException extends Exception
 	private DocumentRunException( String documentName, ScriptException scriptException )
 	{
 		super( scriptException.getMessage(), scriptException.getCause() );
-		//System.out.println(scriptException.getCause().getClass());
 		this.documentName = documentName;
 		this.lineNumber = scriptException.getLineNumber();
 		this.columnNumber = scriptException.getColumnNumber();

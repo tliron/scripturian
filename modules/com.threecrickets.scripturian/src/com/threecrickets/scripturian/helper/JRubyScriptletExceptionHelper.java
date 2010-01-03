@@ -10,7 +10,6 @@
  */
 package com.threecrickets.scripturian.helper;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -22,18 +21,18 @@ import com.threecrickets.scripturian.exception.DocumentRunException;
 /**
  * @author Tal Liron
  */
-public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
+public class JRubyScriptletExceptionHelper implements ScriptletExceptionHelper
 {
 	//
 	// Construction
 	//
 
-	public JythonScriptletExceptionHelper() throws ClassNotFoundException, SecurityException, NoSuchFieldException, NoSuchMethodException
+	public JRubyScriptletExceptionHelper() throws ClassNotFoundException, SecurityException, NoSuchFieldException, NoSuchMethodException
 	{
-		pyExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyException" );
-		pyExceptionValueField = pyExceptionClass.getField( "value" );
-		pyObjectClass = getClass().getClassLoader().loadClass( "org.python.core.PyObject" );
-		pyObjectToJavaMethod = pyObjectClass.getMethod( "__tojava__", Class.class );
+		raiseExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.exceptions.RaiseException" );
+		raiseExceptionGetExceptionMethod = raiseExceptionClass.getMethod( "getException" );
+		nativeExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.NativeException" );
+		nativeExceptionGetCauseMethod = nativeExceptionClass.getMethod( "getCause" );
 	}
 
 	//
@@ -45,19 +44,21 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 		if( exception instanceof ScriptException )
 		{
 			Throwable cause = exception.getCause();
-
-			if( pyExceptionClass.isInstance( cause ) )
+			if( raiseExceptionClass.isInstance( cause ) )
 			{
 				try
 				{
-					// Returns a PyObject
-					Object value = pyExceptionValueField.get( cause );
-					if( value != null )
+					Object rubyException = raiseExceptionGetExceptionMethod.invoke( cause );
+					if( nativeExceptionClass.isInstance( rubyException ) )
 					{
-						// Might return Py.NoConversion
-						Object toJava = pyObjectToJavaMethod.invoke( value, DocumentRunException.class );
-						if( toJava instanceof DocumentRunException )
-							return (DocumentRunException) toJava;
+						cause = (Throwable) nativeExceptionGetCauseMethod.invoke( rubyException );
+						if( cause instanceof DocumentRunException )
+							return (DocumentRunException) cause;
+					}
+					else
+					{
+						// Wish there were a way to get line numbers from
+						// RubyException!
 					}
 				}
 				catch( IllegalArgumentException x )
@@ -81,11 +82,11 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final Class<?> pyExceptionClass;
+	private final Class<?> raiseExceptionClass;
 
-	private final Field pyExceptionValueField;
+	private final Method raiseExceptionGetExceptionMethod;
 
-	private final Class<?> pyObjectClass;
+	private final Class<?> nativeExceptionClass;
 
-	private final Method pyObjectToJavaMethod;
+	private final Method nativeExceptionGetCauseMethod;
 }

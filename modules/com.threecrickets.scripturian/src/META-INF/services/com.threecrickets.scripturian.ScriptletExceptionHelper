@@ -1,2 +1,4 @@
+com.threecrickets.scripturian.helper.GroovyScriptletExceptionHelper
+com.threecrickets.scripturian.helper.JRubyScriptletExceptionHelper
 com.threecrickets.scripturian.helper.JythonScriptletExceptionHelper
 com.threecrickets.scripturian.helper.RhinoScriptletExceptionHelper

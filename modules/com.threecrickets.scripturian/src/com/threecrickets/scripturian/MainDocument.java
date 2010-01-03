@@ -253,8 +253,10 @@ public class MainDocument implements Runnable
 			System.err.print( "Run error: " );
 			System.err.println( " " + x.getMessage() );
 			System.err.println( " Document: " + x.getDocumentName() );
-			System.err.println( " Line: " + x.getLineNumber() );
-			System.err.println( " Column: " + x.getColumnNumber() );
+			if( x.getLineNumber() >= 0 )
+				System.err.println( " Line: " + x.getLineNumber() );
+			if( x.getColumnNumber() >= 0 )
+				System.err.println( " Column: " + x.getColumnNumber() );
 		}
 	}
 
