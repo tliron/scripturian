@@ -33,7 +33,7 @@ import com.threecrickets.scripturian.internal.ExposedContainerForPygmentsDocumen
 public class PygmentsDocumentFormatter<D> implements DocumentFormatter<D>
 {
 	//
-	// Constructino
+	// Construction
 	//
 
 	public PygmentsDocumentFormatter()
