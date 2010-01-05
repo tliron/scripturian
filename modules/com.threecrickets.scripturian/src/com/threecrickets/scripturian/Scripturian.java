@@ -15,6 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
+import com.threecrickets.scripturian.annotation.ScriptEngines;
 import com.threecrickets.scripturian.exception.DocumentRunException;
 import com.threecrickets.scripturian.internal.ServiceLoader;
 
@@ -23,7 +25,7 @@ import com.threecrickets.scripturian.internal.ServiceLoader;
  * 
  * @author Tal Liron
  */
-public class Scripturian
+public abstract class Scripturian
 {
 	//
 	// Static attributes
@@ -102,5 +104,22 @@ public class Scripturian
 		ServiceLoader<ScriptletExceptionHelper> scriptletExceptionHelperLoader = ServiceLoader.load( ScriptletExceptionHelper.class );
 		for( ScriptletExceptionHelper scriptletExceptionHelper : scriptletExceptionHelperLoader )
 			scriptletExceptionHelpers.add( scriptletExceptionHelper );
+	}
+
+	//
+	// Main
+	//
+
+	public void main( String[] arguments )
+	{
+		// Delegate to MainDocument
+		MainDocument.main( arguments );
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	private Scripturian()
+	{
 	}
 }

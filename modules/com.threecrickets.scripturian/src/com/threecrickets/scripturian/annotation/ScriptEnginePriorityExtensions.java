@@ -9,23 +9,24 @@
  * at http://www.threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.threecrickets.scripturian.ScriptletParsingHelper;
+
 /**
  * Used for {@link ScriptletParsingHelper} implementations to mark supported
- * script engine names. Note that the first script engine listed will be
- * considered the default name.
+ * script engine extensions.
  * 
  * @author Tal Liron
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ScriptEngines
+public @interface ScriptEnginePriorityExtensions
 {
 	public String[] value();
 }

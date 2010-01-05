@@ -15,7 +15,7 @@ import java.io.IOException;
 
 import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.DocumentContext;
-import com.threecrickets.scripturian.DocumentSource;
+import com.threecrickets.scripturian.DocumentDescriptor;
 import com.threecrickets.scripturian.MainDocument;
 import com.threecrickets.scripturian.exception.DocumentInitializationException;
 import com.threecrickets.scripturian.exception.DocumentRunException;
@@ -64,7 +64,7 @@ public class ExposedContainerForMainDocument
 	 */
 	public void includeDocument( String name ) throws IOException, DocumentInitializationException, DocumentRunException
 	{
-		DocumentSource.DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
+		DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
 		Document document = documentDescriptor.getDocument();
 		if( document == null )
 		{
@@ -92,7 +92,7 @@ public class ExposedContainerForMainDocument
 	 */
 	public void include( String name ) throws IOException, DocumentInitializationException, DocumentRunException
 	{
-		DocumentSource.DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
+		DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
 		Document document = documentDescriptor.getDocument();
 		if( document == null )
 		{

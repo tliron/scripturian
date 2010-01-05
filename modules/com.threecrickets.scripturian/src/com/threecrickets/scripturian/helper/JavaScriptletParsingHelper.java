@@ -15,7 +15,7 @@ import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.ScriptletParsingHelper;
-import com.threecrickets.scripturian.ScriptEngines;
+import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
  * An {@link ScriptletParsingHelper} that supports Java as if it were a

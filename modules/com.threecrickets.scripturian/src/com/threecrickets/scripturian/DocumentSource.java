@@ -14,106 +14,56 @@ package com.threecrickets.scripturian;
 import java.io.IOException;
 
 /**
- * Manages retrieval of script text and caching of arbitrary script
- * implementations via descriptors.
+ * Manages retrieval of document text and caching of arbitrary document
+ * implementations via descriptor.
  * <p>
  * Implementations are expected to be thread safe! This includes returned
- * descriptors.
+ * descriptor.
  * 
  * @author Tal Liron
  * @param <D>
- *        The script type
+ *        The document type
  */
 public interface DocumentSource<D>
 {
 	/**
-	 * Access to the script descriptor.
-	 * 
-	 * @param <S>
-	 *        The script type
-	 */
-	public interface DocumentDescriptor<S>
-	{
-		/**
-		 * The text for the script.
-		 * 
-		 * @return The text
-		 */
-		public String getText();
-
-		/**
-		 * The tag for the script (for a file-based script source, this will
-		 * probably be the file name extension).
-		 * 
-		 * @return The tag
-		 */
-		public String getTag();
-
-		/**
-		 * The script instance. Should be null by default, as it is intended to
-		 * be set by the user of the {@link DocumentSource},
-		 * 
-		 * @return The script instance
-		 */
-		public S getDocument();
-
-		/**
-		 * @param value
-		 *        The script instance
-		 * @return The existing script instance before we changed it
-		 * @see #getDocument()
-		 */
-		public S setDocument( S value );
-
-		/**
-		 * Like {@link #setDocument(Object)}, with an atomic check for null.
-		 * 
-		 * @param value
-		 *        The script instance
-		 * @return The existing script instance before we changed it
-		 * @see #getDocument()
-		 */
-		public S setDocumentIfAbsent( S value );
-	}
-
-	/**
-	 * Gets a script descriptor by its name.
+	 * Gets a document descriptor by its name.
 	 * 
 	 * @param name
-	 *        The script's name
-	 * @return The script descriptor
+	 *        The document's name
+	 * @return The document descriptor
 	 * @throws IOException
 	 */
 	public DocumentDescriptor<D> getDocumentDescriptor( String name ) throws IOException;
 
 	/**
-	 * Allows adding or changing script descriptors.
+	 * Allows adding or changing document descriptor.
 	 * 
 	 * @param name
-	 *        The script's name
+	 *        The document's name
 	 * @param text
-	 *        The text for the script
+	 *        The text for the document
 	 * @param tag
 	 *        The tag
-	 * @param script
-	 *        The script instance
-	 * @return The existing script descriptor before we changed it
+	 * @param document
+	 *        The document instance
+	 * @return The existing document descriptor before we changed it
 	 */
-	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D script );
+	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D document );
 
 	/**
-	 * Allows adding or changing script descriptors, with an atomic check for
+	 * Allows adding or changing document descriptor, with an atomic check for
 	 * null.
 	 * 
 	 * @param name
-	 *        The script's name
+	 *        The document's name
 	 * @param text
-	 *        The text for the script
+	 *        The text for the document
 	 * @param tag
 	 *        The tag
-	 * @param script
-	 *        The script instance
-	 * @return The existing script descriptor before we changed it
+	 * @param document
+	 *        The document instance
+	 * @return The existing document descriptor before we changed it
 	 */
-	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D script );
+	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D document );
 }

@@ -21,18 +21,16 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.script.Compilable;
-import javax.script.CompiledScript;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.exception.DocumentCompilationException;
 import com.threecrickets.scripturian.exception.DocumentInitializationException;
 import com.threecrickets.scripturian.exception.DocumentRunException;
 import com.threecrickets.scripturian.internal.ExposedDocument;
+import com.threecrickets.scripturian.internal.DocumentSegment;
 
 /**
  * Handles the parsing, optional compilation and running of Scripturian
@@ -289,12 +287,12 @@ public class Document
 
 		if( isScript )
 		{
-			Segment segment = new Segment( text, true, defaultEngineName );
-			segments = new Segment[]
+			DocumentSegment segment = new DocumentSegment( text, true, defaultEngineName );
+			segments = new DocumentSegment[]
 			{
 				segment
 			};
-			segment.initScriptlet( this, scriptEngineManager, allowCompilation );
+			segment.resolve( this, scriptEngineManager, allowCompilation );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -335,7 +333,7 @@ public class Document
 			}
 		}
 
-		List<Segment> segments = new LinkedList<Segment>();
+		List<DocumentSegment> segments = new LinkedList<DocumentSegment>();
 
 		// Parse segments
 		if( start != -1 )
@@ -346,7 +344,7 @@ public class Document
 			{
 				// Add previous non-script segment
 				if( start != last )
-					segments.add( new Segment( text.substring( last, start ), false, lastScriptEngineName ) );
+					segments.add( new DocumentSegment( text.substring( last, start ), false, lastScriptEngineName ) );
 
 				start += delimiterStartLength;
 
@@ -412,9 +410,9 @@ public class Document
 								throw DocumentInitializationException.scriptletParsingHelperNotFound( name, scriptEngineName );
 
 							if( isExpression )
-								segments.add( new Segment( scriptletParsingHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new DocumentSegment( scriptletParsingHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
 							else if( isInclude )
-								segments.add( new Segment( scriptletParsingHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new DocumentSegment( scriptletParsingHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
 						}
 						else if( isInFlow && ( documentSource != null ) )
 						{
@@ -440,10 +438,10 @@ public class Document
 							// dependent in-flow instances?
 
 							// Our include is in the last script engine
-							segments.add( new Segment( scriptletParsingHelper.getExpressionAsInclude( this, lastScriptEngine, "'" + inFlowName + "'" ), true, lastScriptEngineName ) );
+							segments.add( new DocumentSegment( scriptletParsingHelper.getExpressionAsInclude( this, lastScriptEngine, "'" + inFlowName + "'" ), true, lastScriptEngineName ) );
 						}
 						else
-							segments.add( new Segment( text.substring( start, end ), true, scriptEngineName ) );
+							segments.add( new DocumentSegment( text.substring( start, end ), true, scriptEngineName ) );
 					}
 
 					if( !isInFlow )
@@ -456,22 +454,22 @@ public class Document
 
 			// Add remaining non-script segment
 			if( last < text.length() )
-				segments.add( new Segment( text.substring( last ), false, lastScriptEngineName ) );
+				segments.add( new DocumentSegment( text.substring( last ), false, lastScriptEngineName ) );
 		}
 		else
 		{
 			// Trivial file: does not include script
-			this.segments = new Segment[]
+			this.segments = new DocumentSegment[]
 			{
-				new Segment( text, false, lastScriptEngineName )
+				new DocumentSegment( text, false, lastScriptEngineName )
 			};
 			return;
 		}
 
 		// Collapse segments of same kind
-		Segment previous = null;
-		Segment current;
-		for( Iterator<Segment> i = segments.iterator(); i.hasNext(); )
+		DocumentSegment previous = null;
+		DocumentSegment current;
+		for( Iterator<DocumentSegment> i = segments.iterator(); i.hasNext(); )
 		{
 			current = i.next();
 
@@ -496,7 +494,7 @@ public class Document
 		// (does not convert first segment into script if it isn't one -- that's
 		// good)
 		previous = null;
-		for( Iterator<Segment> i = segments.iterator(); i.hasNext(); )
+		for( Iterator<DocumentSegment> i = segments.iterator(); i.hasNext(); )
 		{
 			current = i.next();
 
@@ -539,17 +537,27 @@ public class Document
 		}
 
 		// Process scriptlets
-		for( Segment segment : segments )
+		for( DocumentSegment segment : segments )
 			if( segment.isScriptlet )
-				segment.initScriptlet( this, scriptEngineManager, allowCompilation );
+				segment.resolve( this, scriptEngineManager, allowCompilation );
 
-		this.segments = new Segment[segments.size()];
+		this.segments = new DocumentSegment[segments.size()];
 		segments.toArray( this.segments );
 	}
 
 	//
 	// Attributes
 	//
+
+	/**
+	 * Name used for error messages.
+	 * 
+	 * @return The name
+	 */
+	public String getName()
+	{
+		return name;
+	}
 
 	/**
 	 * The start delimiter used.
@@ -648,7 +656,7 @@ public class Document
 	{
 		if( segments.length == 1 )
 		{
-			Segment sole = segments[0];
+			DocumentSegment sole = segments[0];
 			if( !sole.isScriptlet )
 				return sole.text;
 		}
@@ -730,7 +738,7 @@ public class Document
 
 			try
 			{
-				for( Segment segment : segments )
+				for( DocumentSegment segment : segments )
 				{
 					if( !segment.isScriptlet )
 						writer.write( segment.text );
@@ -905,9 +913,9 @@ public class Document
 
 	private static final AtomicInteger inFlowCounter = new AtomicInteger();
 
-	private final String name;
+	final String name;
 
-	private final Segment[] segments;
+	private final DocumentSegment[] segments;
 
 	private final String delimiterStart;
 
@@ -920,55 +928,4 @@ public class Document
 	private volatile long lastRun = 0;
 
 	private DocumentContext documentContextForInvocations;
-
-	private static class Segment
-	{
-		public Segment( String text, boolean isScriptlet, String scriptEngineName )
-		{
-			this.text = text;
-			this.isScriptlet = isScriptlet;
-			this.scriptEngineName = scriptEngineName;
-		}
-
-		public String text;
-
-		public CompiledScript compiledScript;
-
-		public boolean isScriptlet;
-
-		public String scriptEngineName;
-
-		private void initScriptlet( Document document, ScriptEngineManager scriptEngineManager, boolean allowCompilation ) throws DocumentInitializationException
-		{
-			ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
-			if( scriptEngine == null )
-				throw DocumentInitializationException.scriptEngineNotFound( document.name, scriptEngineName );
-
-			ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
-			if( scriptletParsingHelper == null )
-				throw DocumentInitializationException.scriptletParsingHelperNotFound( document.name, scriptEngineName );
-
-			// Add header
-			String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );
-			if( header != null )
-				text = header + text;
-
-			// Add footer
-			String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
-			if( footer != null )
-				text += footer;
-
-			if( allowCompilation && ( scriptEngine instanceof Compilable ) && scriptletParsingHelper.isCompilable() )
-			{
-				try
-				{
-					compiledScript = ( (Compilable) scriptEngine ).compile( text );
-				}
-				catch( ScriptException x )
-				{
-					throw new DocumentCompilationException( document.name, "Compilation error in " + scriptEngineName, x );
-				}
-			}
-		}
-	}
 }
