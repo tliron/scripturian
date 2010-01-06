@@ -110,7 +110,7 @@ public abstract class Scripturian
 	// Main
 	//
 
-	public void main( String[] arguments )
+	public static void main( String[] arguments )
 	{
 		// Delegate to MainDocument
 		MainDocument.main( arguments );
