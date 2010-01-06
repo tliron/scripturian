@@ -33,7 +33,7 @@
 				<fileset dir="${lib}/jsr223/lib" />
 			</classpath>
 			<bottom>
-				<![CDATA[<i>Copyright &#169; 2009-2010 <a target="_top" href="http://www.threecrickets.com/">Three Crickets LLC</a>.</i>]]>
+				<![CDATA[<i>Copyright &#169; 2009-2010 <a target="_top" href="http://threecrickets.com/">Three Crickets LLC</a>.</i>]]>
 			</bottom>
 		</javadoc>
 	</target>

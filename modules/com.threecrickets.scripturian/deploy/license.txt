@@ -3,7 +3,7 @@
 License agreement
 =================
 
-Version 1.0, April 2009
+Version 1.1, April 2010
 
 This software distribution is provided to you under the LGPL license
 version 3.0.
@@ -23,7 +23,7 @@ For special licensing requests, please contact:
     3021 W. Wilson Ave. #3
     Chicago, IL 60625
     USA
-	http://www.threecrickets.com/
+	http://threecrickets.com/
     mailto:legal@threecrickets.com
 
 _______________________________________________________________________
