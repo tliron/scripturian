@@ -25,7 +25,7 @@ import com.threecrickets.scripturian.exception.DocumentInitializationException;
 
 /**
  * Encapsulates context for an {@link Document}. Every thread calling
- * {@link Document#run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+ * {@link Document#run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
  * must use its own context.
  * 
  * @author Tal Liron

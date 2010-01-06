@@ -44,13 +44,17 @@ public class DocumentSegment
 	// Attributes
 	//
 
+	public final boolean isScriptlet;
+
+	public final String scriptEngineName;
+
 	public String text;
 
 	public CompiledScript compiledScript;
 
-	public final boolean isScriptlet;
-
-	public final String scriptEngineName;
+	//
+	// Operations
+	//
 
 	public void resolve( Document document, ScriptEngineManager scriptEngineManager, boolean allowCompilation ) throws DocumentInitializationException
 	{

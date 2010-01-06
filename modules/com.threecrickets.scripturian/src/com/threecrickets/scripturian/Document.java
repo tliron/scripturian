@@ -113,7 +113,7 @@ import com.threecrickets.scripturian.internal.DocumentSegment;
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
  * <code>document</code> (this name can be changed via the
- * {@link #Document(String, boolean, ScriptEngineManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
+ * {@link #Document(String, String, boolean, ScriptEngineManager, String, DocumentSource, boolean)}
  * constructor).
  * <p>
  * Read-only attributes:
@@ -590,9 +590,10 @@ public class Document
 	}
 
 	/**
-	 * Timestamp of when the script last finished running successfully.
+	 * Timestamp of when the script last finished running successfully, or 0 if
+	 * it was never run.
 	 * 
-	 * @return The timestamp
+	 * @return The timestamp or 0
 	 */
 	public long getLastRun()
 	{
@@ -603,7 +604,7 @@ public class Document
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
-	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * causes the script to be run. This class does not handle caching itself.
 	 * Caching can be provided by your environment if appropriate.
 	 * <p>
@@ -647,7 +648,7 @@ public class Document
 	/**
 	 * Trivial documents have no scriptlets, meaning that they are pure text.
 	 * Identifying such documents can save you from making unnecessary calls to
-	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * in some situations.
 	 * 
 	 * @return The text content if it's trivial, null if not
@@ -690,6 +691,8 @@ public class Document
 	 * is recommended that you use the same {@link DocumentContext} for each
 	 * call for better performance.
 	 * 
+	 * @param checkRan
+	 *        Run only if we've never ran before
 	 * @param checkCache
 	 *        Whether or not to check for caching versus the value of
 	 *        {@link #getLastRun()}
@@ -712,13 +715,20 @@ public class Document
 	 * @throws DocumentRunException
 	 * @throws IOException
 	 */
-	public boolean run( boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, DocumentContext documentContext, Object container, ScriptletController scriptletController )
+	public boolean run( boolean checkRan, boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, DocumentContext documentContext, Object container, ScriptletController scriptletController )
 		throws DocumentInitializationException, DocumentRunException, IOException
 	{
+		if( checkRan )
+		{
+			// TODO: ughghghghghghgh!!!!
+			if( lastRun != 0 )
+				return false;
+		}
+
 		long now = System.currentTimeMillis();
 		if( checkCache && ( now - lastRun < cacheDuration ) )
 		{
-			// We didn't run this time
+			// We won't run this time
 			return false;
 		}
 		else
@@ -812,7 +822,7 @@ public class Document
 	 * {@link ScriptletParsingHelper} implementation to be installed for the
 	 * script engine. Most likely, the script engine supports the
 	 * {@link Invocable} interface. Running the script first (via
-	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * ) is not absolutely required, but probably will be necessary in most
 	 * useful scenarios, where running the script causes useful entry point to
 	 * be defined.
@@ -826,7 +836,7 @@ public class Document
 	 * that, internally, invoke relies on the {@link DocumentContext} from
 	 * {@link #getDocumentContextForInvocations()}. This is set to be the one
 	 * used in the last call to
-	 * {@link #run(boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point

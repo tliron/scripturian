@@ -12,13 +12,20 @@
 package com.threecrickets.scripturian;
 
 /**
- * Access to the script descriptor.
+ * Access to the document descriptor.
  * 
- * @param <S>
- *        The script type
+ * @param <D>
+ *        The document type
  */
 public interface DocumentDescriptor<D>
 {
+	/**
+	 * Documents may have many names, but this one is preferred to others.
+	 * 
+	 * @return The preferred name
+	 */
+	public String getDefaultName();
+
 	/**
 	 * The source text for the document.
 	 * 

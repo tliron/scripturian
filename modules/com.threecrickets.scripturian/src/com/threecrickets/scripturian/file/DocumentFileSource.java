@@ -14,11 +14,12 @@ package com.threecrickets.scripturian.file;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.DocumentDescriptor;
 import com.threecrickets.scripturian.DocumentSource;
@@ -152,7 +153,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D script )
 	{
-		return filedDocumentDescriptors.put( name, new FiledDocumentDescriptor( text, tag, script ) );
+		return filedDocumentDescriptors.put( name, new FiledDocumentDescriptor( name, text, tag, script ) );
 	}
 
 	/**
@@ -161,7 +162,15 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D script )
 	{
-		return filedDocumentDescriptors.putIfAbsent( name, new FiledDocumentDescriptor( text, tag, script ) );
+		return filedDocumentDescriptors.putIfAbsent( name, new FiledDocumentDescriptor( name, text, tag, script ) );
+	}
+
+	/***
+	 * @see DocumentSource#getDocumentDescriptors()
+	 */
+	public Collection<DocumentDescriptor<D>> getDocumentDescriptors()
+	{
+		return getDocumentDescriptors( basePath );
 	}
 
 	//
@@ -196,13 +205,46 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	private final ConcurrentMap<String, FiledDocumentDescriptor> filedDocumentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor>();
 
-	private final Map<File, FiledDocumentDescriptor> filedDocumentDescriptorsByFile = new HashMap<File, FiledDocumentDescriptor>();
+	private final ConcurrentMap<File, FiledDocumentDescriptor> filedDocumentDescriptorsByFile = new ConcurrentHashMap<File, FiledDocumentDescriptor>();
 
 	private final File basePath;
 
 	private final String defaultName;
 
 	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
+
+	private Collection<DocumentDescriptor<D>> getDocumentDescriptors( File basePath )
+	{
+		ArrayList<DocumentDescriptor<D>> list = new ArrayList<DocumentDescriptor<D>>();
+
+		File[] files = basePath.listFiles();
+		for( File file : files )
+		{
+			if( file.isDirectory() )
+				// Recurse
+				list.addAll( getDocumentDescriptors( file ) );
+			else
+			{
+				FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
+				if( filedDocumentDescriptor == null )
+				{
+					try
+					{
+						filedDocumentDescriptor = new FiledDocumentDescriptor( file );
+						FiledDocumentDescriptor existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
+						if( existing != null )
+							filedDocumentDescriptor = existing;
+						list.add( filedDocumentDescriptor );
+					}
+					catch( IOException x )
+					{
+					}
+				}
+			}
+		}
+
+		return list;
+	}
 
 	private static class StartsWithFilter implements FilenameFilter
 	{
@@ -266,6 +308,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	private class FiledDocumentDescriptor implements DocumentDescriptor<D>
 	{
+		public String getDefaultName()
+		{
+			return name;
+		}
+
 		public String getText()
 		{
 			return text;
@@ -276,28 +323,28 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			return tag;
 		}
 
-		public synchronized D getDocument()
+		public D getDocument()
 		{
-			return document;
+			return document.get();
 		}
 
-		public synchronized D setDocument( D document )
+		public D setDocument( D document )
 		{
-			D old = this.document;
-			this.document = document;
-			return old;
+			return this.document.getAndSet( document );
 		}
 
-		public synchronized D setDocumentIfAbsent( D document )
+		public D setDocumentIfAbsent( D document )
 		{
-			D old = this.document;
-			if( old == null )
-				this.document = document;
-			return old;
+			if( !this.document.compareAndSet( null, document ) )
+				return this.document.get();
+			else
+				return document;
 		}
 
 		// //////////////////////////////////////////////////////////////////////////
 		// Private
+
+		private final String name;
 
 		private final File file;
 
@@ -307,27 +354,27 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		private final String tag;
 
-		private final AtomicLong lastValidityCheck;
+		private volatile long lastValidityCheck;
 
-		private D document;
+		private AtomicReference<D> document = new AtomicReference<D>();
 
-		private FiledDocumentDescriptor( String text, String tag, D document )
+		private FiledDocumentDescriptor( String name, String text, String tag, D document )
 		{
+			this.name = name;
 			file = null;
 			timestamp = -1;
 			this.text = text;
 			this.tag = tag;
-			lastValidityCheck = new AtomicLong();
-			this.document = document;
+			this.document.set( document );
 		}
 
 		private FiledDocumentDescriptor( File file ) throws IOException
 		{
+			this.name = file.toString();
 			this.file = file;
 			timestamp = file.lastModified();
 			text = ScripturianUtil.getString( file );
 			tag = ScripturianUtil.getExtension( file );
-			lastValidityCheck = new AtomicLong();
 		}
 
 		private boolean isValid()
@@ -344,10 +391,10 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			long now = System.currentTimeMillis();
 
 			// Are we in the threshold for checking for validity?
-			if( ( now - lastValidityCheck.get() ) > minimumTimeBetweenValidityChecks )
+			if( ( now - lastValidityCheck ) > minimumTimeBetweenValidityChecks )
 			{
 				// Check for validity
-				lastValidityCheck.set( now );
+				lastValidityCheck = now;
 				return file.lastModified() <= timestamp;
 			}
 			else

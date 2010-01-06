@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * Manages retrieval of document text and caching of arbitrary document
@@ -66,4 +67,14 @@ public interface DocumentSource<D>
 	 * @return The existing document descriptor before we changed it
 	 */
 	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D document );
+
+	/**
+	 * Access to all available document descriptors.
+	 * <p>
+	 * Note that not all implementations support this operation.
+	 * 
+	 * @return An collection of document descriptors
+	 * @throws UnsupportedOperationException
+	 */
+	public Collection<DocumentDescriptor<D>> getDocumentDescriptors();
 }
