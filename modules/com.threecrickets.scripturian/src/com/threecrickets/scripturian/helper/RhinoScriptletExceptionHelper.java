@@ -14,10 +14,9 @@ package com.threecrickets.scripturian.helper;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import javax.script.ScriptException;
-
 import com.threecrickets.scripturian.ScriptletExceptionHelper;
 import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
  * @author Tal Liron
@@ -42,56 +41,48 @@ public class RhinoScriptletExceptionHelper implements ScriptletExceptionHelper
 	// ScriptletExceptionHelper
 	//
 
-	public DocumentRunException getDocumentRunException( String documentName, Exception exception )
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
 	{
-		if( exception instanceof ScriptException )
+		if( wrappedExceptionClass.isInstance( throwable ) )
 		{
-			Throwable cause = exception.getCause();
-
-			if( wrappedExceptionClass.isInstance( cause ) )
+			// Unwrap
+			try
 			{
-				// Unwrap
-				try
-				{
-					cause = (Throwable) wrappedExceptionGetWrappedExceptionMethod.invoke( cause );
-					if( cause instanceof DocumentRunException )
-						return (DocumentRunException) cause;
-				}
-				catch( IllegalArgumentException x )
-				{
-					x.printStackTrace();
-				}
-				catch( IllegalAccessException x )
-				{
-					x.printStackTrace();
-				}
-				catch( InvocationTargetException x )
-				{
-					x.printStackTrace();
-				}
+				return (Throwable) wrappedExceptionGetWrappedExceptionMethod.invoke( throwable );
 			}
-
-			if( rhinoExceptionClass.isInstance( cause ) )
+			catch( IllegalArgumentException x )
 			{
-				try
-				{
-					String details = (String) rhinoExceptionDetailsMethod.invoke( cause );
-					int lineNumber = (Integer) rhinoExceptionLineNumberMethod.invoke( cause );
-					int columnNumber = (Integer) rhinoExceptionColumnNumberMethod.invoke( cause );
-					return new DocumentRunException( documentName, details, lineNumber, columnNumber );
-				}
-				catch( IllegalArgumentException x )
-				{
-					x.printStackTrace();
-				}
-				catch( IllegalAccessException x )
-				{
-					x.printStackTrace();
-				}
-				catch( InvocationTargetException x )
-				{
-					x.printStackTrace();
-				}
+				x.printStackTrace();
+			}
+			catch( IllegalAccessException x )
+			{
+				x.printStackTrace();
+			}
+			catch( InvocationTargetException x )
+			{
+				x.printStackTrace();
+			}
+		}
+		else if( rhinoExceptionClass.isInstance( throwable ) )
+		{
+			try
+			{
+				String details = (String) rhinoExceptionDetailsMethod.invoke( throwable );
+				int lineNumber = (Integer) rhinoExceptionLineNumberMethod.invoke( throwable );
+				int columnNumber = (Integer) rhinoExceptionColumnNumberMethod.invoke( throwable );
+				return new DocumentRunException( details, new StackFrame( documentName, lineNumber, columnNumber ) );
+			}
+			catch( IllegalArgumentException x )
+			{
+				x.printStackTrace();
+			}
+			catch( IllegalAccessException x )
+			{
+				x.printStackTrace();
+			}
+			catch( InvocationTargetException x )
+			{
+				x.printStackTrace();
 			}
 		}
 

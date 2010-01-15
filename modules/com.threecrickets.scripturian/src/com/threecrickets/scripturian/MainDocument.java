@@ -20,6 +20,7 @@ import javax.script.ScriptEngineManager;
 
 import com.threecrickets.scripturian.exception.DocumentInitializationException;
 import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.exception.StackFrame;
 import com.threecrickets.scripturian.file.DocumentFileSource;
 import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
 
@@ -252,11 +253,14 @@ public class MainDocument implements Runnable
 		{
 			System.err.print( "Run error: " );
 			System.err.println( " " + x.getMessage() );
-			System.err.println( " Document: " + x.getDocumentName() );
-			if( x.getLineNumber() >= 0 )
-				System.err.println( " Line: " + x.getLineNumber() );
-			if( x.getColumnNumber() >= 0 )
-				System.err.println( " Column: " + x.getColumnNumber() );
+			for( StackFrame stackFrame : x.getStack() )
+			{
+				System.err.println( "  Document: " + stackFrame.getName() );
+				if( stackFrame.getLineNumber() >= 0 )
+					System.err.println( "   Line: " + stackFrame.getLineNumber() );
+				if( stackFrame.getColumnNumber() >= 0 )
+					System.err.println( "   Column: " + stackFrame.getColumnNumber() );
+			}
 		}
 	}
 

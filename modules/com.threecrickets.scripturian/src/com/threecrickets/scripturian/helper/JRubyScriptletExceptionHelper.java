@@ -14,10 +14,7 @@ package com.threecrickets.scripturian.helper;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import javax.script.ScriptException;
-
 import com.threecrickets.scripturian.ScriptletExceptionHelper;
-import com.threecrickets.scripturian.exception.DocumentRunException;
 
 /**
  * @author Tal Liron
@@ -40,40 +37,30 @@ public class JRubyScriptletExceptionHelper implements ScriptletExceptionHelper
 	// ScriptletExceptionHelper
 	//
 
-	public DocumentRunException getDocumentRunException( String documentName, Exception exception )
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
 	{
-		if( exception instanceof ScriptException )
+		if( raiseExceptionClass.isInstance( throwable ) )
 		{
-			Throwable cause = exception.getCause();
-			if( raiseExceptionClass.isInstance( cause ) )
+			try
 			{
-				try
-				{
-					Object rubyException = raiseExceptionGetExceptionMethod.invoke( cause );
-					if( nativeExceptionClass.isInstance( rubyException ) )
-					{
-						cause = (Throwable) nativeExceptionGetCauseMethod.invoke( rubyException );
-						if( cause instanceof DocumentRunException )
-							return (DocumentRunException) cause;
-					}
-					else
-					{
-						// Wish there were a way to get line numbers from
-						// RubyException!
-					}
-				}
-				catch( IllegalArgumentException x )
-				{
-					x.printStackTrace();
-				}
-				catch( IllegalAccessException x )
-				{
-					x.printStackTrace();
-				}
-				catch( InvocationTargetException x )
-				{
-					x.printStackTrace();
-				}
+				Object rubyException = raiseExceptionGetExceptionMethod.invoke( throwable );
+				if( nativeExceptionClass.isInstance( rubyException ) )
+					return (Throwable) nativeExceptionGetCauseMethod.invoke( rubyException );
+
+				// Wish there were a way to get line numbers from
+				// RubyException!
+			}
+			catch( IllegalArgumentException x )
+			{
+				x.printStackTrace();
+			}
+			catch( IllegalAccessException x )
+			{
+				x.printStackTrace();
+			}
+			catch( InvocationTargetException x )
+			{
+				x.printStackTrace();
 			}
 		}
 

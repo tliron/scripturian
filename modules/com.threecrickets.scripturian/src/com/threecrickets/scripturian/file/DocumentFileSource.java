@@ -218,26 +218,29 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		ArrayList<DocumentDescriptor<D>> list = new ArrayList<DocumentDescriptor<D>>();
 
 		File[] files = basePath.listFiles();
-		for( File file : files )
+		if( files != null )
 		{
-			if( file.isDirectory() )
-				// Recurse
-				list.addAll( getDocumentDescriptors( file ) );
-			else
+			for( File file : files )
 			{
-				FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
-				if( filedDocumentDescriptor == null )
+				if( file.isDirectory() )
+					// Recurse
+					list.addAll( getDocumentDescriptors( file ) );
+				else
 				{
-					try
+					FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
+					if( filedDocumentDescriptor == null )
 					{
-						filedDocumentDescriptor = new FiledDocumentDescriptor( file );
-						FiledDocumentDescriptor existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
-						if( existing != null )
-							filedDocumentDescriptor = existing;
-						list.add( filedDocumentDescriptor );
-					}
-					catch( IOException x )
-					{
+						try
+						{
+							filedDocumentDescriptor = new FiledDocumentDescriptor( file );
+							FiledDocumentDescriptor existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
+							if( existing != null )
+								filedDocumentDescriptor = existing;
+							list.add( filedDocumentDescriptor );
+						}
+						catch( IOException x )
+						{
+						}
 					}
 				}
 			}

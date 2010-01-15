@@ -11,10 +11,7 @@
 
 package com.threecrickets.scripturian.helper;
 
-import javax.script.ScriptException;
-
 import com.threecrickets.scripturian.ScriptletExceptionHelper;
-import com.threecrickets.scripturian.exception.DocumentRunException;
 
 /**
  * @author Tal Liron
@@ -25,23 +22,10 @@ public class GroovyScriptletExceptionHelper implements ScriptletExceptionHelper
 	// ScriptletExceptionHelper
 	//
 
-	public DocumentRunException getDocumentRunException( String documentName, Exception exception )
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
 	{
-		// Groovy does a slightly more complex wrap
-		if( exception instanceof ScriptException )
-		{
-			Throwable cause = exception.getCause();
-			if( cause instanceof ScriptException )
-			{
-				// Likely a GroovyRuntimeException
-				cause = cause.getCause();
-				if( cause instanceof DocumentRunException )
-					return (DocumentRunException) cause;
-
-				// Wish there were a way to get line numbers from
-				// GroovyRuntimeException!
-			}
-		}
+		// Wish there were a way to get line numbers from
+		// GroovyRuntimeException!
 
 		return null;
 	}

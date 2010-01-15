@@ -83,19 +83,15 @@ public class ServiceLoader<S> implements Iterable<S>
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( x );
 		}
 		catch( InstantiationException x )
 		{
-			throw new RuntimeException( x );
 		}
 		catch( IllegalAccessException x )
 		{
-			throw new RuntimeException( x );
 		}
 		catch( ClassNotFoundException x )
 		{
-			throw new RuntimeException( x );
 		}
 	}
 }

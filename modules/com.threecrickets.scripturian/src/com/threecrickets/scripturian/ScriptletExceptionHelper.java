@@ -11,8 +11,6 @@
 
 package com.threecrickets.scripturian;
 
-import com.threecrickets.scripturian.exception.DocumentRunException;
-
 /**
  * @author Tal Liron
  */
@@ -21,9 +19,9 @@ public interface ScriptletExceptionHelper
 	/**
 	 * @param documentName
 	 *        The document name
-	 * @param exception
-	 *        The exception to process
-	 * @return A document run exception or null
+	 * @param throwable
+	 *        The throwable to process
+	 * @return A document run exception, a wrapped cause, or null
 	 */
-	public DocumentRunException getDocumentRunException( String documentName, Exception exception );
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable );
 }

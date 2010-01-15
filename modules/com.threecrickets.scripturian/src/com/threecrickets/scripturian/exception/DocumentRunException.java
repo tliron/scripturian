@@ -25,63 +25,81 @@ public class DocumentRunException extends Exception
 	// Static operations
 	//
 
-	public static DocumentRunException create( String documentName, Exception exception )
+	public static DocumentRunException create( String documentName, Throwable throwable )
 	{
-		// Simple wrap
-		Throwable cause = exception.getCause();
-		if( cause instanceof DocumentRunException )
-			return (DocumentRunException) cause;
-
-		// Try helpers
-		for( ScriptletExceptionHelper scriptletExceptionHelper : Scripturian.scriptletExceptionHelpers )
+		Throwable wrapped = throwable;
+		while( wrapped != null )
 		{
-			DocumentRunException documentRunException = scriptletExceptionHelper.getDocumentRunException( documentName, exception );
-			if( documentRunException != null )
-				return documentRunException;
+			if( wrapped instanceof DocumentRunException )
+				return (DocumentRunException) wrapped;
+
+			// Try helpers
+			Throwable causeOrDocumentRunException = null;
+			for( ScriptletExceptionHelper scriptletExceptionHelper : Scripturian.scriptletExceptionHelpers )
+			{
+				causeOrDocumentRunException = scriptletExceptionHelper.getCauseOrDocumentRunException( documentName, wrapped );
+				if( causeOrDocumentRunException != null )
+					break;
+			}
+
+			if( causeOrDocumentRunException != null )
+			{
+				// Found it!
+				if( causeOrDocumentRunException instanceof DocumentRunException )
+					return (DocumentRunException) causeOrDocumentRunException;
+
+				// We are unwrapped
+				wrapped = causeOrDocumentRunException;
+				continue;
+			}
+
+			// Unwrap
+			wrapped = wrapped.getCause();
 		}
 
-		if( exception instanceof ScriptException )
+		if( throwable instanceof ScriptException )
 			// Extract from ScriptException
-			return new DocumentRunException( documentName, (ScriptException) exception );
+			return new DocumentRunException( documentName, (ScriptException) throwable );
 		else
 			// Unknown
-			return new DocumentRunException( documentName, exception );
+			return new DocumentRunException( documentName, throwable );
 	}
 
 	//
 	// Construction
 	//
 
-	public DocumentRunException( String documentName, String message )
-	{
-		this( documentName, message, -1, -1 );
-	}
-
-	public DocumentRunException( String documentName, String message, int lineNumber, int columnNumber )
+	public DocumentRunException( String message, StackFrame... stackFrames )
 	{
 		super( message );
-		this.documentName = documentName;
-		this.lineNumber = lineNumber;
-		this.columnNumber = columnNumber;
+		stack = stackFrames;
+	}
+
+	public DocumentRunException( String documentName, String message )
+	{
+		super( message );
+		stack = new StackFrame[]
+		{
+			new StackFrame( documentName )
+		};
+	}
+
+	public DocumentRunException( String documentName, ScriptException scriptException )
+	{
+		super( scriptException.getMessage(), scriptException.getCause() );
+		stack = new StackFrame[]
+		{
+			new StackFrame( documentName, scriptException.getLineNumber(), scriptException.getColumnNumber() )
+		};
 	}
 
 	//
 	// Attributes
 	//
 
-	public String getDocumentName()
+	public StackFrame[] getStack()
 	{
-		return documentName;
-	}
-
-	public int getLineNumber()
-	{
-		return lineNumber;
-	}
-
-	public int getColumnNumber()
-	{
-		return columnNumber;
+		return stack;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -89,25 +107,11 @@ public class DocumentRunException extends Exception
 
 	private static final long serialVersionUID = 1L;
 
-	private final String documentName;
-
-	private final int lineNumber;
-
-	private final int columnNumber;
-
-	private DocumentRunException( String documentName, ScriptException scriptException )
-	{
-		super( scriptException.getMessage(), scriptException.getCause() );
-		this.documentName = documentName;
-		this.lineNumber = scriptException.getLineNumber();
-		this.columnNumber = scriptException.getColumnNumber();
-	}
+	private final StackFrame[] stack;
 
 	private DocumentRunException( String documentName, Throwable cause )
 	{
 		super( cause.getMessage(), cause );
-		this.documentName = documentName;
-		this.lineNumber = -1;
-		this.columnNumber = -1;
+		stack = new StackFrame[0];
 	}
 }

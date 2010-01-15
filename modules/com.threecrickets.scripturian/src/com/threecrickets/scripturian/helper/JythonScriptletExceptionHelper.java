@@ -33,6 +33,7 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 	{
 		pyExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyException" );
 		pyExceptionValueField = pyExceptionClass.getField( "value" );
+		pyBaseExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyBaseException" );
 		pyObjectClass = getClass().getClassLoader().loadClass( "org.python.core.PyObject" );
 		pyObjectToJavaMethod = pyObjectClass.getMethod( "__tojava__", Class.class );
 	}
@@ -41,39 +42,22 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 	// ScriptletExceptionHelper
 	//
 
-	public DocumentRunException getDocumentRunException( String documentName, Exception exception )
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
 	{
-		if( exception instanceof ScriptException )
-		{
-			Throwable cause = exception.getCause();
+		Throwable root = getRoot( throwable );
+		if( root != null )
+			return root;
 
-			if( pyExceptionClass.isInstance( cause ) )
-			{
-				try
-				{
-					// Returns a PyObject
-					Object value = pyExceptionValueField.get( cause );
-					if( value != null )
-					{
-						// Might return Py.NoConversion
-						Object toJava = pyObjectToJavaMethod.invoke( value, DocumentRunException.class );
-						if( toJava instanceof DocumentRunException )
-							return (DocumentRunException) toJava;
-					}
-				}
-				catch( IllegalArgumentException x )
-				{
-					x.printStackTrace();
-				}
-				catch( IllegalAccessException x )
-				{
-					x.printStackTrace();
-				}
-				catch( InvocationTargetException x )
-				{
-					x.printStackTrace();
-				}
-			}
+		if( throwable instanceof ScriptException )
+		{
+			Throwable cause = throwable.getCause();
+			root = getRoot( cause );
+			if( root != null )
+				return root;
+
+			// A wrapped Jython exception -- terrific, because Jython does a
+			// great job at returning a complete ScriptException
+			return new DocumentRunException( documentName, (ScriptException) throwable );
 		}
 
 		return null;
@@ -86,7 +70,56 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 
 	private final Field pyExceptionValueField;
 
+	private final Class<?> pyBaseExceptionClass;
+
 	private final Class<?> pyObjectClass;
 
 	private final Method pyObjectToJavaMethod;
+
+	/*private DocumentRunException getDocumentRunexception( PyTraceback tb )
+	{
+		DocumentRunException next = tb.tb_next != null ? getDocumentRunexception( (PyTraceback) tb.tb_next ) : null;
+		return new DocumentRunException( tb.tb_frame.f_code.co_filename != null ? tb.tb_frame.f_code.co_filename : "", "", tb.tb_lineno, -1, next );
+	}*/
+
+	private Throwable getRoot( Throwable throwable )
+	{
+		if( pyExceptionClass.isInstance( throwable ) )
+		{
+			try
+			{
+				// Returns a PyObject
+				Object value = pyExceptionValueField.get( throwable );
+				if( value != null )
+				{
+					if( pyBaseExceptionClass.isInstance( value ) )
+					{
+						//PyException e = (PyException) throwable;
+						//PyTraceback tb = e.traceback;
+						//return getDocumentRunexception( tb );
+					}
+
+					// Might return Py.NoConversion
+					Object toJava = pyObjectToJavaMethod.invoke( value, Throwable.class );
+					if( toJava instanceof Throwable )
+						// A native exception
+						return (Throwable) toJava;
+				}
+			}
+			catch( IllegalArgumentException x )
+			{
+				x.printStackTrace();
+			}
+			catch( IllegalAccessException x )
+			{
+				x.printStackTrace();
+			}
+			catch( InvocationTargetException x )
+			{
+				x.printStackTrace();
+			}
+		}
+
+		return null;
+	}
 }
