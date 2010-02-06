@@ -18,7 +18,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.Scripturian;
 import com.threecrickets.scripturian.exception.DocumentCompilationException;
 import com.threecrickets.scripturian.exception.DocumentInitializationException;
@@ -62,7 +62,7 @@ public class DocumentSegment
 		if( scriptEngine == null )
 			throw DocumentInitializationException.scriptEngineNotFound( document.getName(), scriptEngineName );
 
-		ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
+		ScriptletHelper scriptletParsingHelper = Scripturian.scriptletHelpers.get( scriptEngineName );
 		if( scriptletParsingHelper == null )
 			throw DocumentInitializationException.scriptletParsingHelperNotFound( document.getName(), scriptEngineName );
 
@@ -75,7 +75,7 @@ public class DocumentSegment
 		String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
 		if( footer != null )
 			text += footer;
-
+		
 		if( allowCompilation && ( scriptEngine instanceof Compilable ) && scriptletParsingHelper.isCompilable() )
 		{
 			try

@@ -11,14 +11,17 @@
 
 package com.threecrickets.scripturian.helper;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the Ruby scripting language
+ * An {@link ScriptletHelper} that supports the Ruby scripting language
  * as implemented by <a href="http://jruby.codehaus.org/">JRuby</a>.
  * <p>
  * Note that JRuby internally embeds each script in a "main" object, so that
@@ -48,32 +51,25 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"jruby", "ruby"
 })
-public class JRubyScriptletParsingHelper implements ScriptletParsingHelper
+public class JRubyScriptletHelper extends ScriptletHelper
 {
 	//
-	// ScriptletParsingHelper
+	// Construction
 	//
 
-	public boolean isPrintOnEval()
+	public JRubyScriptletHelper() throws ClassNotFoundException, SecurityException, NoSuchFieldException, NoSuchMethodException
 	{
-		return false;
+		raiseExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.exceptions.RaiseException" );
+		raiseExceptionGetExceptionMethod = raiseExceptionClass.getMethod( "getException" );
+		nativeExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.NativeException" );
+		nativeExceptionGetCauseMethod = nativeExceptionClass.getMethod( "getCause" );
 	}
 
-	public boolean isCompilable()
-	{
-		return true;
-	}
+	//
+	// ScriptletHelper
+	//
 
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
-	{
-		return null;
-	}
-
-	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
-	{
-		return null;
-	}
-
+	@Override
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
@@ -81,19 +77,64 @@ public class JRubyScriptletParsingHelper implements ScriptletParsingHelper
 		return "print(\"" + content + "\");";
 	}
 
+	@Override
 	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
+	@Override
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "$" + document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
 	}
 
+	@Override
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		// return "$invocable.send(:" + content + ");";
 		return "$" + content + ".call;";
 	}
+
+	@Override
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
+	{
+		if( raiseExceptionClass.isInstance( throwable ) )
+		{
+			try
+			{
+				Object rubyException = raiseExceptionGetExceptionMethod.invoke( throwable );
+				if( nativeExceptionClass.isInstance( rubyException ) )
+					return (Throwable) nativeExceptionGetCauseMethod.invoke( rubyException );
+
+				// Wish there were a way to get line numbers from
+				// RubyException!
+			}
+			catch( IllegalArgumentException x )
+			{
+				x.printStackTrace();
+			}
+			catch( IllegalAccessException x )
+			{
+				x.printStackTrace();
+			}
+			catch( InvocationTargetException x )
+			{
+				x.printStackTrace();
+			}
+		}
+
+		return null;
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	private final Class<?> raiseExceptionClass;
+
+	private final Method raiseExceptionGetExceptionMethod;
+
+	private final Class<?> nativeExceptionClass;
+
+	private final Method nativeExceptionGetCauseMethod;
 }

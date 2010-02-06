@@ -16,10 +16,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 
 /**
- * Used for {@link ScriptletParsingHelper} implementations to mark supported
+ * Used for {@link ScriptletHelper} implementations to mark supported
  * script engine extensions.
  * 
  * @author Tal Liron

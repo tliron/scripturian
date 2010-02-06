@@ -42,7 +42,7 @@ import com.threecrickets.scripturian.internal.DocumentSegment;
  * which happens only once in the constructor, the entire document is converted
  * into code and optionally compiled. When the code is run, the non-delimited
  * plain text segments are sent to output via whatever method is appropriate for
- * the scripting engine (see {@link ScriptletParsingHelper}).
+ * the scripting engine (see {@link ScriptletHelper}).
  * <p>
  * The exception to this is documents beginning with plain text -- in such
  * cases, just that first section is sent directly to your specified output. The
@@ -200,7 +200,7 @@ public class Document
 	/**
 	 * Parses a text stream containing plain text and scriptlets into a compact,
 	 * optimized document. Parsing requires the appropriate
-	 * {@link ScriptletParsingHelper} implementations to be installed for the
+	 * {@link ScriptletHelper} implementations to be installed for the
 	 * script engines.
 	 * 
 	 * @param name
@@ -234,7 +234,7 @@ public class Document
 	/**
 	 * Parses a text stream containing plain text and scriptlets into a compact,
 	 * optimized document. Parsing requires the appropriate
-	 * {@link ScriptletParsingHelper} implementations to be installed for the
+	 * {@link ScriptletHelper} implementations to be installed for the
 	 * script engines.
 	 * 
 	 * @param name
@@ -276,7 +276,7 @@ public class Document
 	 *        tag
 	 * @throws DocumentInitializationException
 	 *         In case of a parsing error
-	 * @see ScriptletParsingHelper
+	 * @see ScriptletHelper
 	 */
 	public Document( String name, String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation,
 		String documentVariableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
@@ -405,7 +405,7 @@ public class Document
 							if( scriptEngine == null )
 								throw DocumentInitializationException.scriptEngineNotFound( name, scriptEngineName );
 
-							ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
+							ScriptletHelper scriptletParsingHelper = Scripturian.scriptletHelpers.get( scriptEngineName );
 							if( scriptletParsingHelper == null )
 								throw DocumentInitializationException.scriptletParsingHelperNotFound( name, scriptEngineName );
 
@@ -420,7 +420,7 @@ public class Document
 							if( lastScriptEngine == null )
 								throw DocumentInitializationException.scriptEngineNotFound( name, lastScriptEngineName );
 
-							ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
+							ScriptletHelper scriptletParsingHelper = Scripturian.scriptletHelpers.get( scriptEngineName );
 							if( scriptletParsingHelper == null )
 								throw DocumentInitializationException.scriptletParsingHelperNotFound( name, scriptEngineName );
 
@@ -514,7 +514,7 @@ public class Document
 						if( scriptEngine == null )
 							throw DocumentInitializationException.scriptEngineNotFound( name, current.scriptEngineName );
 
-						ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( current.scriptEngineName );
+						ScriptletHelper scriptletParsingHelper = Scripturian.scriptletHelpers.get( current.scriptEngineName );
 						if( scriptletParsingHelper == null )
 							throw DocumentInitializationException.scriptletParsingHelperNotFound( name, current.scriptEngineName );
 
@@ -740,6 +740,9 @@ public class Document
 			writer = new PrintWriter( writer, flushLines );
 			errorWriter = new PrintWriter( errorWriter, flushLines );
 
+			Writer oldWriter = scriptContext.getWriter();
+			Writer oldErrorWriter = scriptContext.getErrorWriter();
+
 			scriptContext.setWriter( writer );
 			scriptContext.setErrorWriter( errorWriter );
 
@@ -754,13 +757,20 @@ public class Document
 						writer.write( segment.text );
 					else
 					{
-						ScriptEngine scriptEngine = documentContext.getScriptEngine( segment.scriptEngineName );
+						ScriptEngine scriptEngine = documentContext.getScriptEngine( segment.scriptEngineName, name );
 
 						Object oldExposedDocument = scriptContext.getAttribute( documentVariableName, ScriptContext.ENGINE_SCOPE );
 						scriptContext.setAttribute( documentVariableName, new ExposedDocument( this, documentContext, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
 
 						try
 						{
+							ScriptletHelper scriptletParsingHelper = Scripturian.scriptletHelpers.get( segment.scriptEngineName );
+
+							if( scriptletParsingHelper == null )
+								throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + segment.scriptEngineName );
+
+							scriptletParsingHelper.beforeScriptlet( scriptContext );
+
 							Object value;
 							if( segment.compiledScript != null )
 								value = segment.compiledScript.eval( scriptContext );
@@ -774,14 +784,11 @@ public class Document
 
 							if( value != null )
 							{
-								ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( segment.scriptEngineName );
-
-								if( scriptletParsingHelper == null )
-									throw new ScriptException( "Scriptlet parsing helper not available for script engine: " + segment.scriptEngineName );
-
 								if( scriptletParsingHelper.isPrintOnEval() )
 									writer.write( value.toString() );
 							}
+
+							scriptletParsingHelper.afterScriptlet( scriptContext );
 						}
 						catch( ScriptException x )
 						{
@@ -805,6 +812,9 @@ public class Document
 			}
 			finally
 			{
+				scriptContext.setWriter( oldWriter );
+				scriptContext.setErrorWriter( oldErrorWriter );
+
 				if( scriptletController != null )
 					scriptletController.finalize( scriptContext );
 			}
@@ -819,7 +829,7 @@ public class Document
 	 * Calls an entry point in the document: a function, method, closure, etc.,
 	 * according to how the script engine and its language handles invocations.
 	 * If not, then this method requires the appropriate
-	 * {@link ScriptletParsingHelper} implementation to be installed for the
+	 * {@link ScriptletHelper} implementation to be installed for the
 	 * script engine. Most likely, the script engine supports the
 	 * {@link Invocable} interface. Running the script first (via
 	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
@@ -870,7 +880,7 @@ public class Document
 
 		try
 		{
-			ScriptletParsingHelper scriptletParsingHelper = Scripturian.scriptletParsingHelpers.get( scriptEngineName );
+			ScriptletHelper scriptletParsingHelper = Scripturian.scriptletHelpers.get( scriptEngineName );
 
 			if( scriptletParsingHelper == null )
 				throw DocumentInitializationException.scriptletParsingHelperNotFound( name, scriptEngineName );
@@ -937,5 +947,5 @@ public class Document
 
 	private volatile long lastRun = 0;
 
-	private DocumentContext documentContextForInvocations;
+	private volatile DocumentContext documentContextForInvocations;
 }

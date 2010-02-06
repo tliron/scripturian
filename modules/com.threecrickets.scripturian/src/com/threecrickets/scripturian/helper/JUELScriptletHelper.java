@@ -14,11 +14,11 @@ package com.threecrickets.scripturian.helper;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the <a
+ * An {@link ScriptletHelper} that supports the <a
  * href="http://juel.sourceforge.net/">JUEL</a> expression language.
  * 
  * @author Tal Liron
@@ -27,47 +27,31 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"juel"
 })
-public class JUELScriptletParsingHelper implements ScriptletParsingHelper
+public class JUELScriptletHelper extends ScriptletHelper
 {
 	//
-	// ScriptletParsingHelper
+	// ScriptletHelper
 	//
 
-	public boolean isPrintOnEval()
-	{
-		return true;
-	}
-
-	public boolean isCompilable()
-	{
-		return true;
-	}
-
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
-	{
-		return null;
-	}
-
-	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
-	{
-		return null;
-	}
-
+	@Override
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return content;
 	}
 
+	@Override
 	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "${" + content.trim() + "}";
 	}
 
+	@Override
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}
 
+	@Override
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return null;

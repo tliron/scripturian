@@ -54,6 +54,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public DocumentFileSource( File basePath, String defaultName, long minimumTimeBetweenValidityChecks )
 	{
 		this.basePath = basePath;
+		this.basePathLength = basePath.getPath().length();
 		this.defaultName = defaultName;
 		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
 		defaultNameFilter = new StartsWithFilter( defaultName );
@@ -209,6 +210,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	private final File basePath;
 
+	private final int basePathLength;
+
 	private final String defaultName;
 
 	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
@@ -289,6 +292,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		}
 
 		return file;
+	}
+
+	private String getRelativeFilePath( File file )
+	{
+		return file.getPath().substring( basePathLength );
 	}
 
 	private FiledDocumentDescriptor removeIfInvalid( String name, FiledDocumentDescriptor filedDocumentDescriptor )
@@ -373,7 +381,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		private FiledDocumentDescriptor( File file ) throws IOException
 		{
-			this.name = file.toString();
+			this.name = getRelativeFilePath( file );
 			this.file = file;
 			timestamp = file.lastModified();
 			text = ScripturianUtil.getString( file );

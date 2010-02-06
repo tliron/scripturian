@@ -11,15 +11,16 @@
 
 package com.threecrickets.scripturian.helper;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the <a
+ * An {@link ScriptletHelper} that supports the <a
  * href="http://groovy.codehaus.org/">Groovy</a> scripting language.
  * 
  * @author Tal Liron
@@ -32,36 +33,23 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"gv"
 })
-public class GroovyScriptletParsingHelper implements ScriptletParsingHelper
+public class GroovyScriptletHelper extends ScriptletHelper
 {
 	//
-	// ScriptletParsingHelper
+	// ScriptletHelper
 	//
 
-	public boolean isPrintOnEval()
+	@Override
+	public void afterScriptlet( ScriptContext scriptContext )
 	{
-		return false;
+		// There's a bug in Groovy's script engine implementation (as of
+		// version 1.6) that makes it lose the connection between the
+		// script's output and our script context writer in some cases. This
+		// makes sure that they are connected.
+		scriptContext.setAttribute( "out", scriptContext.getWriter(), ScriptContext.ENGINE_SCOPE );
 	}
 
-	public boolean isCompilable()
-	{
-		return true;
-	}
-
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
-	{
-		// There's a bug in Groovy's script engine implementation (as of version
-		// 1.6) that makes it lose the connection between the script's output
-		// and our script context writer in some cases. This makes sure that
-		// they are connected.
-		return "out=context.writer;";
-	}
-
-	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
-	{
-		return null;
-	}
-
+	@Override
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
@@ -69,18 +57,24 @@ public class GroovyScriptletParsingHelper implements ScriptletParsingHelper
 		return "print('" + content + "');";
 	}
 
+	@Override
 	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
+	@Override
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
 	}
 
-	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	@Override
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
 	{
+		// Wish there were a way to get line numbers from
+		// GroovyRuntimeException!
+
 		return null;
 	}
 }

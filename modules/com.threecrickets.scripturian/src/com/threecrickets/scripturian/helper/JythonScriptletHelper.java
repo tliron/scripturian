@@ -15,21 +15,36 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.ScriptletExceptionHelper;
+import com.threecrickets.scripturian.Document;
+import com.threecrickets.scripturian.ScriptletHelper;
+import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
+import com.threecrickets.scripturian.annotation.ScriptEngines;
 import com.threecrickets.scripturian.exception.DocumentRunException;
 
 /**
+ * An {@link ScriptletHelper} that supports the Python scripting language
+ * as implemented by <a href="http://www.jython.org/">Jython</a>.
+ * 
  * @author Tal Liron
  */
-public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
+@ScriptEngines(
+{
+	"jython", "python"
+})
+@ScriptEnginePriorityExtensions(
+{
+	"py"
+})
+public class JythonScriptletHelper extends ScriptletHelper
 {
 	//
 	// Construction
 	//
 
-	public JythonScriptletExceptionHelper() throws ClassNotFoundException, SecurityException, NoSuchFieldException, NoSuchMethodException
+	public JythonScriptletHelper() throws ClassNotFoundException, SecurityException, NoSuchFieldException, NoSuchMethodException
 	{
 		pyExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyException" );
 		pyExceptionValueField = pyExceptionClass.getField( "value" );
@@ -39,9 +54,47 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 	}
 
 	//
-	// ScriptletExceptionHelper
+	// ScriptletHelper
 	//
 
+	@Override
+	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	{
+		String version = scriptEngine.getFactory().getEngineVersion();
+		String[] split = version.split( "\\." );
+		int major = Integer.parseInt( split[0] );
+		int minor = Integer.parseInt( split[1] );
+		if( ( major >= 2 ) && ( minor >= 5 ) )
+			return "import sys;";
+		else
+			// Apparently the Java Scripting support for Jython (version 2.2.1)
+			// does not correctly redirect stdout and stderr. Luckily, the
+			// Python interface is compatible with Java's Writer interface, so
+			// we can redirect them explicitly.
+			return "import sys;sys.stdout=context.writer;sys.stderr=context.errorWriter;";
+	}
+
+	@Override
+	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	{
+		content = content.replaceAll( "\\n", "\\\\n" );
+		content = content.replaceAll( "\\\"", "\\\\\"" );
+		return "sys.stdout.write(\"" + content + "\"),;";
+	}
+
+	@Override
+	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	{
+		return "sys.stdout.write(" + content + ");";
+	}
+
+	@Override
+	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	{
+		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
+	}
+
+	@Override
 	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
 	{
 		Throwable root = getRoot( throwable );
@@ -76,11 +129,13 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 
 	private final Method pyObjectToJavaMethod;
 
-	/*private DocumentRunException getDocumentRunexception( PyTraceback tb )
-	{
-		DocumentRunException next = tb.tb_next != null ? getDocumentRunexception( (PyTraceback) tb.tb_next ) : null;
-		return new DocumentRunException( tb.tb_frame.f_code.co_filename != null ? tb.tb_frame.f_code.co_filename : "", "", tb.tb_lineno, -1, next );
-	}*/
+	/*
+	 * private DocumentRunException getDocumentRunexception( PyTraceback tb ) {
+	 * DocumentRunException next = tb.tb_next != null ? getDocumentRunexception(
+	 * (PyTraceback) tb.tb_next ) : null; return new DocumentRunException(
+	 * tb.tb_frame.f_code.co_filename != null ? tb.tb_frame.f_code.co_filename :
+	 * "", "", tb.tb_lineno, -1, next ); }
+	 */
 
 	private Throwable getRoot( Throwable throwable )
 	{
@@ -94,9 +149,9 @@ public class JythonScriptletExceptionHelper implements ScriptletExceptionHelper
 				{
 					if( pyBaseExceptionClass.isInstance( value ) )
 					{
-						//PyException e = (PyException) throwable;
-						//PyTraceback tb = e.traceback;
-						//return getDocumentRunexception( tb );
+						// PyException e = (PyException) throwable;
+						// PyTraceback tb = e.traceback;
+						// return getDocumentRunexception( tb );
 					}
 
 					// Might return Py.NoConversion

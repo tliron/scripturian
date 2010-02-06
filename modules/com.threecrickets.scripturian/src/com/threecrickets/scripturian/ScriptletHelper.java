@@ -13,17 +13,18 @@ package com.threecrickets.scripturian;
 
 import javax.script.Compilable;
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 /**
- * This interface handles additional tasks specific to parsing scriptlets, which
- * are not covered by standard Java scripting support. It must be implemented
- * for every script engine used by {@link Document}.
+ * Subclasses handles additional tasks specific to parsing scriptlets, which are
+ * not covered by standard Java scripting support. It must be implemented for
+ * every script engine used by {@link Document}.
  * 
  * @author Tal Liron
  * @see Document
  */
-public interface ScriptletParsingHelper
+public abstract class ScriptletHelper
 {
 	/**
 	 * Some languages support their own printing facilities, while others don't.
@@ -31,7 +32,10 @@ public interface ScriptletParsingHelper
 	 * 
 	 * @return True if should print on eval
 	 */
-	public boolean isPrintOnEval();
+	public boolean isPrintOnEval()
+	{
+		return false;
+	}
 
 	/**
 	 * Though some scripting engines support {@link Compilable}, their
@@ -40,7 +44,18 @@ public interface ScriptletParsingHelper
 	 * 
 	 * @return True if compilation is allowed
 	 */
-	public boolean isCompilable();
+	public boolean isCompilable()
+	{
+		return true;
+	}
+
+	public void beforeScriptlet( ScriptContext scriptContext )
+	{
+	}
+
+	public void afterScriptlet( ScriptContext scriptContext )
+	{
+	}
 
 	/**
 	 * The header is inserted at the beginning of every script. It is useful for
@@ -52,7 +67,10 @@ public interface ScriptletParsingHelper
 	 *        The script engine
 	 * @return The header or null
 	 */
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine );
+	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	{
+		return null;
+	}
 
 	/**
 	 * The footer is appended to the end of every script. It is useful for
@@ -65,7 +83,10 @@ public interface ScriptletParsingHelper
 	 * @return The footer or null
 	 * @see #getScriptletHeader(Document, ScriptEngine)
 	 */
-	public String getScriptletFooter( Document document, ScriptEngine scriptEngine );
+	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
+	{
+		return null;
+	}
 
 	/**
 	 * Turns text into a command or series of commands to print the text to
@@ -81,7 +102,7 @@ public interface ScriptletParsingHelper
 	 *        The content
 	 * @return A command or series of commands to print the content
 	 */
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content );
+	public abstract String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Turns an expression into a command or series of commands to print the
@@ -97,7 +118,7 @@ public interface ScriptletParsingHelper
 	 *        The content
 	 * @return A command or series of commands to print the expression
 	 */
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content );
+	public abstract String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Turns an expression into a command or series of commands to include the
@@ -115,7 +136,7 @@ public interface ScriptletParsingHelper
 	 *         the expression
 	 * @see Document#getDocumentVariableName()
 	 */
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content );
+	public abstract String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content );
 
 	/**
 	 * Creates a command or series of commands to invoke an entry point
@@ -131,5 +152,20 @@ public interface ScriptletParsingHelper
 	 * @return A command or series of commands to call the entry point, or null
 	 *         to signify that {@link Invocable} should be used
 	 */
-	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content );
+	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	{
+		return null;
+	}
+
+	/**
+	 * @param documentName
+	 *        The document name
+	 * @param throwable
+	 *        The throwable to process
+	 * @return A document run exception, a wrapped cause, or null
+	 */
+	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
+	{
+		return null;
+	}
 }

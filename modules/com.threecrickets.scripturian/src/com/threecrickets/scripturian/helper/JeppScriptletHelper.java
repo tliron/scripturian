@@ -14,11 +14,11 @@ package com.threecrickets.scripturian.helper;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the Python scripting language
+ * An {@link ScriptletHelper} that supports the Python scripting language
  * as implemented by <a href="http://jepp.sourceforge.net/">Jepp</a>.
  * 
  * @author Tal Liron
@@ -27,22 +27,13 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"jepp", "jep"
 })
-public class JeppScriptletParsingHelper implements ScriptletParsingHelper
+public class JeppScriptletHelper extends ScriptletHelper
 {
 	//
-	// ScriptletParsingHelper
+	// ScriptletHelper
 	//
 
-	public boolean isPrintOnEval()
-	{
-		return false;
-	}
-
-	public boolean isCompilable()
-	{
-		return true;
-	}
-
+	@Override
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		// Apparently the Java Scripting support for Jepp does not correctly
@@ -52,11 +43,7 @@ public class JeppScriptletParsingHelper implements ScriptletParsingHelper
 		return document.getDocumentVariableName() + "=context.getAttribute('" + document.getDocumentVariableName() + "');import sys;sys.stdout=context.getWriter();sys.stderr=context.getErrorWriter();";
 	}
 
-	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
-	{
-		return null;
-	}
-
+	@Override
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
@@ -64,19 +51,15 @@ public class JeppScriptletParsingHelper implements ScriptletParsingHelper
 		return "sys.stdout.write(\"" + content + "\"),;";
 	}
 
+	@Override
 	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(" + content + ");";
 	}
 
+	@Override
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return document.getDocumentVariableName() + ".getContainer().includeDocument(" + content + ");";
-	}
-
-	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
-	{
-		return null;
-		// return content + "();";
 	}
 }

@@ -14,20 +14,36 @@ package com.threecrickets.scripturian.helper;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import com.threecrickets.scripturian.ScriptletExceptionHelper;
+import javax.script.ScriptEngine;
+
+import com.threecrickets.scripturian.Document;
+import com.threecrickets.scripturian.ScriptletHelper;
+import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
+import com.threecrickets.scripturian.annotation.ScriptEngines;
 import com.threecrickets.scripturian.exception.DocumentRunException;
 import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
+ * An {@link ScriptletHelper} that supports the JavaScript scripting
+ * language as implemented by <a href="http://www.mozilla.org/rhino/">Rhino</a>.
+ * 
  * @author Tal Liron
  */
-public class RhinoScriptletExceptionHelper implements ScriptletExceptionHelper
+@ScriptEngines(
+{
+	"rhino-nonjdk", "rhino", "js", "javascript", "JavaScript", "ecmascript", "ECMAScript"
+})
+@ScriptEnginePriorityExtensions(
+{
+	"js"
+})
+public class RhinoScriptletHelper extends ScriptletHelper
 {
 	//
 	// Construction
 	//
 
-	public RhinoScriptletExceptionHelper() throws ClassNotFoundException, SecurityException, NoSuchMethodException
+	public RhinoScriptletHelper() throws ClassNotFoundException, SecurityException, NoSuchMethodException
 	{
 		wrappedExceptionClass = getClass().getClassLoader().loadClass( "org.mozilla.javascript.WrappedException" );
 		wrappedExceptionGetWrappedExceptionMethod = wrappedExceptionClass.getMethod( "getWrappedException" );
@@ -38,9 +54,38 @@ public class RhinoScriptletExceptionHelper implements ScriptletExceptionHelper
 	}
 
 	//
-	// ScriptletExceptionHelper
+	// ScriptletHelper
 	//
 
+	@Override
+	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	{
+		// Rhino's default implementation of print() is annoyingly a println().
+		// This will fix it.
+		return "print=function(s){context.writer.print(String(s));context.writer.flush();};";
+	}
+
+	@Override
+	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	{
+		content = content.replaceAll( "\\n", "\\\\n" );
+		content = content.replaceAll( "\\'", "\\\\'" );
+		return "print('" + content + "');";
+	}
+
+	@Override
+	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	{
+		return "print(" + content + ");";
+	}
+
+	@Override
+	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	{
+		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
+	}
+
+	@Override
 	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
 	{
 		if( wrappedExceptionClass.isInstance( throwable ) )

@@ -13,7 +13,7 @@ package com.threecrickets.scripturian.exception;
 
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.ScriptletExceptionHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.Scripturian;
 
 /**
@@ -35,7 +35,7 @@ public class DocumentRunException extends Exception
 
 			// Try helpers
 			Throwable causeOrDocumentRunException = null;
-			for( ScriptletExceptionHelper scriptletExceptionHelper : Scripturian.scriptletExceptionHelpers )
+			for( ScriptletHelper scriptletExceptionHelper : Scripturian.scriptletHelpers.values() )
 			{
 				causeOrDocumentRunException = scriptletExceptionHelper.getCauseOrDocumentRunException( documentName, wrapped );
 				if( causeOrDocumentRunException != null )

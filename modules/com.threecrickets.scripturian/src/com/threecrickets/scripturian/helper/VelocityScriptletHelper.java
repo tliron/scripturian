@@ -14,11 +14,11 @@ package com.threecrickets.scripturian.helper;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the <a
+ * An {@link ScriptletHelper} that supports the <a
  * href="http://velocity.apache.org/">Velocity</a> templating language.
  * 
  * @author Tal Liron
@@ -27,32 +27,19 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"velocity", "Velocity"
 })
-public class VelocityScriptletParsingHelper implements ScriptletParsingHelper
+public class VelocityScriptletHelper extends ScriptletHelper
 {
 	//
-	// ScriptletParsingHelper
+	// ScriptletHelper
 	//
 
-	public boolean isPrintOnEval()
-	{
-		return false;
-	}
-
-	public boolean isCompilable()
-	{
-		return true;
-	}
-
+	@Override
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
 		return "#set($_d='$')#set($_h='#')";
 	}
 
-	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
-	{
-		return null;
-	}
-
+	@Override
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		// 
@@ -68,18 +55,15 @@ public class VelocityScriptletParsingHelper implements ScriptletParsingHelper
 		// return "\n#literal()\n" + content + "\n#end\n";
 	}
 
+	@Override
 	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "${" + content.trim() + "}";
 	}
 
+	@Override
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
 		return "#if($" + document.getDocumentVariableName() + ".container.includeDocument(" + content + "))#end ";
-	}
-
-	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
-	{
-		return null;
 	}
 }

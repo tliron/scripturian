@@ -67,10 +67,12 @@ public class DocumentContext
 	 * 
 	 * @param scriptEngineName
 	 *        The script engine name
+	 * @param documentName
+	 *        The document name for debugging
 	 * @return The cached script engine
 	 * @throws DocumentInitializationException
 	 */
-	public ScriptEngine getScriptEngine( String scriptEngineName ) throws DocumentInitializationException
+	public ScriptEngine getScriptEngine( String scriptEngineName, String documentName ) throws DocumentInitializationException
 	{
 		if( scriptEngines == null )
 			scriptEngines = new HashMap<String, ScriptEngine>();
@@ -81,7 +83,7 @@ public class DocumentContext
 		{
 			lastScriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 			if( lastScriptEngine == null )
-				throw DocumentInitializationException.scriptEngineNotFound( "", scriptEngineName );
+				throw DocumentInitializationException.scriptEngineNotFound( documentName, scriptEngineName );
 
 			// (Note that some script engines do not even
 			// provide a default context -- Jepp, for example -- so

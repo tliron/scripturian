@@ -14,68 +14,66 @@ package com.threecrickets.scripturian.helper;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletParsingHelper;
+import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
- * An {@link ScriptletParsingHelper} that supports the <a
- * href="http://clojure.org/">Clojure</a> scripting language.
+ * An {@link ScriptletHelper} that supports the PHP scripting language as
+ * implemented by <a href="http://quercus.caucho.com/">Quercus</a>.
+ * <p>
+ * Note the peculiarity of the "include" implementation -- due to limitations of
+ * the Quercus engine, it must use the internal PHP include. For this to work,
+ * it is expected that a variable under
+ * <code>documentnt.container.source.basePath</code> be set to the base path for
+ * all includes.
  * 
  * @author Tal Liron
  */
 @ScriptEngines(
 {
-	"Clojure"
+	"quercus", "php"
 })
-public class ClojureScriptletParsingHelper implements ScriptletParsingHelper
+public class QuercusScriptletHelper extends ScriptletHelper
 {
 	//
-	// ScriptletParsingHelper
+	// ScriptletHelper
 	//
 
-	public boolean isPrintOnEval()
-	{
-		return false;
-	}
-
-	public boolean isCompilable()
-	{
-		// The developers of Clojure's JSR-223 support seem to have
-		// misunderstood the use of the Compilable interface,
-		// and have implemented it so that it expects a library name, rather
-		// than plain Clojure code. We will have to disable support for it.
-		return false;
-	}
-
+	@Override
 	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
 	{
-		return null;
+		return "<?php";
 	}
 
+	@Override
 	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
 	{
-		return null;
+		return "?>";
 	}
 
+	@Override
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
-		return "(print \"" + content + "\")";
+		return "print(\"" + content + "\");";
 	}
 
+	@Override
 	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return "(print " + content + ")";
+		return "print(" + content + ");";
 	}
 
+	@Override
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return "(.. " + document.getDocumentVariableName() + " getContainer (includeDocument " + content + "))";
+		return "include $" + document.getDocumentVariableName() + "->container->source->basePath . '/' . " + content + ";";
 	}
 
+	@Override
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return null;
+		return "<?php " + content + "(); ?>";
 	}
 }
