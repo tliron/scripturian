@@ -62,9 +62,7 @@ public class DocumentSegment
 		if( scriptEngine == null )
 			throw DocumentInitializationException.scriptEngineNotFound( document.getName(), scriptEngineName );
 
-		ScriptletHelper scriptletParsingHelper = Scripturian.scriptletHelpers.get( scriptEngineName );
-		if( scriptletParsingHelper == null )
-			throw DocumentInitializationException.scriptletParsingHelperNotFound( document.getName(), scriptEngineName );
+		ScriptletHelper scriptletParsingHelper = Scripturian.getScriptletHelper( scriptEngineName, document.getName() );
 
 		// Add header
 		String header = scriptletParsingHelper.getScriptletHeader( document, scriptEngine );

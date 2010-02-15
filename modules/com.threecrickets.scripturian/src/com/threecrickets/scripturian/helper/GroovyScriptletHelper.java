@@ -40,7 +40,7 @@ public class GroovyScriptletHelper extends ScriptletHelper
 	//
 
 	@Override
-	public void afterScriptlet( ScriptContext scriptContext )
+	public void afterCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
 	{
 		// There's a bug in Groovy's script engine implementation (as of
 		// version 1.6) that makes it lose the connection between the

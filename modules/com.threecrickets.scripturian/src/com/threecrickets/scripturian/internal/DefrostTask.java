@@ -16,6 +16,7 @@ import java.util.concurrent.Callable;
 import com.threecrickets.scripturian.Defroster;
 import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.DocumentDescriptor;
+import com.threecrickets.scripturian.Scripturian;
 
 /**
  * @author Tal Liron
@@ -43,7 +44,7 @@ public class DefrostTask implements Callable<Document>
 
 		if( document == null )
 		{
-			String scriptEngineName = ScripturianUtil.getScriptEngineNameByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag(), compiler.getScriptEngineManager() );
+			String scriptEngineName = Scripturian.getScriptEngineNameByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag(), compiler.getScriptEngineManager() );
 			String text = documentDescriptor.getText();
 			document = new Document( documentDescriptor.getDefaultName(), text, true, compiler.getScriptEngineManager(), scriptEngineName, compiler.getDocumentSource(), true );
 

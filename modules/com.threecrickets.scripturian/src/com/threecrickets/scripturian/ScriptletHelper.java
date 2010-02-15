@@ -49,11 +49,11 @@ public abstract class ScriptletHelper
 		return true;
 	}
 
-	public void beforeScriptlet( ScriptContext scriptContext )
+	public void beforeCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
 	{
 	}
 
-	public void afterScriptlet( ScriptContext scriptContext )
+	public void afterCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
 	{
 	}
 

@@ -14,15 +14,17 @@ package com.threecrickets.scripturian.helper;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.Document;
 import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
 /**
- * An {@link ScriptletHelper} that supports the Ruby scripting language
- * as implemented by <a href="http://jruby.codehaus.org/">JRuby</a>.
+ * An {@link ScriptletHelper} that supports the Ruby scripting language as
+ * implemented by <a href="http://jruby.codehaus.org/">JRuby</a>.
  * <p>
  * Note that JRuby internally embeds each script in a "main" object, so that
  * methods defined therein cannot be accessible to us after the script runs,
@@ -70,6 +72,34 @@ public class JRubyScriptletHelper extends ScriptletHelper
 	//
 
 	@Override
+	public void beforeCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
+	{
+		scriptEngine.setContext( scriptContext );
+
+		// Move global vars to instance vars
+		StringBuilder r = new StringBuilder();
+		for( Integer scope : scriptContext.getScopes() )
+		{
+			for( String var : scriptContext.getBindings( scope ).keySet() )
+			{
+				r.append( '@' );
+				r.append( var );
+				r.append( "=$" );
+				r.append( var );
+				r.append( ';' );
+			}
+		}
+
+		try
+		{
+			scriptEngine.eval( r.toString() );
+		}
+		catch( ScriptException x )
+		{
+		}
+	}
+
+	@Override
 	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
@@ -86,14 +116,25 @@ public class JRubyScriptletHelper extends ScriptletHelper
 	@Override
 	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
 	{
-		return "$" + document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
+		// return "require $" + document.getDocumentVariableName() +
+		// ".container.source.basePath.toString + '/' + " + content + ";";
+		return "$" + document.getDocumentVariableName() + ".container.include_document(" + content + ");";
 	}
 
 	@Override
 	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
 	{
-		// return "$invocable.send(:" + content + ");";
-		return "$" + content + ".call;";
+		/*String version = scriptEngine.getFactory().getEngineVersion();
+		String[] split = version.split( "\\." );
+		int major = split.length >= 1 ? Integer.parseInt( split[0] ) : 0;
+		int minor = split.length >= 2 ? Integer.parseInt( split[1] ) : 0;
+		int revision = split.length >= 3 ? Integer.parseInt( split[2] ) : 0;
+		*/
+
+		return null;
+		//return content + "();";
+		// else
+		// return "$" + content + ".call;";
 	}
 
 	@Override

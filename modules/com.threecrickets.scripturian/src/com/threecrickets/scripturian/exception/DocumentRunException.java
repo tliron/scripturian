@@ -35,7 +35,7 @@ public class DocumentRunException extends Exception
 
 			// Try helpers
 			Throwable causeOrDocumentRunException = null;
-			for( ScriptletHelper scriptletExceptionHelper : Scripturian.scriptletHelpers.values() )
+			for( ScriptletHelper scriptletExceptionHelper : Scripturian.getScriptletHelpers() )
 			{
 				causeOrDocumentRunException = scriptletExceptionHelper.getCauseOrDocumentRunException( documentName, wrapped );
 				if( causeOrDocumentRunException != null )

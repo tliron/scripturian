@@ -11,11 +11,16 @@
 
 package com.threecrickets.scripturian;
 
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
 import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
+import com.threecrickets.scripturian.exception.DocumentInitializationException;
 import com.threecrickets.scripturian.internal.ServiceLoader;
 
 /**
@@ -28,6 +33,69 @@ public abstract class Scripturian
 	//
 	// Static attributes
 	//
+
+	public static ScriptletHelper getScriptletHelper( String scriptEngineName, String documentName ) throws DocumentInitializationException
+	{
+		ScriptletHelper scriptletHelper = Scripturian.scriptletHelpers.get( scriptEngineName );
+
+		if( scriptletHelper == null )
+			throw DocumentInitializationException.scriptletHelperNotFound( documentName, scriptEngineName );
+
+		return scriptletHelper;
+	}
+	
+	public static Collection<ScriptletHelper> getScriptletHelpers()
+	{
+		return scriptletHelpers.values();
+	}
+
+	public static String getScriptEngineNameByExtension( String name, String def, ScriptEngineManager scriptEngineManager ) throws DocumentInitializationException
+	{
+		int slash = name.lastIndexOf( '/' );
+		if( slash != -1 )
+			name = name.substring( slash + 1 );
+
+		int dot = name.lastIndexOf( '.' );
+		String extension = dot != -1 ? name.substring( dot + 1 ) : def;
+		if( extension == null )
+			throw new DocumentInitializationException( name, "Name must have an extension" );
+
+		// Try our priority mappings first
+		String engineName = scriptEngineExtensionPriorities.get( extension );
+
+		if( engineName == null )
+		{
+			// Try script engine factory's mappings
+			ScriptEngine scriptEngine = scriptEngineManager.getEngineByExtension( extension );
+			if( scriptEngine == null )
+			{
+				throw new DocumentInitializationException( name, "Name's extension is not recognized by any script engine: " + extension );
+			}
+			try
+			{
+				return scriptEngine.getFactory().getNames().get( 0 );
+			}
+			catch( IndexOutOfBoundsException x )
+			{
+				throw new DocumentInitializationException( name, "Script engine has no names: " + scriptEngine );
+			}
+		}
+		else
+			return engineName;
+	}
+
+	//
+	// Main
+	//
+
+	public static void main( String[] arguments )
+	{
+		// Delegate to MainDocument
+		MainDocument.main( arguments );
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
 
 	/**
 	 * A map of script engine names to their {@link ScriptletHelper}. Note that
@@ -48,7 +116,7 @@ public abstract class Scripturian
 	 * The default implementation of this library already contains a few useful
 	 * parsing helpers, under the com.threecrickets.scripturian.helper package.
 	 */
-	public static final ConcurrentMap<String, ScriptletHelper> scriptletHelpers = new ConcurrentHashMap<String, ScriptletHelper>();
+	private static final ConcurrentMap<String, ScriptletHelper> scriptletHelpers = new ConcurrentHashMap<String, ScriptletHelper>();
 
 	/**
 	 * Map of extensions named to script engine names. For Scripturian, these
@@ -66,7 +134,7 @@ public abstract class Scripturian
 	 * You may also manipulate this map yourself, adding and removing helpers as
 	 * necessary.
 	 */
-	public static final ConcurrentMap<String, String> scriptEngineExtensionPriorities = new ConcurrentHashMap<String, String>();
+	private static final ConcurrentMap<String, String> scriptEngineExtensionPriorities = new ConcurrentHashMap<String, String>();
 
 	static
 	{
@@ -74,35 +142,29 @@ public abstract class Scripturian
 		ServiceLoader<ScriptletHelper> scriptletHelperLoader = ServiceLoader.load( ScriptletHelper.class );
 		for( ScriptletHelper scriptletHelper : scriptletHelperLoader )
 		{
-			ScriptEngines scriptEngines = scriptletHelper.getClass().getAnnotation( ScriptEngines.class );
-			if( scriptEngines == null )
-				throw new RuntimeException( "" + scriptletHelper + " does not have a ScriptEngines annotation" );
-
-			for( String scriptEngine : scriptEngines.value() )
-				scriptletHelpers.put( scriptEngine, scriptletHelper );
-
-			ScriptEnginePriorityExtensions scriptEngineExtensions = scriptletHelper.getClass().getAnnotation( ScriptEnginePriorityExtensions.class );
-			if( scriptEngineExtensions != null )
+			try
 			{
-				String scriptEngine = scriptEngines.value()[0];
-				for( String scriptEngineExtension : scriptEngineExtensions.value() )
-					scriptEngineExtensionPriorities.put( scriptEngineExtension, scriptEngine );
+				ScriptEngines scriptEngines = scriptletHelper.getClass().getAnnotation( ScriptEngines.class );
+				if( scriptEngines == null )
+					throw new RuntimeException( "" + scriptletHelper + " does not have a ScriptEngines annotation" );
+
+				for( String scriptEngine : scriptEngines.value() )
+					scriptletHelpers.put( scriptEngine, scriptletHelper );
+
+				ScriptEnginePriorityExtensions scriptEngineExtensions = scriptletHelper.getClass().getAnnotation( ScriptEnginePriorityExtensions.class );
+				if( scriptEngineExtensions != null )
+				{
+					String scriptEngine = scriptEngines.value()[0];
+					for( String scriptEngineExtension : scriptEngineExtensions.value() )
+						scriptEngineExtensionPriorities.put( scriptEngineExtension, scriptEngine );
+				}
+			}
+			catch( Throwable x )
+			{
+				throw new RuntimeException( "Could not initialize " + scriptletHelper, x );
 			}
 		}
 	}
-
-	//
-	// Main
-	//
-
-	public static void main( String[] arguments )
-	{
-		// Delegate to MainDocument
-		MainDocument.main( arguments );
-	}
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Private
 
 	private Scripturian()
 	{

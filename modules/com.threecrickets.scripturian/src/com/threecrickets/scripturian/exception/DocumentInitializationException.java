@@ -25,9 +25,9 @@ public class DocumentInitializationException extends Exception
 		return new DocumentInitializationException( documentName, "Unsupported script engine: " + scriptEngineName );
 	}
 
-	public static DocumentInitializationException scriptletParsingHelperNotFound( String documentName, String scriptEngineName )
+	public static DocumentInitializationException scriptletHelperNotFound( String documentName, String scriptEngineName )
 	{
-		return new DocumentInitializationException( documentName, "Scriptlet parsing helper not available for script engine: " + scriptEngineName );
+		return new DocumentInitializationException( documentName, "Scriptlet helper not available for script engine: " + scriptEngineName );
 	}
 
 	//

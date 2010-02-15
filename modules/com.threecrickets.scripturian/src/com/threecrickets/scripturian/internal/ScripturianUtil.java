@@ -19,11 +19,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 
-import com.threecrickets.scripturian.Scripturian;
-import com.threecrickets.scripturian.exception.DocumentInitializationException;
 
 /**
  * Utility methods.
@@ -92,44 +88,6 @@ public abstract class ScripturianUtil
 		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFER_SIZE );
 		return getString( reader );
 	}
-
-	public static String getScriptEngineNameByExtension( String name, String def, ScriptEngineManager scriptEngineManager ) throws DocumentInitializationException
-	{
-		int slash = name.lastIndexOf( '/' );
-		if( slash != -1 )
-			name = name.substring( slash + 1 );
-
-		int dot = name.lastIndexOf( '.' );
-		String extension = dot != -1 ? name.substring( dot + 1 ) : def;
-		if( extension == null )
-			throw new DocumentInitializationException( name, "Name must have an extension" );
-
-		// Try our priority mappings first
-		String engineName = Scripturian.scriptEngineExtensionPriorities.get( extension );
-
-		if( engineName == null )
-		{
-			// Try script engine factory's mappings
-			ScriptEngine scriptEngine = scriptEngineManager.getEngineByExtension( extension );
-			if( scriptEngine == null )
-			{
-				throw new DocumentInitializationException( name, "Name's extension is not recognized by any script engine: " + extension );
-			}
-			try
-			{
-				return scriptEngine.getFactory().getNames().get( 0 );
-			}
-			catch( IndexOutOfBoundsException x )
-			{
-				throw new DocumentInitializationException( name, "Script engine has no names: " + scriptEngine );
-			}
-		}
-		else
-			return engineName;
-	}
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Private
 
 	private ScripturianUtil()
 	{
