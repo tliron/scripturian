@@ -11,7 +11,7 @@
 
 package com.threecrickets.scripturian;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -23,8 +23,6 @@ import java.util.concurrent.Future;
 
 import javax.script.ScriptEngineManager;
 
-import com.threecrickets.scripturian.internal.DefrostTask;
-
 /**
  * @author Tal Liron
  */
@@ -34,11 +32,11 @@ public class Defroster
 	// Construction
 	//
 
-	public Defroster( ScriptEngineManager scriptEngineManager, DocumentSource<Document> documentSource, boolean allowCompilation )
+	public Defroster( DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
 	{
 		super();
-		this.scriptEngineManager = scriptEngineManager;
 		this.documentSource = documentSource;
+		this.scriptEngineManager = scriptEngineManager;
 		this.allowCompilation = allowCompilation;
 	}
 
@@ -127,9 +125,9 @@ public class Defroster
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final ScriptEngineManager scriptEngineManager;
-
 	private final DocumentSource<Document> documentSource;
+
+	private final ScriptEngineManager scriptEngineManager;
 
 	private final boolean allowCompilation;
 
@@ -151,15 +149,11 @@ public class Defroster
 
 		public void run()
 		{
-			Collection<DocumentDescriptor<Document>> documentDescriptors = documentSource.getDocumentDescriptors();
-			ArrayList<Callable<Document>> defrosters = new ArrayList<Callable<Document>>( documentDescriptors.size() );
-			for( DocumentDescriptor<Document> documentDescriptor : documentDescriptors )
-				defrosters.add( new DefrostTask( documentDescriptor, Defroster.this ) );
-
+			Callable<Document>[] defrostTasks = DefrostTask.create( documentSource, scriptEngineManager, allowCompilation );
 			List<Future<Document>> futures;
 			try
 			{
-				futures = executorService.invokeAll( defrosters );
+				futures = executorService.invokeAll( Arrays.asList( defrostTasks ) );
 
 				if( block )
 				{
