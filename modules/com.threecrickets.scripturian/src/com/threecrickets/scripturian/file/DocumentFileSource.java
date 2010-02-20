@@ -239,12 +239,12 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 							FiledDocumentDescriptor existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
 							if( existing != null )
 								filedDocumentDescriptor = existing;
-							list.add( filedDocumentDescriptor );
 						}
 						catch( IOException x )
 						{
 						}
 					}
+					list.add( filedDocumentDescriptor );
 				}
 			}
 		}
