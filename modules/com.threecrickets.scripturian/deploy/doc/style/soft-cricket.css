@@ -1,8 +1,8 @@
-/******************
- *  Soft Cricket  *
- *                *
- *  By Tal Liron  *
- ******************/
+/*********************
+ *  Soft Cricket 1.1 *
+ *                   *
+ *    By Tal Liron   *
+ *********************/
 
 body {
 	sbackground-color: #e0ffe0;
@@ -32,6 +32,12 @@ p {
 	font-size: 14px;
 	line-height: 180%;
 }
+
+ul {
+	font-size: 14px;
+	line-height: 180%;
+}
+
 
 div.hr {
   height: 57px;
@@ -101,6 +107,7 @@ div.navigation ul {
 	padding: 0;
 	list-style-type: none;
 	font-family: verdana, arial, sans-serif;
+	line-height: 100%;
 }
 
 div.navigation li {
