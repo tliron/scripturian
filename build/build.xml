@@ -13,6 +13,7 @@
 		<javac srcdir="${src}" destdir="${tmp}" target="1.5">
 			<classpath>
 				<fileset dir="${lib}/jsr223/lib" />
+				<fileset dir="${lib}/jygments/lib" />
 			</classpath>
 		</javac>
 		<copy todir="${tmp}/META-INF">
@@ -47,11 +48,17 @@
 		<copy todir="${content}/licenses/jsr223">
 			<fileset dir="${lib}/jsr223/license" />
 		</copy>
+		<copy todir="${content}/licenses/jygments">
+			<fileset dir="${lib}/jygments/license" />
+		</copy>
 	</target>
 	
 	<target name="libraries" depends="jar" description="Fetch libraries">
 		<copy todir="${content}/lib">
 			<fileset dir="${lib}/jsr223/lib" />
+		</copy>
+		<copy todir="${content}/lib">
+			<fileset dir="${lib}/jygments/lib" />
 		</copy>
 	</target>
 	
