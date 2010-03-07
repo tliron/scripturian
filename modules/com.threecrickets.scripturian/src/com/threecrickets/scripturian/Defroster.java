@@ -32,6 +32,16 @@ public class Defroster
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param documentSource
+	 *        The document source
+	 * @param scriptEngineManager
+	 *        The script engine manager to use for document initialization
+	 * @param allowCompilation
+	 *        Whether to allow compilation for initialized documents
+	 */
 	public Defroster( DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
 	{
 		super();
@@ -44,31 +54,49 @@ public class Defroster
 	// Attributes
 	//
 
+	/**
+	 * @return
+	 */
 	public ScriptEngineManager getScriptEngineManager()
 	{
 		return scriptEngineManager;
 	}
 
+	/**
+	 * @return
+	 */
 	public DocumentSource<Document> getDocumentSource()
 	{
 		return documentSource;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean isAllowCompilation()
 	{
 		return allowCompilation;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean wasInterrupted()
 	{
 		return wasInterrupted;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean hasErrors()
 	{
 		return !errors.isEmpty();
 	}
 
+	/**
+	 * @return
+	 */
 	public Collection<Throwable> getErrors()
 	{
 		return errors;
@@ -125,10 +153,19 @@ public class Defroster
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The document source.
+	 */
 	private final DocumentSource<Document> documentSource;
 
+	/**
+	 * The script engine manager to use for document initialization.
+	 */
 	private final ScriptEngineManager scriptEngineManager;
 
+	/**
+	 * Whether to allow compilation for initialized documents.
+	 */
 	private final boolean allowCompilation;
 
 	private volatile boolean wasInterrupted;
@@ -149,7 +186,7 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Document>[] defrostTasks = DefrostTask.create( documentSource, scriptEngineManager, allowCompilation );
+			Callable<Document>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, scriptEngineManager, allowCompilation );
 			List<Future<Document>> futures;
 			try
 			{

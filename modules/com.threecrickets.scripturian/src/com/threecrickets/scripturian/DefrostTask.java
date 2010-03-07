@@ -17,6 +17,12 @@ import java.util.concurrent.Callable;
 import javax.script.ScriptEngineManager;
 
 /**
+ * A {@link Callable} that makes sure that a {@link Document} is tied to a
+ * {@link DocumentDescriptor}, making it ready to use without the delay of
+ * initialization, parsing, compilation, etc.
+ * <p>
+ * It may be easier to use a {@link Defroster}.
+ * 
  * @author Tal Liron
  * @see Defroster
  */
@@ -26,7 +32,19 @@ public class DefrostTask implements Callable<Document>
 	// Static operations
 	//
 
-	public static DefrostTask[] create( DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
+	/**
+	 * Creates a defrost task for each document descriptor in a document source.
+	 * 
+	 * @param documentSource
+	 *        The document source
+	 * @param scriptEngineManager
+	 *        The script engine manager to use for document initialization
+	 * @param allowCompilation
+	 *        Whether to allow compilation for initialized documents
+	 * @return An array of tasks
+	 * @see DocumentSource#getDocumentDescriptor(String)
+	 */
+	public static DefrostTask[] forDocumentSource( DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
 	{
 		Collection<DocumentDescriptor<Document>> documentDescriptors = documentSource.getDocumentDescriptors();
 		DefrostTask[] defrostTasks = new DefrostTask[documentDescriptors.size()];
@@ -41,6 +59,19 @@ public class DefrostTask implements Callable<Document>
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param documentDescriptor
+	 *        The document descriptor
+	 * @param documentSource
+	 *        The document source, required for processing in-flow tags during
+	 *        document initialization
+	 * @param scriptEngineManager
+	 *        The script engine manager to use for document initialization
+	 * @param allowCompilation
+	 *        Whether to allow compilation for initialized documents
+	 */
 	public DefrostTask( DocumentDescriptor<Document> documentDescriptor, DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
 	{
 		this.documentDescriptor = documentDescriptor;
@@ -84,11 +115,24 @@ public class DefrostTask implements Callable<Document>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The document descriptor.
+	 */
 	private final DocumentDescriptor<Document> documentDescriptor;
 
+	/**
+	 * The document source, required for processing in-flow tags during document
+	 * initialization.
+	 */
 	private final DocumentSource<Document> documentSource;
 
+	/**
+	 * The script engine manager to use for document initialization.
+	 */
 	private final ScriptEngineManager scriptEngineManager;
 
+	/**
+	 * Whether to allow compilation for initialized documents.
+	 */
 	private final boolean allowCompilation;
 }
