@@ -11,6 +11,9 @@
 
 package com.threecrickets.scripturian;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import javax.script.Compilable;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -26,6 +29,18 @@ import javax.script.ScriptEngine;
  */
 public abstract class ScriptletHelper
 {
+	/**
+	 * Some languages or their script engines are inherently broken when called
+	 * by multiple threads. Returning false here makes sure Scripturian respects
+	 * this and blocks.
+	 * 
+	 * @return True if we support being run by concurrent threads
+	 */
+	public boolean isMultiThreaded()
+	{
+		return true;
+	}
+
 	/**
 	 * Some languages support their own printing facilities, while others don't.
 	 * Returning true here will delegate print handling to {@link Document}.
@@ -168,4 +183,6 @@ public abstract class ScriptletHelper
 	{
 		return null;
 	}
+
+	public final Lock lock = new ReentrantLock();
 }

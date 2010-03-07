@@ -754,13 +754,16 @@ public class Document
 						ScriptEngine scriptEngine = documentContext.getScriptEngine( segment.scriptEngineName, name );
 						ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( segment.scriptEngineName, name );
 
+						if( !scriptletHelper.isMultiThreaded() )
+							scriptletHelper.lock.lock();
+
 						Object oldExposedDocument = scriptContext.getAttribute( documentVariableName, ScriptContext.ENGINE_SCOPE );
 						scriptContext.setAttribute( documentVariableName, new ExposedDocument( this, documentContext, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
 
-						scriptletHelper.beforeCall( scriptEngine, scriptContext );
-
 						try
 						{
+							scriptletHelper.beforeCall( scriptEngine, scriptContext );
+
 							Object value;
 							if( segment.compiledScript != null )
 								value = segment.compiledScript.eval( scriptContext );
@@ -793,6 +796,9 @@ public class Document
 							// documents that run other documents)
 							if( oldExposedDocument != null )
 								scriptContext.setAttribute( documentVariableName, oldExposedDocument, ScriptContext.ENGINE_SCOPE );
+
+							if( !scriptletHelper.isMultiThreaded() )
+								scriptletHelper.lock.unlock();
 						}
 					}
 				}
@@ -861,15 +867,18 @@ public class Document
 
 		ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( scriptEngineName, name );
 
+		if( !scriptletHelper.isMultiThreaded() )
+			scriptletHelper.lock.lock();
+
 		Object oldExposedDocument = scriptContext.getAttribute( documentVariableName, ScriptContext.ENGINE_SCOPE );
 		scriptContext.setAttribute( documentVariableName, new ExposedDocument( this, documentContextForInvocations, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
-
-		if( scriptletController != null )
-			scriptletController.initialize( scriptContext );
 
 		try
 		{
 			scriptletHelper.beforeCall( scriptEngine, scriptContext );
+
+			if( scriptletController != null )
+				scriptletController.initialize( scriptContext );
 
 			String program = scriptletHelper.getInvocationAsProgram( this, scriptEngine, entryPointName );
 			if( program == null )
@@ -911,6 +920,9 @@ public class Document
 			// other scripts)
 			if( oldExposedDocument != null )
 				scriptContext.setAttribute( documentVariableName, oldExposedDocument, ScriptContext.ENGINE_SCOPE );
+
+			if( !scriptletHelper.isMultiThreaded() )
+				scriptletHelper.lock.unlock();
 		}
 	}
 

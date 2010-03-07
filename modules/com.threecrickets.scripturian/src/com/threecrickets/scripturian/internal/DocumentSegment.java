@@ -73,7 +73,7 @@ public class DocumentSegment
 		String footer = scriptletParsingHelper.getScriptletFooter( document, scriptEngine );
 		if( footer != null )
 			text += footer;
-		
+
 		if( allowCompilation && ( scriptEngine instanceof Compilable ) && scriptletParsingHelper.isCompilable() )
 		{
 			try

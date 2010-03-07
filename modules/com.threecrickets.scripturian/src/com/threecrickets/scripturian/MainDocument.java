@@ -103,7 +103,8 @@ public class MainDocument implements Runnable
 		this.arguments = arguments;
 
 		// Fixes problems with JRuby
-		System.setProperty( "org.jruby.embed.localcontext.scope", "singlethread" );
+		System.setProperty( "org.jruby.embed.localcontext.scope", "threadsafe" );
+		//System.setProperty( "org.jruby.embed.localcontext.scope", "singlethread" );
 
 		scriptEngineManager = new ScriptEngineManager();
 		allowCompilation = false;

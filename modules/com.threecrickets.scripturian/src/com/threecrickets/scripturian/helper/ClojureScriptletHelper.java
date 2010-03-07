@@ -34,6 +34,15 @@ public class ClojureScriptletHelper extends ScriptletHelper
 	//
 
 	@Override
+	public boolean isMultiThreaded()
+	{
+		// Unfortunately, Clojure's JSR-223 support puts all global vars in the
+		// same namespace. This means that multiple calling threads will
+		// override each other's vars.
+		return false;
+	}
+
+	@Override
 	public boolean isCompilable()
 	{
 		// The developers of Clojure's JSR-223 support seem to have

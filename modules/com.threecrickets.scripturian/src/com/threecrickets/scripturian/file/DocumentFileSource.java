@@ -19,7 +19,8 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.threecrickets.scripturian.DocumentDescriptor;
 import com.threecrickets.scripturian.DocumentSource;
@@ -336,20 +337,62 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		public D getDocument()
 		{
-			return document.get();
+			documentLock.readLock().lock();
+			try
+			{
+				return document;
+			}
+			finally
+			{
+				documentLock.readLock().unlock();
+			}
 		}
 
 		public D setDocument( D document )
 		{
-			return this.document.getAndSet( document );
+			documentLock.writeLock().lock();
+			try
+			{
+				D last = document;
+				this.document = document;
+				return last;
+			}
+			finally
+			{
+				documentLock.writeLock().unlock();
+			}
 		}
 
 		public D setDocumentIfAbsent( D document )
 		{
-			if( !this.document.compareAndSet( null, document ) )
-				return this.document.get();
-			else
-				return document;
+			documentLock.readLock().lock();
+			try
+			{
+				if( document != null )
+					return document;
+
+				documentLock.readLock().unlock();
+				// (Might change here!)
+				documentLock.writeLock().lock();
+				try
+				{
+					if( document != null )
+						return document;
+
+					D last = document;
+					this.document = document;
+					return last;
+				}
+				finally
+				{
+					documentLock.writeLock().unlock();
+					documentLock.readLock().lock();
+				}
+			}
+			finally
+			{
+				documentLock.readLock().unlock();
+			}
 		}
 
 		// //////////////////////////////////////////////////////////////////////////
@@ -367,7 +410,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		private volatile long lastValidityCheck;
 
-		private AtomicReference<D> document = new AtomicReference<D>();
+		private final ReadWriteLock documentLock = new ReentrantReadWriteLock();
+
+		private D document;
 
 		private FiledDocumentDescriptor( String name, String text, String tag, D document )
 		{
@@ -376,7 +421,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			timestamp = -1;
 			this.text = text;
 			this.tag = tag;
-			this.document.set( document );
+			this.document = document;
 		}
 
 		private FiledDocumentDescriptor( File file ) throws IOException
