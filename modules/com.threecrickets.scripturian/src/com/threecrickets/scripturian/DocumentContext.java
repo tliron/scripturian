@@ -139,6 +139,16 @@ public class DocumentContext
 
 	/**
 	 * @param name
+	 * @return
+	 */
+	public Object getVariable( String name )
+	{
+		ScriptContext scriptContext = getScriptContext();
+		return scriptContext.getAttribute( name, ScriptContext.ENGINE_SCOPE );
+	}
+
+	/**
+	 * @param name
 	 * @param object
 	 * @return
 	 */
