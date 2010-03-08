@@ -11,17 +11,25 @@
 
 package com.threecrickets.scripturian;
 
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import javax.script.CompiledScript;
+import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 import javax.script.SimpleScriptContext;
 
 import com.threecrickets.scripturian.exception.DocumentInitializationException;
+import com.threecrickets.scripturian.exception.DocumentRunException;
 
 /**
  * Encapsulates context for an {@link Document}. Every thread calling
@@ -115,6 +123,112 @@ public class DocumentContext
 	}
 
 	/**
+	 * @return
+	 */
+	public Set<String> getVariableNames()
+	{
+		Set<String> variables = new HashSet<String>();
+		ScriptContext scriptContext = getScriptContext();
+		for( Integer scope : scriptContext.getScopes() )
+		{
+			for( String var : scriptContext.getBindings( scope ).keySet() )
+				variables.add( var );
+		}
+		return variables;
+	}
+
+	/**
+	 * @param name
+	 * @param object
+	 * @return
+	 */
+	public Object setVariable( String name, Object object )
+	{
+		ScriptContext scriptContext = getScriptContext();
+		Object old = scriptContext.getAttribute( name, ScriptContext.ENGINE_SCOPE );
+		scriptContext.setAttribute( name, object, ScriptContext.ENGINE_SCOPE );
+		return old;
+	}
+
+	/**
+	 * @return
+	 */
+	public Writer getWriter()
+	{
+		ScriptContext scriptContext = getScriptContext();
+		return scriptContext.getWriter();
+	}
+
+	/**
+	 * @param writer
+	 * @return
+	 */
+	public Writer setWriter( Writer writer )
+	{
+		ScriptContext scriptContext = getScriptContext();
+		Writer old = scriptContext.getWriter();
+		scriptContext.setWriter( writer );
+		return old;
+	}
+
+	/**
+	 * @param writer
+	 * @param flushLines
+	 * @return
+	 */
+	public Writer setWriter( Writer writer, boolean flushLines )
+	{
+		ScriptContext scriptContext = getScriptContext();
+		Writer old = scriptContext.getWriter();
+
+		// Note that some script engines (such as Rhino) expect a
+		// PrintWriter, even though the spec defines just a Writer
+		writer = new PrintWriter( writer, flushLines );
+
+		scriptContext.setWriter( writer );
+		return old;
+	}
+
+	/**
+	 * @return
+	 */
+	public Writer getErrorWriter()
+	{
+		ScriptContext scriptContext = getScriptContext();
+		return scriptContext.getErrorWriter();
+	}
+
+	/**
+	 * @param writer
+	 * @return
+	 */
+	public Writer setErrorWriter( Writer writer )
+	{
+		ScriptContext scriptContext = getScriptContext();
+		Writer old = scriptContext.getErrorWriter();
+		scriptContext.setErrorWriter( writer );
+		return old;
+	}
+
+	/**
+	 * @param writer
+	 * @param flushLines
+	 * @return
+	 */
+	public Writer setErrorWriter( Writer writer, boolean flushLines )
+	{
+		ScriptContext scriptContext = getScriptContext();
+		Writer old = scriptContext.getErrorWriter();
+
+		// Note that some script engines (such as Rhino) expect a
+		// PrintWriter, even though the spec defines just a Writer
+		writer = new PrintWriter( writer, flushLines );
+
+		scriptContext.setErrorWriter( writer );
+		return old;
+	}
+
+	/**
 	 * The last {@link ScriptEngine} used in the last run of the document.
 	 * 
 	 * @return The last script engine
@@ -133,6 +247,101 @@ public class DocumentContext
 	public String getLastScriptEngineName()
 	{
 		return lastScriptEngineName;
+	}
+
+	/**
+	 * @param scriptEngine
+	 * @param compiledScript
+	 * @param name
+	 * @param program
+	 * @return
+	 * @throws ScriptException
+	 */
+	public Object call( ScriptEngine scriptEngine, CompiledScript compiledScript, String name, String program ) throws DocumentRunException
+	{
+		ScriptContext scriptContext = getScriptContext();
+		Object value;
+		try
+		{
+			if( compiledScript != null )
+				value = compiledScript.eval( scriptContext );
+			else
+				// Note that we are wrapping our text with a
+				// StringReader. Why? Because some
+				// implementations of javax.script (notably
+				// Jepp) interpret the String version of eval to
+				// mean only one line of code.
+				value = scriptEngine.eval( new StringReader( program ), scriptContext );
+		}
+		catch( ScriptException x )
+		{
+			throw DocumentRunException.create( name, x );
+		}
+		catch( Exception x )
+		{
+			// Some script engines (notably Quercus) throw their
+			// own special exceptions
+			throw DocumentRunException.create( name, x );
+		}
+
+		return value;
+	}
+
+	/**
+	 * @param scriptEngine
+	 * @param scriptEngineName
+	 * @param entryPointName
+	 * @param name
+	 * @param program
+	 * @return
+	 * @throws DocumentRunException
+	 * @throws NoSuchMethodException
+	 */
+	public Object invoke( ScriptEngine scriptEngine, String scriptEngineName, String entryPointName, String name, String program ) throws DocumentRunException, NoSuchMethodException
+	{
+		if( program == null )
+		{
+			if( scriptEngine instanceof Invocable )
+			{
+				try
+				{
+					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
+				}
+				catch( ScriptException x )
+				{
+					throw DocumentRunException.create( name, x );
+				}
+				catch( NoSuchMethodException x )
+				{
+					throw x;
+				}
+				catch( Exception x )
+				{
+					// Some script engines (notably Quercus) throw their
+					// own special exceptions
+					throw DocumentRunException.create( name, x );
+				}
+			}
+			else
+				throw new DocumentRunException( name, "Script engine " + scriptEngineName + " does not support invocations" );
+		}
+		else
+		{
+			try
+			{
+				return scriptEngine.eval( program );
+			}
+			catch( ScriptException x )
+			{
+				throw DocumentRunException.create( name, x );
+			}
+			catch( Exception x )
+			{
+				// Some script engines (notably Quercus) throw their
+				// own special exceptions
+				throw DocumentRunException.create( name, x );
+			}
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

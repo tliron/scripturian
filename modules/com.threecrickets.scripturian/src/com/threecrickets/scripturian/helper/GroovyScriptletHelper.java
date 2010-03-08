@@ -11,10 +11,10 @@
 
 package com.threecrickets.scripturian.helper;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Document;
+import com.threecrickets.scripturian.DocumentContext;
 import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
@@ -40,13 +40,13 @@ public class GroovyScriptletHelper extends ScriptletHelper
 	//
 
 	@Override
-	public void afterCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
+	public void afterCall( ScriptEngine scriptEngine, DocumentContext documentContext )
 	{
 		// There's a bug in Groovy's script engine implementation (as of
 		// version 1.6) that makes it lose the connection between the
 		// script's output and our script context writer in some cases. This
 		// makes sure that they are connected.
-		scriptContext.setAttribute( "out", scriptContext.getWriter(), ScriptContext.ENGINE_SCOPE );
+		documentContext.setVariable( "out", documentContext.getWriter() );
 	}
 
 	@Override

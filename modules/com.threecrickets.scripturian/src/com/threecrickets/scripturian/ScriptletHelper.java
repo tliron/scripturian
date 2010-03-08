@@ -16,7 +16,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.script.Compilable;
 import javax.script.Invocable;
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
 /**
@@ -64,11 +63,11 @@ public abstract class ScriptletHelper
 		return true;
 	}
 
-	public void beforeCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
+	public void beforeCall( ScriptEngine scriptEngine, DocumentContext documentContext )
 	{
 	}
-
-	public void afterCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
+	
+	public void afterCall( ScriptEngine scriptEngine, DocumentContext documentContext )
 	{
 	}
 

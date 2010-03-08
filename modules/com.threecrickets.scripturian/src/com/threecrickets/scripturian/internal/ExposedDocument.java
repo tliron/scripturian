@@ -14,7 +14,6 @@ package com.threecrickets.scripturian.internal;
 import java.io.Writer;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
@@ -73,15 +72,15 @@ public class ExposedDocument
 	}
 
 	/**
-	 * This is the {@link ScriptContext} used by the document. Scriptlets may
+	 * This is the {@link DocumentContext} used by the document. Scriptlets may
 	 * use it to get access to the {@link Writer} objects used for standard
 	 * output and standard error.
 	 * 
-	 * @return The script context
+	 * @return The document context
 	 */
-	public ScriptContext getContext()
+	public DocumentContext getContext()
 	{
-		return documentContext.getScriptContext();
+		return documentContext;
 	}
 
 	/**

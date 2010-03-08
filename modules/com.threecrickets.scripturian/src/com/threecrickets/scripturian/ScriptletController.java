@@ -11,8 +11,6 @@
 
 package com.threecrickets.scripturian;
 
-import javax.script.ScriptContext;
-
 import com.threecrickets.scripturian.exception.DocumentRunException;
 
 /**
@@ -27,19 +25,19 @@ public interface ScriptletController
 	/**
 	 * Called when a scriptlet is initialized.
 	 * 
-	 * @param scriptContext
-	 *        The script context
+	 * @param documentContext
+	 *        The document context
 	 * @throws DocumentRunException
 	 *         If you throw an exception here, the scriptlet will not run
 	 */
-	public void initialize( ScriptContext scriptContext ) throws DocumentRunException;
+	public void initialize( DocumentContext documentContext ) throws DocumentRunException;
 
 	/**
 	 * Called when a scriptlet finalizes. This is a good place to clean up
-	 * resources you set up during {@link #initialize(ScriptContext)}.
+	 * resources you set up during {@link #initialize(DocumentContext)}.
 	 * 
-	 * @param scriptContext
-	 *        The script context
+	 * @param documentContext
+	 *        The document context
 	 */
-	public void finalize( ScriptContext scriptContext );
+	public void finalize( DocumentContext documentContext );
 }

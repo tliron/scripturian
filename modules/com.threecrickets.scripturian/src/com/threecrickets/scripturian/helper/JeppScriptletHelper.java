@@ -11,11 +11,11 @@
 
 package com.threecrickets.scripturian.helper;
 
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.Document;
+import com.threecrickets.scripturian.DocumentContext;
 import com.threecrickets.scripturian.ScriptletHelper;
 import com.threecrickets.scripturian.annotation.ScriptEngines;
 
@@ -46,18 +46,15 @@ public class JeppScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public void beforeCall( ScriptEngine scriptEngine, ScriptContext scriptContext )
+	public void beforeCall( ScriptEngine scriptEngine, DocumentContext documentContext )
 	{
 		StringBuilder r = new StringBuilder();
-		for( Integer scope : scriptContext.getScopes() )
+		for( String var : documentContext.getVariableNames() )
 		{
-			for( String var : scriptContext.getBindings( scope ).keySet() )
-			{
-				r.append( var );
-				r.append( "=context.getAttribute('" );
-				r.append( var );
-				r.append( "');" );
-			}
+			r.append( var );
+			r.append( "=context.getAttribute('" );
+			r.append( var );
+			r.append( "');" );
 		}
 
 		try

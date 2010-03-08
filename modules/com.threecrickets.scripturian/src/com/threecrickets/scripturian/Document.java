@@ -12,8 +12,6 @@
 package com.threecrickets.scripturian;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringReader;
 import java.io.Writer;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,8 +27,8 @@ import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.exception.DocumentInitializationException;
 import com.threecrickets.scripturian.exception.DocumentRunException;
-import com.threecrickets.scripturian.internal.ExposedDocument;
 import com.threecrickets.scripturian.internal.DocumentSegment;
+import com.threecrickets.scripturian.internal.ExposedDocument;
 
 /**
  * Handles the parsing, optional compilation and running of Scripturian
@@ -727,21 +725,11 @@ public class Document
 		}
 		else
 		{
-			ScriptContext scriptContext = documentContext.getScriptContext();
-
-			// Note that some script engines (such as Rhino) expect a
-			// PrintWriter, even though the spec defines just a Writer
-			writer = new PrintWriter( writer, flushLines );
-			errorWriter = new PrintWriter( errorWriter, flushLines );
-
-			Writer oldWriter = scriptContext.getWriter();
-			Writer oldErrorWriter = scriptContext.getErrorWriter();
-
-			scriptContext.setWriter( writer );
-			scriptContext.setErrorWriter( errorWriter );
+			Writer oldWriter = documentContext.setWriter( writer, flushLines );
+			Writer oldErrorWriter = documentContext.setErrorWriter( writer, flushLines );
 
 			if( scriptletController != null )
-				scriptletController.initialize( scriptContext );
+				scriptletController.initialize( documentContext );
 
 			try
 			{
@@ -757,45 +745,25 @@ public class Document
 						if( !scriptletHelper.isMultiThreaded() )
 							scriptletHelper.lock.lock();
 
-						Object oldExposedDocument = scriptContext.getAttribute( documentVariableName, ScriptContext.ENGINE_SCOPE );
-						scriptContext.setAttribute( documentVariableName, new ExposedDocument( this, documentContext, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
+						Object oldExposedDocument = documentContext.setVariable( documentVariableName, new ExposedDocument( this, documentContext, scriptEngine, container ) );
 
 						try
 						{
-							scriptletHelper.beforeCall( scriptEngine, scriptContext );
+							scriptletHelper.beforeCall( scriptEngine, documentContext );
 
-							Object value;
-							if( segment.compiledScript != null )
-								value = segment.compiledScript.eval( scriptContext );
-							else
-								// Note that we are wrapping our text with a
-								// StringReader. Why? Because some
-								// implementations of javax.script (notably
-								// Jepp) interpret the String version of eval to
-								// mean only one line of code.
-								value = scriptEngine.eval( new StringReader( segment.text ), scriptContext );
+							Object value = documentContext.call( scriptEngine, segment.compiledScript, name, segment.text );
 
 							if( ( value != null ) && scriptletHelper.isPrintOnEval() )
 								writer.write( value.toString() );
 						}
-						catch( ScriptException x )
-						{
-							throw DocumentRunException.create( name, x );
-						}
-						catch( Exception x )
-						{
-							// Some script engines (notably Quercus) throw their
-							// own special exceptions
-							throw DocumentRunException.create( name, x );
-						}
 						finally
 						{
-							scriptletHelper.afterCall( scriptEngine, scriptContext );
+							scriptletHelper.afterCall( scriptEngine, documentContext );
 
 							// Restore old document value (this is desirable for
 							// documents that run other documents)
 							if( oldExposedDocument != null )
-								scriptContext.setAttribute( documentVariableName, oldExposedDocument, ScriptContext.ENGINE_SCOPE );
+								documentContext.setVariable( documentVariableName, oldExposedDocument );
 
 							if( !scriptletHelper.isMultiThreaded() )
 								scriptletHelper.lock.unlock();
@@ -805,11 +773,11 @@ public class Document
 			}
 			finally
 			{
-				scriptContext.setWriter( oldWriter );
-				scriptContext.setErrorWriter( oldErrorWriter );
+				documentContext.setWriter( oldWriter );
+				documentContext.setErrorWriter( oldErrorWriter );
 
 				if( scriptletController != null )
-					scriptletController.finalize( scriptContext );
+					scriptletController.finalize( documentContext );
 			}
 
 			this.documentContextForInvocations = documentContext;
@@ -862,7 +830,6 @@ public class Document
 			throw new DocumentRunException( name, "Document must be run at least once before calling invoke" );
 
 		ScriptEngine scriptEngine = documentContextForInvocations.getLastScriptEngine();
-		ScriptContext scriptContext = documentContextForInvocations.getScriptContext();
 		String scriptEngineName = documentContextForInvocations.getLastScriptEngineName();
 
 		ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( scriptEngineName, name );
@@ -870,56 +837,29 @@ public class Document
 		if( !scriptletHelper.isMultiThreaded() )
 			scriptletHelper.lock.lock();
 
-		Object oldExposedDocument = scriptContext.getAttribute( documentVariableName, ScriptContext.ENGINE_SCOPE );
-		scriptContext.setAttribute( documentVariableName, new ExposedDocument( this, documentContextForInvocations, scriptEngine, container ), ScriptContext.ENGINE_SCOPE );
+		Object oldExposedDocument = documentContextForInvocations.setVariable( documentVariableName, new ExposedDocument( this, documentContextForInvocations, scriptEngine, container ) );
 
 		try
 		{
-			scriptletHelper.beforeCall( scriptEngine, scriptContext );
+			scriptletHelper.beforeCall( scriptEngine, documentContextForInvocations );
 
 			if( scriptletController != null )
-				scriptletController.initialize( scriptContext );
+				scriptletController.initialize( documentContextForInvocations );
 
 			String program = scriptletHelper.getInvocationAsProgram( this, scriptEngine, entryPointName );
-			if( program == null )
-			{
-				if( scriptEngine instanceof Invocable )
-				{
-					try
-					{
-						return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
-					}
-					catch( ScriptException x )
-					{
-						throw DocumentRunException.create( name, x );
-					}
-				}
-				else
-					throw new DocumentRunException( name, "Script engine " + scriptEngineName + " does not support invocations" );
-			}
-			else
-			{
-				try
-				{
-					return scriptEngine.eval( program );
-				}
-				catch( ScriptException x )
-				{
-					throw DocumentRunException.create( name, x );
-				}
-			}
+			return documentContextForInvocations.invoke( scriptEngine, scriptEngineName, entryPointName, name, program );
 		}
 		finally
 		{
-			scriptletHelper.afterCall( scriptEngine, scriptContext );
+			scriptletHelper.afterCall( scriptEngine, documentContextForInvocations );
 
 			if( scriptletController != null )
-				scriptletController.finalize( scriptContext );
+				scriptletController.finalize( documentContextForInvocations );
 
 			// Restore old script value (this is desirable for scripts that run
 			// other scripts)
 			if( oldExposedDocument != null )
-				scriptContext.setAttribute( documentVariableName, oldExposedDocument, ScriptContext.ENGINE_SCOPE );
+				documentContextForInvocations.setVariable( documentVariableName, oldExposedDocument );
 
 			if( !scriptletHelper.isMultiThreaded() )
 				scriptletHelper.lock.unlock();
