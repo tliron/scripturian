@@ -353,7 +353,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			documentLock.writeLock().lock();
 			try
 			{
-				D last = document;
+				D last = this.document;
 				this.document = document;
 				return last;
 			}
@@ -368,18 +368,18 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			documentLock.readLock().lock();
 			try
 			{
-				if( document != null )
-					return document;
+				if( this.document != null )
+					return this.document;
 
 				documentLock.readLock().unlock();
 				// (Might change here!)
 				documentLock.writeLock().lock();
 				try
 				{
-					if( document != null )
-						return document;
+					if( this.document != null )
+						return this.document;
 
-					D last = document;
+					D last = this.document;
 					this.document = document;
 					return last;
 				}
