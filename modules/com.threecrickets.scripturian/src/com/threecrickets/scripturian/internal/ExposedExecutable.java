@@ -14,30 +14,26 @@ package com.threecrickets.scripturian.internal;
 import java.io.Writer;
 import java.util.concurrent.ConcurrentMap;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.DocumentContext;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.ExecutionContext;
 
 /**
  * This is the <code>document</code> variable exposed to scriptlets. The name is
- * set according to {@link Document#getDocumentVariableName()}.
+ * set according to {@link Executable#getExecutableVariableName()}.
  * 
  * @author Tal Liron
- * @see Document
+ * @see Executable
  */
-public class ExposedDocument
+public class ExposedExecutable
 {
 	//
 	// Construction
 	//
 
-	public ExposedDocument( Document document, DocumentContext documentContext, ScriptEngine scriptEngine, Object container )
+	public ExposedExecutable( Executable executable, ExecutionContext executionContext, Object container )
 	{
-		this.document = document;
-		this.documentContext = documentContext;
-		this.scriptEngine = scriptEngine;
+		this.executable = executable;
+		this.executionContext = executionContext;
 		this.container = container;
 	}
 
@@ -54,11 +50,11 @@ public class ExposedDocument
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
-	 * @see Document#cacheDuration
+	 * @see Executable#cacheDuration
 	 */
 	public long getCacheDuration()
 	{
-		return document.getCacheDuration();
+		return executable.getCacheDuration();
 	}
 
 	/**
@@ -68,42 +64,19 @@ public class ExposedDocument
 	 */
 	public void setCacheDuration( long cacheDuration )
 	{
-		document.setCacheDuration( cacheDuration );
+		executable.setCacheDuration( cacheDuration );
 	}
 
 	/**
-	 * This is the {@link DocumentContext} used by the document. Scriptlets may
+	 * This is the {@link ExecutionContext} used by the document. Scriptlets may
 	 * use it to get access to the {@link Writer} objects used for standard
 	 * output and standard error.
 	 * 
 	 * @return The document context
 	 */
-	public DocumentContext getContext()
+	public ExecutionContext getContext()
 	{
-		return documentContext;
-	}
-
-	/**
-	 * This is the {@link ScriptEngine} used by the scriptlet. Scriptlets may
-	 * use it to get information about the engine's capabilities.
-	 * 
-	 * @return The script engine
-	 */
-	public ScriptEngine getEngine()
-	{
-		return scriptEngine;
-	}
-
-	/**
-	 * This is the {@link ScriptEngineManager} used to create all script engines
-	 * in the document. Scriptlets may use it to get information about what
-	 * other engines are available.
-	 * 
-	 * @return The script engine manager
-	 */
-	public ScriptEngineManager getEngineManager()
-	{
-		return documentContext.getScriptEngineManager();
+		return executionContext;
 	}
 
 	/**
@@ -130,11 +103,9 @@ public class ExposedDocument
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final Document document;
+	private final Executable executable;
 
-	private final DocumentContext documentContext;
-
-	private final ScriptEngine scriptEngine;
+	private final ExecutionContext executionContext;
 
 	private final Object container;
 }

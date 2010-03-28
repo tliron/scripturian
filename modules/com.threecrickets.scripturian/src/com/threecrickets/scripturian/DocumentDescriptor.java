@@ -45,7 +45,7 @@ public interface DocumentDescriptor<D>
 	 * The document instance. Should be null by default, as it is intended to be
 	 * set by the user of the {@link DocumentSource},
 	 * 
-	 * @return The script instance
+	 * @return The document instance
 	 */
 	public D getDocument();
 

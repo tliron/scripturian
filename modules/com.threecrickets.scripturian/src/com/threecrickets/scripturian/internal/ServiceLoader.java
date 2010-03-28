@@ -74,7 +74,24 @@ public class ServiceLoader<S> implements Iterable<S>
 				{
 					line = line.trim();
 					if( ( line.length() > 0 ) && !line.startsWith( "#" ) )
-						services.add( (S) loader.loadClass( line ).newInstance() );
+					{
+						try
+						{
+							services.add( (S) loader.loadClass( line ).newInstance() );
+						}
+						catch( InstantiationException x )
+						{
+						}
+						catch( IllegalAccessException x )
+						{
+						}
+						catch( ClassNotFoundException x )
+						{
+						}
+						catch( Exception x )
+						{
+						}
+					}
 					line = reader.readLine();
 				}
 				stream.close();
@@ -82,15 +99,6 @@ public class ServiceLoader<S> implements Iterable<S>
 			}
 		}
 		catch( IOException x )
-		{
-		}
-		catch( InstantiationException x )
-		{
-		}
-		catch( IllegalAccessException x )
-		{
-		}
-		catch( ClassNotFoundException x )
 		{
 		}
 	}

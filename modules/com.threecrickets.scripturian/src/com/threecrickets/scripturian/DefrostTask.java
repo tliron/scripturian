@@ -14,10 +14,8 @@ package com.threecrickets.scripturian;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
-import javax.script.ScriptEngineManager;
-
 /**
- * A {@link Callable} that makes sure that a {@link Document} is tied to a
+ * A {@link Callable} that makes sure that a {@link Executable} is tied to a
  * {@link DocumentDescriptor}, making it ready to use without the delay of
  * initialization, parsing, compilation, etc.
  * <p>
@@ -26,7 +24,7 @@ import javax.script.ScriptEngineManager;
  * @author Tal Liron
  * @see Defroster
  */
-public class DefrostTask implements Callable<Document>
+public class DefrostTask implements Callable<Executable>
 {
 	//
 	// Static operations
@@ -37,20 +35,20 @@ public class DefrostTask implements Callable<Document>
 	 * 
 	 * @param documentSource
 	 *        The document source
-	 * @param scriptEngineManager
+	 * @param manager
 	 *        The script engine manager to use for document initialization
 	 * @param allowCompilation
 	 *        Whether to allow compilation for initialized documents
 	 * @return An array of tasks
 	 * @see DocumentSource#getDocumentDescriptor(String)
 	 */
-	public static DefrostTask[] forDocumentSource( DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
+	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager manager, boolean allowCompilation )
 	{
-		Collection<DocumentDescriptor<Document>> documentDescriptors = documentSource.getDocumentDescriptors();
+		Collection<DocumentDescriptor<Executable>> documentDescriptors = documentSource.getDocumentDescriptors();
 		DefrostTask[] defrostTasks = new DefrostTask[documentDescriptors.size()];
 		int i = 0;
-		for( DocumentDescriptor<Document> documentDescriptor : documentDescriptors )
-			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, scriptEngineManager, allowCompilation );
+		for( DocumentDescriptor<Executable> documentDescriptor : documentDescriptors )
+			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, manager, allowCompilation );
 
 		return defrostTasks;
 	}
@@ -67,16 +65,16 @@ public class DefrostTask implements Callable<Document>
 	 * @param documentSource
 	 *        The document source, required for processing in-flow tags during
 	 *        document initialization
-	 * @param scriptEngineManager
+	 * @param manager
 	 *        The script engine manager to use for document initialization
 	 * @param allowCompilation
 	 *        Whether to allow compilation for initialized documents
 	 */
-	public DefrostTask( DocumentDescriptor<Document> documentDescriptor, DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
+	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager manager, boolean allowCompilation )
 	{
 		this.documentDescriptor = documentDescriptor;
 		this.documentSource = documentSource;
-		this.scriptEngineManager = scriptEngineManager;
+		this.manager = manager;
 		this.allowCompilation = allowCompilation;
 	}
 
@@ -84,17 +82,17 @@ public class DefrostTask implements Callable<Document>
 	// Callable
 	//
 
-	public Document call() throws Exception
+	public Executable call() throws Exception
 	{
-		Document document = documentDescriptor.getDocument();
+		Executable document = documentDescriptor.getDocument();
 
 		if( document == null )
 		{
-			String scriptEngineName = Scripturian.getScriptEngineNameByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag(), scriptEngineManager );
+			LanguageAdapter scriptEngine = manager.getAdapterByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag() );
 			String text = documentDescriptor.getText();
-			document = new Document( documentDescriptor.getDefaultName(), text, true, scriptEngineManager, scriptEngineName, documentSource, allowCompilation );
+			document = new Executable( documentDescriptor.getDefaultName(), text, false, manager, (String) scriptEngine.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), documentSource, allowCompilation );
 
-			Document existing = documentDescriptor.setDocumentIfAbsent( document );
+			Executable existing = documentDescriptor.setDocumentIfAbsent( document );
 			if( existing != null )
 				document = existing;
 		}
@@ -118,18 +116,18 @@ public class DefrostTask implements Callable<Document>
 	/**
 	 * The document descriptor.
 	 */
-	private final DocumentDescriptor<Document> documentDescriptor;
+	private final DocumentDescriptor<Executable> documentDescriptor;
 
 	/**
 	 * The document source, required for processing in-flow tags during document
 	 * initialization.
 	 */
-	private final DocumentSource<Document> documentSource;
+	private final DocumentSource<Executable> documentSource;
 
 	/**
 	 * The script engine manager to use for document initialization.
 	 */
-	private final ScriptEngineManager scriptEngineManager;
+	private final LanguageManager manager;
 
 	/**
 	 * Whether to allow compilation for initialized documents.

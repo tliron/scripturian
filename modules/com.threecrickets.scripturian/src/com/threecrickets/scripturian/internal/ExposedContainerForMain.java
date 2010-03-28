@@ -13,30 +13,30 @@ package com.threecrickets.scripturian.internal;
 
 import java.io.IOException;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.DocumentContext;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.DocumentDescriptor;
-import com.threecrickets.scripturian.MainDocument;
-import com.threecrickets.scripturian.Scripturian;
-import com.threecrickets.scripturian.exception.DocumentInitializationException;
-import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
  * This is the <code>document.container</code> variable exposed to scriptlets.
  * 
  * @author Tal Liron
- * @see MainDocument
+ * @see Main
  */
-public class ExposedContainerForMainDocument
+public class ExposedContainerForMain
 {
 	//
 	// Construction
 	//
 
-	public ExposedContainerForMainDocument( MainDocument mainDocument )
+	public ExposedContainerForMain( Main mainDocument )
 	{
 		this.mainDocument = mainDocument;
-		documentContext = new DocumentContext( mainDocument.getScriptEngineManager() );
+		executionContext = new ExecutionContext( mainDocument.getManager() );
 	}
 
 	//
@@ -60,24 +60,24 @@ public class ExposedContainerForMainDocument
 	 * @param name
 	 *        The document name
 	 * @throws IOException
-	 * @throws DocumentInitializationException
-	 * @throws DocumentRunException
+	 * @throws ExecutableInitializationException
+	 * @throws ExecutionException
 	 */
-	public void includeDocument( String name ) throws IOException, DocumentInitializationException, DocumentRunException
+	public void includeDocument( String name ) throws IOException, ExecutableInitializationException, ExecutionException
 	{
-		DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
-		Document document = documentDescriptor.getDocument();
+		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
+		Executable document = documentDescriptor.getDocument();
 		if( document == null )
 		{
 			String text = documentDescriptor.getText();
-			document = new Document( name, text, false, mainDocument.getScriptEngineManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+			document = new Executable( name, text, true, mainDocument.getManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
-			Document existing = documentDescriptor.setDocumentIfAbsent( document );
+			Executable existing = documentDescriptor.setDocumentIfAbsent( document );
 			if( existing != null )
 				document = existing;
 		}
 
-		document.run( false, false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, documentContext, this, mainDocument.getScriptletController() );
+		document.execute( false, false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	/**
@@ -88,25 +88,26 @@ public class ExposedContainerForMainDocument
 	 * @param name
 	 *        The document name
 	 * @throws IOException
-	 * @throws DocumentInitializationException
-	 * @throws DocumentRunException
+	 * @throws ExecutableInitializationException
+	 * @throws ExecutionException
 	 */
-	public void include( String name ) throws IOException, DocumentInitializationException, DocumentRunException
+	public void include( String name ) throws IOException, ExecutableInitializationException, ExecutionException
 	{
-		DocumentDescriptor<Document> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
-		Document document = documentDescriptor.getDocument();
+		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
+		Executable document = documentDescriptor.getDocument();
 		if( document == null )
 		{
-			String scriptEngineName = Scripturian.getScriptEngineNameByExtension( name, documentDescriptor.getTag(), mainDocument.getScriptEngineManager() );
+			LanguageAdapter adapter = mainDocument.getManager().getAdapterByExtension( name, documentDescriptor.getTag() );
 			String text = documentDescriptor.getText();
-			document = new Document( name, text, true, mainDocument.getScriptEngineManager(), scriptEngineName, mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
+			document = new Executable( name, text, false, mainDocument.getManager(), (String) adapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), mainDocument.getDocumentSource(), mainDocument
+				.isAllowCompilation() );
 
-			Document existing = documentDescriptor.setDocumentIfAbsent( document );
+			Executable existing = documentDescriptor.setDocumentIfAbsent( document );
 			if( existing != null )
 				document = existing;
 		}
 
-		document.run( false, false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, documentContext, this, mainDocument.getScriptletController() );
+		document.execute( false, false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	//
@@ -114,7 +115,7 @@ public class ExposedContainerForMainDocument
 	//
 
 	/**
-	 * The arguments sent to {@link MainDocument#main(String[])}.
+	 * The arguments sent to {@link Main#main(String[])}.
 	 * 
 	 * @return The arguments
 	 */
@@ -148,9 +149,9 @@ public class ExposedContainerForMainDocument
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final MainDocument mainDocument;
+	private final Main mainDocument;
 
-	private final DocumentContext documentContext;
+	private final ExecutionContext executionContext;
 
 	private String defaultEngineName = "js";
 }

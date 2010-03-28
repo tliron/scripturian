@@ -19,16 +19,10 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
-import com.threecrickets.scripturian.exception.DocumentInitializationException;
-import com.threecrickets.scripturian.exception.DocumentRunException;
-import com.threecrickets.scripturian.internal.DocumentSegment;
-import com.threecrickets.scripturian.internal.ExposedDocument;
+import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.internal.ExecutableSegment;
+import com.threecrickets.scripturian.internal.ExposedExecutable;
 
 /**
  * Handles the parsing, optional compilation and running of Scripturian
@@ -40,7 +34,7 @@ import com.threecrickets.scripturian.internal.ExposedDocument;
  * which happens only once in the constructor, the entire document is converted
  * into code and optionally compiled. When the code is run, the non-delimited
  * plain text segments are sent to output via whatever method is appropriate for
- * the scripting engine (see {@link ScriptletHelper}).
+ * the scripting engine (see {@link LanguageAdapter}).
  * <p>
  * The exception to this is documents beginning with plain text -- in such
  * cases, just that first section is sent directly to your specified output. The
@@ -48,8 +42,8 @@ import com.threecrickets.scripturian.internal.ExposedDocument;
  * yet, so we can't be sure which to use, and second, that sending in directly
  * is probably a bit faster than sending via a scriptlet. If the entire text
  * stream is just plain text, it is simply sent directly to output without
- * invoking any scriptlet. In such cases, {@link #getTrivial()} would return the
- * content of the text stream.
+ * invoking any scriptlet. In such cases, {@link #getAsPlainText()} would return
+ * the content of the text stream.
  * <p>
  * Documents are often provided by an implementation of {@link DocumentSource},
  * though your environment can use its own system.
@@ -111,7 +105,7 @@ import com.threecrickets.scripturian.internal.ExposedDocument;
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
  * <code>document</code> (this name can be changed via the
- * {@link #Document(String, String, boolean, ScriptEngineManager, String, DocumentSource, boolean)}
+ * {@link #Document(String, String, boolean, Manager, String, DocumentSource, boolean)}
  * constructor).
  * <p>
  * Read-only attributes:
@@ -119,16 +113,9 @@ import com.threecrickets.scripturian.internal.ExposedDocument;
  * <li><code>document.container</code>: This is an arbitrary object set by the
  * document's container environment for access to container-specific services.
  * It might be null if none was provided.</li>
- * <li><code>document.context</code>: This is the {@link ScriptContext} used by
- * the document. Scriptlets may use it to get access to the {@link Writer}
+ * <li><code>document.context</code>: This is the {@link DocumentContext} used
+ * by the document. Scriptlets may use it to get access to the {@link Writer}
  * objects used for standard output and standard error.</li>
- * <li><code>document.engine</code>: This is the {@link ScriptEngine} used by
- * the scriptlet. Scriptlets may use it to get information about the engine's
- * capabilities.</li>
- * <li><code>document.engineManager</code>: This is the
- * {@link ScriptEngineManager} used to create all script engines in the
- * document. Scriptlets may use it to get information about what other engines
- * are available.</li>
  * <li><code>document.meta</code>: This {@link ConcurrentMap} provides a
  * convenient location for global values shared by all scriptlets in all
  * documents.</li>
@@ -144,7 +131,7 @@ import com.threecrickets.scripturian.internal.ExposedDocument;
  * 
  * @author Tal Liron
  */
-public class Document
+public class Executable
 {
 	//
 	// Constants
@@ -187,9 +174,9 @@ public class Document
 	public static final String DEFAULT_DELIMITER_IN_FLOW = ":";
 
 	/**
-	 * The default document variable name: "document"
+	 * The default executable variable name: "executable"
 	 */
-	public static final String DEFAULT_DOCUMENT_VARIABLE_NAME = "document";
+	public static final String DEFAULT_EXECUTABLE_VARIABLE_NAME = "executable";
 
 	//
 	// Construction
@@ -198,19 +185,19 @@ public class Document
 	/**
 	 * Parses a text stream containing plain text and scriptlets into a compact,
 	 * optimized document. Parsing requires the appropriate
-	 * {@link ScriptletHelper} implementations to be installed for the script
+	 * {@link LanguageAdapter} implementations to be installed for the script
 	 * engines.
 	 * 
 	 * @param name
 	 *        Name used for error messages
-	 * @param text
+	 * @param code
 	 *        The text stream
-	 * @param isScript
+	 * @param isPlainTextWithScriptlets
 	 *        If true, the text will be parsed as a single script for
 	 *        defaultEngineName
-	 * @param scriptEngineManager
-	 *        The script engine manager used to create script engines
-	 * @param defaultEngineName
+	 * @param manager
+	 *        The Scripturian manager used to access language adapters
+	 * @param defaultLanguageTag
 	 *        If a script engine name isn't explicitly specified in the first
 	 *        scriptlet, this one will be used
 	 * @param documentSource
@@ -219,32 +206,32 @@ public class Document
 	 *        Whether script segments will be compiled (note that compilation
 	 *        will only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
-	 * @throws DocumentInitializationException
+	 * @throws ExecutableInitializationException
 	 *         In case of a parsing error
 	 */
-	public Document( String name, String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation )
-		throws DocumentInitializationException
+	public Executable( String name, String code, boolean isPlainTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation )
+		throws ExecutableInitializationException
 	{
-		this( name, text, isScript, scriptEngineManager, defaultEngineName, documentSource, allowCompilation, DEFAULT_DOCUMENT_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START,
-			DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
+		this( name, code, isPlainTextWithScriptlets, manager, defaultLanguageTag, documentSource, allowCompilation, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
+			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
 	/**
 	 * Parses a text stream containing plain text and scriptlets into a compact,
 	 * optimized document. Parsing requires the appropriate
-	 * {@link ScriptletHelper} implementations to be installed for the script
+	 * {@link LanguageAdapter} implementations to be installed for the script
 	 * engines.
 	 * 
 	 * @param name
 	 *        Name used for error messages
-	 * @param text
+	 * @param code
 	 *        The text stream
-	 * @param isScript
+	 * @param isPlainTextWithScriptlets
 	 *        If true, the text will be parsed as a single script for
 	 *        defaultEngineName
-	 * @param scriptEngineManager
-	 *        The script engine manager used to create script engines
-	 * @param defaultEngineName
+	 * @param manager
+	 *        The Scripturian manager used to access language adapters
+	 * @param defaultLanguageTag
 	 *        If a script engine name isn't explicitly specified in the first
 	 *        scriptlet, this one will be used
 	 * @param documentSource
@@ -253,7 +240,7 @@ public class Document
 	 *        Whether scriptlets will be compiled (note that compilation will
 	 *        only happen if the script engine supports it, and that what
 	 *        compilation exactly means is left up to the script engine)
-	 * @param documentVariableName
+	 * @param executableVariableName
 	 *        The document variable name
 	 * @param delimiter1Start
 	 *        The start delimiter (first option)
@@ -272,31 +259,31 @@ public class Document
 	 * @param delimiterInFlow
 	 *        The default addition to the start delimiter to specify an in-flow
 	 *        tag
-	 * @throws DocumentInitializationException
+	 * @throws ExecutableInitializationException
 	 *         In case of a parsing error
-	 * @see ScriptletHelper
+	 * @see LanguageAdapter
 	 */
-	public Document( String name, String text, boolean isScript, ScriptEngineManager scriptEngineManager, String defaultEngineName, DocumentSource<Document> documentSource, boolean allowCompilation,
-		String documentVariableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
-		throws DocumentInitializationException
+	public Executable( String name, String code, boolean isPlainTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation,
+		String executableVariableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
+		throws ExecutableInitializationException
 	{
 		this.name = name;
-		this.documentVariableName = documentVariableName;
+		this.executableVariableName = executableVariableName;
 
-		if( isScript )
+		if( !isPlainTextWithScriptlets )
 		{
-			DocumentSegment segment = new DocumentSegment( text, true, defaultEngineName );
-			segments = new DocumentSegment[]
+			ExecutableSegment segment = new ExecutableSegment( code, true, defaultLanguageTag );
+			segments = new ExecutableSegment[]
 			{
 				segment
 			};
-			segment.resolve( this, scriptEngineManager, allowCompilation );
+			segment.createScriptlet( this, manager, allowCompilation );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
 		}
 
-		String lastScriptEngineName = defaultEngineName;
+		String lastLanguageTag = defaultLanguageTag;
 
 		int delimiterStartLength = 0;
 		int delimiterEndLength = 0;
@@ -305,7 +292,7 @@ public class Document
 		int inFlowLength = delimiterInFlow.length();
 
 		// Detect type of delimiter
-		int start = text.indexOf( delimiter1Start );
+		int start = code.indexOf( delimiter1Start );
 		if( start != -1 )
 		{
 			delimiterStart = delimiter1Start;
@@ -315,7 +302,7 @@ public class Document
 		}
 		else
 		{
-			start = text.indexOf( delimiter2Start );
+			start = code.indexOf( delimiter2Start );
 			if( start != -1 )
 			{
 				delimiterStart = delimiter2Start;
@@ -331,7 +318,7 @@ public class Document
 			}
 		}
 
-		List<DocumentSegment> segments = new LinkedList<DocumentSegment>();
+		List<ExecutableSegment> segments = new LinkedList<ExecutableSegment>();
 
 		// Parse segments
 		if( start != -1 )
@@ -342,53 +329,53 @@ public class Document
 			{
 				// Add previous non-script segment
 				if( start != last )
-					segments.add( new DocumentSegment( text.substring( last, start ), false, lastScriptEngineName ) );
+					segments.add( new ExecutableSegment( code.substring( last, start ), false, lastLanguageTag ) );
 
 				start += delimiterStartLength;
 
-				int end = text.indexOf( delimiterEnd, start );
+				int end = code.indexOf( delimiterEnd, start );
 				if( end == -1 )
 					throw new RuntimeException( "Script block does not have an ending delimiter" );
 
 				if( start + 1 != end )
 				{
-					String scriptEngineName = lastScriptEngineName;
+					String languageTag = lastLanguageTag;
 
 					boolean isExpression = false;
 					boolean isInclude = false;
 					boolean isInFlow = false;
 
 					// Check if this is an expression
-					if( text.substring( start, start + expressionLength ).equals( delimiterExpression ) )
+					if( code.substring( start, start + expressionLength ).equals( delimiterExpression ) )
 					{
 						start += expressionLength;
 						isExpression = true;
 					}
 					// Check if this is an include
-					else if( text.substring( start, start + includeLength ).equals( delimiterInclude ) )
+					else if( code.substring( start, start + includeLength ).equals( delimiterInclude ) )
 					{
 						start += includeLength;
 						isInclude = true;
 					}
 					// Check if this is an in-flow
-					else if( text.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
+					else if( code.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
 					{
 						start += inFlowLength;
 						isInFlow = true;
 					}
 
 					// Get engine name if available
-					if( !Character.isWhitespace( text.charAt( start ) ) )
+					if( !Character.isWhitespace( code.charAt( start ) ) )
 					{
 						int endEngineName = start + 1;
-						while( !Character.isWhitespace( text.charAt( endEngineName ) ) )
+						while( !Character.isWhitespace( code.charAt( endEngineName ) ) )
 							endEngineName++;
 
-						scriptEngineName = text.substring( start, endEngineName );
+						languageTag = code.substring( start, endEngineName );
 
 						// Optimization: in-flow is unnecessary if we are in the
 						// same script engine
-						if( isInFlow && lastScriptEngineName.equals( scriptEngineName ) )
+						if( isInFlow && lastLanguageTag.equals( languageTag ) )
 							isInFlow = false;
 
 						start = endEngineName + 1;
@@ -399,71 +386,67 @@ public class Document
 						// Add script segment
 						if( isExpression || isInclude )
 						{
-							ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
-							if( scriptEngine == null )
-								throw DocumentInitializationException.scriptEngineNotFound( name, scriptEngineName );
-
-							ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( scriptEngineName, name );
+							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
+							if( adapter == null )
+								throw ExecutableInitializationException.adapterNotFound( name, languageTag );
 
 							if( isExpression )
-								segments.add( new DocumentSegment( scriptletHelper.getExpressionAsProgram( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new ExecutableSegment( adapter.getCodeForExpressionOutput( code.substring( start, end ), this ), true, languageTag ) );
 							else if( isInclude )
-								segments.add( new DocumentSegment( scriptletHelper.getExpressionAsInclude( this, scriptEngine, text.substring( start, end ) ), true, scriptEngineName ) );
+								segments.add( new ExecutableSegment( adapter.getCodeForExpressionInclude( code.substring( start, end ), this ), true, languageTag ) );
 						}
 						else if( isInFlow && ( documentSource != null ) )
 						{
-							ScriptEngine lastScriptEngine = scriptEngineManager.getEngineByName( lastScriptEngineName );
-							if( lastScriptEngine == null )
-								throw DocumentInitializationException.scriptEngineNotFound( name, lastScriptEngineName );
+							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
+							if( adapter == null )
+								throw ExecutableInitializationException.adapterNotFound( name, languageTag );
 
-							ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( lastScriptEngineName, name );
-
-							String inFlowText = delimiterStart + scriptEngineName + " " + text.substring( start, end ) + delimiterEnd;
+							String inFlowCode = delimiterStart + languageTag + " " + code.substring( start, end ) + delimiterEnd;
 							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
 
-							// Note that the in-flow scriptlet is a
+							// Note that the in-flow executable is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Document inFlowScript = new Document( name + "/" + inFlowName, inFlowText, false, scriptEngineManager, null, null, allowCompilation, documentVariableName, delimiterStart, delimiterEnd,
+							Executable inFlowExecutable = new Executable( name + "/" + inFlowName, inFlowCode, false, manager, null, null, allowCompilation, executableVariableName, delimiterStart, delimiterEnd,
 								delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
-							documentSource.setDocumentDescriptor( inFlowName, inFlowText, "", inFlowScript );
+							documentSource.setDocumentDescriptor( inFlowName, inFlowCode, "", inFlowExecutable );
 
 							// TODO: would it ever be possible to remove the
 							// dependent in-flow instances?
 
-							// Our include is in the last script engine
-							segments.add( new DocumentSegment( scriptletHelper.getExpressionAsInclude( this, lastScriptEngine, "'" + inFlowName + "'" ), true, lastScriptEngineName ) );
+							// Our include segment is in the last language
+							segments.add( new ExecutableSegment( adapter.getCodeForExpressionInclude( "'" + inFlowName + "'", this ), true, lastLanguageTag ) );
 						}
 						else
-							segments.add( new DocumentSegment( text.substring( start, end ), true, scriptEngineName ) );
+							segments.add( new ExecutableSegment( code.substring( start, end ), true, languageTag ) );
 					}
 
 					if( !isInFlow )
-						lastScriptEngineName = scriptEngineName;
+						lastLanguageTag = languageTag;
 				}
 
 				last = end + delimiterEndLength;
-				start = text.indexOf( delimiterStart, last );
+				start = code.indexOf( delimiterStart, last );
 			}
 
 			// Add remaining non-script segment
-			if( last < text.length() )
-				segments.add( new DocumentSegment( text.substring( last ), false, lastScriptEngineName ) );
+			if( last < code.length() )
+				segments.add( new ExecutableSegment( code.substring( last ), false, lastLanguageTag ) );
 		}
 		else
 		{
 			// Trivial file: does not include script
-			this.segments = new DocumentSegment[]
+			this.segments = new ExecutableSegment[]
 			{
-				new DocumentSegment( text, false, lastScriptEngineName )
+				new ExecutableSegment( code, false, lastLanguageTag )
 			};
 			return;
 		}
 
 		// Collapse segments of same kind
-		DocumentSegment previous = null;
-		DocumentSegment current;
-		for( Iterator<DocumentSegment> i = segments.iterator(); i.hasNext(); )
+		ExecutableSegment previous = null;
+		ExecutableSegment current;
+		for( Iterator<ExecutableSegment> i = segments.iterator(); i.hasNext(); )
 		{
 			current = i.next();
 
@@ -471,11 +454,11 @@ public class Document
 			{
 				if( previous.isScriptlet == current.isScriptlet )
 				{
-					if( current.scriptEngineName.equals( previous.scriptEngineName ) )
+					if( current.languageTag.equals( previous.languageTag ) )
 					{
 						// Collapse current into previous
 						i.remove();
-						previous.text += current.text;
+						previous.code += current.code;
 						current = previous;
 					}
 				}
@@ -488,27 +471,25 @@ public class Document
 		// (does not convert first segment into script if it isn't one -- that's
 		// good)
 		previous = null;
-		for( Iterator<DocumentSegment> i = segments.iterator(); i.hasNext(); )
+		for( Iterator<ExecutableSegment> i = segments.iterator(); i.hasNext(); )
 		{
 			current = i.next();
 
 			if( ( previous != null ) && previous.isScriptlet )
 			{
-				if( previous.scriptEngineName.equals( current.scriptEngineName ) )
+				if( previous.languageTag.equals( current.languageTag ) )
 				{
 					// Collapse current into previous
 					// (converting to script if necessary)
 					i.remove();
 
 					if( current.isScriptlet )
-						previous.text += current.text;
+						previous.code += current.code;
 					else
 					{
-						ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( current.scriptEngineName );
-						if( scriptEngine == null )
-							throw DocumentInitializationException.scriptEngineNotFound( name, current.scriptEngineName );
-
-						ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( current.scriptEngineName, name );
+						LanguageAdapter adapter = manager.getAdapterByTag( current.languageTag );
+						if( adapter == null )
+							throw ExecutableInitializationException.adapterNotFound( name, current.languageTag );
 
 						// ScriptEngineFactory factory =
 						// scriptEngine.getFactory();
@@ -518,7 +499,7 @@ public class Document
 						// scriptEngine,
 						// current.text ) ) );
 
-						previous.text += scriptletHelper.getTextAsProgram( this, scriptEngine, current.text );
+						previous.code += adapter.getCodeForLiteralOutput( current.code, this );
 					}
 
 					current = previous;
@@ -528,12 +509,13 @@ public class Document
 			previous = current;
 		}
 
-		// Process scriptlets
-		for( DocumentSegment segment : segments )
+		// Resolve scriptlets
+		for( ExecutableSegment segment : segments )
 			if( segment.isScriptlet )
-				segment.resolve( this, scriptEngineManager, allowCompilation );
+				segment.createScriptlet( this, manager, allowCompilation );
 
-		this.segments = new DocumentSegment[segments.size()];
+		// Flatten
+		this.segments = new ExecutableSegment[segments.size()];
 		segments.toArray( this.segments );
 	}
 
@@ -574,11 +556,11 @@ public class Document
 	}
 
 	/**
-	 * The default variable name for the {@link ExposedDocument} instance.
+	 * The default variable name for the {@link ExposedExecutable} instance.
 	 */
-	public String getDocumentVariableName()
+	public String getExecutableVariableName()
 	{
-		return documentVariableName;
+		return executableVariableName;
 	}
 
 	/**
@@ -596,7 +578,7 @@ public class Document
 	 * Setting this to something greater than 0 enables caching of the script
 	 * results for a maximum number of milliseconds. By default cacheDuration is
 	 * 0, so that each call to
-	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * causes the script to be run. This class does not handle caching itself.
 	 * Caching can be provided by your environment if appropriate.
 	 * <p>
@@ -640,31 +622,31 @@ public class Document
 	/**
 	 * Trivial documents have no scriptlets, meaning that they are pure text.
 	 * Identifying such documents can save you from making unnecessary calls to
-	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * in some situations.
 	 * 
 	 * @return The text content if it's trivial, null if not
 	 */
-	public String getTrivial()
+	public String getAsPlainText()
 	{
 		if( segments.length == 1 )
 		{
-			DocumentSegment sole = segments[0];
+			ExecutableSegment sole = segments[0];
 			if( !sole.isScriptlet )
-				return sole.text;
+				return sole.code;
 		}
 		return null;
 	}
 
 	/**
-	 * The document context to be used for calls to
-	 * {@link #invoke(String, Object, ScriptletController)}.
+	 * The execution context to be used for calls to
+	 * {@link #invoke(String, Object, ExecutionController)}.
 	 * 
-	 * @return The document context
+	 * @return The execution context
 	 */
-	public DocumentContext getDocumentContextForInvocations()
+	public ExecutionContext getExecutionContextForInvocations()
 	{
-		return documentContextForInvocations;
+		return executionContextForInvocations;
 	}
 
 	//
@@ -680,7 +662,7 @@ public class Document
 	 * this accordingly if you wish to support caching.
 	 * <p>
 	 * If you intend to run the document multiple times from the same thread, it
-	 * is recommended that you use the same {@link DocumentContext} for each
+	 * is recommended that you use the same {@link ExecutionContext} for each
 	 * call for better performance.
 	 * 
 	 * @param checkRan
@@ -694,21 +676,21 @@ public class Document
 	 *        Standard error output
 	 * @param flushLines
 	 *        Whether to flush the writers after every line
-	 * @param documentContext
+	 * @param executionContext
 	 *        The context
 	 * @param container
 	 *        The container (can be null)
-	 * @param scriptletController
-	 *        An optional {@link ScriptletController} to be applied to the
+	 * @param executionController
+	 *        An optional {@link ExecutionController} to be applied to the
 	 *        script context
 	 * @return True if the script ran, false if it didn't run, because the
 	 *         cached output is expected to be used instead
-	 * @throws DocumentInitializationException
-	 * @throws DocumentRunException
+	 * @throws ExecutableInitializationException
+	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean run( boolean checkRan, boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, DocumentContext documentContext, Object container, ScriptletController scriptletController )
-		throws DocumentInitializationException, DocumentRunException, IOException
+	public boolean execute( boolean checkRan, boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, ExecutionContext executionContext, Object container, ExecutionController executionController )
+		throws ExecutableInitializationException, ExecutionException, IOException
 	{
 		if( checkRan )
 		{
@@ -725,62 +707,59 @@ public class Document
 		}
 		else
 		{
-			Writer oldWriter = documentContext.setWriter( writer, flushLines );
-			Writer oldErrorWriter = documentContext.setErrorWriter( writer, flushLines );
+			Writer oldWriter = executionContext.setWriter( writer, flushLines );
+			Writer oldErrorWriter = executionContext.setErrorWriter( writer, flushLines );
 
-			if( scriptletController != null )
-				scriptletController.initialize( documentContext );
+			if( executionController != null )
+				executionController.initialize( executionContext );
 
 			try
 			{
-				for( DocumentSegment segment : segments )
+				for( ExecutableSegment segment : segments )
 				{
 					if( !segment.isScriptlet )
-						writer.write( segment.text );
+						// Plain text
+						writer.write( segment.code );
 					else
 					{
-						ScriptEngine scriptEngine = documentContext.getScriptEngine( segment.scriptEngineName, name );
-						ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( segment.scriptEngineName, name );
+						LanguageAdapter adapter = executionContext.getManager().getAdapterByTag( segment.languageTag );
+						if( adapter == null )
+							throw ExecutableInitializationException.adapterNotFound( name, segment.languageTag );
 
-						if( !scriptletHelper.isMultiThreaded() )
-							scriptletHelper.lock.lock();
+						executionContext.setAdapter( adapter );
 
-						Object oldExposedDocument = documentContext.setVariable( documentVariableName, new ExposedDocument( this, documentContext, scriptEngine, container ) );
+						if( !adapter.isThreadSafe() )
+							adapter.lock.lock();
+
+						Object oldExposedExecutable = executionContext.getExposedVariables().put( executableVariableName, new ExposedExecutable( this, executionContext, container ) );
 
 						try
 						{
-							scriptletHelper.beforeCall( scriptEngine, documentContext );
-
-							Object value = documentContext.call( scriptEngine, segment.compiledScript, name, segment.text );
-
-							if( ( value != null ) && scriptletHelper.isPrintOnEval() )
-								writer.write( value.toString() );
+							segment.scriptlet.execute( executionContext );
 						}
 						finally
 						{
-							scriptletHelper.afterCall( scriptEngine, documentContext );
-
 							// Restore old document value (this is desirable for
 							// documents that run other documents)
-							if( oldExposedDocument != null )
-								documentContext.setVariable( documentVariableName, oldExposedDocument );
+							if( oldExposedExecutable != null )
+								executionContext.getExposedVariables().put( executableVariableName, oldExposedExecutable );
 
-							if( !scriptletHelper.isMultiThreaded() )
-								scriptletHelper.lock.unlock();
+							if( !adapter.isThreadSafe() )
+								adapter.lock.unlock();
 						}
 					}
 				}
 			}
 			finally
 			{
-				documentContext.setWriter( oldWriter );
-				documentContext.setErrorWriter( oldErrorWriter );
+				executionContext.setWriter( oldWriter );
+				executionContext.setErrorWriter( oldErrorWriter );
 
-				if( scriptletController != null )
-					scriptletController.finalize( documentContext );
+				if( executionController != null )
+					executionController.finalize( executionContext );
 			}
 
-			this.documentContextForInvocations = documentContext;
+			this.executionContextForInvocations = executionContext;
 			lastRun = now;
 			return true;
 		}
@@ -790,79 +769,68 @@ public class Document
 	 * Calls an entry point in the document: a function, method, closure, etc.,
 	 * according to how the script engine and its language handles invocations.
 	 * If not, then this method requires the appropriate {@link ScriptletHelper}
-	 * implementation to be installed for the script engine. Most likely, the
-	 * script engine supports the {@link Invocable} interface. Running the
-	 * script first (via
-	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * implementation to be installed for the script engine. Running the script
+	 * first (via
+	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * ) is not absolutely required, but probably will be necessary in most
 	 * useful scenarios, where running the script causes useful entry point to
 	 * be defined.
 	 * <p>
 	 * Note that this call does not support sending arguments. If you need to
 	 * pass data to the script, use a global variable, which you can set via the
-	 * optional {@link ScriptletController}.
+	 * optional {@link ExecutionController}.
 	 * <p>
 	 * Concurrency note: The invoke mechanism allows for multi-threaded access,
 	 * so it's the responsibility of your script to be thread-safe. Also note
-	 * that, internally, invoke relies on the {@link DocumentContext} from
-	 * {@link #getDocumentContextForInvocations()}. This is set to be the one
+	 * that, internally, invoke relies on the {@link ExecutionContext} from
+	 * {@link #getExecutionContextForInvocations()}. This is set to be the one
 	 * used in the last call to
-	 * {@link #run(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
 	 * @param container
 	 *        The container (can be null)
-	 * @param scriptletController
-	 *        An optional {@link ScriptletController} to be applied to the
+	 * @param executionController
+	 *        An optional {@link ExecutionController} to be applied to the
 	 *        script context
 	 * @return The value returned by the invocation
-	 * @throws DocumentInitializationException
-	 * @throws DocumentRunException
+	 * @throws ExecutableInitializationException
+	 * @throws ExecutionException
 	 * @throws NoSuchMethodException
-	 *         Note that this exception will only be thrown if the script engine
-	 *         supports the {@link Invocable} interface; otherwise a
-	 *         {@link ScriptException} is thrown if the method is not found
+	 *         If the method is not found
 	 */
-	public Object invoke( String entryPointName, Object container, ScriptletController scriptletController ) throws DocumentInitializationException, DocumentRunException, NoSuchMethodException
+	public Object invoke( String entryPointName, Object container, ExecutionController executionController ) throws ExecutableInitializationException, ExecutionException, NoSuchMethodException
 	{
-		if( documentContextForInvocations == null )
-			throw new DocumentRunException( name, "Document must be run at least once before calling invoke" );
+		if( executionContextForInvocations == null )
+			throw new ExecutionException( name, "Document must be run at least once before calling invoke" );
 
-		ScriptEngine scriptEngine = documentContextForInvocations.getLastScriptEngine();
-		String scriptEngineName = documentContextForInvocations.getLastScriptEngineName();
+		LanguageAdapter adapter = executionContextForInvocations.getAdapter();
 
-		ScriptletHelper scriptletHelper = Scripturian.getScriptletHelper( scriptEngineName, name );
+		if( !adapter.isThreadSafe() )
+			adapter.lock.lock();
 
-		if( !scriptletHelper.isMultiThreaded() )
-			scriptletHelper.lock.lock();
-
-		Object oldExposedDocument = documentContextForInvocations.setVariable( documentVariableName, new ExposedDocument( this, documentContextForInvocations, scriptEngine, container ) );
+		Object oldExposedExecutable = executionContextForInvocations.getExposedVariables().put( executableVariableName, new ExposedExecutable( this, executionContextForInvocations, container ) );
 
 		try
 		{
-			scriptletHelper.beforeCall( scriptEngine, documentContextForInvocations );
+			if( executionController != null )
+				executionController.initialize( executionContextForInvocations );
 
-			if( scriptletController != null )
-				scriptletController.initialize( documentContextForInvocations );
-
-			String program = scriptletHelper.getInvocationAsProgram( this, scriptEngine, entryPointName );
-			return documentContextForInvocations.invoke( scriptEngine, scriptEngineName, entryPointName, name, program );
+			return adapter.invoke( entryPointName, this, executionContextForInvocations );
 		}
 		finally
 		{
-			scriptletHelper.afterCall( scriptEngine, documentContextForInvocations );
-
-			if( scriptletController != null )
-				scriptletController.finalize( documentContextForInvocations );
+			if( executionController != null )
+				executionController.finalize( executionContextForInvocations );
 
 			// Restore old script value (this is desirable for scripts that run
 			// other scripts)
-			if( oldExposedDocument != null )
-				documentContextForInvocations.setVariable( documentVariableName, oldExposedDocument );
+			if( oldExposedExecutable != null )
+				executionContextForInvocations.getExposedVariables().put( executableVariableName, oldExposedExecutable );
 
-			if( !scriptletHelper.isMultiThreaded() )
-				scriptletHelper.lock.unlock();
+			if( !adapter.isThreadSafe() )
+				adapter.lock.unlock();
 		}
 	}
 
@@ -875,17 +843,17 @@ public class Document
 
 	final String name;
 
-	private final DocumentSegment[] segments;
+	private final ExecutableSegment[] segments;
 
 	private final String delimiterStart;
 
 	private final String delimiterEnd;
 
-	private final String documentVariableName;
+	private final String executableVariableName;
 
 	private volatile long cacheDuration = 0;
 
 	private volatile long lastRun = 0;
 
-	private volatile DocumentContext documentContextForInvocations;
+	private volatile ExecutionContext executionContextForInvocations;
 }

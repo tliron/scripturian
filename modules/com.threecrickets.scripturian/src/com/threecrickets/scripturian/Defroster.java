@@ -21,8 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.script.ScriptEngineManager;
-
 /**
  * @author Tal Liron
  */
@@ -37,16 +35,16 @@ public class Defroster
 	 * 
 	 * @param documentSource
 	 *        The document source
-	 * @param scriptEngineManager
+	 * @param manager
 	 *        The script engine manager to use for document initialization
 	 * @param allowCompilation
 	 *        Whether to allow compilation for initialized documents
 	 */
-	public Defroster( DocumentSource<Document> documentSource, ScriptEngineManager scriptEngineManager, boolean allowCompilation )
+	public Defroster( DocumentSource<Executable> documentSource, LanguageManager manager, boolean allowCompilation )
 	{
 		super();
 		this.documentSource = documentSource;
-		this.scriptEngineManager = scriptEngineManager;
+		this.manager = manager;
 		this.allowCompilation = allowCompilation;
 	}
 
@@ -57,15 +55,15 @@ public class Defroster
 	/**
 	 * @return
 	 */
-	public ScriptEngineManager getScriptEngineManager()
+	public LanguageManager getManager()
 	{
-		return scriptEngineManager;
+		return manager;
 	}
 
 	/**
 	 * @return
 	 */
-	public DocumentSource<Document> getDocumentSource()
+	public DocumentSource<Executable> getDocumentSource()
 	{
 		return documentSource;
 	}
@@ -156,12 +154,12 @@ public class Defroster
 	/**
 	 * The document source.
 	 */
-	private final DocumentSource<Document> documentSource;
+	private final DocumentSource<Executable> documentSource;
 
 	/**
 	 * The script engine manager to use for document initialization.
 	 */
-	private final ScriptEngineManager scriptEngineManager;
+	private final LanguageManager manager;
 
 	/**
 	 * Whether to allow compilation for initialized documents.
@@ -186,15 +184,15 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Document>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, scriptEngineManager, allowCompilation );
-			List<Future<Document>> futures;
+			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, manager, allowCompilation );
+			List<Future<Executable>> futures;
 			try
 			{
 				futures = executorService.invokeAll( Arrays.asList( defrostTasks ) );
 
 				if( block )
 				{
-					for( Future<Document> future : futures )
+					for( Future<Executable> future : futures )
 					{
 						try
 						{

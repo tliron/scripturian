@@ -18,14 +18,14 @@ import java.io.Writer;
 
 import javax.script.ScriptEngineManager;
 
-import com.threecrickets.scripturian.exception.DocumentInitializationException;
-import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.StackFrame;
 import com.threecrickets.scripturian.file.DocumentFileSource;
-import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
+import com.threecrickets.scripturian.internal.ExposedContainerForMain;
 
 /**
- * Delegates the main() call to a {@link Document}, in effect using it as the
+ * Delegates the main() call to a {@link Executable}, in effect using it as the
  * entry point of a Java platform application. The path to the document file can
  * be supplied as the first argument. If it's not supplied, {@link #defaultName}
  * is used instead.
@@ -37,7 +37,7 @@ import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
  * A special container environment is created for scriptlets, with some useful
  * services. It is available to code as a global variable named
  * <code>document.container</code>. For some other global variables, see
- * {@link Document}.
+ * {@link Executable}.
  * <p>
  * Operations:
  * <ul>
@@ -71,47 +71,48 @@ import com.threecrickets.scripturian.internal.ExposedContainerForMainDocument;
  * to "js". Scriptlets can change this value.</li>
  * </ul>
  * <p>
- * In addition to the above, a {@link #scriptletController} can be set to add
+ * In addition to the above, a {@link #executionController} can be set to add
  * your own global variables to scriptlets.
  * 
  * @author Tal Liron
  */
-public class MainDocument implements Runnable
+public class Main implements Runnable
 {
 	//
 	// Static operations
 	//
 
 	/**
-	 * Delegates to an {@link Document} file specified by the first argument, or
-	 * to {@link MainDocument#defaultName} if not specified.
+	 * Delegates to an {@link Executable} file specified by the first argument,
+	 * or to {@link Main#defaultName} if not specified.
 	 * 
 	 * @param arguments
 	 *        Supplied arguments (usually from a command line)
 	 */
 	public static void main( String[] arguments )
 	{
-		new MainDocument( arguments ).run();
+		new Main( arguments ).run();
 	}
 
 	//
 	// Construction
 	//
 
-	public MainDocument( String[] arguments )
+	public Main( String[] arguments )
 	{
 		this.arguments = arguments;
 
 		// Fixes problems with JRuby
-		System.setProperty( "org.jruby.embed.localcontext.scope", "threadsafe" );
+		// System.setProperty( "org.jruby.embed.localcontext.scope",
+		// "threadsafe" );
 		//System.setProperty( "org.jruby.embed.localcontext.scope", "singlethread" );
 
-		scriptEngineManager = new ScriptEngineManager();
+		manager = new LanguageManager();
 		allowCompilation = false;
 		defaultName = "default";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Document>( new File( "." ), defaultName, -1 );
+		documentSource = new DocumentFileSource<Executable>( new File( "." ), defaultName, -1 );
 	}
 
 	//
@@ -119,7 +120,7 @@ public class MainDocument implements Runnable
 	//
 
 	/**
-	 * The arguments sent to {@link MainDocument#main(String[])}.
+	 * The arguments sent to {@link Main#main(String[])}.
 	 * 
 	 * @return The arguments
 	 */
@@ -134,9 +135,9 @@ public class MainDocument implements Runnable
 	 * 
 	 * @return The script engine manager
 	 */
-	public ScriptEngineManager getScriptEngineManager()
+	public LanguageManager getManager()
 	{
-		return scriptEngineManager;
+		return manager;
 	}
 
 	/**
@@ -163,7 +164,7 @@ public class MainDocument implements Runnable
 	}
 
 	/**
-	 * The writer to use for {@link Document}.
+	 * The writer to use for {@link Executable}.
 	 * 
 	 * @return The writer
 	 */
@@ -183,24 +184,24 @@ public class MainDocument implements Runnable
 	}
 
 	/**
-	 * An optional {@link ScriptletController} to be used with scriptlets.
+	 * An optional {@link ExecutionController} to be used with scriptlets.
 	 * Useful for adding your own global variables to scriptlets.
 	 * 
 	 * @return The scriptlet controller
-	 * @see #setScriptletController(ScriptletController)
+	 * @see #setScriptletController(ExecutionController)
 	 */
-	public ScriptletController getScriptletController()
+	public ExecutionController getScriptletController()
 	{
-		return scriptletController;
+		return executionController;
 	}
 
 	/**
-	 * @param scriptletController
+	 * @param executionController
 	 * @see #getScriptletController()
 	 */
-	public void setScriptletController( ScriptletController scriptletController )
+	public void setScriptletController( ExecutionController executionController )
 	{
-		this.scriptletController = scriptletController;
+		this.executionController = executionController;
 	}
 
 	/**
@@ -210,7 +211,7 @@ public class MainDocument implements Runnable
 	 * @return The document source
 	 * @see #setDocumentSource(DocumentSource)
 	 */
-	public DocumentSource<Document> getDocumentSource()
+	public DocumentSource<Executable> getDocumentSource()
 	{
 		return documentSource;
 	}
@@ -220,7 +221,7 @@ public class MainDocument implements Runnable
 	 *        The document source
 	 * @see #getDocumentSource()
 	 */
-	public void setDocumentSource( DocumentSource<Document> documentSource )
+	public void setDocumentSource( DocumentSource<Executable> documentSource )
 	{
 		this.documentSource = documentSource;
 	}
@@ -239,7 +240,7 @@ public class MainDocument implements Runnable
 
 		try
 		{
-			ExposedContainerForMainDocument container = new ExposedContainerForMainDocument( this );
+			ExposedContainerForMain container = new ExposedContainerForMain( this );
 			container.include( name );
 			writer.flush();
 			errorWriter.flush();
@@ -249,12 +250,12 @@ public class MainDocument implements Runnable
 			System.err.print( "Error reading document file \"" + name + "\": " );
 			System.err.println( x.getMessage() );
 		}
-		catch( DocumentInitializationException x )
+		catch( ExecutableInitializationException x )
 		{
 			System.err.print( "Init error: " );
 			System.err.println( x.getMessage() );
 		}
-		catch( DocumentRunException x )
+		catch( ExecutionException x )
 		{
 			System.err.print( "Run error: " );
 			System.err.println( " " + x.getMessage() );
@@ -274,7 +275,7 @@ public class MainDocument implements Runnable
 
 	private final String[] arguments;
 
-	private final ScriptEngineManager scriptEngineManager;
+	private final LanguageManager manager;
 
 	private final boolean allowCompilation;
 
@@ -284,7 +285,7 @@ public class MainDocument implements Runnable
 
 	private final Writer errorWriter;
 
-	private volatile ScriptletController scriptletController;
+	private volatile ExecutionController executionController;
 
-	private volatile DocumentSource<Document> documentSource;
+	private volatile DocumentSource<Executable> documentSource;
 }

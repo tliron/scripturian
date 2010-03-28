@@ -9,18 +9,20 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
 
+import java.util.Collection;
+
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.DocumentContext;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.ExecutionContext;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
 /**
- * An {@link ScriptletHelper} that supports the <a
+ * An {@link LanguageAdapter} that supports the <a
  * href="http://groovy.codehaus.org/">Groovy</a> scripting language.
  * 
  * @author Tal Liron
@@ -29,28 +31,31 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"groovy", "Groovy"
 })
-@ScriptEnginePriorityExtensions(
-{
-	"gv"
-})
-public class GroovyScriptletHelper extends ScriptletHelper
+public class GroovyAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// ScriptletHelper
 	//
 
+	@SuppressWarnings("unchecked")
+	public GroovyAdapter() throws LanguageInitializationException
+	{
+		super();
+		( (Collection<String>) getAttributes().get( EXTENSIONS ) ).add( "gv" );
+	}
+
 	@Override
-	public void afterCall( ScriptEngine scriptEngine, DocumentContext documentContext )
+	public void afterCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
 	{
 		// There's a bug in Groovy's script engine implementation (as of
 		// version 1.6) that makes it lose the connection between the
 		// script's output and our script context writer in some cases. This
 		// makes sure that they are connected.
-		documentContext.setVariable( "out", documentContext.getWriter() );
+		scriptEngine.getContext().setAttribute( "out", executionContext.getWriter(), ScriptContext.ENGINE_SCOPE );
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\'", "\\\\'" );
@@ -58,15 +63,15 @@ public class GroovyScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
+		return document.getExecutableVariableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	@Override

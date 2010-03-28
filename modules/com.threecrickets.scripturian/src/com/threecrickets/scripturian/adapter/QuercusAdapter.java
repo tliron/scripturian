@@ -9,16 +9,16 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
 /**
- * An {@link ScriptletHelper} that supports the PHP scripting language as
+ * An {@link LanguageAdapter} that supports the PHP scripting language as
  * implemented by <a href="http://quercus.caucho.com/">Quercus</a>.
  * <p>
  * Note the peculiarity of the "include" implementation -- due to limitations of
@@ -33,26 +33,31 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"quercus", "php"
 })
-public class QuercusScriptletHelper extends ScriptletHelper
+public class QuercusAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// ScriptletHelper
 	//
 
+	public QuercusAdapter() throws LanguageInitializationException
+	{
+		super();
+	}
+
 	@Override
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
 	{
 		return "<?php";
 	}
 
 	@Override
-	public String getScriptletFooter( Document document, ScriptEngine scriptEngine )
+	public String getScriptletFooter( Executable document, ScriptEngine scriptEngine )
 	{
 		return "?>";
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -60,19 +65,19 @@ public class QuercusScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return "include $" + document.getDocumentVariableName() + "->container->source->basePath . '/' . " + content + ";";
+		return "include $" + document.getExecutableVariableName() + "->container->source->basePath . '/' . " + content + ";";
 	}
 
 	@Override
-	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "<?php " + content + "(); ?>";
 	}

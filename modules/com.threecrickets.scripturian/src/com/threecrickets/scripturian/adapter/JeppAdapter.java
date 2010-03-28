@@ -9,18 +9,18 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.DocumentContext;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.ExecutionContext;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
 /**
- * An {@link ScriptletHelper} that supports the Python scripting language as
+ * An {@link LanguageAdapter} that supports the Python scripting language as
  * implemented by <a href="http://jepp.sourceforge.net/">Jepp</a>.
  * 
  * @author Tal Liron
@@ -29,14 +29,19 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"jepp", "jep"
 })
-public class JeppScriptletHelper extends ScriptletHelper
+public class JeppAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// ScriptletHelper
 	//
 
+	public JeppAdapter() throws LanguageInitializationException
+	{
+		super();
+	}
+
 	@Override
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
 	{
 		// Apparently the Java Scripting support for Jepp does not correctly
 		// set global variables, not redirect stdout and stderr. Luckily, the
@@ -46,10 +51,10 @@ public class JeppScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public void beforeCall( ScriptEngine scriptEngine, DocumentContext documentContext )
+	public void beforeCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
 	{
 		StringBuilder r = new StringBuilder();
-		for( String var : documentContext.getVariableNames() )
+		for( String var : executionContext.getExposedVariables().keySet() )
 		{
 			r.append( var );
 			r.append( "=context.getAttribute('" );
@@ -67,7 +72,7 @@ public class JeppScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -75,14 +80,14 @@ public class JeppScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".getContainer().includeDocument(" + content + ");";
+		return document.getExecutableVariableName() + ".getContainer().includeDocument(" + content + ");";
 	}
 }

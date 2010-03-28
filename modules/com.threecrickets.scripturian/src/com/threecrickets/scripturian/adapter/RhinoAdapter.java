@@ -9,23 +9,22 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
-import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
- * An {@link ScriptletHelper} that supports the JavaScript scripting
- * language as implemented by <a href="http://www.mozilla.org/rhino/">Rhino</a>.
+ * An {@link LanguageAdapter} that supports the JavaScript scripting language as
+ * implemented by <a href="http://www.mozilla.org/rhino/">Rhino</a>.
  * 
  * @author Tal Liron
  */
@@ -33,24 +32,35 @@ import com.threecrickets.scripturian.exception.StackFrame;
 {
 	"rhino-nonjdk", "rhino", "js", "javascript", "JavaScript", "ecmascript", "ECMAScript"
 })
-@ScriptEnginePriorityExtensions(
-{
-	"js"
-})
-public class RhinoScriptletHelper extends ScriptletHelper
+public class RhinoAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// Construction
 	//
 
-	public RhinoScriptletHelper() throws ClassNotFoundException, SecurityException, NoSuchMethodException
+	public RhinoAdapter() throws LanguageInitializationException
 	{
-		wrappedExceptionClass = getClass().getClassLoader().loadClass( "org.mozilla.javascript.WrappedException" );
-		wrappedExceptionGetWrappedExceptionMethod = wrappedExceptionClass.getMethod( "getWrappedException" );
-		rhinoExceptionClass = getClass().getClassLoader().loadClass( "org.mozilla.javascript.RhinoException" );
-		rhinoExceptionDetailsMethod = rhinoExceptionClass.getMethod( "details" );
-		rhinoExceptionLineNumberMethod = rhinoExceptionClass.getMethod( "lineNumber" );
-		rhinoExceptionColumnNumberMethod = rhinoExceptionClass.getMethod( "columnNumber" );
+		try
+		{
+			wrappedExceptionClass = getClass().getClassLoader().loadClass( "org.mozilla.javascript.WrappedException" );
+			wrappedExceptionGetWrappedExceptionMethod = wrappedExceptionClass.getMethod( "getWrappedException" );
+			rhinoExceptionClass = getClass().getClassLoader().loadClass( "org.mozilla.javascript.RhinoException" );
+			rhinoExceptionDetailsMethod = rhinoExceptionClass.getMethod( "details" );
+			rhinoExceptionLineNumberMethod = rhinoExceptionClass.getMethod( "lineNumber" );
+			rhinoExceptionColumnNumberMethod = rhinoExceptionClass.getMethod( "columnNumber" );
+		}
+		catch( ClassNotFoundException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
+		catch( SecurityException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
+		catch( NoSuchMethodException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
 	}
 
 	//
@@ -58,7 +68,7 @@ public class RhinoScriptletHelper extends ScriptletHelper
 	//
 
 	@Override
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
 	{
 		// Rhino's default implementation of print() is annoyingly a println().
 		// This will fix it.
@@ -66,7 +76,7 @@ public class RhinoScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\'", "\\\\'" );
@@ -74,15 +84,15 @@ public class RhinoScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
+		return document.getExecutableVariableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	@Override
@@ -115,7 +125,7 @@ public class RhinoScriptletHelper extends ScriptletHelper
 				String details = (String) rhinoExceptionDetailsMethod.invoke( throwable );
 				int lineNumber = (Integer) rhinoExceptionLineNumberMethod.invoke( throwable );
 				int columnNumber = (Integer) rhinoExceptionColumnNumberMethod.invoke( throwable );
-				return new DocumentRunException( details, new StackFrame( documentName, lineNumber, columnNumber ) );
+				return new ExecutionException( details, new StackFrame( documentName, lineNumber, columnNumber ) );
 			}
 			catch( IllegalArgumentException x )
 			{

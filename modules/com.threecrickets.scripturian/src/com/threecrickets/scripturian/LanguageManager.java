@@ -1,0 +1,133 @@
+/**
+ * Copyright 2009-2010 Three Crickets LLC.
+ * <p>
+ * The contents of this file are subject to the terms of the LGPL version 3.0:
+ * http://www.opensource.org/licenses/lgpl-3.0.html
+ * <p>
+ * Alternatively, you can obtain a royalty free commercial license with less
+ * limitations, transferable or non-transferable, directly from Three Crickets
+ * at http://threecrickets.com/
+ */
+
+package com.threecrickets.scripturian;
+
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
+
+import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.internal.ServiceLoader;
+
+/**
+ * Shared static attributes for Scripturian.
+ * 
+ * @author Tal Liron
+ */
+public class LanguageManager
+{
+	//
+	// Construction
+	//
+
+	@SuppressWarnings("unchecked")
+	public LanguageManager()
+	{
+		// Initialize adapters
+		ServiceLoader<LanguageAdapter> adapterLoader = ServiceLoader.load( LanguageAdapter.class );
+		for( LanguageAdapter adapter : adapterLoader )
+		{
+			try
+			{
+				adapters.add( adapter );
+
+				Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
+				for( String tag : tags )
+					adapterByTag.put( tag, adapter );
+
+				Iterable<String> extensions = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.EXTENSIONS );
+				for( String extension : extensions )
+					adapterByExtension.put( extension, adapter );
+			}
+			catch( Throwable x )
+			{
+				throw new RuntimeException( "Could not initialize " + adapter, x );
+			}
+		}
+	}
+
+	//
+	// Attributes
+	//
+
+	public ConcurrentMap<String, Object> getAttributes()
+	{
+		return attributes;
+	}
+
+	public LanguageAdapter getAdapterByTag( String tag ) throws ExecutableInitializationException
+	{
+		return adapterByTag.get( tag );
+	}
+
+	public Collection<LanguageAdapter> getAdapters()
+	{
+		return adapters;
+	}
+
+	public LanguageAdapter getAdapterByExtension( String name, String defaultExtension ) throws ExecutableInitializationException
+	{
+		int slash = name.lastIndexOf( '/' );
+		if( slash != -1 )
+			name = name.substring( slash + 1 );
+
+		int dot = name.lastIndexOf( '.' );
+		String extension = dot != -1 ? name.substring( dot + 1 ) : defaultExtension;
+		if( extension == null )
+			throw new ExecutableInitializationException( name, "Name must have an extension" );
+
+		return adapterByExtension.get( extension );
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	private final CopyOnWriteArraySet<LanguageAdapter> adapters = new CopyOnWriteArraySet<LanguageAdapter>();
+
+	/**
+	 * A map of script engine names to their {@link LanguageAdapter}. Note that
+	 * Scripturian documents will not work without the appropriate adapters
+	 * installed.
+	 * <p>
+	 * This map is automatically initialized when this class loads according to
+	 * resources named
+	 * <code>META-INF/services/com.threecrickets.scripturian.ScripturianAdapter</code>
+	 * . Each resource is a simple text file with class names, one per line.
+	 * Each class listed must implement the {@link LanguageAdapter} interface.
+	 * <p>
+	 * You may also manipulate this map yourself, adding and removing helpers as
+	 * necessary.
+	 * <p>
+	 * The default implementation of this library already contains a few useful
+	 * adapter, under the com.threecrickets.scripturian.adapter package.
+	 */
+	private final ConcurrentMap<String, LanguageAdapter> adapterByTag = new ConcurrentHashMap<String, LanguageAdapter>();
+
+	/**
+	 * Map of extensions named to script engine names. For Scripturian, these
+	 * mappings supplement and override those extensions declared by individual
+	 * script engines.
+	 * <p>
+	 * This map is automatically initialized when this class loads according to
+	 * resources named
+	 * <code>META-INF/services/com.threecrickets.scripturian.ScriptletParsingHelper</code>
+	 * . Each resource is a simple text file with class names, one per line.
+	 * Each class listed must implement the {@link LanguageAdapter} interface.
+	 * <p>
+	 * You may also manipulate this map yourself, adding and removing helpers as
+	 * necessary.
+	 */
+	private final ConcurrentMap<String, LanguageAdapter> adapterByExtension = new ConcurrentHashMap<String, LanguageAdapter>();
+
+	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
+}

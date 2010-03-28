@@ -9,16 +9,16 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
 /**
- * An {@link ScriptletHelper} that supports the <a
+ * An {@link LanguageAdapter} that supports the <a
  * href="http://velocity.apache.org/">Velocity</a> templating language.
  * 
  * @author Tal Liron
@@ -27,20 +27,25 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"velocity", "Velocity"
 })
-public class VelocityScriptletHelper extends ScriptletHelper
+public class VelocityAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// ScriptletHelper
 	//
 
+	public VelocityAdapter() throws LanguageInitializationException
+	{
+		super();
+	}
+
 	@Override
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
 	{
 		return "#set($_d='$')#set($_h='#')";
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		// 
 		// content = content.replaceAll( "\\#", "\\\\#" );
@@ -56,14 +61,14 @@ public class VelocityScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "${" + content.trim() + "}";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return "#if($" + document.getDocumentVariableName() + ".container.includeDocument(" + content + "))#end ";
+		return "#if($" + document.getExecutableVariableName() + ".container.includeDocument(" + content + "))#end ";
 	}
 }

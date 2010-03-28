@@ -9,16 +9,18 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
+
+import java.util.Collection;
 
 import javax.script.ScriptEngine;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
 /**
- * An {@link ScriptletHelper} that supports the <a
+ * An {@link LanguageAdapter} that supports the <a
  * href="http://clojure.org/">Clojure</a> scripting language.
  * 
  * @author Tal Liron
@@ -27,14 +29,21 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"Clojure"
 })
-public class ClojureScriptletHelper extends ScriptletHelper
+public class ClojureAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// ScriptletHelper
 	//
 
+	@SuppressWarnings("unchecked")
+	public ClojureAdapter() throws LanguageInitializationException
+	{
+		super();
+		( (Collection<String>) getAttributes().get( TAGS ) ).add( "clojure" );
+	}
+
 	@Override
-	public boolean isMultiThreaded()
+	public boolean isThreadSafe()
 	{
 		// Unfortunately, Clojure's JSR-223 support puts all global vars in the
 		// same namespace. This means that multiple calling threads will
@@ -53,7 +62,7 @@ public class ClojureScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -61,14 +70,14 @@ public class ClojureScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "(print " + content + ")";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return "(.. " + document.getDocumentVariableName() + " getContainer (includeDocument " + content + "))";
+		return "(.. " + document.getExecutableVariableName() + " getContainer (includeDocument " + content + "))";
 	}
 }

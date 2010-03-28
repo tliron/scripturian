@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -18,15 +18,14 @@ import java.lang.reflect.Method;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEnginePriorityExtensions;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
-import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
 /**
- * An {@link ScriptletHelper} that supports the Python scripting language
- * as implemented by <a href="http://www.jython.org/">Jython</a>.
+ * An {@link LanguageAdapter} that supports the Python scripting language as
+ * implemented by <a href="http://www.jython.org/">Jython</a>.
  * 
  * @author Tal Liron
  */
@@ -34,23 +33,38 @@ import com.threecrickets.scripturian.exception.DocumentRunException;
 {
 	"jython", "python"
 })
-@ScriptEnginePriorityExtensions(
-{
-	"py"
-})
-public class JythonScriptletHelper extends ScriptletHelper
+public class JythonAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// Construction
 	//
 
-	public JythonScriptletHelper() throws ClassNotFoundException, SecurityException, NoSuchFieldException, NoSuchMethodException
+	public JythonAdapter() throws LanguageInitializationException
 	{
-		pyExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyException" );
-		pyExceptionValueField = pyExceptionClass.getField( "value" );
-		pyBaseExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyBaseException" );
-		pyObjectClass = getClass().getClassLoader().loadClass( "org.python.core.PyObject" );
-		pyObjectToJavaMethod = pyObjectClass.getMethod( "__tojava__", Class.class );
+		try
+		{
+			pyExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyException" );
+			pyExceptionValueField = pyExceptionClass.getField( "value" );
+			pyBaseExceptionClass = getClass().getClassLoader().loadClass( "org.python.core.PyBaseException" );
+			pyObjectClass = getClass().getClassLoader().loadClass( "org.python.core.PyObject" );
+			pyObjectToJavaMethod = pyObjectClass.getMethod( "__tojava__", Class.class );
+		}
+		catch( ClassNotFoundException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
+		catch( SecurityException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
+		catch( NoSuchMethodException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
+		catch( NoSuchFieldException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
 	}
 
 	//
@@ -58,7 +72,7 @@ public class JythonScriptletHelper extends ScriptletHelper
 	//
 
 	@Override
-	public String getScriptletHeader( Document document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
 	{
 		String version = scriptEngine.getFactory().getEngineVersion();
 		String[] split = version.split( "\\." );
@@ -75,7 +89,7 @@ public class JythonScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -83,15 +97,15 @@ public class JythonScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getDocumentVariableName() + ".container.includeDocument(" + content + ");";
+		return document.getExecutableVariableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	@Override
@@ -110,7 +124,7 @@ public class JythonScriptletHelper extends ScriptletHelper
 
 			// A wrapped Jython exception -- terrific, because Jython does a
 			// great job at returning a complete ScriptException
-			return new DocumentRunException( documentName, (ScriptException) throwable );
+			return new ExecutionException( documentName, (ScriptException) throwable );
 		}
 
 		return null;

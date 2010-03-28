@@ -9,21 +9,22 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.helper;
+package com.threecrickets.scripturian.adapter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.Document;
-import com.threecrickets.scripturian.DocumentContext;
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.annotation.ScriptEngines;
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.ExecutionContext;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
 /**
- * An {@link ScriptletHelper} that supports the Ruby scripting language as
+ * An {@link LanguageAdapter} that supports the Ruby scripting language as
  * implemented by <a href="http://jruby.codehaus.org/">JRuby</a>.
  * <p>
  * Note that JRuby internally embeds each script in a "main" object, so that
@@ -53,32 +54,54 @@ import com.threecrickets.scripturian.annotation.ScriptEngines;
 {
 	"jruby", "ruby"
 })
-public class JRubyScriptletHelper extends ScriptletHelper
+public class JRubyAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// Construction
 	//
 
-	public JRubyScriptletHelper() throws ClassNotFoundException, SecurityException, NoSuchFieldException, NoSuchMethodException
+	public JRubyAdapter() throws LanguageInitializationException
 	{
-		raiseExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.exceptions.RaiseException" );
-		raiseExceptionGetExceptionMethod = raiseExceptionClass.getMethod( "getException" );
-		nativeExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.NativeException" );
-		nativeExceptionGetCauseMethod = nativeExceptionClass.getMethod( "getCause" );
+		try
+		{
+			raiseExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.exceptions.RaiseException" );
+			raiseExceptionGetExceptionMethod = raiseExceptionClass.getMethod( "getException" );
+			nativeExceptionClass = getClass().getClassLoader().loadClass( "org.jruby.NativeException" );
+			nativeExceptionGetCauseMethod = nativeExceptionClass.getMethod( "getCause" );
+		}
+		catch( ClassNotFoundException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
+		catch( SecurityException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
+		catch( NoSuchMethodException x )
+		{
+			throw new LanguageInitializationException( getClass(), x );
+		}
 	}
 
 	//
 	// ScriptletHelper
 	//
 
-	@Override
-	public void beforeCall( ScriptEngine scriptEngine, DocumentContext documentContext )
+	/*@Override
+	public boolean isCompilable()
 	{
-		scriptEngine.setContext( documentContext.getScriptContext() );
+		return false;
+	}*/
+
+	@Override
+	public void beforeCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
+	{
+		ScriptContext scriptContext = getScriptContext( executionContext );
+		scriptEngine.setContext( scriptContext );
 
 		// Move global vars to instance vars
 		StringBuilder r = new StringBuilder();
-		for( String var : documentContext.getVariableNames() )
+		for( String var : executionContext.getExposedVariables().keySet() )
 		{
 			r.append( '@' );
 			r.append( var );
@@ -89,7 +112,7 @@ public class JRubyScriptletHelper extends ScriptletHelper
 
 		try
 		{
-			scriptEngine.eval( r.toString() );
+			scriptEngine.eval( r.toString(), scriptContext );
 		}
 		catch( ScriptException x )
 		{
@@ -97,7 +120,7 @@ public class JRubyScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getTextAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -105,21 +128,21 @@ public class JRubyScriptletHelper extends ScriptletHelper
 	}
 
 	@Override
-	public String getExpressionAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Document document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		// return "require $" + document.getDocumentVariableName() +
 		// ".container.source.basePath.toString + '/' + " + content + ";";
-		return "$" + document.getDocumentVariableName() + ".container.include_document(" + content + ");";
+		return "$" + document.getExecutableVariableName() + ".container.include_document(" + content + ");";
 	}
 
 	@Override
-	public String getInvocationAsProgram( Document document, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
 		/*
 		 * String version = scriptEngine.getFactory().getEngineVersion();

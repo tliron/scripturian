@@ -14,33 +14,33 @@ package com.threecrickets.scripturian.exception;
 /**
  * @author Tal Liron
  */
-public class DocumentInitializationException extends Exception
+public class ExecutableInitializationException extends Exception
 {
 	//
 	// Static operations
 	//
 
-	public static DocumentInitializationException scriptEngineNotFound( String documentName, String scriptEngineName )
+	public static ExecutableInitializationException scriptEngineNotFound( String documentName, String scriptEngineName )
 	{
-		return new DocumentInitializationException( documentName, "Unsupported script engine: " + scriptEngineName );
+		return new ExecutableInitializationException( documentName, "Unsupported script engine: " + scriptEngineName );
 	}
 
-	public static DocumentInitializationException scriptletHelperNotFound( String documentName, String scriptEngineName )
+	public static ExecutableInitializationException adapterNotFound( String documentName, String scriptEngineName )
 	{
-		return new DocumentInitializationException( documentName, "Scriptlet helper not available for script engine: " + scriptEngineName );
+		return new ExecutableInitializationException( documentName, "Adapter not available for script engine: " + scriptEngineName );
 	}
 
 	//
 	// Construction
 	//
 
-	public DocumentInitializationException( String documentName, String message )
+	public ExecutableInitializationException( String documentName, String message )
 	{
 		super( message );
 		this.documentName = documentName;
 	}
 
-	public DocumentInitializationException( String documentName, String message, Throwable cause )
+	public ExecutableInitializationException( String documentName, String message, Throwable cause )
 	{
 		super( message, cause );
 		this.documentName = documentName;

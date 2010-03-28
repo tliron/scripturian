@@ -16,13 +16,13 @@ import javax.script.ScriptException;
 /**
  * @author Tal Liron
  */
-public class DocumentCompilationException extends DocumentInitializationException
+public class CompilationException extends ExecutableInitializationException
 {
 	//
 	// Construction
 	//
 
-	public DocumentCompilationException( String documentName, String message, ScriptException x )
+	public CompilationException( String documentName, String message, ScriptException x )
 	{
 		super( documentName, message, x );
 	}

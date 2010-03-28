@@ -13,31 +13,31 @@ package com.threecrickets.scripturian.exception;
 
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.ScriptletHelper;
-import com.threecrickets.scripturian.Scripturian;
+import com.threecrickets.scripturian.LanguageManager;
+import com.threecrickets.scripturian.LanguageAdapter;
 
 /**
  * @author Tal Liron
  */
-public class DocumentRunException extends Exception
+public class ExecutionException extends Exception
 {
 	//
 	// Static operations
 	//
 
-	public static DocumentRunException create( String documentName, Throwable throwable )
+	public static ExecutionException create( String documentName, LanguageManager manager, Throwable throwable )
 	{
 		Throwable wrapped = throwable;
 		while( wrapped != null )
 		{
-			if( wrapped instanceof DocumentRunException )
-				return (DocumentRunException) wrapped;
+			if( wrapped instanceof ExecutionException )
+				return (ExecutionException) wrapped;
 
 			// Try helpers
 			Throwable causeOrDocumentRunException = null;
-			for( ScriptletHelper scriptletExceptionHelper : Scripturian.getScriptletHelpers() )
+			for( LanguageAdapter adapter : manager.getAdapters() )
 			{
-				causeOrDocumentRunException = scriptletExceptionHelper.getCauseOrDocumentRunException( documentName, wrapped );
+				causeOrDocumentRunException = adapter.getCauseOrDocumentRunException( documentName, wrapped );
 				if( causeOrDocumentRunException != null )
 					break;
 			}
@@ -45,8 +45,8 @@ public class DocumentRunException extends Exception
 			if( causeOrDocumentRunException != null )
 			{
 				// Found it!
-				if( causeOrDocumentRunException instanceof DocumentRunException )
-					return (DocumentRunException) causeOrDocumentRunException;
+				if( causeOrDocumentRunException instanceof ExecutionException )
+					return (ExecutionException) causeOrDocumentRunException;
 
 				// We are unwrapped
 				wrapped = causeOrDocumentRunException;
@@ -59,23 +59,23 @@ public class DocumentRunException extends Exception
 
 		if( throwable instanceof ScriptException )
 			// Extract from ScriptException
-			return new DocumentRunException( documentName, (ScriptException) throwable );
+			return new ExecutionException( documentName, (ScriptException) throwable );
 		else
 			// Unknown
-			return new DocumentRunException( documentName, throwable );
+			return new ExecutionException( documentName, throwable );
 	}
 
 	//
 	// Construction
 	//
 
-	public DocumentRunException( String message, StackFrame... stackFrames )
+	public ExecutionException( String message, StackFrame... stackFrames )
 	{
 		super( message );
 		stack = stackFrames;
 	}
 
-	public DocumentRunException( String documentName, String message )
+	public ExecutionException( String documentName, String message )
 	{
 		super( message );
 		stack = new StackFrame[]
@@ -84,7 +84,7 @@ public class DocumentRunException extends Exception
 		};
 	}
 
-	public DocumentRunException( String documentName, ScriptException scriptException )
+	public ExecutionException( String documentName, ScriptException scriptException )
 	{
 		super( scriptException.getMessage(), scriptException.getCause() );
 		stack = new StackFrame[]
@@ -109,7 +109,7 @@ public class DocumentRunException extends Exception
 
 	private final StackFrame[] stack;
 
-	private DocumentRunException( String documentName, Throwable cause )
+	private ExecutionException( String documentName, Throwable cause )
 	{
 		super( cause.getMessage(), cause );
 		stack = new StackFrame[0];

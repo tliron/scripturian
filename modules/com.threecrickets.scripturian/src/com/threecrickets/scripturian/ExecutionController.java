@@ -11,7 +11,7 @@
 
 package com.threecrickets.scripturian;
 
-import com.threecrickets.scripturian.exception.DocumentRunException;
+import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
  * Used in order to add specialized initialization and finalization for
@@ -20,24 +20,24 @@ import com.threecrickets.scripturian.exception.DocumentRunException;
  * 
  * @author Tal Liron
  */
-public interface ScriptletController
+public interface ExecutionController
 {
 	/**
 	 * Called when a scriptlet is initialized.
 	 * 
-	 * @param documentContext
+	 * @param executionContext
 	 *        The document context
-	 * @throws DocumentRunException
+	 * @throws ExecutionException
 	 *         If you throw an exception here, the scriptlet will not run
 	 */
-	public void initialize( DocumentContext documentContext ) throws DocumentRunException;
+	public void initialize( ExecutionContext executionContext ) throws ExecutionException;
 
 	/**
 	 * Called when a scriptlet finalizes. This is a good place to clean up
-	 * resources you set up during {@link #initialize(DocumentContext)}.
+	 * resources you set up during {@link #initialize(ExecutionContext)}.
 	 * 
-	 * @param documentContext
+	 * @param executionContext
 	 *        The document context
 	 */
-	public void finalize( DocumentContext documentContext );
+	public void finalize( ExecutionContext executionContext );
 }
