@@ -105,7 +105,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * A special container environment is created for scripts, with some useful
  * services. It is available to the script as a global variable named
  * <code>document</code> (this name can be changed via the
- * {@link #Document(String, String, boolean, Manager, String, DocumentSource, boolean)}
+ * {@link #Executable(String, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
@@ -113,7 +113,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * <li><code>document.container</code>: This is an arbitrary object set by the
  * document's container environment for access to container-specific services.
  * It might be null if none was provided.</li>
- * <li><code>document.context</code>: This is the {@link DocumentContext} used
+ * <li><code>document.context</code>: This is the {@link ExecutionContext} used
  * by the document. Scriptlets may use it to get access to the {@link Writer}
  * objects used for standard output and standard error.</li>
  * <li><code>document.meta</code>: This {@link ConcurrentMap} provides a
@@ -768,7 +768,7 @@ public class Executable
 	/**
 	 * Calls an entry point in the document: a function, method, closure, etc.,
 	 * according to how the script engine and its language handles invocations.
-	 * If not, then this method requires the appropriate {@link ScriptletHelper}
+	 * If not, then this method requires the appropriate {@link LanguageAdapter}
 	 * implementation to be installed for the script engine. Running the script
 	 * first (via
 	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}

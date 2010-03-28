@@ -18,13 +18,17 @@ import java.util.Map;
 
 /**
  * Encapsulates context for an {@link Executable}. Every thread calling
- * {@link Executable#execute(boolean, boolean, Writer, Writer, boolean, DocumentContext, Object, ScriptletController)}
+ * {@link Executable#execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
  * must use its own context.
  * 
  * @author Tal Liron
  */
 public class ExecutionContext
 {
+	//
+	// Construction
+	//
+
 	public ExecutionContext( LanguageManager manager )
 	{
 		this.manager = manager;

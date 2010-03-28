@@ -345,7 +345,7 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
-	 * @param content
+	 * @param text
 	 *        The content
 	 * @return A command or series of commands to print the content
 	 */
@@ -364,7 +364,7 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
-	 * @param content
+	 * @param text
 	 *        The content
 	 * @return A command or series of commands to print the expression
 	 */
@@ -383,7 +383,7 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
-	 * @param content
+	 * @param text
 	 *        The content
 	 * @return A command or series of commands to include the script named for
 	 *         the expression
