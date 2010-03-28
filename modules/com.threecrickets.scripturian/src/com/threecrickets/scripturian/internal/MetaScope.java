@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Used as global space for sharing objects between scripts. Statics will stay
+ * Used as global space for sharing objects between executables. Metas will stay
  * alive for the duration of the Java virtual machine. Any object can be stored
  * here.
  * 

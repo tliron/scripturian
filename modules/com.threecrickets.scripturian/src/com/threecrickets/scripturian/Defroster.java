@@ -34,17 +34,17 @@ public class Defroster
 	 * Construction.
 	 * 
 	 * @param documentSource
-	 *        The document source
-	 * @param manager
-	 *        The script engine manager to use for document initialization
+	 *        The document source for executables
+	 * @param languageManager
+	 *        The language manager for executable initialization
 	 * @param allowCompilation
-	 *        Whether to allow compilation for initialized documents
+	 *        Whether to compile executables
 	 */
-	public Defroster( DocumentSource<Executable> documentSource, LanguageManager manager, boolean allowCompilation )
+	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean allowCompilation )
 	{
 		super();
 		this.documentSource = documentSource;
-		this.manager = manager;
+		this.languageManager = languageManager;
 		this.allowCompilation = allowCompilation;
 	}
 
@@ -53,15 +53,19 @@ public class Defroster
 	//
 
 	/**
-	 * @return
+	 * The language manager for executable initialization.
+	 * 
+	 * @return A language manager
 	 */
-	public LanguageManager getManager()
+	public LanguageManager getLanguageManager()
 	{
-		return manager;
+		return languageManager;
 	}
 
 	/**
-	 * @return
+	 * The document source for executables.
+	 * 
+	 * @return A document source
 	 */
 	public DocumentSource<Executable> getDocumentSource()
 	{
@@ -69,7 +73,9 @@ public class Defroster
 	}
 
 	/**
-	 * @return
+	 * Whether to compile executables.
+	 * 
+	 * @return True if compilation is to be attempted
 	 */
 	public boolean isAllowCompilation()
 	{
@@ -152,17 +158,17 @@ public class Defroster
 	// Private
 
 	/**
-	 * The document source.
+	 * The document source for executables.
 	 */
 	private final DocumentSource<Executable> documentSource;
 
 	/**
-	 * The script engine manager to use for document initialization.
+	 * The language manager for executable initialization.
 	 */
-	private final LanguageManager manager;
+	private final LanguageManager languageManager;
 
 	/**
-	 * Whether to allow compilation for initialized documents.
+	 * Whether to compile executables.
 	 */
 	private final boolean allowCompilation;
 
@@ -184,7 +190,7 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, manager, allowCompilation );
+			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, allowCompilation );
 			List<Future<Executable>> futures;
 			try
 			{

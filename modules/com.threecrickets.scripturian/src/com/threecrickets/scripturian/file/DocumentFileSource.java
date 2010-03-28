@@ -44,7 +44,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * @param basePath
 	 *        The base path
 	 * @param defaultName
-	 *        If the name used in {@link #getDocumentDescriptor(String)} points
+	 *        If the name used in {@link #getDocument(String)} points
 	 *        to a directory, then this file name in that directory will be used
 	 *        instead; note that if an extension is not specified, then the
 	 *        first file in the directory with this name, with any extension,
@@ -67,7 +67,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * @param basePath
 	 *        The base path
 	 * @param defaultName
-	 *        If the name used in {@link #getDocumentDescriptor(String)} points
+	 *        If the name used in {@link #getDocument(String)} points
 	 *        to a directory, then this file name in that directory will be used
 	 *        instead; note that if an extension is not specified, then the
 	 *        first file in the directory with this name, with any extension,
@@ -95,7 +95,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * If the name used in {@link #getDocumentDescriptor(String)} points to a
+	 * If the name used in {@link #getDocument(String)} points to a
 	 * directory, then this file name in that directory will be used instead.
 	 * 
 	 * @return The default name
@@ -116,9 +116,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * checking this every time this method is called, use
 	 * {@link #setMinimumTimeBetweenValidityChecks(long)}.
 	 * 
-	 * @see DocumentSource#getDocumentDescriptor(String)
+	 * @see DocumentSource#getDocument(String)
 	 */
-	public DocumentDescriptor<D> getDocumentDescriptor( String name ) throws IOException
+	public DocumentDescriptor<D> getDocument( String name ) throws IOException
 	{
 		// See if we already have a descriptor for this name
 		FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptors.get( name );
@@ -151,26 +151,26 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * @see DocumentSource#setDocumentDescriptor(String, String, String, Object)
+	 * @see DocumentSource#setDocument(String, String, String, Object)
 	 */
-	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D script )
+	public DocumentDescriptor<D> setDocument( String name, String text, String tag, D script )
 	{
 		return filedDocumentDescriptors.put( name, new FiledDocumentDescriptor( name, text, tag, script ) );
 	}
 
 	/**
-	 * @see DocumentSource#setDocumentDescriptorIfAbsent(String, String, String,
+	 * @see DocumentSource#setDocumentIfAbsent(String, String, String,
 	 *      Object)
 	 */
-	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D script )
+	public DocumentDescriptor<D> setDocumentIfAbsent( String name, String text, String tag, D script )
 	{
 		return filedDocumentDescriptors.putIfAbsent( name, new FiledDocumentDescriptor( name, text, tag, script ) );
 	}
 
 	/***
-	 * @see DocumentSource#getDocumentDescriptors()
+	 * @see DocumentSource#getDocuments()
 	 */
-	public Collection<DocumentDescriptor<D>> getDocumentDescriptors()
+	public Collection<DocumentDescriptor<D>> getDocuments()
 	{
 		return getDocumentDescriptors( basePath );
 	}
@@ -180,7 +180,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	//
 
 	/**
-	 * Attempts to call {@link #getDocumentDescriptor(String)} for a specific
+	 * Attempts to call {@link #getDocument(String)} for a specific
 	 * name within less than this time from the previous call will return the
 	 * cached descriptor without checking if it is valid. A value of -1 disables
 	 * all validity checking.
@@ -325,7 +325,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			return name;
 		}
 
-		public String getText()
+		public String getSourceCode()
 		{
 			return text;
 		}

@@ -71,7 +71,7 @@ public class SyntaxHighlighterSourceRepresenter<D> implements DocumentFormatter<
 			brush = "Xml";
 
 		if( brush == null )
-			return documentDescriptor.getText();
+			return documentDescriptor.getSourceCode();
 
 		StringBuilder html = new StringBuilder();
 		html.append( "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n" );
@@ -94,7 +94,7 @@ public class SyntaxHighlighterSourceRepresenter<D> implements DocumentFormatter<
 		html.append( "      You must enable JavaScript in your browser in order to see the source code." );
 		html.append( "    </noscript>" );
 		html.append( "<script type=\"syntaxhighlighter\" class=\"brush: " + alias + ";\"><![CDATA[" );
-		html.append( documentDescriptor.getText() );
+		html.append( documentDescriptor.getSourceCode() );
 		html.append( "]]></script>\n" );
 		html.append( "\n" );
 		html.append( "  </body>\n" );

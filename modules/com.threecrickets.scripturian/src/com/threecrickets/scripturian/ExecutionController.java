@@ -15,29 +15,31 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
  * Used in order to add specialized initialization and finalization for
- * scriptlets. For example, to add extra global variables or to perform cleanup
- * of resources.
+ * executables. For example, to expose variables or to perform cleanup of
+ * resources.
  * 
  * @author Tal Liron
+ * @see Executable
+ * @see ExecutionContext
  */
 public interface ExecutionController
 {
 	/**
-	 * Called when a scriptlet is initialized.
+	 * Called before an executable is executed.
 	 * 
 	 * @param executionContext
-	 *        The document context
+	 *        The execution context
 	 * @throws ExecutionException
-	 *         If you throw an exception here, the scriptlet will not run
+	 *         If you throw an exception here the executable will not run
 	 */
 	public void initialize( ExecutionContext executionContext ) throws ExecutionException;
 
 	/**
-	 * Called when a scriptlet finalizes. This is a good place to clean up
+	 * Called after an executable is executed. This is a good place to clean up
 	 * resources you set up during {@link #initialize(ExecutionContext)}.
 	 * 
 	 * @param executionContext
-	 *        The document context
+	 *        The execution context
 	 */
 	public void finalize( ExecutionContext executionContext );
 }

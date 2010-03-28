@@ -78,6 +78,6 @@ public class ClojureAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return "(.. " + document.getExecutableVariableName() + " getContainer (includeDocument " + content + "))";
+		return "(.. " + document.getExposedExecutableName() + " getContainer (includeDocument " + content + "))";
 	}
 }

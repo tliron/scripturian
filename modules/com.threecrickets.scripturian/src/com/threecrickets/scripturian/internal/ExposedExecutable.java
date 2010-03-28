@@ -19,7 +19,7 @@ import com.threecrickets.scripturian.ExecutionContext;
 
 /**
  * This is the <code>document</code> variable exposed to scriptlets. The name is
- * set according to {@link Executable#getExecutableVariableName()}.
+ * set according to {@link Executable#getExposedExecutableName()}.
  * 
  * @author Tal Liron
  * @see Executable

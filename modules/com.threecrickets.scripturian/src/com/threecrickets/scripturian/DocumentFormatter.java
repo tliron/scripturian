@@ -12,6 +12,9 @@
 package com.threecrickets.scripturian;
 
 /**
+ * Transforms a document described by a {@link DocumentDescriptor} to a
+ * different format. Useful for both human- and machine-readable formats.
+ * 
  * @author Tal Liron
  * @param <D>
  */

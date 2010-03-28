@@ -1,3 +1,14 @@
+/**
+ * Copyright 2009-2010 Three Crickets LLC.
+ * <p>
+ * The contents of this file are subject to the terms of the LGPL version 3.0:
+ * http://www.opensource.org/licenses/lgpl-3.0.html
+ * <p>
+ * Alternatively, you can obtain a royalty free commercial license with less
+ * limitations, transferable or non-transferable, directly from Three Crickets
+ * at http://threecrickets.com/
+ */
+
 package com.threecrickets.scripturian.adapter;
 
 import java.util.ArrayList;
@@ -5,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.script.Compilable;
 import javax.script.Invocable;
@@ -24,8 +37,15 @@ import com.threecrickets.scripturian.exception.ExecutableInitializationException
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageInitializationException;
 
-public abstract class Jsr223LanguageAdapter extends LanguageAdapter
+/**
+ * @author Tal Liron
+ */
+public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 {
+	//
+	// Constants
+	//
+
 	public static final String JSR223_SCRIPT_ENGINE_MANAGER = "jsr223.scriptEngineManager";
 
 	public static final String JSR223_SCRIPT_ENGINE_NAME = "jsr223.scriptEngineName";
@@ -34,12 +54,9 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 
 	public static final String JSR223_SCRIPT_ENGINES = "jsr223.scriptEngines";
 
-	// private static final ScriptEngineManager scriptEngineManager = new
-	// ScriptEngineManager();
-
-	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
-
-	private final ScriptEngine scriptEngine;
+	//
+	// Static operations
+	//
 
 	public static ScriptContext getScriptContext( ExecutionContext executionContext )
 	{
@@ -117,6 +134,10 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 		return scriptEngine;
 	}
 
+	//
+	// Construction
+	//
+
 	public Jsr223LanguageAdapter() throws LanguageInitializationException
 	{
 		ScriptEngines scriptEngineNames = getClass().getAnnotation( ScriptEngines.class );
@@ -143,6 +164,10 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 		attributes.put( JSR223_SCRIPT_ENGINE_NAME, scriptEngineName );
 	}
 
+	//
+	// Attributes
+	//
+
 	public ScriptEngine getScriptEngine( Executable document, ExecutionContext executionContext ) throws ExecutableInitializationException
 	{
 		String scriptEngineName = (String) attributes.get( JSR223_SCRIPT_ENGINE_NAME );
@@ -153,125 +178,6 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 	{
 		return scriptEngine;
 	}
-
-	@Override
-	public ConcurrentMap<String, Object> getAttributes()
-	{
-		return attributes;
-	}
-
-	@Override
-	public boolean isThreadSafe()
-	{
-		return true;
-	}
-
-	@Override
-	public Scriptlet createScriptlet( String code, Executable document ) throws ExecutableInitializationException
-	{
-		// Add header
-		String header = getScriptletHeader( document, scriptEngine );
-		if( header != null )
-			code = header + code;
-
-		// Add footer
-		String footer = getScriptletFooter( document, scriptEngine );
-		if( footer != null )
-			code += footer;
-
-		return new Jsr223Scriptlet( code, this, document );
-	}
-
-	@Override
-	public String getCodeForLiteralOutput( String literal, Executable document ) throws ExecutableInitializationException
-	{
-		return getTextAsProgram( document, scriptEngine, literal );
-	}
-
-	@Override
-	public String getCodeForExpressionOutput( String expression, Executable document ) throws ExecutableInitializationException
-	{
-		return getExpressionAsProgram( document, scriptEngine, expression );
-	}
-
-	@Override
-	public String getCodeForExpressionInclude( String expression, Executable document ) throws ExecutableInitializationException
-	{
-		return getExpressionAsInclude( document, scriptEngine, expression );
-	}
-
-	@Override
-	public Object invoke( String method, Executable document, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException
-	{
-		ScriptEngine scriptEngine = getScriptEngine( document, executionContext );
-		scriptEngine.setContext( getScriptContext( executionContext ) );
-
-		String code = getInvocationAsProgram( document, scriptEngine, method );
-		if( code == null )
-		{
-			if( scriptEngine instanceof Invocable )
-			{
-				try
-				{
-					beforeCall( scriptEngine, executionContext );
-					return ( (Invocable) scriptEngine ).invokeFunction( method );
-				}
-				catch( ScriptException x )
-				{
-					throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
-				}
-				catch( NoSuchMethodException x )
-				{
-					throw x;
-				}
-				catch( Exception x )
-				{
-					// Some script engines (notably Quercus) throw their
-					// own special exceptions
-					throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
-				}
-				finally
-				{
-					afterCall( scriptEngine, executionContext );
-				}
-			}
-			else
-			{
-				String scriptEngineName = (String) attributes.get( JSR223_SCRIPT_ENGINE_NAME );
-				throw new ExecutionException( document.getName(), "Script engine " + scriptEngineName + " does not support invocations" );
-			}
-		}
-		else
-		{
-			try
-			{
-				beforeCall( scriptEngine, executionContext );
-				return scriptEngine.eval( code );
-			}
-			catch( ScriptException x )
-			{
-				throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
-			}
-			catch( Exception x )
-			{
-				// Some script engines (notably Quercus) throw their
-				// own special exceptions
-				throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
-			}
-			finally
-			{
-				afterCall( scriptEngine, executionContext );
-			}
-		}
-	}
-
-	@Override
-	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
-	{
-		return null;
-	}
-
-	// Helper
 
 	/**
 	 * Though some scripting engines support {@link Compilable}, their
@@ -387,7 +293,7 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 	 *        The content
 	 * @return A command or series of commands to include the script named for
 	 *         the expression
-	 * @see Executable#getExecutableVariableName()
+	 * @see Executable#getExposedExecutableName()
 	 */
 	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String text )
 	{
@@ -412,4 +318,131 @@ public abstract class Jsr223LanguageAdapter extends LanguageAdapter
 	{
 		return null;
 	}
+
+	//
+	// LanguageAdapter
+	//
+
+	public ConcurrentMap<String, Object> getAttributes()
+	{
+		return attributes;
+	}
+
+	public boolean isThreadSafe()
+	{
+		return true;
+	}
+
+	public Lock getLock()
+	{
+		return lock;
+	}
+
+	public String getCodeForLiteralOutput( String literal, Executable document ) throws ExecutableInitializationException
+	{
+		return getTextAsProgram( document, scriptEngine, literal );
+	}
+
+	public String getCodeForExpressionOutput( String expression, Executable document ) throws ExecutableInitializationException
+	{
+		return getExpressionAsProgram( document, scriptEngine, expression );
+	}
+
+	public String getCodeForExpressionInclude( String expression, Executable document ) throws ExecutableInitializationException
+	{
+		return getExpressionAsInclude( document, scriptEngine, expression );
+	}
+
+	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable )
+	{
+		return null;
+	}
+
+	public Scriptlet createScriptlet( String code, Executable document ) throws ExecutableInitializationException
+	{
+		// Add header
+		String header = getScriptletHeader( document, scriptEngine );
+		if( header != null )
+			code = header + code;
+
+		// Add footer
+		String footer = getScriptletFooter( document, scriptEngine );
+		if( footer != null )
+			code += footer;
+
+		return new Jsr223Scriptlet( code, this, document );
+	}
+
+	public Object invoke( String method, Executable document, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException
+	{
+		ScriptEngine scriptEngine = getScriptEngine( document, executionContext );
+		scriptEngine.setContext( getScriptContext( executionContext ) );
+
+		String code = getInvocationAsProgram( document, scriptEngine, method );
+		if( code == null )
+		{
+			if( scriptEngine instanceof Invocable )
+			{
+				try
+				{
+					beforeCall( scriptEngine, executionContext );
+					return ( (Invocable) scriptEngine ).invokeFunction( method );
+				}
+				catch( ScriptException x )
+				{
+					throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+				}
+				catch( NoSuchMethodException x )
+				{
+					throw x;
+				}
+				catch( Exception x )
+				{
+					// Some script engines (notably Quercus) throw their
+					// own special exceptions
+					throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+				}
+				finally
+				{
+					afterCall( scriptEngine, executionContext );
+				}
+			}
+			else
+			{
+				String scriptEngineName = (String) attributes.get( JSR223_SCRIPT_ENGINE_NAME );
+				throw new ExecutionException( document.getName(), "Script engine " + scriptEngineName + " does not support invocations" );
+			}
+		}
+		else
+		{
+			try
+			{
+				beforeCall( scriptEngine, executionContext );
+				return scriptEngine.eval( code );
+			}
+			catch( ScriptException x )
+			{
+				throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+			}
+			catch( Exception x )
+			{
+				// Some script engines (notably Quercus) throw their
+				// own special exceptions
+				throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+			}
+			finally
+			{
+				afterCall( scriptEngine, executionContext );
+			}
+		}
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
+
+	private final Lock lock = new ReentrantLock();
+
+	private final ScriptEngine scriptEngine;
 }

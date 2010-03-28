@@ -1,14 +1,37 @@
+/**
+ * Copyright 2009-2010 Three Crickets LLC.
+ * <p>
+ * The contents of this file are subject to the terms of the LGPL version 3.0:
+ * http://www.opensource.org/licenses/lgpl-3.0.html
+ * <p>
+ * Alternatively, you can obtain a royalty free commercial license with less
+ * limitations, transferable or non-transferable, directly from Three Crickets
+ * at http://threecrickets.com/
+ */
+
 package com.threecrickets.scripturian;
 
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.threecrickets.scripturian.exception.ExecutableInitializationException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
-public abstract class LanguageAdapter
+/**
+ * Allows execution of code in a supported source language.
+ * <p>
+ * Language adapters are usually accessed via a {@link LanguageManager}
+ * instance.
+ * 
+ * @author Tal Liron
+ * @see LanguageManager
+ */
+public interface LanguageAdapter
 {
+	//
+	// Constants
+	//
+
 	public static final String NAME = "name";
 
 	public static final String VERSION = "version";
@@ -25,7 +48,11 @@ public abstract class LanguageAdapter
 
 	public static final String DEFAULT_TAG = "tag.default";
 
-	public abstract Map<String, Object> getAttributes();
+	//
+	// Attributes
+	//
+
+	public Map<String, Object> getAttributes();
 
 	/**
 	 * Some languages or their script engines are inherently broken when called
@@ -34,19 +61,23 @@ public abstract class LanguageAdapter
 	 * 
 	 * @return True if we support being run by concurrent threads
 	 */
-	public abstract boolean isThreadSafe();
+	public boolean isThreadSafe();
 
-	public abstract Scriptlet createScriptlet( String code, Executable document ) throws ExecutableInitializationException;
+	public Lock getLock();
 
-	public abstract String getCodeForLiteralOutput( String literal, Executable document ) throws ExecutableInitializationException;
+	public String getCodeForLiteralOutput( String literal, Executable document ) throws ExecutableInitializationException;
 
-	public abstract String getCodeForExpressionOutput( String expression, Executable document ) throws ExecutableInitializationException;
+	public String getCodeForExpressionOutput( String expression, Executable document ) throws ExecutableInitializationException;
 
-	public abstract String getCodeForExpressionInclude( String expression, Executable document ) throws ExecutableInitializationException;
+	public String getCodeForExpressionInclude( String expression, Executable document ) throws ExecutableInitializationException;
 
-	public abstract Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable );
+	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable );
 
-	public abstract Object invoke( String method, Executable document, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException;
+	//
+	// Operations
+	//
 
-	public final Lock lock = new ReentrantLock();
+	public Scriptlet createScriptlet( String code, Executable document ) throws ExecutableInitializationException;
+
+	public Object invoke( String method, Executable document, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException;
 }

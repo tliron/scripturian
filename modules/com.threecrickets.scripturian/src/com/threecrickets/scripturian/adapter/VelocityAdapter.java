@@ -69,6 +69,6 @@ public class VelocityAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return "#if($" + document.getExecutableVariableName() + ".container.includeDocument(" + content + "))#end ";
+		return "#if($" + document.getExposedExecutableName() + ".container.includeDocument(" + content + "))#end ";
 	}
 }

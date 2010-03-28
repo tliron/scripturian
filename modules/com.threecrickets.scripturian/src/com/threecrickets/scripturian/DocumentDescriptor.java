@@ -12,8 +12,10 @@
 package com.threecrickets.scripturian;
 
 /**
- * Access to the document descriptor.
+ * Document descriptors are provided by a {@link DocumentSource} as a way to
+ * describe and access documents.
  * 
+ * @author Tal Liron
  * @param <D>
  *        The document type
  */
@@ -27,11 +29,11 @@ public interface DocumentDescriptor<D>
 	public String getDefaultName();
 
 	/**
-	 * The source text for the document.
+	 * The source code for the document.
 	 * 
-	 * @return The source text
+	 * @return The source code
 	 */
-	public String getText();
+	public String getSourceCode();
 
 	/**
 	 * The tag for the document (for a file-based document source, this will

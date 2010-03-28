@@ -19,7 +19,8 @@ import java.util.concurrent.Callable;
  * {@link DocumentDescriptor}, making it ready to use without the delay of
  * initialization, parsing, compilation, etc.
  * <p>
- * It may be easier to use a {@link Defroster}.
+ * It may be easier to use a {@link Defroster}, which is at a higher level than
+ * this class.
  * 
  * @author Tal Liron
  * @see Defroster
@@ -34,21 +35,21 @@ public class DefrostTask implements Callable<Executable>
 	 * Creates a defrost task for each document descriptor in a document source.
 	 * 
 	 * @param documentSource
-	 *        The document source
-	 * @param manager
-	 *        The script engine manager to use for document initialization
+	 *        The document source for executables
+	 * @param languageManager
+	 *        The language manager for executable initialization
 	 * @param allowCompilation
-	 *        Whether to allow compilation for initialized documents
+	 *        Whether to compile executables
 	 * @return An array of tasks
-	 * @see DocumentSource#getDocumentDescriptor(String)
+	 * @see DocumentSource#getDocument(String)
 	 */
-	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager manager, boolean allowCompilation )
+	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean allowCompilation )
 	{
-		Collection<DocumentDescriptor<Executable>> documentDescriptors = documentSource.getDocumentDescriptors();
+		Collection<DocumentDescriptor<Executable>> documentDescriptors = documentSource.getDocuments();
 		DefrostTask[] defrostTasks = new DefrostTask[documentDescriptors.size()];
 		int i = 0;
 		for( DocumentDescriptor<Executable> documentDescriptor : documentDescriptors )
-			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, manager, allowCompilation );
+			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, languageManager, allowCompilation );
 
 		return defrostTasks;
 	}
@@ -61,20 +62,20 @@ public class DefrostTask implements Callable<Executable>
 	 * Construction.
 	 * 
 	 * @param documentDescriptor
-	 *        The document descriptor
+	 *        The document descriptor for the executable
 	 * @param documentSource
-	 *        The document source, required for processing in-flow tags during
-	 *        document initialization
-	 * @param manager
-	 *        The script engine manager to use for document initialization
+	 *        The document source for the executables, required for processing
+	 *        in-flow tags during executable initialization
+	 * @param languageManager
+	 *        The language manager for executable initialization
 	 * @param allowCompilation
-	 *        Whether to allow compilation for initialized documents
+	 *        Whether to compile executables
 	 */
-	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager manager, boolean allowCompilation )
+	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean allowCompilation )
 	{
 		this.documentDescriptor = documentDescriptor;
 		this.documentSource = documentSource;
-		this.manager = manager;
+		this.languageManager = languageManager;
 		this.allowCompilation = allowCompilation;
 	}
 
@@ -84,20 +85,20 @@ public class DefrostTask implements Callable<Executable>
 
 	public Executable call() throws Exception
 	{
-		Executable document = documentDescriptor.getDocument();
+		Executable executable = documentDescriptor.getDocument();
 
-		if( document == null )
+		if( executable == null )
 		{
-			LanguageAdapter scriptEngine = manager.getAdapterByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag() );
-			String text = documentDescriptor.getText();
-			document = new Executable( documentDescriptor.getDefaultName(), text, false, manager, (String) scriptEngine.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), documentSource, allowCompilation );
+			LanguageAdapter scriptEngine = languageManager.getAdapterByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag() );
+			String sourceCode = documentDescriptor.getSourceCode();
+			executable = new Executable( documentDescriptor.getDefaultName(), sourceCode, false, languageManager, (String) scriptEngine.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), documentSource, allowCompilation );
 
-			Executable existing = documentDescriptor.setDocumentIfAbsent( document );
+			Executable existing = documentDescriptor.setDocumentIfAbsent( executable );
 			if( existing != null )
-				document = existing;
+				executable = existing;
 		}
 
-		return document;
+		return executable;
 	}
 
 	//
@@ -114,23 +115,23 @@ public class DefrostTask implements Callable<Executable>
 	// Private
 
 	/**
-	 * The document descriptor.
+	 * The document descriptor for the executable.
 	 */
 	private final DocumentDescriptor<Executable> documentDescriptor;
 
 	/**
-	 * The document source, required for processing in-flow tags during document
-	 * initialization.
+	 * The document source for the executables, required for processing in-flow
+	 * tags during executable initialization.
 	 */
 	private final DocumentSource<Executable> documentSource;
 
 	/**
-	 * The script engine manager to use for document initialization.
+	 * The language manager for executable initialization.
 	 */
-	private final LanguageManager manager;
+	private final LanguageManager languageManager;
 
 	/**
-	 * Whether to allow compilation for initialized documents.
+	 * Whether to compile executables.
 	 */
 	private final boolean allowCompilation;
 }

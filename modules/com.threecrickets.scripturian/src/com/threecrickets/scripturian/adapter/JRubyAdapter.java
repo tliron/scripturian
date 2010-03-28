@@ -138,7 +138,7 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	{
 		// return "require $" + document.getDocumentVariableName() +
 		// ".container.source.basePath.toString + '/' + " + content + ";";
-		return "$" + document.getExecutableVariableName() + ".container.include_document(" + content + ");";
+		return "$" + document.getExposedExecutableName() + ".container.include_document(" + content + ");";
 	}
 
 	@Override
@@ -159,7 +159,7 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
+	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable )
 	{
 		if( raiseExceptionClass.isInstance( throwable ) )
 		{

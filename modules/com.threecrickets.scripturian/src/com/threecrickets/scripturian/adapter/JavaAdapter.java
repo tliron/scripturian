@@ -64,7 +64,7 @@ public class JavaAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getExecutableVariableName() + ".container.includeDocument((" + content + ").toString());";
+		return document.getExposedExecutableName() + ".container.includeDocument((" + content + ").toString());";
 	}
 
 	@Override

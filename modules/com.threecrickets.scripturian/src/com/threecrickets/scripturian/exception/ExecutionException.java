@@ -37,7 +37,7 @@ public class ExecutionException extends Exception
 			Throwable causeOrDocumentRunException = null;
 			for( LanguageAdapter adapter : manager.getAdapters() )
 			{
-				causeOrDocumentRunException = adapter.getCauseOrDocumentRunException( documentName, wrapped );
+				causeOrDocumentRunException = adapter.getCauseOrExecutionException( documentName, wrapped );
 				if( causeOrDocumentRunException != null )
 					break;
 			}

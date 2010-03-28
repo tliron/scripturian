@@ -105,11 +105,11 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return document.getExecutableVariableName() + ".container.includeDocument(" + content + ");";
+		return document.getExposedExecutableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	@Override
-	public Throwable getCauseOrDocumentRunException( String documentName, Throwable throwable )
+	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable )
 	{
 		Throwable root = getRoot( throwable );
 		if( root != null )

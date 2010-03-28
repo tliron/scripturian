@@ -1,3 +1,14 @@
+/**
+ * Copyright 2009-2010 Three Crickets LLC.
+ * <p>
+ * The contents of this file are subject to the terms of the LGPL version 3.0:
+ * http://www.opensource.org/licenses/lgpl-3.0.html
+ * <p>
+ * Alternatively, you can obtain a royalty free commercial license with less
+ * limitations, transferable or non-transferable, directly from Three Crickets
+ * at http://threecrickets.com/
+ */
+
 package com.threecrickets.scripturian.adapter;
 
 import java.io.StringReader;
@@ -15,60 +26,60 @@ import com.threecrickets.scripturian.exception.CompilationException;
 import com.threecrickets.scripturian.exception.ExecutableInitializationException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
-public class Jsr223Scriptlet extends Scriptlet
+/**
+ * @author Tal Liron
+ */
+public class Jsr223Scriptlet implements Scriptlet
 {
-	private final String code;
+	//
+	// Construction
+	//
 
-	private CompiledScript compiledScript;
-
-	private final Jsr223LanguageAdapter adapter;
-
-	private final Executable document;
-
-	@Override
-	public String getCode()
+	public Jsr223Scriptlet( String sourceCode, Jsr223LanguageAdapter languageAdapter, Executable executable )
 	{
-		return code;
+		this.sourceCode = sourceCode;
+		this.languageAdapter = languageAdapter;
+		this.executable = executable;
 	}
 
-	public Jsr223Scriptlet( String code, Jsr223LanguageAdapter adapter, Executable document )
+	//
+	// Scriptlet
+	//
+
+	public String getSourceCode()
 	{
-		this.code = code;
-		this.adapter = adapter;
-		this.document = document;
+		return sourceCode;
 	}
 
-	@Override
-	public void compile() throws ExecutableInitializationException
+	public void compile() throws CompilationException
 	{
-		if( adapter.isCompilable() )
+		if( languageAdapter.isCompilable() )
 		{
-			ScriptEngine scriptEngine = adapter.getStaticScriptEngine();
+			ScriptEngine scriptEngine = languageAdapter.getStaticScriptEngine();
 			if( scriptEngine instanceof Compilable )
 			{
 				try
 				{
-					compiledScript = ( (Compilable) scriptEngine ).compile( code );
+					compiledScript = ( (Compilable) scriptEngine ).compile( sourceCode );
 				}
 				catch( ScriptException x )
 				{
-					String scriptEngineName = (String) adapter.getAttributes().get( "jsr223.scriptEngineName" );
-					throw new CompilationException( document.getName(), "Compilation error in " + scriptEngineName, x );
+					String scriptEngineName = (String) languageAdapter.getAttributes().get( "jsr223.scriptEngineName" );
+					throw new CompilationException( executable.getName(), "Compilation error in " + scriptEngineName, x );
 				}
 			}
 		}
 	}
 
-	@Override
 	public Object execute( ExecutionContext executionContext ) throws ExecutableInitializationException, ExecutionException
 	{
-		ScriptEngine scriptEngine = adapter.getScriptEngine( document, executionContext );
+		ScriptEngine scriptEngine = languageAdapter.getScriptEngine( executable, executionContext );
 		ScriptContext scriptContext = Jsr223LanguageAdapter.getScriptContext( executionContext );
 
 		Object value;
 		try
 		{
-			adapter.beforeCall( scriptEngine, executionContext );
+			languageAdapter.beforeCall( scriptEngine, executionContext );
 
 			if( compiledScript != null )
 				value = compiledScript.eval( scriptContext );
@@ -78,26 +89,38 @@ public class Jsr223Scriptlet extends Scriptlet
 				// implementations of javax.script (notably
 				// Jepp) interpret the String version of eval to
 				// mean only one line of code.
-				value = scriptEngine.eval( new StringReader( code ), scriptContext );
+				value = scriptEngine.eval( new StringReader( sourceCode ), scriptContext );
 
-			if( ( value != null ) && adapter.isPrintOnEval() )
+			if( ( value != null ) && languageAdapter.isPrintOnEval() )
 				executionContext.getWriter().write( value.toString() );
 		}
 		catch( ScriptException x )
 		{
-			throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+			throw ExecutionException.create( executable.getName(), executionContext.getManager(), x );
 		}
 		catch( Exception x )
 		{
 			// Some script engines (notably Quercus) throw their
 			// own special exceptions
-			throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+			throw ExecutionException.create( executable.getName(), executionContext.getManager(), x );
 		}
 		finally
 		{
-			adapter.afterCall( scriptEngine, executionContext );
+			languageAdapter.afterCall( scriptEngine, executionContext );
 		}
 
 		return value;
 	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	private final String sourceCode;
+
+	private final Jsr223LanguageAdapter languageAdapter;
+
+	private final Executable executable;
+
+	private CompiledScript compiledScript;
+
 }

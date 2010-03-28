@@ -25,65 +25,66 @@ import com.threecrickets.scripturian.internal.ExecutableSegment;
 import com.threecrickets.scripturian.internal.ExposedExecutable;
 
 /**
- * Handles the parsing, optional compilation and running of Scripturian
- * documents.
+ * Handles the parsing, compilation, execution and invocation of executable
+ * units in any supported languages.
  * <p>
- * Scripturian documents are text streams containing a mix of plain text and
- * "scriptlets" -- script code embedded between special delimiters with an
- * optional specification of which engine to use. During the parsing stage,
- * which happens only once in the constructor, the entire document is converted
- * into code and optionally compiled. When the code is run, the non-delimited
- * plain text segments are sent to output via whatever method is appropriate for
- * the scripting engine (see {@link LanguageAdapter}).
+ * Executables can be constructed in three modes:
  * <p>
- * The exception to this is documents beginning with plain text -- in such
- * cases, just that first section is sent directly to your specified output. The
- * reasons for this are two: first, that no script engine has been specified
- * yet, so we can't be sure which to use, and second, that sending in directly
- * is probably a bit faster than sending via a scriptlet. If the entire text
- * stream is just plain text, it is simply sent directly to output without
- * invoking any scriptlet. In such cases, {@link #getAsPlainText()} would return
- * the content of the text stream.
+ * <ul>
+ * <li><b>Pure source code.</b> These are constructed when any of the
+ * constructors is called with {@code isTextWithScriptlets} as false. The code
+ * must be in a single programming language defined by {@code
+ * defaultLanguageTag}.</li>
+ * <li><b>Text with scriptlets.</b> These are constructed when any of the
+ * constructors is called with {@code isTextWithScriptlets} as true. This
+ * powerful mode supports executables with scriptlets in various languages,
+ * in-flow scriptlets, and other features detailed below.</li>
+ * <li><b>Pure text.</b> This is a trivial case of "text with scriptlets" -- no
+ * scriptlets are included. If executed, the executable will simply output the
+ * text. You can detect plain text executables via {@link #getAsPureText()} to
+ * optimize for this edge case.</li>
+ * </ul>
+ * "Text with scriptlets" executable source code is a mix of text with
+ * "scriptlets" -- source code embedded between special delimiters, with an
+ * optional specification of which language to use. During construction, the
+ * entire document is converted into code and optionally compiled. When the code
+ * is executed, the non-scriptlet text segments are sent to output via whatever
+ * method is appropriate for the language (see {@link LanguageAdapter}).
  * <p>
- * Documents are often provided by an implementation of {@link DocumentSource},
- * though your environment can use its own system.
+ * (The exception to this behavior is when the first segment is text -- in such
+ * cases, just that first segment is sent to output from Java. This is just an
+ * optimization.)
  * <p>
- * Scripturian documents can be abused, becoming hard to read and hard to
- * maintain, since both code and plain text are mixed together. However, they
- * can boost productivity in environments which mostly just output plain text.
- * For example, in an application that dynamically generates HTML web pages, it
- * is likely that most files will be in HTML with only some parts of some files
- * containing scriptlets. In such cases, it is easy to have a professional web
- * designer work on the HTML parts while the scriptlets are reserved for the
- * programmer. Web design software can often recognize scriptlets and take care
- * to keep it safe while the web designer makes changes to the file.
+ * Source code can be provided by an implementation of {@link DocumentSource},
+ * though you can use your own system.
  * <p>
- * Scripturian documents can support scriptlets in multiple languages and
- * engines within the same text. Each scriptlet can specify which engine it uses
- * explicitly at the opening delimiter. If the engine is not specified, whatever
- * engine was previously used in the file will be used. If no engine was
- * previously specified, a default value is used (supplied in the constructor).
+ * "Text with scriptlets" is useful for building applications with a lot of
+ * textual output -- for example, HTML-based web applications.
+ * <p>
+ * Executables can have scriptlets in multiple languages within the same source
+ * code. You can specify a different language for each scriptlet in its opening
+ * delimiter. If the language is not specified, whatever language was previously
+ * used in the source code will be used. If no language was previously
+ * specified, the {@code defaultLanguageTag} value from the constructor is used.
  * <p>
  * Two scriptlet delimiting styles are supported: JSP/ASP style (using
  * percentage signs), and the PHP style (using question marks). However, each
  * document must adhere to only one style throughout.
  * <p>
- * In addition to scriptlets, which are regular code, Scriptuarian documents
- * support a few shorthands for common scriptlet tasks.
+ * In addition to regular scriptlets, Scripturian supports a few shorthand
+ * scriptlets for common tasks:
  * <p>
- * The expression tag causes the expression to be sent to standard output. It
- * can allow for more compact and cleaner code.
+ * The expression scriptlet (with an equals sign) causes the expression to be
+ * sent to standard output. It can allow for more compact and cleaner code.
  * <p>
- * The include tag invokes the <code>document.container.include(name)</code>
- * command as appropriate for the engine. Note that you need this command to be
- * supported by your container environment.
+ * The include scriptlet (with an ampersand) invokes the
+ * <code>executable.container.include(name)</code> command as appropriate for
+ * the language. Note that you need the "include" command to be supported by
+ * your container environment.
  * <p>
- * Finally, the in-flow tag works exactly like an include, but lets you place
- * the included script into the flow of the current script. The inclusion is
- * applied to the previously used script engine, which is then restored to being
- * the default engine after the in-flow tag. This construct allows for very
- * powerful and clean mixing of scripting engines, without cumbersome creation
- * of separate scripts for inclusion.
+ * Finally, the in-flow scriptlet (with a colon) works like a combination of
+ * regular scriptlets with include scriptlets. Read the FAQ for more
+ * information.
  * <p>
  * Examples:
  * <ul>
@@ -102,31 +103,30 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * </li>
  * </ul>
  * <p>
- * A special container environment is created for scripts, with some useful
- * services. It is available to the script as a global variable named
- * <code>document</code> (this name can be changed via the
+ * A special container environment is exposed to your executable, with some
+ * useful services. It is available as a global variable named
+ * <code>executable</code> (this name can be changed via the
  * {@link #Executable(String, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
  * <ul>
- * <li><code>document.container</code>: This is an arbitrary object set by the
- * document's container environment for access to container-specific services.
+ * <li><code>executable.container</code>: This is an arbitrary object set by the
+ * executable's container environment for access to container-specific services.
  * It might be null if none was provided.</li>
- * <li><code>document.context</code>: This is the {@link ExecutionContext} used
- * by the document. Scriptlets may use it to get access to the {@link Writer}
- * objects used for standard output and standard error.</li>
- * <li><code>document.meta</code>: This {@link ConcurrentMap} provides a
- * convenient location for global values shared by all scriptlets in all
- * documents.</li>
+ * <li><code>executable.context</code>: This is the {@link ExecutionContext}
+ * used by the executable. Your code may use it to get access to the
+ * {@link Writer} objects used for standard output and standard error.</li>
+ * <li><code>executable.meta</code>: This {@link ConcurrentMap} provides a
+ * convenient location for global values shared by all executables.</li>
  * </ul>
  * Modifiable attributes:
  * <ul>
- * <li><code>document.cacheDuration</code>: Setting this to something greater
- * than 0 enables caching of the document's output for a maximum number of
- * milliseconds. By default cacheDuration is 0, so that each request causes the
- * document to be run. This class does not handle caching itself. Caching can be
- * provided by your environment if appropriate.</li>
+ * <li><code>executable.cacheDuration</code>: Setting this to something greater
+ * than 0 enables caching of the executable's output for a maximum number of
+ * milliseconds. By default {@code cacheDuration} is 0. Note that Scripturian
+ * doesn't actually cache anything -- this value is provided as a utility for
+ * you.</li>
  * </ul>
  * 
  * @author Tal Liron
@@ -190,29 +190,33 @@ public class Executable
 	 * 
 	 * @param name
 	 *        Name used for error messages
-	 * @param code
-	 *        The text stream
-	 * @param isPlainTextWithScriptlets
-	 *        If true, the text will be parsed as a single script for
-	 *        defaultEngineName
-	 * @param manager
-	 *        The Scripturian manager used to access language adapters
+	 * @param sourceCode
+	 *        The source code -- when {@code isTextWithScriptlets} is false,
+	 *        it's considered as pure source code in the language defined by
+	 *        {@code defaultLanguageTag}, otherwise it's considered as text with
+	 *        embedded scriptlets
+	 * @param isTextWithScriptlets
+	 *        See {@code sourceCode} and {@code defaultLanguageTag}
+	 * @param languageManager
+	 *        The language manager used to parse and compile the executable
 	 * @param defaultLanguageTag
-	 *        If a script engine name isn't explicitly specified in the first
-	 *        scriptlet, this one will be used
+	 *        When {@code isTextWithScriptlets} is true, this is the language
+	 *        used for scriptlets if none is specified
 	 * @param documentSource
-	 *        The document source (used for in-flow tags)
+	 *        A document source used to store in-flow scriptlets; can be null if
+	 *        in-flow scriptlets are not used
 	 * @param allowCompilation
-	 *        Whether script segments will be compiled (note that compilation
-	 *        will only happen if the script engine supports it, and that what
-	 *        compilation exactly means is left up to the script engine)
+	 *        Whether to compile the source code -- note that compilation will
+	 *        only happen if the language supports it, that what compilation
+	 *        exactly means may differ widely, and that it can be time-consuming
+	 *        for some languages)
 	 * @throws ExecutableInitializationException
 	 *         In case of a parsing error
 	 */
-	public Executable( String name, String code, boolean isPlainTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation )
+	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation )
 		throws ExecutableInitializationException
 	{
-		this( name, code, isPlainTextWithScriptlets, manager, defaultLanguageTag, documentSource, allowCompilation, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
+		this( name, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, allowCompilation, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
 			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
@@ -224,23 +228,27 @@ public class Executable
 	 * 
 	 * @param name
 	 *        Name used for error messages
-	 * @param code
-	 *        The text stream
-	 * @param isPlainTextWithScriptlets
-	 *        If true, the text will be parsed as a single script for
-	 *        defaultEngineName
-	 * @param manager
-	 *        The Scripturian manager used to access language adapters
+	 * @param sourceCode
+	 *        The source code -- when {@code isTextWithScriptlets} is false,
+	 *        it's considered as pure source code in the language defined by
+	 *        {@code defaultLanguageTag}, otherwise it's considered as text with
+	 *        embedded scriptlets
+	 * @param isTextWithScriptlets
+	 *        See {@code sourceCode} and {@code defaultLanguageTag}
+	 * @param languageManager
+	 *        The language manager used to parse and compile the executable
 	 * @param defaultLanguageTag
-	 *        If a script engine name isn't explicitly specified in the first
-	 *        scriptlet, this one will be used
+	 *        When {@code isTextWithScriptlets} is true, this is the language
+	 *        used for scriptlets if none is specified
 	 * @param documentSource
-	 *        The document source (used for in-flow tags)
+	 *        A document source used to store in-flow scriptlets; can be null if
+	 *        in-flow scriptlets are not used
 	 * @param allowCompilation
-	 *        Whether scriptlets will be compiled (note that compilation will
-	 *        only happen if the script engine supports it, and that what
-	 *        compilation exactly means is left up to the script engine)
-	 * @param executableVariableName
+	 *        Whether to compile the source code -- note that compilation will
+	 *        only happen if the language supports it, that what compilation
+	 *        exactly means may differ widely, and that it can be time-consuming
+	 *        for some languages)
+	 * @param exposedExecutableName
 	 *        The document variable name
 	 * @param delimiter1Start
 	 *        The start delimiter (first option)
@@ -255,29 +263,29 @@ public class Executable
 	 *        expression tag
 	 * @param delimiterInclude
 	 *        The default addition to the start delimiter to specify an include
-	 *        tag
+	 *        scriptlet
 	 * @param delimiterInFlow
 	 *        The default addition to the start delimiter to specify an in-flow
-	 *        tag
+	 *        scriptlet
 	 * @throws ExecutableInitializationException
-	 *         In case of a parsing error
+	 *         In case of a parsing or compilation error
 	 * @see LanguageAdapter
 	 */
-	public Executable( String name, String code, boolean isPlainTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation,
-		String executableVariableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
+	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation,
+		String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
 		throws ExecutableInitializationException
 	{
 		this.name = name;
-		this.executableVariableName = executableVariableName;
+		this.exposedExecutableName = exposedExecutableName;
 
-		if( !isPlainTextWithScriptlets )
+		if( !isTextWithScriptlets )
 		{
-			ExecutableSegment segment = new ExecutableSegment( code, true, defaultLanguageTag );
+			ExecutableSegment segment = new ExecutableSegment( sourceCode, true, defaultLanguageTag );
 			segments = new ExecutableSegment[]
 			{
 				segment
 			};
-			segment.createScriptlet( this, manager, allowCompilation );
+			segment.createScriptlet( this, languageManager, allowCompilation );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -292,7 +300,7 @@ public class Executable
 		int inFlowLength = delimiterInFlow.length();
 
 		// Detect type of delimiter
-		int start = code.indexOf( delimiter1Start );
+		int start = sourceCode.indexOf( delimiter1Start );
 		if( start != -1 )
 		{
 			delimiterStart = delimiter1Start;
@@ -302,7 +310,7 @@ public class Executable
 		}
 		else
 		{
-			start = code.indexOf( delimiter2Start );
+			start = sourceCode.indexOf( delimiter2Start );
 			if( start != -1 )
 			{
 				delimiterStart = delimiter2Start;
@@ -329,11 +337,11 @@ public class Executable
 			{
 				// Add previous non-script segment
 				if( start != last )
-					segments.add( new ExecutableSegment( code.substring( last, start ), false, lastLanguageTag ) );
+					segments.add( new ExecutableSegment( sourceCode.substring( last, start ), false, lastLanguageTag ) );
 
 				start += delimiterStartLength;
 
-				int end = code.indexOf( delimiterEnd, start );
+				int end = sourceCode.indexOf( delimiterEnd, start );
 				if( end == -1 )
 					throw new RuntimeException( "Script block does not have an ending delimiter" );
 
@@ -346,32 +354,32 @@ public class Executable
 					boolean isInFlow = false;
 
 					// Check if this is an expression
-					if( code.substring( start, start + expressionLength ).equals( delimiterExpression ) )
+					if( sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
 					{
 						start += expressionLength;
 						isExpression = true;
 					}
 					// Check if this is an include
-					else if( code.substring( start, start + includeLength ).equals( delimiterInclude ) )
+					else if( sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
 					{
 						start += includeLength;
 						isInclude = true;
 					}
 					// Check if this is an in-flow
-					else if( code.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
+					else if( sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
 					{
 						start += inFlowLength;
 						isInFlow = true;
 					}
 
 					// Get engine name if available
-					if( !Character.isWhitespace( code.charAt( start ) ) )
+					if( !Character.isWhitespace( sourceCode.charAt( start ) ) )
 					{
 						int endEngineName = start + 1;
-						while( !Character.isWhitespace( code.charAt( endEngineName ) ) )
+						while( !Character.isWhitespace( sourceCode.charAt( endEngineName ) ) )
 							endEngineName++;
 
-						languageTag = code.substring( start, endEngineName );
+						languageTag = sourceCode.substring( start, endEngineName );
 
 						// Optimization: in-flow is unnecessary if we are in the
 						// same script engine
@@ -386,30 +394,30 @@ public class Executable
 						// Add script segment
 						if( isExpression || isInclude )
 						{
-							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
+							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ExecutableInitializationException.adapterNotFound( name, languageTag );
 
 							if( isExpression )
-								segments.add( new ExecutableSegment( adapter.getCodeForExpressionOutput( code.substring( start, end ), this ), true, languageTag ) );
+								segments.add( new ExecutableSegment( adapter.getCodeForExpressionOutput( sourceCode.substring( start, end ), this ), true, languageTag ) );
 							else if( isInclude )
-								segments.add( new ExecutableSegment( adapter.getCodeForExpressionInclude( code.substring( start, end ), this ), true, languageTag ) );
+								segments.add( new ExecutableSegment( adapter.getCodeForExpressionInclude( sourceCode.substring( start, end ), this ), true, languageTag ) );
 						}
 						else if( isInFlow && ( documentSource != null ) )
 						{
-							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
+							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ExecutableInitializationException.adapterNotFound( name, languageTag );
 
-							String inFlowCode = delimiterStart + languageTag + " " + code.substring( start, end ) + delimiterEnd;
+							String inFlowCode = delimiterStart + languageTag + " " + sourceCode.substring( start, end ) + delimiterEnd;
 							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
 
 							// Note that the in-flow executable is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Executable inFlowExecutable = new Executable( name + "/" + inFlowName, inFlowCode, false, manager, null, null, allowCompilation, executableVariableName, delimiterStart, delimiterEnd,
+							Executable inFlowExecutable = new Executable( name + "/" + inFlowName, inFlowCode, false, languageManager, null, null, allowCompilation, exposedExecutableName, delimiterStart, delimiterEnd,
 								delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
-							documentSource.setDocumentDescriptor( inFlowName, inFlowCode, "", inFlowExecutable );
+							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
 							// TODO: would it ever be possible to remove the
 							// dependent in-flow instances?
@@ -418,7 +426,7 @@ public class Executable
 							segments.add( new ExecutableSegment( adapter.getCodeForExpressionInclude( "'" + inFlowName + "'", this ), true, lastLanguageTag ) );
 						}
 						else
-							segments.add( new ExecutableSegment( code.substring( start, end ), true, languageTag ) );
+							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), true, languageTag ) );
 					}
 
 					if( !isInFlow )
@@ -426,19 +434,19 @@ public class Executable
 				}
 
 				last = end + delimiterEndLength;
-				start = code.indexOf( delimiterStart, last );
+				start = sourceCode.indexOf( delimiterStart, last );
 			}
 
 			// Add remaining non-script segment
-			if( last < code.length() )
-				segments.add( new ExecutableSegment( code.substring( last ), false, lastLanguageTag ) );
+			if( last < sourceCode.length() )
+				segments.add( new ExecutableSegment( sourceCode.substring( last ), false, lastLanguageTag ) );
 		}
 		else
 		{
 			// Trivial file: does not include script
 			this.segments = new ExecutableSegment[]
 			{
-				new ExecutableSegment( code, false, lastLanguageTag )
+				new ExecutableSegment( sourceCode, false, lastLanguageTag )
 			};
 			return;
 		}
@@ -487,7 +495,7 @@ public class Executable
 						previous.code += current.code;
 					else
 					{
-						LanguageAdapter adapter = manager.getAdapterByTag( current.languageTag );
+						LanguageAdapter adapter = languageManager.getAdapterByTag( current.languageTag );
 						if( adapter == null )
 							throw ExecutableInitializationException.adapterNotFound( name, current.languageTag );
 
@@ -512,7 +520,7 @@ public class Executable
 		// Resolve scriptlets
 		for( ExecutableSegment segment : segments )
 			if( segment.isScriptlet )
-				segment.createScriptlet( this, manager, allowCompilation );
+				segment.createScriptlet( this, languageManager, allowCompilation );
 
 		// Flatten
 		this.segments = new ExecutableSegment[segments.size()];
@@ -558,14 +566,14 @@ public class Executable
 	/**
 	 * The default variable name for the {@link ExposedExecutable} instance.
 	 */
-	public String getExecutableVariableName()
+	public String getExposedExecutableName()
 	{
-		return executableVariableName;
+		return exposedExecutableName;
 	}
 
 	/**
-	 * Timestamp of when the script last finished running successfully, or 0 if
-	 * it was never run.
+	 * Timestamp of when the executable last finished running successfully, or 0
+	 * if it was never run.
 	 * 
 	 * @return The timestamp or 0
 	 */
@@ -575,14 +583,10 @@ public class Executable
 	}
 
 	/**
-	 * Setting this to something greater than 0 enables caching of the script
-	 * results for a maximum number of milliseconds. By default cacheDuration is
-	 * 0, so that each call to
-	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
-	 * causes the script to be run. This class does not handle caching itself.
-	 * Caching can be provided by your environment if appropriate.
-	 * <p>
-	 * This is the same instance provided for ExposedScript#getCacheDuration().
+	 * Setting this to something greater than 0 enables caching of the
+	 * executable's output for a maximum number of milliseconds. By default
+	 * {@code cacheDuration} is 0. Note that Scripturian doesn't actually cache
+	 * anything -- this value is provided as a utility for you.
 	 * 
 	 * @return The cache duration in milliseconds
 	 * @see #setCacheDuration(long)
@@ -620,14 +624,15 @@ public class Executable
 	}
 
 	/**
-	 * Trivial documents have no scriptlets, meaning that they are pure text.
+	 * Returns the entire source code in the trivial case of a
+	 * "text with scriptlets" executable that contains no scriptlets.
 	 * Identifying such documents can save you from making unnecessary calls to
 	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * in some situations.
 	 * 
-	 * @return The text content if it's trivial, null if not
+	 * @return The soure code if it's pure text, null if not
 	 */
-	public String getAsPlainText()
+	public String getAsPureText()
 	{
 		if( segments.length == 1 )
 		{
@@ -665,11 +670,12 @@ public class Executable
 	 * is recommended that you use the same {@link ExecutionContext} for each
 	 * call for better performance.
 	 * 
-	 * @param checkRan
-	 *        Run only if we've never ran before
+	 * @param checkIfRanBefore
+	 *        Run only if we've never ran before -- this will affect the return
+	 *        value
 	 * @param checkCache
 	 *        Whether or not to check for caching versus the value of
-	 *        {@link #getLastRun()}
+	 *        {@link #getLastRun()} -- this will affect the return value
 	 * @param writer
 	 *        Standard output
 	 * @param errorWriter
@@ -677,22 +683,22 @@ public class Executable
 	 * @param flushLines
 	 *        Whether to flush the writers after every line
 	 * @param executionContext
-	 *        The context
+	 *        The execution context
 	 * @param container
 	 *        The container (can be null)
 	 * @param executionController
 	 *        An optional {@link ExecutionController} to be applied to the
-	 *        script context
-	 * @return True if the script ran, false if it didn't run, because the
-	 *         cached output is expected to be used instead
+	 *        execution context
+	 * @return True if execution happened, false if it didn't because the cached
+	 *         output is expected to be used instead
 	 * @throws ExecutableInitializationException
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean execute( boolean checkRan, boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, ExecutionContext executionContext, Object container, ExecutionController executionController )
-		throws ExecutableInitializationException, ExecutionException, IOException
+	public boolean execute( boolean checkIfRanBefore, boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, ExecutionContext executionContext, Object container,
+		ExecutionController executionController ) throws ExecutableInitializationException, ExecutionException, IOException
 	{
-		if( checkRan )
+		if( checkIfRanBefore )
 		{
 			// TODO: ughghghghghghgh!!!!
 			if( lastRun != 0 )
@@ -722,16 +728,16 @@ public class Executable
 						writer.write( segment.code );
 					else
 					{
-						LanguageAdapter adapter = executionContext.getManager().getAdapterByTag( segment.languageTag );
-						if( adapter == null )
+						LanguageAdapter languageAdapter = executionContext.getManager().getAdapterByTag( segment.languageTag );
+						if( languageAdapter == null )
 							throw ExecutableInitializationException.adapterNotFound( name, segment.languageTag );
 
-						executionContext.setAdapter( adapter );
+						executionContext.setAdapter( languageAdapter );
 
-						if( !adapter.isThreadSafe() )
-							adapter.lock.lock();
+						if( !languageAdapter.isThreadSafe() )
+							languageAdapter.getLock().lock();
 
-						Object oldExposedExecutable = executionContext.getExposedVariables().put( executableVariableName, new ExposedExecutable( this, executionContext, container ) );
+						Object oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( this, executionContext, container ) );
 
 						try
 						{
@@ -742,10 +748,10 @@ public class Executable
 							// Restore old document value (this is desirable for
 							// documents that run other documents)
 							if( oldExposedExecutable != null )
-								executionContext.getExposedVariables().put( executableVariableName, oldExposedExecutable );
+								executionContext.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
 
-							if( !adapter.isThreadSafe() )
-								adapter.lock.unlock();
+							if( !languageAdapter.isThreadSafe() )
+								languageAdapter.getLock().unlock();
 						}
 					}
 				}
@@ -766,23 +772,21 @@ public class Executable
 	}
 
 	/**
-	 * Calls an entry point in the document: a function, method, closure, etc.,
-	 * according to how the script engine and its language handles invocations.
-	 * If not, then this method requires the appropriate {@link LanguageAdapter}
-	 * implementation to be installed for the script engine. Running the script
-	 * first (via
+	 * Calls an entry point in the executable: a function, method, closure,
+	 * etc., according to how the language handles invocations. Executing the
+	 * script first (via
 	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
-	 * ) is not absolutely required, but probably will be necessary in most
-	 * useful scenarios, where running the script causes useful entry point to
-	 * be defined.
+	 * ) is not absolutely required for this, but probably will be necessary in
+	 * most useful scenarios, where running the script causes useful entry point
+	 * to be initialized.
 	 * <p>
-	 * Note that this call does not support sending arguments. If you need to
-	 * pass data to the script, use a global variable, which you can set via the
-	 * optional {@link ExecutionController}.
+	 * Note that this call does not support sending arguments to the method. If
+	 * you need to pass data to the script, expose it via the optional
+	 * {@link ExecutionController}.
 	 * <p>
 	 * Concurrency note: The invoke mechanism allows for multi-threaded access,
-	 * so it's the responsibility of your script to be thread-safe. Also note
-	 * that, internally, invoke relies on the {@link ExecutionContext} from
+	 * so it's the responsibility of your executable to be thread-safe. Also
+	 * note that, internally, invoke relies on the {@link ExecutionContext} from
 	 * {@link #getExecutionContextForInvocations()}. This is set to be the one
 	 * used in the last call to
 	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
@@ -793,7 +797,7 @@ public class Executable
 	 *        The container (can be null)
 	 * @param executionController
 	 *        An optional {@link ExecutionController} to be applied to the
-	 *        script context
+	 *        execution context
 	 * @return The value returned by the invocation
 	 * @throws ExecutableInitializationException
 	 * @throws ExecutionException
@@ -805,19 +809,19 @@ public class Executable
 		if( executionContextForInvocations == null )
 			throw new ExecutionException( name, "Document must be run at least once before calling invoke" );
 
-		LanguageAdapter adapter = executionContextForInvocations.getAdapter();
+		LanguageAdapter languageAdapter = executionContextForInvocations.getAdapter();
 
-		if( !adapter.isThreadSafe() )
-			adapter.lock.lock();
+		if( !languageAdapter.isThreadSafe() )
+			languageAdapter.getLock().lock();
 
-		Object oldExposedExecutable = executionContextForInvocations.getExposedVariables().put( executableVariableName, new ExposedExecutable( this, executionContextForInvocations, container ) );
+		Object oldExposedExecutable = executionContextForInvocations.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( this, executionContextForInvocations, container ) );
 
 		try
 		{
 			if( executionController != null )
 				executionController.initialize( executionContextForInvocations );
 
-			return adapter.invoke( entryPointName, this, executionContextForInvocations );
+			return languageAdapter.invoke( entryPointName, this, executionContextForInvocations );
 		}
 		finally
 		{
@@ -827,10 +831,10 @@ public class Executable
 			// Restore old script value (this is desirable for scripts that run
 			// other scripts)
 			if( oldExposedExecutable != null )
-				executionContextForInvocations.getExposedVariables().put( executableVariableName, oldExposedExecutable );
+				executionContextForInvocations.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
 
-			if( !adapter.isThreadSafe() )
-				adapter.lock.unlock();
+			if( !languageAdapter.isThreadSafe() )
+				languageAdapter.getLock().unlock();
 		}
 	}
 
@@ -849,7 +853,7 @@ public class Executable
 
 	private final String delimiterEnd;
 
-	private final String executableVariableName;
+	private final String exposedExecutableName;
 
 	private volatile long cacheDuration = 0;
 

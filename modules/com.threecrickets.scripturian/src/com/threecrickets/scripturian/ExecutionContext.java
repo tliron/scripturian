@@ -29,9 +29,9 @@ public class ExecutionContext
 	// Construction
 	//
 
-	public ExecutionContext( LanguageManager manager )
+	public ExecutionContext( LanguageManager languageManager )
 	{
-		this.manager = manager;
+		this.languageManager = languageManager;
 	}
 
 	//
@@ -118,17 +118,17 @@ public class ExecutionContext
 
 	public LanguageAdapter getAdapter()
 	{
-		return adapter;
+		return languageAdapter;
 	}
 
 	public void setAdapter( LanguageAdapter adapter )
 	{
-		this.adapter = adapter;
+		this.languageAdapter = adapter;
 	}
 
 	public LanguageManager getManager()
 	{
-		return manager;
+		return languageManager;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -142,7 +142,7 @@ public class ExecutionContext
 
 	private Writer errorWriter;
 
-	private LanguageManager manager;
+	private LanguageManager languageManager;
 
-	private LanguageAdapter adapter;
+	private LanguageAdapter languageAdapter;
 }

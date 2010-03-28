@@ -65,11 +65,11 @@ public class ExposedContainerForMain
 	 */
 	public void includeDocument( String name ) throws IOException, ExecutableInitializationException, ExecutionException
 	{
-		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
+		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocument( name );
 		Executable document = documentDescriptor.getDocument();
 		if( document == null )
 		{
-			String text = documentDescriptor.getText();
+			String text = documentDescriptor.getSourceCode();
 			document = new Executable( name, text, true, mainDocument.getManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
 
 			Executable existing = documentDescriptor.setDocumentIfAbsent( document );
@@ -93,12 +93,12 @@ public class ExposedContainerForMain
 	 */
 	public void include( String name ) throws IOException, ExecutableInitializationException, ExecutionException
 	{
-		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocumentDescriptor( name );
+		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocument( name );
 		Executable document = documentDescriptor.getDocument();
 		if( document == null )
 		{
 			LanguageAdapter adapter = mainDocument.getManager().getAdapterByExtension( name, documentDescriptor.getTag() );
-			String text = documentDescriptor.getText();
+			String text = documentDescriptor.getSourceCode();
 			document = new Executable( name, text, false, mainDocument.getManager(), (String) adapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), mainDocument.getDocumentSource(), mainDocument
 				.isAllowCompilation() );
 

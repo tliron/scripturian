@@ -20,9 +20,10 @@ import com.threecrickets.scripturian.exception.ExecutableInitializationException
 import com.threecrickets.scripturian.internal.ServiceLoader;
 
 /**
- * Shared static attributes for Scripturian.
+ * Provides access to {@link LanguageAdapter} instances.
  * 
  * @author Tal Liron
+ * @see LanguageAdapter
  */
 public class LanguageManager
 {
@@ -39,15 +40,15 @@ public class LanguageManager
 		{
 			try
 			{
-				adapters.add( adapter );
+				languageAdapters.add( adapter );
 
 				Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
 				for( String tag : tags )
-					adapterByTag.put( tag, adapter );
+					languageAdapterByTag.put( tag, adapter );
 
 				Iterable<String> extensions = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.EXTENSIONS );
 				for( String extension : extensions )
-					adapterByExtension.put( extension, adapter );
+					languageAdapterByExtension.put( extension, adapter );
 			}
 			catch( Throwable x )
 			{
@@ -65,14 +66,14 @@ public class LanguageManager
 		return attributes;
 	}
 
-	public LanguageAdapter getAdapterByTag( String tag ) throws ExecutableInitializationException
-	{
-		return adapterByTag.get( tag );
-	}
-
 	public Collection<LanguageAdapter> getAdapters()
 	{
-		return adapters;
+		return languageAdapters;
+	}
+
+	public LanguageAdapter getAdapterByTag( String tag ) throws ExecutableInitializationException
+	{
+		return languageAdapterByTag.get( tag );
 	}
 
 	public LanguageAdapter getAdapterByExtension( String name, String defaultExtension ) throws ExecutableInitializationException
@@ -86,13 +87,15 @@ public class LanguageManager
 		if( extension == null )
 			throw new ExecutableInitializationException( name, "Name must have an extension" );
 
-		return adapterByExtension.get( extension );
+		return languageAdapterByExtension.get( extension );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final CopyOnWriteArraySet<LanguageAdapter> adapters = new CopyOnWriteArraySet<LanguageAdapter>();
+	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
+
+	private final CopyOnWriteArraySet<LanguageAdapter> languageAdapters = new CopyOnWriteArraySet<LanguageAdapter>();
 
 	/**
 	 * A map of script engine names to their {@link LanguageAdapter}. Note that
@@ -111,7 +114,7 @@ public class LanguageManager
 	 * The default implementation of this library already contains a few useful
 	 * adapter, under the com.threecrickets.scripturian.adapter package.
 	 */
-	private final ConcurrentMap<String, LanguageAdapter> adapterByTag = new ConcurrentHashMap<String, LanguageAdapter>();
+	private final ConcurrentMap<String, LanguageAdapter> languageAdapterByTag = new ConcurrentHashMap<String, LanguageAdapter>();
 
 	/**
 	 * Map of extensions named to script engine names. For Scripturian, these
@@ -127,7 +130,5 @@ public class LanguageManager
 	 * You may also manipulate this map yourself, adding and removing helpers as
 	 * necessary.
 	 */
-	private final ConcurrentMap<String, LanguageAdapter> adapterByExtension = new ConcurrentHashMap<String, LanguageAdapter>();
-
-	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
+	private final ConcurrentMap<String, LanguageAdapter> languageAdapterByExtension = new ConcurrentHashMap<String, LanguageAdapter>();
 }

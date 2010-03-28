@@ -76,9 +76,9 @@ public class PygmentsDocumentFormatter<D> implements DocumentFormatter<D>
 			language = "xslt";
 
 		if( language == null )
-			return documentDescriptor.getText();
+			return documentDescriptor.getSourceCode();
 
-		ExposedContainerForPygmentsDocumentFormatter container = new ExposedContainerForPygmentsDocumentFormatter( documentDescriptor.getText(), highlightLineNumber, language, title, theme, "#dddddd", "#dddd00" );
+		ExposedContainerForPygmentsDocumentFormatter container = new ExposedContainerForPygmentsDocumentFormatter( documentDescriptor.getSourceCode(), highlightLineNumber, language, title, theme, "#dddddd", "#dddd00" );
 		ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 		ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( "python" );
 		ScriptContext scriptContext = scriptEngine.getContext();

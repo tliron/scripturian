@@ -15,66 +15,66 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- * Manages retrieval of document text and caching of arbitrary document
- * implementations via descriptor.
+ * Manages retrieval of text-based documents and caching of arbitrary document
+ * implementations via descriptors.
  * <p>
  * Implementations are expected to be thread safe! This includes returned
- * descriptor.
+ * descriptors.
  * 
  * @author Tal Liron
  * @param <D>
  *        The document type
+ * @see DocumentDescriptor
  */
 public interface DocumentSource<D>
 {
 	/**
-	 * Gets a document descriptor by its name.
+	 * Gets a document by its name.
 	 * 
 	 * @param name
 	 *        The document's name
-	 * @return The document descriptor
+	 * @return The document's descriptor
 	 * @throws IOException
 	 */
-	public DocumentDescriptor<D> getDocumentDescriptor( String name ) throws IOException;
+	public DocumentDescriptor<D> getDocument( String name ) throws IOException;
 
 	/**
-	 * Allows adding or changing document descriptor.
+	 * Allows adding or changing documents.
 	 * 
 	 * @param name
 	 *        The document's name
-	 * @param text
-	 *        The text for the document
+	 * @param sourceCode
+	 *        The source code for the document
+	 * @param tag
+	 *        The tag
+	 * @param document
+	 *        The document
+	 * @return The existing document descriptor before we changed it
+	 */
+	public DocumentDescriptor<D> setDocument( String name, String sourceCode, String tag, D document );
+
+	/**
+	 * Allows adding or changing documents, with an atomic check for null.
+	 * 
+	 * @param name
+	 *        The document's name
+	 * @param sourceCode
+	 *        The source code for the document
 	 * @param tag
 	 *        The tag
 	 * @param document
 	 *        The document instance
 	 * @return The existing document descriptor before we changed it
 	 */
-	public DocumentDescriptor<D> setDocumentDescriptor( String name, String text, String tag, D document );
+	public DocumentDescriptor<D> setDocumentIfAbsent( String name, String sourceCode, String tag, D document );
 
 	/**
-	 * Allows adding or changing document descriptor, with an atomic check for
-	 * null.
-	 * 
-	 * @param name
-	 *        The document's name
-	 * @param text
-	 *        The text for the document
-	 * @param tag
-	 *        The tag
-	 * @param document
-	 *        The document instance
-	 * @return The existing document descriptor before we changed it
-	 */
-	public DocumentDescriptor<D> setDocumentDescriptorIfAbsent( String name, String text, String tag, D document );
-
-	/**
-	 * Access to all available document descriptors.
+	 * Access to all available documents.
 	 * <p>
 	 * Note that not all implementations support this operation.
 	 * 
 	 * @return An collection of document descriptors
 	 * @throws UnsupportedOperationException
 	 */
-	public Collection<DocumentDescriptor<D>> getDocumentDescriptors();
+	public Collection<DocumentDescriptor<D>> getDocuments();
 }
