@@ -75,7 +75,7 @@
 	</target>
 	
 	<target name="package" depends="libraries, licenses, deploy" description="Create Scripturian zip">
-		<zip destfile="${dist}/scripturian.zip" basedir="${content}" includes="**/*" />
+		<zip destfile="scripturian.zip" basedir="${content}" includes="**/*" />
 	</target>
 	
 	<target name="build" depends="package" description="Build distribution" />

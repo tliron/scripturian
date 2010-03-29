@@ -1,4 +1,4 @@
-Scripturian is hosted at http://scripturian.tigris.org/
+Scripturian is hosted at http://threecrickets.com/scripturian/
 
 Complete source code and support forums are available there.
 

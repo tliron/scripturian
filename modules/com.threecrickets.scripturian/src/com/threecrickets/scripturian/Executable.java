@@ -104,7 +104,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * </ul>
  * <p>
  * A special container environment is exposed to your executable, with some
- * useful services. It is available as a global variable named
+ * useful services. It is exposed to your executable as a global variable named
  * <code>executable</code> (this name can be changed via the
  * {@link #Executable(String, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
