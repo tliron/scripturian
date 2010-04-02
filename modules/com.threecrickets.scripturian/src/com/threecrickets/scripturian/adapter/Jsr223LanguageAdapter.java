@@ -121,7 +121,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 			ScriptEngineManager scriptEngineManager = getScriptEngineManager( executionContext );
 			scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 			if( scriptEngine == null )
-				throw ExecutableInitializationException.scriptEngineNotFound( document.getName(), scriptEngineName );
+				throw new ExecutableInitializationException( document.getName(), "Unsupported script engine: " + scriptEngineName );
 
 			// (Note that some script engines do not even
 			// provide a default context -- Jepp, for example -- so

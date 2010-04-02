@@ -20,14 +20,9 @@ public class ExecutableInitializationException extends Exception
 	// Static operations
 	//
 
-	public static ExecutableInitializationException scriptEngineNotFound( String documentName, String scriptEngineName )
+	public static ExecutableInitializationException adapterNotFound( String documentName, String languageTag )
 	{
-		return new ExecutableInitializationException( documentName, "Unsupported script engine: " + scriptEngineName );
-	}
-
-	public static ExecutableInitializationException adapterNotFound( String documentName, String scriptEngineName )
-	{
-		return new ExecutableInitializationException( documentName, "Adapter not available for script engine: " + scriptEngineName );
+		return new ExecutableInitializationException( documentName, "Adapter not available for language: " + languageTag );
 	}
 
 	//
