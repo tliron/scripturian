@@ -16,6 +16,7 @@ import java.io.Writer;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -119,14 +120,6 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * {@link Writer} objects used for standard output and standard error.</li>
  * <li><code>executable.meta</code>: This {@link ConcurrentMap} provides a
  * convenient location for global values shared by all executables.</li>
- * </ul>
- * Modifiable attributes:
- * <ul>
- * <li><code>executable.cacheDuration</code>: Setting this to something greater
- * than 0 enables caching of the executable's output for a maximum number of
- * milliseconds. By default {@code cacheDuration} is 0. Note that Scripturian
- * doesn't actually cache anything -- this value is provided as a utility for
- * you.</li>
  * </ul>
  * 
  * @author Tal Liron
@@ -522,7 +515,7 @@ public class Executable
 			if( segment.isScriptlet )
 				segment.createScriptlet( this, languageManager, allowCompilation );
 
-		// Flatten
+		// Flatten list into array
 		this.segments = new ExecutableSegment[segments.size()];
 		segments.toArray( this.segments );
 	}
@@ -532,13 +525,23 @@ public class Executable
 	//
 
 	/**
-	 * Name used for error messages.
+	 * The executable name, used for debugging and logging.
 	 * 
 	 * @return The name
 	 */
 	public String getName()
 	{
 		return name;
+	}
+
+	/**
+	 * User-defined attributes.
+	 * 
+	 * @return The attributes
+	 */
+	public ConcurrentMap<String, Object> getAttributes()
+	{
+		return attributes;
 	}
 
 	/**
@@ -572,62 +575,21 @@ public class Executable
 	}
 
 	/**
-	 * Timestamp of when the executable last finished running successfully, or 0
-	 * if it was never run.
+	 * Timestamp of when the executable last finished executing successfully, or
+	 * 0 if it was never executed.
 	 * 
 	 * @return The timestamp or 0
 	 */
-	public long getLastRun()
+	public long getLastExecutedTimestamp()
 	{
-		return lastRun;
-	}
-
-	/**
-	 * Setting this to something greater than 0 enables caching of the
-	 * executable's output for a maximum number of milliseconds. By default
-	 * {@code cacheDuration} is 0. Note that Scripturian doesn't actually cache
-	 * anything -- this value is provided as a utility for you.
-	 * 
-	 * @return The cache duration in milliseconds
-	 * @see #setCacheDuration(long)
-	 * @see #getLastRun()
-	 */
-	public long getCacheDuration()
-	{
-		return cacheDuration;
-	}
-
-	/**
-	 * @param cacheDuration
-	 *        The cache duration in milliseconds
-	 * @see #getCacheDuration()
-	 */
-	public void setCacheDuration( long cacheDuration )
-	{
-		this.cacheDuration = cacheDuration;
-	}
-
-	/**
-	 * This is the last run plus the cache duration, or 0 if the cache duration
-	 * is 0.
-	 * 
-	 * @return The expiration timestamp or 0
-	 * @see #getLastRun()
-	 * @see #getCacheDuration()
-	 */
-	public long getExpiration()
-	{
-		// TODO: Should this be more atomic? What are the pitfalls of leaving it
-		// like this?
-		long cacheDuration = getCacheDuration();
-		return cacheDuration > 0 ? getLastRun() + cacheDuration : 0;
+		return lastExecuted;
 	}
 
 	/**
 	 * Returns the entire source code in the trivial case of a
 	 * "text with scriptlets" executable that contains no scriptlets.
 	 * Identifying such documents can save you from making unnecessary calls to
-	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+	 * {@link #execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * in some situations.
 	 * 
 	 * @return The soure code if it's pure text, null if not
@@ -659,23 +621,15 @@ public class Executable
 	//
 
 	/**
-	 * Runs the document. Optionally supports checking for output caching, by
-	 * testing {@link #cacheDuration} versus the value of {@link #getLastRun()}.
-	 * If checking the cache is enabled, this method will return false to
-	 * signify that the script did not run and the cached output should be used
-	 * instead. In such cases, it is up to your running environment to interpret
-	 * this accordingly if you wish to support caching.
+	 * Executes the executable.
 	 * <p>
-	 * If you intend to run the document multiple times from the same thread, it
-	 * is recommended that you use the same {@link ExecutionContext} for each
-	 * call for better performance.
+	 * If you intend to execute the executable multiple times from the same
+	 * thread, it is recommended that you use the same {@link ExecutionContext}
+	 * for each call for better performance.
 	 * 
-	 * @param checkIfRanBefore
+	 * @param checkIfExecutedBefore
 	 *        Run only if we've never ran before -- this will affect the return
 	 *        value
-	 * @param checkCache
-	 *        Whether or not to check for caching versus the value of
-	 *        {@link #getLastRun()} -- this will affect the return value
 	 * @param writer
 	 *        Standard output
 	 * @param errorWriter
@@ -689,99 +643,91 @@ public class Executable
 	 * @param executionController
 	 *        An optional {@link ExecutionController} to be applied to the
 	 *        execution context
-	 * @return True if execution happened, false if it didn't because the cached
-	 *         output is expected to be used instead
+	 * @return True if execution happened, false if it didn't because
+	 *         checkIfExecutedBefore was set to true and we've already executed
+	 *         once
 	 * @throws ExecutableInitializationException
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean execute( boolean checkIfRanBefore, boolean checkCache, Writer writer, Writer errorWriter, boolean flushLines, ExecutionContext executionContext, Object container,
-		ExecutionController executionController ) throws ExecutableInitializationException, ExecutionException, IOException
+	public boolean execute( boolean checkIfExecutedBefore, Writer writer, Writer errorWriter, boolean flushLines, ExecutionContext executionContext, Object container, ExecutionController executionController )
+		throws ExecutableInitializationException, ExecutionException, IOException
 	{
-		if( checkIfRanBefore )
+		if( checkIfExecutedBefore )
 		{
 			// TODO: ughghghghghghgh!!!!
-			if( lastRun != 0 )
+			if( lastExecuted != 0 )
 				return false;
 		}
 
-		long now = System.currentTimeMillis();
-		if( checkCache && ( now - lastRun < cacheDuration ) )
-		{
-			// We won't run this time
-			return false;
-		}
-		else
-		{
-			Writer oldWriter = executionContext.setWriter( writer, flushLines );
-			Writer oldErrorWriter = executionContext.setErrorWriter( writer, flushLines );
+		Writer oldWriter = executionContext.setWriter( writer, flushLines );
+		Writer oldErrorWriter = executionContext.setErrorWriter( writer, flushLines );
 
-			if( executionController != null )
-				executionController.initialize( executionContext );
+		if( executionController != null )
+			executionController.initialize( executionContext );
 
-			try
+		try
+		{
+			for( ExecutableSegment segment : segments )
 			{
-				for( ExecutableSegment segment : segments )
+				if( !segment.isScriptlet )
+					// Plain text
+					writer.write( segment.code );
+				else
 				{
-					if( !segment.isScriptlet )
-						// Plain text
-						writer.write( segment.code );
-					else
-					{
-						LanguageAdapter languageAdapter = executionContext.getManager().getAdapterByTag( segment.languageTag );
-						if( languageAdapter == null )
-							throw ExecutableInitializationException.adapterNotFound( name, segment.languageTag );
+					LanguageAdapter languageAdapter = executionContext.getManager().getAdapterByTag( segment.languageTag );
+					if( languageAdapter == null )
+						throw ExecutableInitializationException.adapterNotFound( name, segment.languageTag );
 
-						executionContext.setAdapter( languageAdapter );
+					executionContext.setAdapter( languageAdapter );
+
+					if( !languageAdapter.isThreadSafe() )
+						languageAdapter.getLock().lock();
+
+					Object oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContext, container ) );
+
+					try
+					{
+						segment.scriptlet.execute( executionContext );
+					}
+					finally
+					{
+						// Restore old document value (this is desirable for
+						// documents that run other documents)
+						if( oldExposedExecutable != null )
+							executionContext.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
 
 						if( !languageAdapter.isThreadSafe() )
-							languageAdapter.getLock().lock();
-
-						Object oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( this, executionContext, container ) );
-
-						try
-						{
-							segment.scriptlet.execute( executionContext );
-						}
-						finally
-						{
-							// Restore old document value (this is desirable for
-							// documents that run other documents)
-							if( oldExposedExecutable != null )
-								executionContext.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
-
-							if( !languageAdapter.isThreadSafe() )
-								languageAdapter.getLock().unlock();
-						}
+							languageAdapter.getLock().unlock();
 					}
 				}
 			}
-			finally
-			{
-				executionContext.setWriter( oldWriter );
-				executionContext.setErrorWriter( oldErrorWriter );
-
-				if( executionController != null )
-					executionController.finalize( executionContext );
-			}
-
-			this.executionContextForInvocations = executionContext;
-			lastRun = now;
-			return true;
 		}
+		finally
+		{
+			executionContext.setWriter( oldWriter );
+			executionContext.setErrorWriter( oldErrorWriter );
+
+			if( executionController != null )
+				executionController.finalize( executionContext );
+		}
+
+		this.executionContextForInvocations = executionContext;
+		lastExecuted = System.currentTimeMillis();
+		return true;
 	}
 
 	/**
-	 * Calls an entry point in the executable: a function, method, closure,
+	 * Invokes an entry point in the executable: a function, method, closure,
 	 * etc., according to how the language handles invocations. Executing the
 	 * script first (via
-	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+	 * {@link #execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * ) is not absolutely required for this, but probably will be necessary in
 	 * most useful scenarios, where running the script causes useful entry point
 	 * to be initialized.
 	 * <p>
 	 * Note that this call does not support sending arguments to the method. If
-	 * you need to pass data to the script, expose it via the optional
+	 * you need to pass data to the executable, expose it via the optional
 	 * {@link ExecutionController}.
 	 * <p>
 	 * Concurrency note: The invoke mechanism allows for multi-threaded access,
@@ -789,7 +735,7 @@ public class Executable
 	 * note that, internally, invoke relies on the {@link ExecutionContext} from
 	 * {@link #getExecutionContextForInvocations()}. This is set to be the one
 	 * used in the last call to
-	 * {@link #execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+	 * {@link #execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
@@ -814,7 +760,7 @@ public class Executable
 		if( !languageAdapter.isThreadSafe() )
 			languageAdapter.getLock().lock();
 
-		Object oldExposedExecutable = executionContextForInvocations.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( this, executionContextForInvocations, container ) );
+		Object oldExposedExecutable = executionContextForInvocations.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContextForInvocations, container ) );
 
 		try
 		{
@@ -845,7 +791,9 @@ public class Executable
 
 	private static final AtomicInteger inFlowCounter = new AtomicInteger();
 
-	final String name;
+	private final String name;
+
+	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
 	private final ExecutableSegment[] segments;
 
@@ -855,9 +803,7 @@ public class Executable
 
 	private final String exposedExecutableName;
 
-	private volatile long cacheDuration = 0;
-
-	private volatile long lastRun = 0;
+	private volatile long lastExecuted = 0;
 
 	private volatile ExecutionContext executionContextForInvocations;
 }

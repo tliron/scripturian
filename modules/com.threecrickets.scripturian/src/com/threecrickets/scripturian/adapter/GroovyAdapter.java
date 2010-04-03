@@ -29,7 +29,7 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
  */
 @ScriptEngines(
 {
-	"groovy", "Groovy"
+	"groovy"
 })
 public class GroovyAdapter extends Jsr223LanguageAdapter
 {

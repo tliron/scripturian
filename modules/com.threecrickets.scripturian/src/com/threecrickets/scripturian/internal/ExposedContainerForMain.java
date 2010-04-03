@@ -77,7 +77,7 @@ public class ExposedContainerForMain
 				document = existing;
 		}
 
-		document.execute( false, false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
+		document.execute( false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class ExposedContainerForMain
 				document = existing;
 		}
 
-		document.execute( false, false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
+		document.execute( false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	//

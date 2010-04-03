@@ -27,7 +27,7 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
  */
 @ScriptEngines(
 {
-	"jepp", "jep"
+	"jep", "jepp"
 })
 public class JeppAdapter extends Jsr223LanguageAdapter
 {
@@ -82,7 +82,7 @@ public class JeppAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
 	{
-		return "sys.stdout.write(" + content + ");";
+		return "sys.stdout.write(str(" + content + "));";
 	}
 
 	@Override

@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -158,7 +159,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		attributes.put( LANGUAGE_VERSION, factory.getLanguageVersion() );
 		attributes.put( EXTENSIONS, new ArrayList<String>( factory.getExtensions() ) );
 		attributes.put( DEFAULT_EXTENSION, factory.getExtensions().get( 0 ) );
-		attributes.put( TAGS, new ArrayList<String>( factory.getNames() ) );
+		attributes.put( TAGS, Arrays.asList( scriptEngineNames.value() ) );
 		attributes.put( DEFAULT_TAG, factory.getNames().get( 0 ) );
 
 		attributes.put( JSR223_SCRIPT_ENGINE_NAME, scriptEngineName );

@@ -11,8 +11,6 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import java.util.Collection;
-
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Executable;
@@ -27,7 +25,7 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
  */
 @ScriptEngines(
 {
-	"Clojure"
+	"Clojure", "clojure"
 })
 public class ClojureAdapter extends Jsr223LanguageAdapter
 {
@@ -35,11 +33,9 @@ public class ClojureAdapter extends Jsr223LanguageAdapter
 	// ScriptletHelper
 	//
 
-	@SuppressWarnings("unchecked")
 	public ClojureAdapter() throws LanguageInitializationException
 	{
 		super();
-		( (Collection<String>) getAttributes().get( TAGS ) ).add( "clojure" );
 	}
 
 	@Override

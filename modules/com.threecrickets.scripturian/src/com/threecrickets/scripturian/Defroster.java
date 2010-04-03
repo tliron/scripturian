@@ -83,7 +83,7 @@ public class Defroster
 	}
 
 	/**
-	 * @return
+	 * @return True if execution was interrupted
 	 */
 	public boolean wasInterrupted()
 	{
@@ -91,7 +91,8 @@ public class Defroster
 	}
 
 	/**
-	 * @return
+	 * @return True if there were errors
+	 * @see #getErrors()
 	 */
 	public boolean hasErrors()
 	{
@@ -99,7 +100,8 @@ public class Defroster
 	}
 
 	/**
-	 * @return
+	 * @return The errors
+	 * @see #hasErrors()
 	 */
 	public Collection<Throwable> getErrors()
 	{

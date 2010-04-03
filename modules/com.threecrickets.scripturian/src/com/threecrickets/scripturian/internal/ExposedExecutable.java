@@ -18,8 +18,8 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 
 /**
- * This is the <code>document</code> variable exposed to scriptlets. The name is
- * set according to {@link Executable#getExposedExecutableName()}.
+ * This is the <code>executable</code> variable exposed to the executable. The
+ * name is set according to {@link Executable#getExposedExecutableName()}.
  * 
  * @author Tal Liron
  * @see Executable
@@ -30,9 +30,8 @@ public class ExposedExecutable
 	// Construction
 	//
 
-	public ExposedExecutable( Executable executable, ExecutionContext executionContext, Object container )
+	public ExposedExecutable( ExecutionContext executionContext, Object container )
 	{
-		this.executable = executable;
 		this.executionContext = executionContext;
 		this.container = container;
 	}
@@ -40,32 +39,6 @@ public class ExposedExecutable
 	//
 	// Attributes
 	//
-
-	/**
-	 * Setting this to something greater than 0 enables caching of the
-	 * document's output for a maximum number of milliseconds. By default
-	 * cacheDuration is 0, so that each request causes the document to be run.
-	 * This class does not handle caching itself. Caching can be provided by
-	 * your environment if appropriate.
-	 * 
-	 * @return The cache duration in milliseconds
-	 * @see #setCacheDuration(long)
-	 * @see Executable#cacheDuration
-	 */
-	public long getCacheDuration()
-	{
-		return executable.getCacheDuration();
-	}
-
-	/**
-	 * @param cacheDuration
-	 *        The cache duration in milliseconds
-	 * @see #getCacheDuration()
-	 */
-	public void setCacheDuration( long cacheDuration )
-	{
-		executable.setCacheDuration( cacheDuration );
-	}
 
 	/**
 	 * This is the {@link ExecutionContext} used by the document. Scriptlets may
@@ -102,8 +75,6 @@ public class ExposedExecutable
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	private final Executable executable;
 
 	private final ExecutionContext executionContext;
 

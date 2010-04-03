@@ -25,7 +25,7 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
  */
 @ScriptEngines(
 {
-	"velocity", "Velocity"
+	"velocity"
 })
 public class VelocityAdapter extends Jsr223LanguageAdapter
 {

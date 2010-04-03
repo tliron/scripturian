@@ -30,7 +30,7 @@ import com.threecrickets.scripturian.exception.StackFrame;
  */
 @ScriptEngines(
 {
-	"rhino-nonjdk", "rhino", "js", "javascript", "JavaScript", "ecmascript", "ECMAScript"
+	"rhino-nonjdk", "js", "javascript", "ecmascript"
 })
 public class RhinoAdapter extends Jsr223LanguageAdapter
 {

@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * Encapsulates context for an {@link Executable}. Every thread calling
- * {@link Executable#execute(boolean, boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+ * {@link Executable#execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
  * must use its own context.
  * 
  * @author Tal Liron
@@ -39,7 +39,7 @@ public class ExecutionContext
 	//
 
 	/**
-	 * @return
+	 * @return The attributes
 	 */
 	public Map<String, Object> getAttributes()
 	{
@@ -47,7 +47,7 @@ public class ExecutionContext
 	}
 
 	/**
-	 * @return
+	 * @return The exposed variables
 	 */
 	public Map<String, Object> getExposedVariables()
 	{
@@ -55,7 +55,7 @@ public class ExecutionContext
 	}
 
 	/**
-	 * @return
+	 * @return The writer
 	 */
 	public Writer getWriter()
 	{
@@ -64,7 +64,7 @@ public class ExecutionContext
 
 	/**
 	 * @param writer
-	 * @return
+	 * @return The previous writer
 	 */
 	public Writer setWriter( Writer writer )
 	{
@@ -76,7 +76,7 @@ public class ExecutionContext
 	/**
 	 * @param writer
 	 * @param flushLines
-	 * @return
+	 * @return The previous writer
 	 */
 	public Writer setWriter( Writer writer, boolean flushLines )
 	{
@@ -86,7 +86,7 @@ public class ExecutionContext
 	}
 
 	/**
-	 * @return
+	 * @return The error writer
 	 */
 	public Writer getErrorWriter()
 	{
@@ -95,7 +95,7 @@ public class ExecutionContext
 
 	/**
 	 * @param writer
-	 * @return
+	 * @return The previous error writer
 	 */
 	public Writer setErrorWriter( Writer writer )
 	{
@@ -107,7 +107,7 @@ public class ExecutionContext
 	/**
 	 * @param writer
 	 * @param flushLines
-	 * @return
+	 * @return The previous error writer
 	 */
 	public Writer setErrorWriter( Writer writer, boolean flushLines )
 	{
@@ -116,16 +116,25 @@ public class ExecutionContext
 		return setErrorWriter( new PrintWriter( writer, flushLines ) );
 	}
 
+	/**
+	 * @return The language adapter
+	 */
 	public LanguageAdapter getAdapter()
 	{
 		return languageAdapter;
 	}
 
+	/**
+	 * @param adapter
+	 */
 	public void setAdapter( LanguageAdapter adapter )
 	{
 		this.languageAdapter = adapter;
 	}
 
+	/**
+	 * @return The language manager
+	 */
 	public LanguageManager getManager()
 	{
 		return languageManager;
