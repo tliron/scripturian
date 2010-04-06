@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.document;
 
 /**
  * Transforms a document described by a {@link DocumentDescriptor} to a

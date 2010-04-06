@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.document;
 
 /**
  * Document descriptors are provided by a {@link DocumentSource} as a way to

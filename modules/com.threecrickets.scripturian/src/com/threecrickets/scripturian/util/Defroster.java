@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.util;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,6 +20,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.LanguageManager;
+import com.threecrickets.scripturian.document.DocumentSource;
 
 /**
  * @author Tal Liron

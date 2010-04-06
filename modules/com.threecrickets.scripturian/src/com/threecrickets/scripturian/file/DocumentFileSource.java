@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.threecrickets.scripturian.DocumentDescriptor;
-import com.threecrickets.scripturian.DocumentSource;
+import com.threecrickets.scripturian.document.DocumentDescriptor;
+import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**

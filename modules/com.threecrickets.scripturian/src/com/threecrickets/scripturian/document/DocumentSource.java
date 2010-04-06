@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.document;
 
 import java.io.IOException;
 import java.util.Collection;

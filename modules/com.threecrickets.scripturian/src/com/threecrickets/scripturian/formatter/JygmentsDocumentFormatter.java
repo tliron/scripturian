@@ -18,8 +18,8 @@ import com.threecrickets.jygments.Jygments;
 import com.threecrickets.jygments.ResolutionException;
 import com.threecrickets.jygments.format.Formatter;
 import com.threecrickets.jygments.grammar.Lexer;
-import com.threecrickets.scripturian.DocumentDescriptor;
-import com.threecrickets.scripturian.DocumentFormatter;
+import com.threecrickets.scripturian.document.DocumentDescriptor;
+import com.threecrickets.scripturian.document.DocumentFormatter;
 
 /**
  * Use <a href="http://threecrickets.com/jygments/">Jygments</a> to format

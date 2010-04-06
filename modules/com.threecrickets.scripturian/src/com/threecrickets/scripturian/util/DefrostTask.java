@@ -9,10 +9,16 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.util;
 
 import java.util.Collection;
 import java.util.concurrent.Callable;
+
+import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
+import com.threecrickets.scripturian.document.DocumentDescriptor;
+import com.threecrickets.scripturian.document.DocumentSource;
 
 /**
  * A {@link Callable} that makes sure that a {@link Executable} is tied to a

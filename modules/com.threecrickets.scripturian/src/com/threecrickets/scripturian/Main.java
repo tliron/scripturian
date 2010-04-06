@@ -18,6 +18,7 @@ import java.io.Writer;
 
 import javax.script.ScriptEngineManager;
 
+import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.exception.ExecutableInitializationException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.StackFrame;

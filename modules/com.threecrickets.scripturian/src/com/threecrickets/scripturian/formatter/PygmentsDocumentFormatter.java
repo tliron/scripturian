@@ -20,8 +20,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.DocumentDescriptor;
-import com.threecrickets.scripturian.DocumentFormatter;
+import com.threecrickets.scripturian.document.DocumentDescriptor;
+import com.threecrickets.scripturian.document.DocumentFormatter;
 import com.threecrickets.scripturian.internal.ExposedContainerForPygmentsDocumentFormatter;
 
 /**

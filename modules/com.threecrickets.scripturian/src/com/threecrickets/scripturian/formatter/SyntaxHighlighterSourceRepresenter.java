@@ -11,8 +11,8 @@
 
 package com.threecrickets.scripturian.formatter;
 
-import com.threecrickets.scripturian.DocumentDescriptor;
-import com.threecrickets.scripturian.DocumentFormatter;
+import com.threecrickets.scripturian.document.DocumentDescriptor;
+import com.threecrickets.scripturian.document.DocumentFormatter;
 
 /**
  * Use <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">Syntax

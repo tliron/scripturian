@@ -15,9 +15,9 @@ import java.io.IOException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
-import com.threecrickets.scripturian.DocumentDescriptor;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.exception.ExecutableInitializationException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
