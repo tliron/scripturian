@@ -132,7 +132,7 @@ public class JRubyAdapter implements LanguageAdapter
 		{
 			PrintStream out = new PrintStream( new WriterOutputStream( executionContext.getWriter() ) );
 			PrintStream err = new PrintStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
-			ruby = Ruby.newInstance( null, out, err );
+			ruby = Ruby.newInstance( System.in, out, err );
 			executionContext.getAttributes().put( RUBY_RUNTIME, ruby );
 		}
 
