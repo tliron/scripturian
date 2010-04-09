@@ -11,7 +11,6 @@
 
 package com.threecrickets.scripturian.exception;
 
-import javax.script.ScriptException;
 
 /**
  * @author Tal Liron
@@ -22,9 +21,9 @@ public class CompilationException extends ExecutableInitializationException
 	// Construction
 	//
 
-	public CompilationException( String documentName, String message, ScriptException x )
+	public CompilationException( String documentName, String message, Throwable cause )
 	{
-		super( documentName, message, x );
+		super( documentName, message, cause );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

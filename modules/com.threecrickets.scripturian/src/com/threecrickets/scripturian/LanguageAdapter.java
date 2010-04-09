@@ -65,19 +65,19 @@ public interface LanguageAdapter
 
 	public Lock getLock();
 
-	public String getCodeForLiteralOutput( String literal, Executable document ) throws ExecutableInitializationException;
+	public String getCodeForLiteralOutput( String literal, Executable executable ) throws ExecutableInitializationException;
 
-	public String getCodeForExpressionOutput( String expression, Executable document ) throws ExecutableInitializationException;
+	public String getCodeForExpressionOutput( String expression, Executable executable ) throws ExecutableInitializationException;
 
-	public String getCodeForExpressionInclude( String expression, Executable document ) throws ExecutableInitializationException;
+	public String getCodeForExpressionInclude( String expression, Executable executable ) throws ExecutableInitializationException;
 
-	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable );
+	public Throwable getCauseOrExecutionException( String executableName, Throwable throwable );
 
 	//
 	// Operations
 	//
 
-	public Scriptlet createScriptlet( String code, Executable document ) throws ExecutableInitializationException;
+	public Scriptlet createScriptlet( String code, Executable executable ) throws ExecutableInitializationException;
 
-	public Object invoke( String method, Executable document, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException;
+	public Object invoke( String method, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException;
 }

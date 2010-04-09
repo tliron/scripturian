@@ -11,7 +11,6 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,11 +18,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.jruby.Ruby;
-import org.jruby.ast.Node;
-import org.jruby.ast.executable.Script;
+import org.jruby.embed.EmbedEvalUnit;
 import org.jruby.embed.EvalFailedException;
-import org.jruby.embed.io.WriterOutputStream;
+import org.jruby.embed.LocalContextScope;
+import org.jruby.embed.LocalVariableBehavior;
+import org.jruby.embed.ScriptingContainer;
 import org.jruby.javasupport.JavaEmbedUtils;
 
 import com.threecrickets.scripturian.Executable;
@@ -41,13 +40,13 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
  * 
  * @author Tal Liron
  */
-public class JRubyAdapter implements LanguageAdapter
+public class JRubyAdapter2 implements LanguageAdapter
 {
 	//
 	// Construction
 	//
 
-	public JRubyAdapter() throws LanguageInitializationException
+	public JRubyAdapter2() throws LanguageInitializationException
 	{
 		attributes.put( NAME, "JRuby" );
 		attributes.put( VERSION, "?" );
@@ -107,8 +106,8 @@ public class JRubyAdapter implements LanguageAdapter
 
 	public Object invoke( String method, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException
 	{
-		Ruby ruby = getRubyRuntime( executionContext );
-		Object r = JavaEmbedUtils.rubyToJava( ruby.getTopSelf().callMethod( ruby.getCurrentContext(), method ) );
+		ScriptingContainer scriptingContainer = getScriptingContainer( executionContext, null );
+		Object r = scriptingContainer.callMethod( null, method );
 		// System.out.println( r );
 		return r;
 	}
@@ -116,65 +115,87 @@ public class JRubyAdapter implements LanguageAdapter
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private static final String RUBY_RUNTIME = "jruby.rubyRuntime";
+	private static final String SCRIPTING_CONTAINER = "jruby.scriptingContainer";
 
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
 	private final ReentrantLock lock = new ReentrantLock();
 
-	private final Ruby compilerRuntime = Ruby.newInstance();
-
-	private Ruby getRubyRuntime( ExecutionContext executionContext )
+	private static ScriptingContainer createScriptingContainer()
 	{
-		Ruby ruby;
-		ruby = (Ruby) executionContext.getAttributes().get( RUBY_RUNTIME );
-		if( ruby == null )
+		return new ScriptingContainer( LocalContextScope.THREADSAFE, LocalVariableBehavior.TRANSIENT );
+	}
+
+	private static ScriptingContainer getScriptingContainer( ExecutionContext executionContext, JRubyScriptlet scriptlet )
+	{
+		ScriptingContainer scriptingContainer;
+		if( scriptlet != null && scriptlet.embedEvalUnit != null )
 		{
-			PrintStream out = new PrintStream( new WriterOutputStream( executionContext.getWriter() ) );
-			PrintStream err = new PrintStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
-			ruby = Ruby.newInstance( null, out, err );
-			executionContext.getAttributes().put( RUBY_RUNTIME, ruby );
+			scriptingContainer = scriptlet.embedEvalUnitScriptingContainer;
+		}
+		else
+		{
+			scriptingContainer = (ScriptingContainer) executionContext.getAttributes().get( SCRIPTING_CONTAINER );
+			if( scriptingContainer == null )
+			{
+				scriptingContainer = createScriptingContainer();
+				executionContext.getAttributes().put( SCRIPTING_CONTAINER, scriptingContainer );
+			}
 		}
 
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			ruby.defineReadonlyVariable( "$" + entry.getKey(), JavaEmbedUtils.javaToRuby( ruby, entry.getValue() ) );
-
-		return ruby;
+		return scriptingContainer;
 	}
 
 	private class JRubyScriptlet implements Scriptlet
 	{
-		public JRubyScriptlet( String sourceCode )
+		public JRubyScriptlet( String script )
 		{
-			this.sourceCode = sourceCode;
+			this.script = script;
 		}
 
 		public void compile() throws CompilationException
 		{
-			// try
+			try
 			{
-				Node node = compilerRuntime.parseEval( sourceCode, "prudence", compilerRuntime.getCurrentContext().getCurrentScope(), 0 );
-				script = compilerRuntime.tryCompile( node );
+				embedEvalUnitScriptingContainer = createScriptingContainer();
+				// embedEvalUnit = embedEvalUnitScriptingContainer.parse( script
+				// );
 			}
-			// catch( EvalFailedException x )
-			// {
-			// throw new CompilationException( "", x.getMessage(), x );
-			// }
+			catch( EvalFailedException x )
+			{
+				throw new CompilationException( "", x.getMessage(), x );
+			}
 		}
 
 		public Object execute( ExecutionContext executionContext ) throws ExecutableInitializationException, ExecutionException
 		{
-			Ruby ruby = getRubyRuntime( executionContext );
+			ScriptingContainer scriptingContainer = getScriptingContainer( executionContext, this );
 
-			if( script != null )
+			scriptingContainer.setWriter( executionContext.getWriter() );
+			scriptingContainer.setErrorWriter( executionContext.getErrorWriter() );
+
+			for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+				scriptingContainer.put( "$" + entry.getKey(), entry.getValue() );
+
+			// scriptingContainer.getVarMap().putAll(
+			// executionContext.getExposedVariables() );
+
+			// scriptingContainer.getVarMap().getVariableInterceptor().inject(
+			// scriptingContainer.getVarMap(), scriptingContainer.getRuntime(),
+			// embedEvalUnit.getScope(), 0, receiver );
+
+			if( embedEvalUnit != null )
 			{
-				return JavaEmbedUtils.rubyToJava( ruby.runScript( script ) );
+				// scriptingContainer.getProvider().getRuntime().getCurrentContext().pushScope(
+				// embedEvalUnit.getScope() );
+				return JavaEmbedUtils.rubyToJava( embedEvalUnit.run() );
 			}
 			else
 			{
 				try
 				{
-					Object r = JavaEmbedUtils.rubyToJava( ruby.evalScriptlet( sourceCode ) );
+					Object r = scriptingContainer.runScriptlet( script );
+					// System.out.println( r );
 					return r;
 				}
 				catch( EvalFailedException x )
@@ -190,11 +211,13 @@ public class JRubyAdapter implements LanguageAdapter
 
 		public String getSourceCode()
 		{
-			return sourceCode;
+			return script;
 		}
 
-		private final String sourceCode;
+		private final String script;
 
-		private Script script;
+		private EmbedEvalUnit embedEvalUnit;
+
+		private ScriptingContainer embedEvalUnitScriptingContainer;
 	}
 }

@@ -109,7 +109,7 @@ public class ExecutionException extends Exception
 
 	private final StackFrame[] stack;
 
-	private ExecutionException( String documentName, Throwable cause )
+	public ExecutionException( String documentName, Throwable cause )
 	{
 		super( cause.getMessage(), cause );
 		stack = new StackFrame[0];
