@@ -22,9 +22,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.jruby.Ruby;
 import org.jruby.ast.Node;
 import org.jruby.ast.executable.Script;
-import org.jruby.embed.EvalFailedException;
 import org.jruby.embed.io.WriterOutputStream;
+import org.jruby.exceptions.RaiseException;
 import org.jruby.javasupport.JavaEmbedUtils;
+import org.jruby.runtime.builtin.IRubyObject;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -107,10 +108,10 @@ public class JRubyAdapter implements LanguageAdapter
 
 	public Object invoke( String method, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException
 	{
+		method = toRubyStyle( method );
 		Ruby ruby = getRubyRuntime( executionContext );
-		Object r = JavaEmbedUtils.rubyToJava( ruby.getTopSelf().callMethod( ruby.getCurrentContext(), method ) );
-		// System.out.println( r );
-		return r;
+		IRubyObject value = ruby.getTopSelf().callMethod( ruby.getCurrentContext(), method );
+		return value.toJava( Object.class );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -123,6 +124,28 @@ public class JRubyAdapter implements LanguageAdapter
 	private final ReentrantLock lock = new ReentrantLock();
 
 	private final Ruby compilerRuntime = Ruby.newInstance();
+
+	private static String toRubyStyle( String camelCase )
+	{
+		StringBuilder r = new StringBuilder();
+		char c = camelCase.charAt( 0 );
+		if( Character.isUpperCase( c ) )
+			r.append( Character.toLowerCase( c ) );
+		else
+			r.append( c );
+		for( int i = 1; i < camelCase.length(); i++ )
+		{
+			c = camelCase.charAt( i );
+			if( Character.isUpperCase( c ) )
+			{
+				r.append( '_' );
+				r.append( Character.toLowerCase( c ) );
+			}
+			else
+				r.append( c );
+		}
+		return r.toString();
+	}
 
 	private Ruby getRubyRuntime( ExecutionContext executionContext )
 	{
@@ -151,41 +174,38 @@ public class JRubyAdapter implements LanguageAdapter
 
 		public void compile() throws CompilationException
 		{
-			// try
+			try
 			{
 				Node node = compilerRuntime.parseEval( sourceCode, "prudence", compilerRuntime.getCurrentContext().getCurrentScope(), 0 );
 				script = compilerRuntime.tryCompile( node );
 			}
-			// catch( EvalFailedException x )
-			// {
-			// throw new CompilationException( "", x.getMessage(), x );
-			// }
+			catch( RaiseException x )
+			{
+				throw new CompilationException( "", x.getMessage(), x );
+			}
 		}
 
 		public Object execute( ExecutionContext executionContext ) throws ExecutableInitializationException, ExecutionException
 		{
 			Ruby ruby = getRubyRuntime( executionContext );
 
-			if( script != null )
+			try
 			{
-				return JavaEmbedUtils.rubyToJava( ruby.runScript( script ) );
-			}
-			else
-			{
-				try
+				if( script != null )
 				{
-					Object r = JavaEmbedUtils.rubyToJava( ruby.evalScriptlet( sourceCode ) );
-					return r;
+					IRubyObject value = ruby.runScript( script );
+					return value.toJava( Object.class );
 				}
-				catch( EvalFailedException x )
+				else
 				{
-					throw new ExecutableInitializationException( "", x.getMessage(), x );
+					IRubyObject value = ruby.evalScriptlet( sourceCode );
+					return value.toJava( Object.class );
 				}
 			}
-			/*
-			 * catch( Throwable x ) { throw new ExecutionException(
-			 * x.getMessage(), x ); }
-			 */
+			catch( RaiseException x )
+			{
+				throw new ExecutionException( "", x );
+			}
 		}
 
 		public String getSourceCode()
