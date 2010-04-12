@@ -178,7 +178,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		}
 		catch( LanguageAdapterException x )
 		{
-			throw new ExecutionException( executable.getDocumentName(), x );
+			throw new ExecutionException( executable.getDocumentName(), x.getMessage(), x );
 		}
 	}
 

@@ -65,17 +65,12 @@ public class ExecutionException extends Exception
 			return new ExecutionException( documentName, (ScriptException) throwable );
 		else
 			// Unknown
-			return new ExecutionException( documentName, throwable );
+			return new ExecutionException( documentName, throwable.getMessage(), throwable );
 	}
 
 	//
 	// Construction
 	//
-
-	public ExecutionException( String message, Throwable cause )
-	{
-		super( message, cause );
-	}
 
 	public ExecutionException( String documentName, int lineNumber, int columnNumber, String message )
 	{
@@ -100,6 +95,12 @@ public class ExecutionException extends Exception
 		super( message );
 		for( StackFrame stackFrame : stackFrames )
 			stack.add( stackFrame );
+	}
+
+	public ExecutionException( String documentName, String message, Throwable cause )
+	{
+		super( message, cause );
+		stack.add( new StackFrame( documentName ) );
 	}
 
 	public ExecutionException( String documentName, String message )

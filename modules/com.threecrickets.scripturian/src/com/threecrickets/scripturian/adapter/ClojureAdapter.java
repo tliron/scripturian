@@ -199,7 +199,7 @@ public class ClojureAdapter implements LanguageAdapter
 		}
 		catch( Exception x )
 		{
-			throw new ExecutionException( "", x );
+			throw new ExecutionException( executable.getDocumentName(), x.getMessage(), x );
 		}
 		finally
 		{

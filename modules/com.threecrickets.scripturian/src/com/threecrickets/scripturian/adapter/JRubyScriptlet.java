@@ -85,7 +85,7 @@ class JRubyScriptlet implements Scriptlet
 		catch( RaiseException x )
 		{
 			// TODO: extract line number
-			throw new ExecutionException( executable.getDocumentName(), x );
+			throw new ExecutionException( executable.getDocumentName(), x.getMessage(), x );
 		}
 	}
 

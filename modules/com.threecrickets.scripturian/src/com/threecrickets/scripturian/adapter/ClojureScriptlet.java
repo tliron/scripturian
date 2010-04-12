@@ -321,7 +321,7 @@ public class ClojureScriptlet implements Scriptlet
 
 		if( !stack.isEmpty() )
 		{
-			ExecutionException executionException = new ExecutionException( message, x );
+			ExecutionException executionException = new ExecutionException( executable.getDocumentName(), message, x );
 			for( StackFrame stackFrame : stack )
 				executionException.getStack().add( stackFrame );
 			return executionException;
