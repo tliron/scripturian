@@ -35,6 +35,16 @@ public class PreparationException extends ParsingException
 		super( documentName, lineNumber, columnNumber, cause );
 	}
 
+	public PreparationException( String documentName, String message, Throwable cause )
+	{
+		super( documentName, message, cause );
+	}
+
+	public PreparationException( String documentName, String message )
+	{
+		super( documentName, message );
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

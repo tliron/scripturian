@@ -76,8 +76,6 @@ public interface LanguageAdapter
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException;
 
-	public Throwable getCauseOrExecutionException( String executableName, Throwable throwable );
-
 	//
 	// Operations
 	//

@@ -165,11 +165,6 @@ public class ClojureAdapter implements LanguageAdapter
 		return "(.. " + executable.getExposedExecutableName() + " getContainer (includeDocument " + expression + "))";
 	}
 
-	public Throwable getCauseOrExecutionException( String executableName, Throwable throwable )
-	{
-		return null;
-	}
-
 	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
 		return new ClojureScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );

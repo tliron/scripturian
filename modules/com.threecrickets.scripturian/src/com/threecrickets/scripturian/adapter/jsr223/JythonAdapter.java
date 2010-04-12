@@ -20,7 +20,6 @@ import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
@@ -124,7 +123,7 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 
 			// A wrapped Jython exception -- terrific, because Jython does a
 			// great job at returning a complete ScriptException
-			return new ExecutionException( documentName, (ScriptException) throwable );
+			return createExecutionException( documentName, (ScriptException) throwable );
 		}
 
 		return null;

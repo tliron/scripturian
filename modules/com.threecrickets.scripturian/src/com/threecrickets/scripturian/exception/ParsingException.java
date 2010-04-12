@@ -50,6 +50,23 @@ public class ParsingException extends Exception
 		stack.add( new StackFrame( documentName, lineNumber, columnNumber ) );
 	}
 
+	public ParsingException( String documentName, String message, Throwable cause )
+	{
+		super( message, cause );
+		stack.add( new StackFrame( documentName ) );
+	}
+
+	public ParsingException( String documentName, String message )
+	{
+		super( message );
+		stack.add( new StackFrame( documentName ) );
+	}
+
+	public ParsingException( String message, Throwable cause )
+	{
+		super( message, cause );
+	}
+
 	//
 	// Attributes
 	//

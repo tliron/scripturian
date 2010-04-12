@@ -122,11 +122,6 @@ public class JRubyAdapter implements LanguageAdapter
 		return "$" + executable.getExposedExecutableName() + ".container.include_document(" + expression + ");";
 	}
 
-	public Throwable getCauseOrExecutionException( String executableName, Throwable throwable )
-	{
-		return null;
-	}
-
 	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
 		return new JRubyScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );

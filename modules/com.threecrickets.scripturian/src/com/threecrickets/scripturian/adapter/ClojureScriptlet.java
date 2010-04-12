@@ -57,7 +57,7 @@ public class ClojureScriptlet implements Scriptlet
 	{
 		forms = new ArrayList<ClojureScriptlet.Form>();
 
-		// This is extracted from Compiler.load()
+		// This code was extracted from Compiler.load()
 
 		Object EOF = new Object();
 		LineNumberingPushbackReader pushbackReader = new LineNumberingPushbackReader( new StringReader( sourceCode ) );
@@ -70,14 +70,12 @@ public class ClojureScriptlet implements Scriptlet
 		catch( ReaderException x )
 		{
 			forms = null;
-			x.printStackTrace();
 			// Note that we can only detect the first column
 			throw new PreparationException( executable.getDocumentName(), startLineNumber + pushbackReader.getLineNumber(), pushbackReader.atLineStart() ? 0 : -1, x.getCause() );
 		}
 		catch( Exception x )
 		{
 			forms = null;
-			x.printStackTrace();
 			// Note that we can only detect the first column
 			throw new PreparationException( executable.getDocumentName(), startLineNumber + pushbackReader.getLineNumber(), pushbackReader.atLineStart() ? 0 : -1, x );
 		}
@@ -152,7 +150,7 @@ public class ClojureScriptlet implements Scriptlet
 
 			if( forms != null )
 			{
-				// This is mostly identical to Compiler.load().
+				// This code is mostly identical to Compiler.load().
 
 				Var.pushThreadBindings( RT.map( Compiler.LOADER, RT.makeClassLoader(), Compiler.SOURCE_PATH, executable.getDocumentName(), Compiler.SOURCE, executable.getDocumentName(), RT.CURRENT_NS, RT.CURRENT_NS
 					.deref(), Compiler.LINE_BEFORE, startLineNumber, Compiler.LINE_AFTER, startLineNumber, Compiler.LINE, startLineNumber ) );
@@ -188,7 +186,7 @@ public class ClojureScriptlet implements Scriptlet
 				// r = Compiler.load( new StringReader( sourceCode ),
 				// executable.getName(), executable.getName() );
 
-				// This is mostly identical to Compiler.load().
+				// This code mostly identical to Compiler.load().
 
 				Object EOF = new Object();
 				LineNumberingPushbackReader pushbackReader = new LineNumberingPushbackReader( new StringReader( sourceCode ) );
@@ -313,17 +311,15 @@ public class ClojureScriptlet implements Scriptlet
 				message = message.substring( "com.threecrickets.scripturian.exception.ExecutionException: ".length() );
 
 			// Add the cause's stack to ours
-			for( StackFrame stackFrame : ( (ExecutionException) x.getCause() ).getStack() )
-				stack.add( stackFrame );
+			stack.addAll( ( (ExecutionException) x.getCause() ).getStack() );
 		}
 
 		message = extractStack( message, stack );
 
 		if( !stack.isEmpty() )
 		{
-			ExecutionException executionException = new ExecutionException( executable.getDocumentName(), message, x );
-			for( StackFrame stackFrame : stack )
-				executionException.getStack().add( stackFrame );
+			ExecutionException executionException = new ExecutionException( message, x );
+			executionException.getStack().addAll( stack );
 			return executionException;
 		}
 		else

@@ -20,7 +20,6 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
-import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
  * A {@link LanguageAdapter} that supports the JavaScript language as
@@ -126,7 +125,7 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 				String details = (String) rhinoExceptionDetailsMethod.invoke( throwable );
 				int lineNumber = (Integer) rhinoExceptionLineNumberMethod.invoke( throwable );
 				int columnNumber = (Integer) rhinoExceptionColumnNumberMethod.invoke( throwable );
-				return new ExecutionException( details, new StackFrame( documentName, lineNumber, columnNumber ) );
+				return new ExecutionException( documentName, lineNumber, columnNumber, details );
 			}
 			catch( IllegalArgumentException x )
 			{

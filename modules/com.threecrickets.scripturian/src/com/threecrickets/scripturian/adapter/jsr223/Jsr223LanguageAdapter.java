@@ -33,10 +33,11 @@ import javax.script.SimpleScriptContext;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Scriptlet;
-import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
+import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
  * @author Tal Liron
@@ -90,6 +91,54 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				scriptEngineManager = existing;
 		}
 		return scriptEngineManager;
+	}
+
+	public static ExecutionException createExecutionException( String documentName, ScriptException scriptException )
+	{
+		return new ExecutionException( documentName, scriptException.getLineNumber(), scriptException.getColumnNumber(), scriptException.getMessage(), scriptException.getCause() );
+	}
+
+	public static ExecutionException createExecutionException( String documentName, LanguageManager manager, Throwable throwable )
+	{
+		Throwable wrapped = throwable;
+		while( wrapped != null )
+		{
+			if( wrapped instanceof ExecutionException )
+				return (ExecutionException) wrapped;
+
+			// Try helpers
+			Throwable causeOrDocumentRunException = null;
+			for( LanguageAdapter adapter : manager.getAdapters() )
+			{
+				if( adapter instanceof Jsr223LanguageAdapter )
+				{
+					causeOrDocumentRunException = ( (Jsr223LanguageAdapter) adapter ).getCauseOrExecutionException( documentName, wrapped );
+					if( causeOrDocumentRunException != null )
+						break;
+				}
+			}
+
+			if( causeOrDocumentRunException != null )
+			{
+				// Found it!
+				if( causeOrDocumentRunException instanceof ExecutionException )
+					return (ExecutionException) causeOrDocumentRunException;
+
+				// We are unwrapped
+				wrapped = causeOrDocumentRunException;
+				continue;
+			}
+
+			// Unwrap
+			wrapped = wrapped.getCause();
+		}
+
+		if( throwable instanceof ScriptException )
+			// Extract from ScriptException
+			return createExecutionException( documentName, (ScriptException) throwable );
+		else
+			// Unknown
+			return new ExecutionException( documentName, throwable.getMessage(), throwable );
 	}
 
 	/**
@@ -398,7 +447,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				}
 				catch( ScriptException x )
 				{
-					throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
+					throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
 				}
 				catch( NoSuchMethodException x )
 				{
@@ -408,7 +457,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				{
 					// Some script engines (notably Quercus) throw their
 					// own special exceptions
-					throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
+					throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
 				}
 				finally
 				{
@@ -430,13 +479,13 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 			}
 			catch( ScriptException x )
 			{
-				throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
+				throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
 			}
 			catch( Exception x )
 			{
 				// Some script engines (notably Quercus) throw their
 				// own special exceptions
-				throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
+				throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
 			}
 			finally
 			{

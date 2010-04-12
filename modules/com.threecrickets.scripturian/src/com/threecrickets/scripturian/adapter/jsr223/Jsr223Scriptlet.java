@@ -98,13 +98,13 @@ public class Jsr223Scriptlet implements Scriptlet
 		}
 		catch( ScriptException x )
 		{
-			throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
+			throw Jsr223LanguageAdapter.createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
 		}
 		catch( Exception x )
 		{
 			// Some script engines (notably Quercus) throw their
 			// own special exceptions
-			throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
+			throw Jsr223LanguageAdapter.createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
 		}
 		finally
 		{
