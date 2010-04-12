@@ -11,12 +11,14 @@
 
 package com.threecrickets.scripturian.adapter.jsr223;
 
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
@@ -66,6 +68,14 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 	//
 	// Jsr223LanguageAdapter
 	//
+
+	@Override
+	public void beforeCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
+	{
+		// Rhino expects a PrintWriter.
+		if( !( executionContext.getWriter() instanceof PrintWriter ) )
+			executionContext.setWriter( new PrintWriter( executionContext.getWriter(), true ) );
+	}
 
 	@Override
 	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
