@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Encapsulates context for an {@link Executable}. Every thread calling
- * {@link Executable#execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+ * {@link Executable#execute(boolean, ExecutionContext, Object, ExecutionController)}
  * must use its own context.
  * 
  * @author Tal Liron

@@ -603,7 +603,7 @@ public class Executable
 	 * Returns the entire source code in the trivial case of a
 	 * "text with scriptlets" executable that contains no scriptlets.
 	 * Identifying such documents can save you from making unnecessary calls to
-	 * {@link #execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+	 * {@link #execute(boolean, ExecutionContext, Object, ExecutionController)}
 	 * in some situations.
 	 * 
 	 * @return The soure code if it's pure text, null if not
@@ -636,16 +636,10 @@ public class Executable
 
 	/**
 	 * Executes the executable.
-	 * <p>
-	 * If you intend to execute the executable multiple times from the same
-	 * thread, it is recommended that you use the same {@link ExecutionContext}
-	 * for each call for better performance.
 	 * 
 	 * @param checkIfExecutedBefore
 	 *        Run only if we've never ran before -- this will affect the return
 	 *        value
-	 * @param flushLines
-	 *        Whether to flush the writers after every line
 	 * @param executionContext
 	 *        The execution context (can be null, in which case we will try to
 	 *        default to the last used context of the executable, or the last
@@ -729,7 +723,7 @@ public class Executable
 	 * Invokes an entry point in the executable: a function, method, closure,
 	 * etc., according to how the language handles invocations. Executing the
 	 * script first (via
-	 * {@link #execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+	 * {@link #execute(boolean, ExecutionContext, Object, ExecutionController)}
 	 * ) is not absolutely required for this, but probably will be necessary in
 	 * most useful scenarios, where running the script causes useful entry point
 	 * to be initialized.
@@ -743,7 +737,7 @@ public class Executable
 	 * note that, internally, invoke relies on the {@link ExecutionContext} from
 	 * {@link #getExecutionContextForInvocations()}. This is set to be the one
 	 * used in the last call to
-	 * {@link #execute(boolean, Writer, Writer, boolean, ExecutionContext, Object, ExecutionController)}
+	 * {@link #execute(boolean, ExecutionContext, Object, ExecutionController)}
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
