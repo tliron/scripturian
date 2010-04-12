@@ -20,25 +20,25 @@ public class StackFrame
 	// Construction
 	//
 
-	public StackFrame( String name, int lineNumber, int columnNumber )
+	public StackFrame( String documentName, int lineNumber, int columnNumber )
 	{
-		this.name = name;
+		this.documentName = documentName;
 		this.lineNumber = lineNumber;
 		this.columnNumber = columnNumber;
 	}
 
-	public StackFrame( String name )
+	public StackFrame( String documentName )
 	{
-		this( name, -1, -1 );
+		this( documentName, -1, -1 );
 	}
 
 	//
 	// Attributes
 	//
 
-	public String getName()
+	public String getDocumentName()
 	{
-		return name;
+		return documentName;
 	}
 
 	public int getLineNumber()
@@ -54,7 +54,7 @@ public class StackFrame
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final String name;
+	private final String documentName;
 
 	private final int lineNumber;
 

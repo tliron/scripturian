@@ -14,7 +14,7 @@ package com.threecrickets.scripturian;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
@@ -63,13 +63,18 @@ public interface LanguageAdapter
 	 */
 	public boolean isThreadSafe();
 
+	/**
+	 * Used when {@link #isThreadSafe()} returns false.
+	 * 
+	 * @return The lock
+	 */
 	public Lock getLock();
 
-	public String getCodeForLiteralOutput( String literal, Executable executable ) throws ExecutableInitializationException;
+	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException;
 
-	public String getCodeForExpressionOutput( String expression, Executable executable ) throws ExecutableInitializationException;
+	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException;
 
-	public String getCodeForExpressionInclude( String expression, Executable executable ) throws ExecutableInitializationException;
+	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException;
 
 	public Throwable getCauseOrExecutionException( String executableName, Throwable throwable );
 
@@ -77,7 +82,9 @@ public interface LanguageAdapter
 	// Operations
 	//
 
-	public Scriptlet createScriptlet( String code, Executable executable ) throws ExecutableInitializationException;
+	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException;
 
-	public Object invoke( String method, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException;
+	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ParsingException, ExecutionException;
+
+	public void releaseContext( ExecutionContext executionContext );
 }

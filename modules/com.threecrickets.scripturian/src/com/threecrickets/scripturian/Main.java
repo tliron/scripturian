@@ -19,7 +19,7 @@ import java.io.Writer;
 import javax.script.ScriptEngineManager;
 
 import com.threecrickets.scripturian.document.DocumentSource;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.StackFrame;
 import com.threecrickets.scripturian.file.DocumentFileSource;
@@ -106,7 +106,8 @@ public class Main implements Runnable
 		// Fixes problems with JRuby
 		// System.setProperty( "org.jruby.embed.localcontext.scope",
 		// "threadsafe" );
-		//System.setProperty( "org.jruby.embed.localcontext.scope", "singlethread" );
+		// System.setProperty( "org.jruby.embed.localcontext.scope",
+		// "singlethread" );
 
 		manager = new LanguageManager();
 		allowCompilation = false;
@@ -185,8 +186,8 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * An optional {@link ExecutionController} to be used with scriptlets.
-	 * Useful for adding your own global variables to scriptlets.
+	 * An optional {@link ExecutionController} to be used with exeuctables.
+	 * Useful for exposing your own global variables to exeuctables.
 	 * 
 	 * @return The scriptlet controller
 	 * @see #setScriptletController(ExecutionController)
@@ -206,8 +207,8 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * Used to load the documents, Defaults to a {@link DocumentFileSource} set
-	 * for the current directory, with no validity checking.
+	 * Used to load the executables, Defaults to a {@link DocumentFileSource}
+	 * set for the current directory, with no validity checking.
 	 * 
 	 * @return The document source
 	 * @see #setDocumentSource(DocumentSource)
@@ -239,35 +240,48 @@ public class Main implements Runnable
 		else
 			name = defaultName;
 
+		ExecutionContext executionContext = new ExecutionContext( manager, getWriter(), getErrorWriter() );
 		try
 		{
-			ExposedContainerForMain container = new ExposedContainerForMain( this );
+			ExposedContainerForMain container = new ExposedContainerForMain( this, executionContext );
 			container.include( name );
 			writer.flush();
 			errorWriter.flush();
 		}
 		catch( IOException x )
 		{
-			System.err.print( "Error reading document file \"" + name + "\": " );
+			System.err.print( "Error reading file \"" + name + "\": " );
 			System.err.println( x.getMessage() );
 		}
-		catch( ExecutableInitializationException x )
+		catch( ParsingException x )
 		{
-			System.err.print( "Init error: " );
-			System.err.println( x.getMessage() );
-		}
-		catch( ExecutionException x )
-		{
-			System.err.print( "Run error: " );
+			System.err.println( "Initialization error:" );
 			System.err.println( " " + x.getMessage() );
 			for( StackFrame stackFrame : x.getStack() )
 			{
-				System.err.println( "  Document: " + stackFrame.getName() );
+				System.err.println( "  Document: " + stackFrame.getDocumentName() );
 				if( stackFrame.getLineNumber() >= 0 )
 					System.err.println( "   Line: " + stackFrame.getLineNumber() );
 				if( stackFrame.getColumnNumber() >= 0 )
 					System.err.println( "   Column: " + stackFrame.getColumnNumber() );
 			}
+		}
+		catch( ExecutionException x )
+		{
+			System.err.println( "Execution error:" );
+			System.err.println( " " + x.getMessage() );
+			for( StackFrame stackFrame : x.getStack() )
+			{
+				System.err.println( "  Document: " + stackFrame.getDocumentName() );
+				if( stackFrame.getLineNumber() >= 0 )
+					System.err.println( "   Line: " + stackFrame.getLineNumber() );
+				if( stackFrame.getColumnNumber() >= 0 )
+					System.err.println( "   Column: " + stackFrame.getColumnNumber() );
+			}
+		}
+		finally
+		{
+			executionContext.release();
 		}
 	}
 

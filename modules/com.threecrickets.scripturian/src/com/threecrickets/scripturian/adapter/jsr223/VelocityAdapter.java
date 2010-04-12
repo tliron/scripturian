@@ -9,17 +9,18 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * An {@link LanguageAdapter} that supports the <a
- * href="http://velocity.apache.org/">Velocity</a> templating language.
+ * A {@link LanguageAdapter} that supports the <a
+ * href="http://velocity.apache.org/">Velocity</a> language via its JSR-223
+ * scripting engine.
  * 
  * @author Tal Liron
  */
@@ -30,22 +31,26 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
 public class VelocityAdapter extends Jsr223LanguageAdapter
 {
 	//
-	// ScriptletHelper
+	// Construction
 	//
 
-	public VelocityAdapter() throws LanguageInitializationException
+	public VelocityAdapter() throws LanguageAdapterException
 	{
 		super();
 	}
 
+	//
+	// Jsr223LanguageAdapter
+	//
+
 	@Override
-	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
 	{
 		return "#set($_d='$')#set($_h='#')";
 	}
 
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		// 
 		// content = content.replaceAll( "\\#", "\\\\#" );
@@ -61,14 +66,14 @@ public class VelocityAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "${" + content.trim() + "}";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return "#if($" + document.getExposedExecutableName() + ".container.includeDocument(" + content + "))#end ";
+		return "#if($" + executable.getExposedExecutableName() + ".container.includeDocument(" + content + "))#end ";
 	}
 }

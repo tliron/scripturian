@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import java.util.Collection;
 
@@ -19,11 +19,12 @@ import javax.script.ScriptEngine;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * An {@link LanguageAdapter} that supports the <a
- * href="http://groovy.codehaus.org/">Groovy</a> scripting language.
+ * A {@link LanguageAdapter} that supports the <a
+ * href="http://groovy.codehaus.org/">Groovy</a> language via its JSR-223
+ * scripting engine.
  * 
  * @author Tal Liron
  */
@@ -34,15 +35,19 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
 public class GroovyAdapter extends Jsr223LanguageAdapter
 {
 	//
-	// ScriptletHelper
+	// Construction
 	//
 
 	@SuppressWarnings("unchecked")
-	public GroovyAdapter() throws LanguageInitializationException
+	public GroovyAdapter() throws LanguageAdapterException
 	{
 		super();
 		( (Collection<String>) getAttributes().get( EXTENSIONS ) ).add( "gv" );
 	}
+
+	//
+	// Jsr223LanguageAdapter
+	//
 
 	@Override
 	public void afterCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
@@ -55,7 +60,7 @@ public class GroovyAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\'", "\\\\'" );
@@ -63,15 +68,15 @@ public class GroovyAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return document.getExposedExecutableName() + ".container.includeDocument(" + content + ");";
+		return executable.getExposedExecutableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	@Override

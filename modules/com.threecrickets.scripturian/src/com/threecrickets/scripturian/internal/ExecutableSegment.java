@@ -15,7 +15,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Scriptlet;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
  * @author Tal Liron
@@ -27,9 +27,11 @@ public class ExecutableSegment
 	// Construction
 	//
 
-	public ExecutableSegment( String code, boolean isScriptlet, String languageTag )
+	public ExecutableSegment( String sourceCode, int startLineNumber, int startColumnNumber, boolean isScriptlet, String languageTag )
 	{
-		this.code = code;
+		this.sourceCode = sourceCode;
+		this.startLineNumber = startLineNumber;
+		this.startColumnNumber = startColumnNumber;
 		this.isScriptlet = isScriptlet;
 		this.languageTag = languageTag;
 	}
@@ -42,7 +44,11 @@ public class ExecutableSegment
 
 	public final String languageTag;
 
-	public String code;
+	public String sourceCode;
+
+	public int startLineNumber;
+
+	public int startColumnNumber;
 
 	public Scriptlet scriptlet;
 
@@ -50,15 +56,15 @@ public class ExecutableSegment
 	// Operations
 	//
 
-	public void createScriptlet( Executable executable, LanguageManager manager, boolean allowCompilation ) throws ExecutableInitializationException
+	public void createScriptlet( Executable executable, LanguageManager manager, boolean prepare ) throws ParsingException
 	{
 		LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
 		if( adapter == null )
-			throw ExecutableInitializationException.adapterNotFound( executable.getName(), languageTag );
+			throw ParsingException.adapterNotFound( executable.getDocumentName(), startLineNumber, startColumnNumber, languageTag );
 
-		scriptlet = adapter.createScriptlet( code, executable );
+		scriptlet = adapter.createScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );
 
-		if( allowCompilation )
-			scriptlet.compile();
+		if( prepare )
+			scriptlet.prepare();
 	}
 }

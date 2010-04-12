@@ -11,8 +11,8 @@
 
 package com.threecrickets.scripturian;
 
-import com.threecrickets.scripturian.exception.CompilationException;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.PreparationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
@@ -24,13 +24,25 @@ public interface Scriptlet
 	// Attributes
 	//
 
+	/**
+	 * @return
+	 */
 	public String getSourceCode();
 
 	//
 	// Operations
 	//
 
-	public void compile() throws CompilationException;
+	/**
+	 * @throws PreparationException
+	 */
+	public void prepare() throws PreparationException;
 
-	public Object execute( ExecutionContext executionContext ) throws ExecutableInitializationException, ExecutionException;
+	/**
+	 * @param executionContext
+	 * @return
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 */
+	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException;
 }

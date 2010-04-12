@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -21,32 +21,12 @@ import javax.script.ScriptException;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * An {@link LanguageAdapter} that supports the Ruby scripting language as
- * implemented by <a href="http://jruby.codehaus.org/">JRuby</a>.
- * <p>
- * Note that JRuby internally embeds each script in a "main" object, so that
- * methods defined therein cannot be accessible to us after the script runs,
- * unless they are explicitly stored in global variables. For this reason, in
- * order to make your methods invocable, they must be stored as closures in
- * global variables of the same name as the entry point. As so:
- * 
- * <pre>
- *  def myentry value
- *  	print value*3
- *  end
- *  $myentry = method :myentry
- * </pre>
- * 
- * Or even store raw lambdas:
- * 
- * <pre>
- *  $myentry = lambda do |value|
- *  	print value*3
- *  end
- * </pre>
+ * A {@link LanguageAdapter} that supports the Ruby language as implemented by
+ * <a href="http://jruby.codehaus.org/">JRuby</a> via its JSR-223 scripting
+ * engine.
  * 
  * @author Tal Liron
  */
@@ -54,13 +34,13 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
 {
 	"jruby", "ruby"
 })
-public class JRubyJsr223Adapter extends Jsr223LanguageAdapter
+public class JRubyAdapter extends Jsr223LanguageAdapter
 {
 	//
 	// Construction
 	//
 
-	public JRubyJsr223Adapter() throws LanguageInitializationException
+	public JRubyAdapter() throws LanguageAdapterException
 	{
 		try
 		{
@@ -71,27 +51,25 @@ public class JRubyJsr223Adapter extends Jsr223LanguageAdapter
 		}
 		catch( ClassNotFoundException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 		catch( SecurityException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 		catch( NoSuchMethodException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 	}
 
 	//
-	// ScriptletHelper
+	// Jsr223LanguageAdapter
 	//
 
-	/*@Override
-	public boolean isCompilable()
-	{
-		return false;
-	}*/
+	/*
+	 * @Override public boolean isCompilable() { return false; }
+	 */
 
 	@Override
 	public void beforeCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
@@ -120,7 +98,7 @@ public class JRubyJsr223Adapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -128,21 +106,21 @@ public class JRubyJsr223Adapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		// return "require $" + document.getDocumentVariableName() +
+		// return "require $" + executable.getDocumentVariableName() +
 		// ".container.source.basePath.toString + '/' + " + content + ";";
-		return "$" + document.getExposedExecutableName() + ".container.include_document(" + content + ");";
+		return "$" + executable.getExposedExecutableName() + ".container.include_executable(" + content + ");";
 	}
 
 	@Override
-	public String getInvocationAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		/*
 		 * String version = scriptEngine.getFactory().getEngineVersion();

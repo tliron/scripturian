@@ -9,22 +9,23 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * An {@link LanguageAdapter} that supports the PHP scripting language as
- * implemented by <a href="http://quercus.caucho.com/">Quercus</a>.
+ * A {@link LanguageAdapter} that supports the PHP language as implemented by <a
+ * href="http://quercus.caucho.com/">Quercus</a> via its JSR-223 scripting
+ * engine.
  * <p>
  * Note the peculiarity of the "include" implementation -- due to limitations of
  * the Quercus engine, it must use the internal PHP include. For this to work,
  * it is expected that a variable under
- * <code>documentnt.container.source.basePath</code> be set to the base path for
+ * <code>executable.container.source.basePath</code> be set to the base path for
  * all includes.
  * 
  * @author Tal Liron
@@ -36,28 +37,32 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
 public class QuercusAdapter extends Jsr223LanguageAdapter
 {
 	//
-	// ScriptletHelper
+	// Construction
 	//
 
-	public QuercusAdapter() throws LanguageInitializationException
+	public QuercusAdapter() throws LanguageAdapterException
 	{
 		super();
 	}
 
+	//
+	// Jsr223LanguageAdapter
+	//
+
 	@Override
-	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
 	{
 		return "<?php";
 	}
 
 	@Override
-	public String getScriptletFooter( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletFooter( Executable executable, ScriptEngine scriptEngine )
 	{
 		return "?>";
 	}
 
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -65,19 +70,19 @@ public class QuercusAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return "include $" + document.getExposedExecutableName() + "->container->source->basePath . '/' . " + content + ";";
+		return "include $" + executable.getExposedExecutableName() + "->container->source->basePath . '/' . " + content + ";";
 	}
 
 	@Override
-	public String getInvocationAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "<?php " + content + "(); ?>";
 	}

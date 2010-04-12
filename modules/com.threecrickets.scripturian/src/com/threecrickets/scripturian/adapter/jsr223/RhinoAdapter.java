@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -19,12 +19,13 @@ import javax.script.ScriptEngine;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.exception.ExecutionException;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
- * An {@link LanguageAdapter} that supports the JavaScript scripting language as
- * implemented by <a href="http://www.mozilla.org/rhino/">Rhino</a>.
+ * A {@link LanguageAdapter} that supports the JavaScript language as
+ * implemented by <a href="http://www.mozilla.org/rhino/">Rhino</a> via its
+ * JSR-223 scripting engine.
  * 
  * @author Tal Liron
  */
@@ -38,7 +39,7 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
-	public RhinoAdapter() throws LanguageInitializationException
+	public RhinoAdapter() throws LanguageAdapterException
 	{
 		try
 		{
@@ -51,24 +52,24 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 		}
 		catch( ClassNotFoundException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 		catch( SecurityException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 		catch( NoSuchMethodException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 	}
 
 	//
-	// ScriptletHelper
+	// Jsr223LanguageAdapter
 	//
 
 	@Override
-	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
 	{
 		// Rhino's default implementation of print() is annoyingly a println().
 		// This will fix it.
@@ -76,7 +77,7 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\'", "\\\\'" );
@@ -84,15 +85,15 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return document.getExposedExecutableName() + ".container.includeDocument(" + content + ");";
+		return executable.getExposedExecutableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	@Override

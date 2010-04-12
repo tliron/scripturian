@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -17,11 +17,12 @@ import javax.script.ScriptException;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * An {@link LanguageAdapter} that supports the Python scripting language as
- * implemented by <a href="http://jepp.sourceforge.net/">Jepp</a>.
+ * A {@link LanguageAdapter} that supports the Python language as implemented by
+ * <a href="http://jepp.sourceforge.net/">Jepp</a> via its JSR-223 scripting
+ * engine.
  * 
  * @author Tal Liron
  */
@@ -32,16 +33,20 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
 public class JeppAdapter extends Jsr223LanguageAdapter
 {
 	//
-	// ScriptletHelper
+	// Construction
 	//
 
-	public JeppAdapter() throws LanguageInitializationException
+	public JeppAdapter() throws LanguageAdapterException
 	{
 		super();
 	}
 
+	//
+	// Jsr223LanguageAdapter
+	//
+
 	@Override
-	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
 	{
 		// Apparently the Java Scripting support for Jepp does not correctly
 		// set global variables, not redirect stdout and stderr. Luckily, the
@@ -72,7 +77,7 @@ public class JeppAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -80,14 +85,14 @@ public class JeppAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(str(" + content + "));";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return document.getExposedExecutableName() + ".getContainer().includeDocument(" + content + ");";
+		return executable.getExposedExecutableName() + ".getContainer().includeDocument(" + content + ");";
 	}
 }

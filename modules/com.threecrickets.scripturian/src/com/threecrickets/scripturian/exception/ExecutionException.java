@@ -11,10 +11,13 @@
 
 package com.threecrickets.scripturian.exception;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 import javax.script.ScriptException;
 
-import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
 
 /**
  * @author Tal Liron
@@ -69,35 +72,53 @@ public class ExecutionException extends Exception
 	// Construction
 	//
 
+	public ExecutionException( String message, Throwable cause )
+	{
+		super( message, cause );
+	}
+
+	public ExecutionException( String documentName, int lineNumber, int columnNumber, String message )
+	{
+		super( message );
+		stack.add( new StackFrame( documentName, lineNumber, columnNumber ) );
+	}
+
+	public ExecutionException( String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
+	{
+		super( message, cause );
+		stack.add( new StackFrame( documentName, lineNumber, columnNumber ) );
+	}
+
+	public ExecutionException( String documentName, int lineNumber, int columnNumber, Throwable cause )
+	{
+		super( cause );
+		stack.add( new StackFrame( documentName, lineNumber, columnNumber ) );
+	}
+
 	public ExecutionException( String message, StackFrame... stackFrames )
 	{
 		super( message );
-		stack = stackFrames;
+		for( StackFrame stackFrame : stackFrames )
+			stack.add( stackFrame );
 	}
 
 	public ExecutionException( String documentName, String message )
 	{
 		super( message );
-		stack = new StackFrame[]
-		{
-			new StackFrame( documentName )
-		};
+		stack.add( new StackFrame( documentName ) );
 	}
 
 	public ExecutionException( String documentName, ScriptException scriptException )
 	{
 		super( scriptException.getMessage(), scriptException.getCause() );
-		stack = new StackFrame[]
-		{
-			new StackFrame( documentName, scriptException.getLineNumber(), scriptException.getColumnNumber() )
-		};
+		stack.add( new StackFrame( documentName, scriptException.getLineNumber(), scriptException.getColumnNumber() ) );
 	}
 
 	//
 	// Attributes
 	//
 
-	public StackFrame[] getStack()
+	public Collection<StackFrame> getStack()
 	{
 		return stack;
 	}
@@ -107,11 +128,5 @@ public class ExecutionException extends Exception
 
 	private static final long serialVersionUID = 1L;
 
-	private final StackFrame[] stack;
-
-	public ExecutionException( String documentName, Throwable cause )
-	{
-		super( cause.getMessage(), cause );
-		stack = new StackFrame[0];
-	}
+	private final ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
 }

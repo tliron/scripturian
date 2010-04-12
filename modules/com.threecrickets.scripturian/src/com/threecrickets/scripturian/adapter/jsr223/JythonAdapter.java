@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -21,11 +21,11 @@ import javax.script.ScriptException;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.exception.ExecutionException;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * An {@link LanguageAdapter} that supports the Python scripting language as
- * implemented by <a href="http://www.jython.org/">Jython</a>.
+ * A {@link LanguageAdapter} that supports the Python language as implemented by
+ * <a href="http://www.jython.org/">Jython</a> via its JSR-223 scripting engine.
  * 
  * @author Tal Liron
  */
@@ -39,7 +39,7 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
-	public JythonAdapter() throws LanguageInitializationException
+	public JythonAdapter() throws LanguageAdapterException
 	{
 		try
 		{
@@ -51,28 +51,28 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 		}
 		catch( ClassNotFoundException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 		catch( SecurityException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 		catch( NoSuchMethodException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 		catch( NoSuchFieldException x )
 		{
-			throw new LanguageInitializationException( getClass(), x );
+			throw new LanguageAdapterException( getClass(), x );
 		}
 	}
 
 	//
-	// ScriptletHelper
+	// Jsr223LanguageAdapter
 	//
 
 	@Override
-	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
 	{
 		String version = scriptEngine.getFactory().getEngineVersion();
 		String[] split = version.split( "\\." );
@@ -89,7 +89,7 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -97,15 +97,15 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "sys.stdout.write(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return document.getExposedExecutableName() + ".container.includeDocument(" + content + ");";
+		return executable.getExposedExecutableName() + ".container.includeDocument(" + content + ");";
 	}
 
 	@Override

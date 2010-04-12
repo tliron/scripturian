@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,9 +34,9 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.Scriptlet;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
  * @author Tal Liron
@@ -98,15 +98,15 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * 
 	 * @param scriptEngineName
 	 *        The script engine name
-	 * @param document
+	 * @param executable
 	 *        The document for debugging
 	 * @param executionContext
 	 *        The document context
 	 * @return The cached script engine
-	 * @throws ExecutableInitializationException
+	 * @throws ParsingException
 	 */
 	@SuppressWarnings("unchecked")
-	public static ScriptEngine getScriptEngine( String scriptEngineName, Executable document, ExecutionContext executionContext ) throws ExecutableInitializationException
+	public static ScriptEngine getScriptEngine( LanguageAdapter adapter, String scriptEngineName, Executable executable, ExecutionContext executionContext ) throws LanguageAdapterException
 	{
 		Map<String, ScriptEngine> scriptEngines = (Map<String, ScriptEngine>) executionContext.getAttributes().get( JSR223_SCRIPT_ENGINES );
 		if( scriptEngines == null )
@@ -122,7 +122,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 			ScriptEngineManager scriptEngineManager = getScriptEngineManager( executionContext );
 			scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 			if( scriptEngine == null )
-				throw new ExecutableInitializationException( document.getName(), "Unsupported script engine: " + scriptEngineName );
+				throw new LanguageAdapterException( adapter.getClass(), "Unsupported script engine: " + scriptEngineName );
 
 			// (Note that some script engines do not even
 			// provide a default context -- Jepp, for example -- so
@@ -139,17 +139,17 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	// Construction
 	//
 
-	public Jsr223LanguageAdapter() throws LanguageInitializationException
+	public Jsr223LanguageAdapter() throws LanguageAdapterException
 	{
 		ScriptEngines scriptEngineNames = getClass().getAnnotation( ScriptEngines.class );
 		if( scriptEngineNames == null )
-			throw new LanguageInitializationException( getClass(), getClass().getName() + " does not have a ScriptEngines annotation" );
+			throw new LanguageAdapterException( getClass(), getClass().getName() + " does not have a ScriptEngines annotation" );
 
 		String scriptEngineName = scriptEngineNames.value()[0];
 		ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 		scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 		if( scriptEngine == null )
-			throw new LanguageInitializationException( getClass(), getClass().getName() + " could not load ScriptEngine " + scriptEngineName );
+			throw new LanguageAdapterException( getClass(), getClass().getName() + " could not load ScriptEngine " + scriptEngineName );
 
 		ScriptEngineFactory factory = scriptEngine.getFactory();
 
@@ -169,10 +169,17 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	// Attributes
 	//
 
-	public ScriptEngine getScriptEngine( Executable document, ExecutionContext executionContext ) throws ExecutableInitializationException
+	public ScriptEngine getScriptEngine( Executable executable, ExecutionContext executionContext ) throws ExecutionException
 	{
 		String scriptEngineName = (String) attributes.get( JSR223_SCRIPT_ENGINE_NAME );
-		return getScriptEngine( scriptEngineName, document, executionContext );
+		try
+		{
+			return getScriptEngine( this, scriptEngineName, executable, executionContext );
+		}
+		catch( LanguageAdapterException x )
+		{
+			throw new ExecutionException( executable.getDocumentName(), x );
+		}
 	}
 
 	public ScriptEngine getStaticScriptEngine()
@@ -215,13 +222,13 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * The header is inserted at the beginning of every script. It is useful for
 	 * appropriately setting up the script's environment.
 	 * 
-	 * @param document
+	 * @param executable
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @return The header or null
 	 */
-	public String getScriptletHeader( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
@@ -230,14 +237,14 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * The footer is appended to the end of every script. It is useful for
 	 * cleaning up resources created in the header.
 	 * 
-	 * @param document
+	 * @param executable
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
 	 * @return The footer or null
 	 * @see #getScriptletHeader(Executable, ScriptEngine)
 	 */
-	public String getScriptletFooter( Executable document, ScriptEngine scriptEngine )
+	public String getScriptletFooter( Executable executable, ScriptEngine scriptEngine )
 	{
 		return null;
 	}
@@ -248,7 +255,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * multiple lines, and include arbitrary characters. The parsing helper
 	 * makes sure to escape special characters, partition long text, etc.
 	 * 
-	 * @param document
+	 * @param executable
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
@@ -256,7 +263,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The content
 	 * @return A command or series of commands to print the content
 	 */
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String text )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String text )
 	{
 		return null;
 	}
@@ -267,7 +274,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * simply involves wrapping the expression in something like a print
 	 * command.
 	 * 
-	 * @param document
+	 * @param executable
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
@@ -275,7 +282,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The content
 	 * @return A command or series of commands to print the expression
 	 */
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String text )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String text )
 	{
 		return null;
 	}
@@ -286,7 +293,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * that this requires the script to have access to a global method named
 	 * <code>documentnt.container.includeDocument</code>.
 	 * 
-	 * @param document
+	 * @param executable
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
@@ -296,7 +303,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *         the expression
 	 * @see Executable#getExposedExecutableName()
 	 */
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String text )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String text )
 	{
 		return null;
 	}
@@ -306,7 +313,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * (function, method, closure, etc.) in the script. Note that for engines
 	 * that implement {@link Invocable} you must return null.
 	 * 
-	 * @param document
+	 * @param executable
 	 *        The composite script instance
 	 * @param scriptEngine
 	 *        The script engine
@@ -315,7 +322,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * @return A command or series of commands to call the entry point, or null
 	 *         to signify that {@link Invocable} should be used
 	 */
-	public String getInvocationAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}
@@ -339,19 +346,19 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return lock;
 	}
 
-	public String getCodeForLiteralOutput( String literal, Executable document ) throws ExecutableInitializationException
+	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		return getTextAsProgram( document, scriptEngine, literal );
+		return getTextAsProgram( executable, scriptEngine, literal );
 	}
 
-	public String getCodeForExpressionOutput( String expression, Executable document ) throws ExecutableInitializationException
+	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
-		return getExpressionAsProgram( document, scriptEngine, expression );
+		return getExpressionAsProgram( executable, scriptEngine, expression );
 	}
 
-	public String getCodeForExpressionInclude( String expression, Executable document ) throws ExecutableInitializationException
+	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		return getExpressionAsInclude( document, scriptEngine, expression );
+		return getExpressionAsInclude( executable, scriptEngine, expression );
 	}
 
 	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable )
@@ -359,27 +366,27 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return null;
 	}
 
-	public Scriptlet createScriptlet( String code, Executable document ) throws ExecutableInitializationException
+	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
 		// Add header
-		String header = getScriptletHeader( document, scriptEngine );
+		String header = getScriptletHeader( executable, scriptEngine );
 		if( header != null )
-			code = header + code;
+			sourceCode = header + sourceCode;
 
 		// Add footer
-		String footer = getScriptletFooter( document, scriptEngine );
+		String footer = getScriptletFooter( executable, scriptEngine );
 		if( footer != null )
-			code += footer;
+			sourceCode += footer;
 
-		return new Jsr223Scriptlet( code, this, document );
+		return new Jsr223Scriptlet( sourceCode, startLineNumber, startColumnNumber, this, executable );
 	}
 
-	public Object invoke( String method, Executable document, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException
+	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		ScriptEngine scriptEngine = getScriptEngine( document, executionContext );
+		ScriptEngine scriptEngine = getScriptEngine( executable, executionContext );
 		scriptEngine.setContext( getScriptContext( executionContext ) );
 
-		String code = getInvocationAsProgram( document, scriptEngine, method );
+		String code = getInvocationAsProgram( executable, scriptEngine, entryPointName );
 		if( code == null )
 		{
 			if( scriptEngine instanceof Invocable )
@@ -387,11 +394,11 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				try
 				{
 					beforeCall( scriptEngine, executionContext );
-					return ( (Invocable) scriptEngine ).invokeFunction( method );
+					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
 				}
 				catch( ScriptException x )
 				{
-					throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+					throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
 				}
 				catch( NoSuchMethodException x )
 				{
@@ -401,7 +408,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				{
 					// Some script engines (notably Quercus) throw their
 					// own special exceptions
-					throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+					throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
 				}
 				finally
 				{
@@ -411,7 +418,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 			else
 			{
 				String scriptEngineName = (String) attributes.get( JSR223_SCRIPT_ENGINE_NAME );
-				throw new ExecutionException( document.getName(), "Script engine " + scriptEngineName + " does not support invocations" );
+				throw new ExecutionException( executable.getDocumentName(), "Script engine " + scriptEngineName + " does not support invocations" );
 			}
 		}
 		else
@@ -423,19 +430,23 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 			}
 			catch( ScriptException x )
 			{
-				throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+				throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
 			}
 			catch( Exception x )
 			{
 				// Some script engines (notably Quercus) throw their
 				// own special exceptions
-				throw ExecutionException.create( document.getName(), executionContext.getManager(), x );
+				throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
 			}
 			finally
 			{
 				afterCall( scriptEngine, executionContext );
 			}
 		}
+	}
+
+	public void releaseContext( ExecutionContext executionContext )
+	{
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

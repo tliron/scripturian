@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.internal.ServiceLoader;
 
 /**
@@ -71,12 +71,12 @@ public class LanguageManager
 		return languageAdapters;
 	}
 
-	public LanguageAdapter getAdapterByTag( String tag ) throws ExecutableInitializationException
+	public LanguageAdapter getAdapterByTag( String tag ) throws ParsingException
 	{
 		return languageAdapterByTag.get( tag );
 	}
 
-	public LanguageAdapter getAdapterByExtension( String name, String defaultExtension ) throws ExecutableInitializationException
+	public LanguageAdapter getAdapterByExtension( String name, String defaultExtension ) throws ParsingException
 	{
 		int slash = name.lastIndexOf( '/' );
 		if( slash != -1 )
@@ -85,7 +85,7 @@ public class LanguageManager
 		int dot = name.lastIndexOf( '.' );
 		String extension = dot != -1 ? name.substring( dot + 1 ) : defaultExtension;
 		if( extension == null )
-			throw new ExecutableInitializationException( name, "Name must have an extension" );
+			throw new ParsingException( name, -1, -1, "Name must have an extension" );
 
 		return languageAdapterByExtension.get( extension );
 	}

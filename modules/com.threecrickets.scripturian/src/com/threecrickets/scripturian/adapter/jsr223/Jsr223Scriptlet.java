@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import java.io.StringReader;
 
@@ -22,8 +22,8 @@ import javax.script.ScriptException;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.Scriptlet;
-import com.threecrickets.scripturian.exception.CompilationException;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.PreparationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
@@ -35,9 +35,11 @@ public class Jsr223Scriptlet implements Scriptlet
 	// Construction
 	//
 
-	public Jsr223Scriptlet( String sourceCode, Jsr223LanguageAdapter languageAdapter, Executable executable )
+	public Jsr223Scriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Jsr223LanguageAdapter languageAdapter, Executable executable )
 	{
 		this.sourceCode = sourceCode;
+		this.startLineNumber = startLineNumber;
+		this.startColumnNumber = startColumnNumber;
 		this.languageAdapter = languageAdapter;
 		this.executable = executable;
 	}
@@ -51,7 +53,7 @@ public class Jsr223Scriptlet implements Scriptlet
 		return sourceCode;
 	}
 
-	public void compile() throws CompilationException
+	public void prepare() throws PreparationException
 	{
 		if( languageAdapter.isCompilable() )
 		{
@@ -64,14 +66,14 @@ public class Jsr223Scriptlet implements Scriptlet
 				}
 				catch( ScriptException x )
 				{
-					String scriptEngineName = (String) languageAdapter.getAttributes().get( "jsr223.scriptEngineName" );
-					throw new CompilationException( executable.getName(), "Compilation error in " + scriptEngineName, x );
+					String scriptEngineName = (String) languageAdapter.getAttributes().get( Jsr223LanguageAdapter.JSR223_SCRIPT_ENGINE_NAME );
+					throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, "Compilation error in " + scriptEngineName, x );
 				}
 			}
 		}
 	}
 
-	public Object execute( ExecutionContext executionContext ) throws ExecutableInitializationException, ExecutionException
+	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		ScriptEngine scriptEngine = languageAdapter.getScriptEngine( executable, executionContext );
 		ScriptContext scriptContext = Jsr223LanguageAdapter.getScriptContext( executionContext );
@@ -96,13 +98,13 @@ public class Jsr223Scriptlet implements Scriptlet
 		}
 		catch( ScriptException x )
 		{
-			throw ExecutionException.create( executable.getName(), executionContext.getManager(), x );
+			throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
 		}
 		catch( Exception x )
 		{
 			// Some script engines (notably Quercus) throw their
 			// own special exceptions
-			throw ExecutionException.create( executable.getName(), executionContext.getManager(), x );
+			throw ExecutionException.create( executable.getDocumentName(), executionContext.getManager(), x );
 		}
 		finally
 		{
@@ -117,10 +119,13 @@ public class Jsr223Scriptlet implements Scriptlet
 
 	private final String sourceCode;
 
+	private final int startLineNumber;
+
+	private final int startColumnNumber;
+
 	private final Jsr223LanguageAdapter languageAdapter;
 
 	private final Executable executable;
 
 	private CompiledScript compiledScript;
-
 }

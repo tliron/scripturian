@@ -15,6 +15,8 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Encapsulates context for an {@link Executable}. Every thread calling
@@ -29,9 +31,11 @@ public class ExecutionContext
 	// Construction
 	//
 
-	public ExecutionContext( LanguageManager languageManager )
+	public ExecutionContext( LanguageManager languageManager, Writer writer, Writer errorWriter )
 	{
 		this.languageManager = languageManager;
+		this.writer = writer;
+		this.errorWriter = errorWriter;
 	}
 
 	//
@@ -69,7 +73,7 @@ public class ExecutionContext
 	public Writer setWriter( Writer writer )
 	{
 		Writer old = this.writer;
-		this.writer = writer;
+		this.writer = new PrintWriter( writer, true );
 		return old;
 	}
 
@@ -78,12 +82,12 @@ public class ExecutionContext
 	 * @param flushLines
 	 * @return The previous writer
 	 */
-	public Writer setWriter( Writer writer, boolean flushLines )
-	{
-		// Note that some script engines (such as Rhino) expect a
-		// PrintWriter, even though the spec defines just a Writer
-		return setWriter( new PrintWriter( writer, flushLines ) );
-	}
+	/*
+	 * public Writer setWriter( Writer writer, boolean flushLines ) { // Note
+	 * that some script engines (such as Rhino) expect a // PrintWriter, even
+	 * though the spec defines just a Writer return setWriter( new PrintWriter(
+	 * writer, flushLines ) ); }
+	 */
 
 	/**
 	 * @return The error writer
@@ -109,12 +113,12 @@ public class ExecutionContext
 	 * @param flushLines
 	 * @return The previous error writer
 	 */
-	public Writer setErrorWriter( Writer writer, boolean flushLines )
-	{
-		// Note that some script engines (such as Rhino) expect a
-		// PrintWriter, even though the spec defines just a Writer
-		return setErrorWriter( new PrintWriter( writer, flushLines ) );
-	}
+	/*
+	 * public Writer setErrorWriter( Writer writer, boolean flushLines ) { //
+	 * Note that some script engines (such as Rhino) expect a // PrintWriter,
+	 * even though the spec defines just a Writer return setErrorWriter( new
+	 * PrintWriter( writer, flushLines ) ); }
+	 */
 
 	/**
 	 * @return The language adapter
@@ -125,11 +129,12 @@ public class ExecutionContext
 	}
 
 	/**
-	 * @param adapter
+	 * @param languageAdapter
 	 */
-	public void setAdapter( LanguageAdapter adapter )
+	public void setAdapter( LanguageAdapter languageAdapter )
 	{
-		this.languageAdapter = adapter;
+		this.languageAdapter = languageAdapter;
+		languageAdapters.add( languageAdapter );
 	}
 
 	/**
@@ -140,12 +145,24 @@ public class ExecutionContext
 		return languageManager;
 	}
 
+	/**
+	 * Calls {@link LanguageAdapter#releaseContext(ExecutionContext)} on all
+	 * adapters that have used this context.
+	 */
+	public void release()
+	{
+		for( LanguageAdapter languageAdapter : languageAdapters )
+			languageAdapter.releaseContext( this );
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	private Map<String, Object> attributes = new HashMap<String, Object>();
 
 	private Map<String, Object> exposedVariables = new HashMap<String, Object>();
+
+	private Set<LanguageAdapter> languageAdapters = new CopyOnWriteArraySet<LanguageAdapter>();
 
 	private Writer writer;
 

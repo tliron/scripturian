@@ -11,19 +11,28 @@
 
 package com.threecrickets.scripturian.exception;
 
-
 /**
  * @author Tal Liron
  */
-public class CompilationException extends ExecutableInitializationException
+public class PreparationException extends ParsingException
 {
 	//
 	// Construction
 	//
 
-	public CompilationException( String documentName, String message, Throwable cause )
+	public PreparationException( String documentName, int lineNumber, int columnNumber, String message )
 	{
-		super( documentName, message, cause );
+		super( documentName, lineNumber, columnNumber, message );
+	}
+
+	public PreparationException( String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
+	{
+		super( documentName, lineNumber, columnNumber, message, cause );
+	}
+
+	public PreparationException( String documentName, int lineNumber, int columnNumber, Throwable cause )
+	{
+		super( documentName, lineNumber, columnNumber, cause );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

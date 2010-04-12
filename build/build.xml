@@ -12,6 +12,7 @@
 		<mkdir dir="${tmp}" />
 		<javac srcdir="${src}" destdir="${tmp}" target="1.5" includeAntRuntime="false">
 			<classpath>
+				<fileset dir="${lib}/clojure/lib" />
 				<fileset dir="${lib}/jruby/lib" />
 				<fileset dir="${lib}/jsr223/lib" />
 				<fileset dir="${lib}/jygments/lib" />

@@ -20,25 +20,22 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.jruby.Ruby;
-import org.jruby.ast.Node;
-import org.jruby.ast.executable.Script;
 import org.jruby.embed.io.WriterOutputStream;
-import org.jruby.exceptions.RaiseException;
-import org.jruby.javasupport.JavaEmbedUtils;
+import org.jruby.javasupport.JavaUtil;
+import org.jruby.runtime.Constants;
 import org.jruby.runtime.builtin.IRubyObject;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.Scriptlet;
-import com.threecrickets.scripturian.exception.CompilationException;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
 import com.threecrickets.scripturian.exception.ExecutionException;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
+import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
- * An {@link LanguageAdapter} that supports the Ruby scripting language as
- * implemented by <a href="http://jruby.codehaus.org/">JRuby</a>.
+ * A {@link LanguageAdapter} that supports the Ruby language as implemented by
+ * <a href="http://jruby.codehaus.org/">JRuby</a>.
  * 
  * @author Tal Liron
  */
@@ -48,16 +45,45 @@ public class JRubyAdapter implements LanguageAdapter
 	// Construction
 	//
 
-	public JRubyAdapter() throws LanguageInitializationException
+	public JRubyAdapter() throws LanguageAdapterException
 	{
 		attributes.put( NAME, "JRuby" );
-		attributes.put( VERSION, "?" );
+		attributes.put( VERSION, Constants.VERSION );
 		attributes.put( LANGUAGE_NAME, "Ruby" );
-		attributes.put( LANGUAGE_VERSION, "?" );
+		attributes.put( LANGUAGE_VERSION, Constants.RUBY_VERSION );
 		attributes.put( EXTENSIONS, Arrays.asList( "rb" ) );
 		attributes.put( DEFAULT_EXTENSION, "rb" );
 		attributes.put( TAGS, Arrays.asList( "ruby", "jruby" ) );
 		attributes.put( DEFAULT_TAG, "ruby" );
+	}
+
+	//
+	// Static operations
+	//
+
+	public static Ruby getRubyRuntime( ExecutionContext executionContext )
+	{
+		Ruby rubyRuntime = (Ruby) executionContext.getAttributes().get( JRUBY_RUNTIME );
+		if( rubyRuntime == null )
+		{
+			// We need to create a fresh runtime for each execution context,
+			// because it's impossible to have the same runtime support multiple
+			// threads running with different standard outs.
+
+			PrintStream out = new PrintStream( new WriterOutputStream( executionContext.getWriter() ) );
+			PrintStream err = new PrintStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
+			rubyRuntime = Ruby.newInstance( System.in, out, err );
+			executionContext.getAttributes().put( JRUBY_RUNTIME, rubyRuntime );
+		}
+
+		// Expose variables as Ruby globals
+		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		{
+			IRubyObject value = JavaUtil.convertJavaToUsableRubyObject( rubyRuntime, entry.getValue() );
+			rubyRuntime.defineReadonlyVariable( "$" + entry.getKey(), value );
+		}
+
+		return rubyRuntime;
 	}
 
 	//
@@ -79,19 +105,19 @@ public class JRubyAdapter implements LanguageAdapter
 		return lock;
 	}
 
-	public String getCodeForLiteralOutput( String literal, Executable executable ) throws ExecutableInitializationException
+	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = literal.replaceAll( "\\n", "\\\\n" );
 		literal = literal.replaceAll( "\\\"", "\\\\\"" );
 		return "print(\"" + literal + "\");";
 	}
 
-	public String getCodeForExpressionOutput( String expression, Executable executable ) throws ExecutableInitializationException
+	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "print(" + expression + ");";
 	}
 
-	public String getCodeForExpressionInclude( String expression, Executable executable ) throws ExecutableInitializationException
+	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		return "$" + executable.getExposedExecutableName() + ".container.include_document(" + expression + ");";
 	}
@@ -101,30 +127,38 @@ public class JRubyAdapter implements LanguageAdapter
 		return null;
 	}
 
-	public Scriptlet createScriptlet( String code, Executable executable ) throws ExecutableInitializationException
+	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new JRubyScriptlet( code );
+		return new JRubyScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );
 	}
 
-	public Object invoke( String method, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ExecutableInitializationException, ExecutionException
+	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		method = toRubyStyle( method );
+		entryPointName = toRubyStyle( entryPointName );
 		Ruby ruby = getRubyRuntime( executionContext );
-		IRubyObject value = ruby.getTopSelf().callMethod( ruby.getCurrentContext(), method );
+		IRubyObject value = ruby.getTopSelf().callMethod( ruby.getCurrentContext(), entryPointName );
 		return value.toJava( Object.class );
+	}
+
+	public void releaseContext( ExecutionContext executionContext )
+	{
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private static final String RUBY_RUNTIME = "jruby.rubyRuntime";
+	private static final String JRUBY_RUNTIME = "jruby.rubyRuntime";
 
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
 	private final ReentrantLock lock = new ReentrantLock();
 
-	private final Ruby compilerRuntime = Ruby.newInstance();
-
+	/**
+	 * From somethingLikeThis to something_like_this.
+	 * 
+	 * @param camelCase
+	 * @return
+	 */
 	private static String toRubyStyle( String camelCase )
 	{
 		StringBuilder r = new StringBuilder();
@@ -145,76 +179,5 @@ public class JRubyAdapter implements LanguageAdapter
 				r.append( c );
 		}
 		return r.toString();
-	}
-
-	private Ruby getRubyRuntime( ExecutionContext executionContext )
-	{
-		Ruby ruby;
-		ruby = (Ruby) executionContext.getAttributes().get( RUBY_RUNTIME );
-		if( ruby == null )
-		{
-			PrintStream out = new PrintStream( new WriterOutputStream( executionContext.getWriter() ) );
-			PrintStream err = new PrintStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
-			ruby = Ruby.newInstance( System.in, out, err );
-			executionContext.getAttributes().put( RUBY_RUNTIME, ruby );
-		}
-
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			ruby.defineReadonlyVariable( "$" + entry.getKey(), JavaEmbedUtils.javaToRuby( ruby, entry.getValue() ) );
-
-		return ruby;
-	}
-
-	private class JRubyScriptlet implements Scriptlet
-	{
-		public JRubyScriptlet( String sourceCode )
-		{
-			this.sourceCode = sourceCode;
-		}
-
-		public void compile() throws CompilationException
-		{
-			try
-			{
-				Node node = compilerRuntime.parseEval( sourceCode, "prudence", compilerRuntime.getCurrentContext().getCurrentScope(), 0 );
-				script = compilerRuntime.tryCompile( node );
-			}
-			catch( RaiseException x )
-			{
-				throw new CompilationException( "", x.getMessage(), x );
-			}
-		}
-
-		public Object execute( ExecutionContext executionContext ) throws ExecutableInitializationException, ExecutionException
-		{
-			Ruby ruby = getRubyRuntime( executionContext );
-
-			try
-			{
-				if( script != null )
-				{
-					IRubyObject value = ruby.runScript( script );
-					return value.toJava( Object.class );
-				}
-				else
-				{
-					IRubyObject value = ruby.evalScriptlet( sourceCode );
-					return value.toJava( Object.class );
-				}
-			}
-			catch( RaiseException x )
-			{
-				throw new ExecutionException( "", x );
-			}
-		}
-
-		public String getSourceCode()
-		{
-			return sourceCode;
-		}
-
-		private final String sourceCode;
-
-		private Script script;
 	}
 }

@@ -19,9 +19,10 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.document.DocumentSource;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.internal.ExecutableSegment;
 import com.threecrickets.scripturian.internal.ExposedExecutable;
@@ -199,18 +200,17 @@ public class Executable
 	 * @param documentSource
 	 *        A document source used to store in-flow scriptlets; can be null if
 	 *        in-flow scriptlets are not used
-	 * @param allowCompilation
-	 *        Whether to compile the source code -- note that compilation will
-	 *        only happen if the language supports it, that what compilation
-	 *        exactly means may differ widely, and that it can be time-consuming
-	 *        for some languages)
-	 * @throws ExecutableInitializationException
+	 * @param prepare
+	 *        Whether to prepare the source code: preparation increases
+	 *        initialization time and reduces execution time; note that not all
+	 *        languages support preparation as a separate operation
+	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation )
-		throws ExecutableInitializationException
+	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare )
+		throws ParsingException
 	{
-		this( name, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, allowCompilation, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
+		this( name, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
 			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
@@ -237,11 +237,10 @@ public class Executable
 	 * @param documentSource
 	 *        A document source used to store in-flow scriptlets; can be null if
 	 *        in-flow scriptlets are not used
-	 * @param allowCompilation
-	 *        Whether to compile the source code -- note that compilation will
-	 *        only happen if the language supports it, that what compilation
-	 *        exactly means may differ widely, and that it can be time-consuming
-	 *        for some languages)
+	 * @param prepare
+	 *        Whether to prepare the source code: preparation increases
+	 *        initialization time and reduces execution time; note that not all
+	 *        languages support preparation as a separate operation
 	 * @param exposedExecutableName
 	 *        The document variable name
 	 * @param delimiter1Start
@@ -261,25 +260,25 @@ public class Executable
 	 * @param delimiterInFlow
 	 *        The default addition to the start delimiter to specify an in-flow
 	 *        scriptlet
-	 * @throws ExecutableInitializationException
+	 * @throws ParsingException
 	 *         In case of a parsing or compilation error
 	 * @see LanguageAdapter
 	 */
-	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean allowCompilation,
+	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare,
 		String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
-		throws ExecutableInitializationException
+		throws ParsingException
 	{
-		this.name = name;
+		this.documentName = name;
 		this.exposedExecutableName = exposedExecutableName;
 
 		if( !isTextWithScriptlets )
 		{
-			ExecutableSegment segment = new ExecutableSegment( sourceCode, true, defaultLanguageTag );
+			ExecutableSegment segment = new ExecutableSegment( sourceCode, 1, 1, true, defaultLanguageTag );
 			segments = new ExecutableSegment[]
 			{
 				segment
 			};
-			segment.createScriptlet( this, languageManager, allowCompilation );
+			segment.createScriptlet( this, languageManager, prepare );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -320,6 +319,15 @@ public class Executable
 			}
 		}
 
+		int startLineNumber = 1;
+		int startColumnNumber = 1;
+		int lastLineNumber = 1;
+		int lastColumnNumber = 1;
+
+		if( start != -1 )
+			for( int i = sourceCode.indexOf( '\n' ); i >= 0 && i < start; i = sourceCode.indexOf( '\n', i + 1 ) )
+				startLineNumber++;
+
 		List<ExecutableSegment> segments = new LinkedList<ExecutableSegment>();
 
 		// Parse segments
@@ -331,13 +339,13 @@ public class Executable
 			{
 				// Add previous non-script segment
 				if( start != last )
-					segments.add( new ExecutableSegment( sourceCode.substring( last, start ), false, lastLanguageTag ) );
+					segments.add( new ExecutableSegment( sourceCode.substring( last, start ), lastLineNumber, lastColumnNumber, false, lastLanguageTag ) );
 
 				start += delimiterStartLength;
 
 				int end = sourceCode.indexOf( delimiterEnd, start );
 				if( end == -1 )
-					throw new RuntimeException( "Script block does not have an ending delimiter" );
+					throw new ParsingException( documentName, startLineNumber, startColumnNumber, "Scriptlet does not have an ending delimiter" );
 
 				if( start + 1 != end )
 				{
@@ -366,7 +374,7 @@ public class Executable
 						isInFlow = true;
 					}
 
-					// Get engine name if available
+					// Get language tag if available
 					if( !Character.isWhitespace( sourceCode.charAt( start ) ) )
 					{
 						int endEngineName = start + 1;
@@ -376,7 +384,7 @@ public class Executable
 						languageTag = sourceCode.substring( start, endEngineName );
 
 						// Optimization: in-flow is unnecessary if we are in the
-						// same script engine
+						// same language
 						if( isInFlow && lastLanguageTag.equals( languageTag ) )
 							isInFlow = false;
 
@@ -385,23 +393,23 @@ public class Executable
 
 					if( start + 1 != end )
 					{
-						// Add script segment
+						// Add scriptlet segment
 						if( isExpression || isInclude )
 						{
 							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
-								throw ExecutableInitializationException.adapterNotFound( name, languageTag );
+								throw ParsingException.adapterNotFound( name, startLineNumber, startColumnNumber, languageTag );
 
 							if( isExpression )
-								segments.add( new ExecutableSegment( adapter.getCodeForExpressionOutput( sourceCode.substring( start, end ), this ), true, languageTag ) );
+								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionOutput( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, languageTag ) );
 							else if( isInclude )
-								segments.add( new ExecutableSegment( adapter.getCodeForExpressionInclude( sourceCode.substring( start, end ), this ), true, languageTag ) );
+								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, languageTag ) );
 						}
 						else if( isInFlow && ( documentSource != null ) )
 						{
 							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
-								throw ExecutableInitializationException.adapterNotFound( name, languageTag );
+								throw ParsingException.adapterNotFound( name, startLineNumber, startColumnNumber, languageTag );
 
 							String inFlowCode = delimiterStart + languageTag + " " + sourceCode.substring( start, end ) + delimiterEnd;
 							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
@@ -409,7 +417,7 @@ public class Executable
 							// Note that the in-flow executable is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Executable inFlowExecutable = new Executable( name + "/" + inFlowName, inFlowCode, false, languageManager, null, null, allowCompilation, exposedExecutableName, delimiterStart, delimiterEnd,
+							Executable inFlowExecutable = new Executable( name + "/" + inFlowName, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName, delimiterStart, delimiterEnd,
 								delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
@@ -417,10 +425,10 @@ public class Executable
 							// dependent in-flow instances?
 
 							// Our include segment is in the last language
-							segments.add( new ExecutableSegment( adapter.getCodeForExpressionInclude( "'" + inFlowName + "'", this ), true, lastLanguageTag ) );
+							segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( "'" + inFlowName + "'", this ), startLineNumber, startColumnNumber, true, lastLanguageTag ) );
 						}
 						else
-							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), true, languageTag ) );
+							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), startLineNumber, startColumnNumber, true, languageTag ) );
 					}
 
 					if( !isInFlow )
@@ -428,19 +436,31 @@ public class Executable
 				}
 
 				last = end + delimiterEndLength;
+				lastLineNumber = startLineNumber;
+				lastColumnNumber = startColumnNumber;
 				start = sourceCode.indexOf( delimiterStart, last );
+				if( start != -1 )
+					for( int i = sourceCode.indexOf( '\n', last ); i >= 0 && i < start; i = sourceCode.indexOf( '\n', i + 1 ) )
+						startLineNumber++;
+
+				/*
+				 * if( documentName.equals( "/test/clojure.html" ) ) if( start
+				 * != -1 ) System.out.println( "" + startLineNumber + " " +
+				 * sourceCode.substring( start, start + 10 ) );
+				 * System.out.flush();
+				 */
 			}
 
-			// Add remaining non-script segment
+			// Add remaining non-scriptlet segment
 			if( last < sourceCode.length() )
-				segments.add( new ExecutableSegment( sourceCode.substring( last ), false, lastLanguageTag ) );
+				segments.add( new ExecutableSegment( sourceCode.substring( last ), lastLineNumber, lastColumnNumber, false, lastLanguageTag ) );
 		}
 		else
 		{
-			// Trivial file: does not include script
+			// Trivial executable: does not contain scriptlets
 			this.segments = new ExecutableSegment[]
 			{
-				new ExecutableSegment( sourceCode, false, lastLanguageTag )
+				new ExecutableSegment( sourceCode, 1, 1, false, lastLanguageTag )
 			};
 			return;
 		}
@@ -460,7 +480,9 @@ public class Executable
 					{
 						// Collapse current into previous
 						i.remove();
-						previous.code += current.code;
+						previous.startLineNumber = current.startLineNumber;
+						previous.startColumnNumber = current.startColumnNumber;
+						previous.sourceCode += current.sourceCode;
 						current = previous;
 					}
 				}
@@ -469,9 +491,8 @@ public class Executable
 			previous = current;
 		}
 
-		// Collapse segments of same engine as scripts
-		// (does not convert first segment into script if it isn't one -- that's
-		// good)
+		// Collapse segments of same language (does not convert first segment
+		// into scriptlet)
 		previous = null;
 		for( Iterator<ExecutableSegment> i = segments.iterator(); i.hasNext(); )
 		{
@@ -482,26 +503,18 @@ public class Executable
 				if( previous.languageTag.equals( current.languageTag ) )
 				{
 					// Collapse current into previous
-					// (converting to script if necessary)
+					// (converting to scriptlet if necessary)
 					i.remove();
 
 					if( current.isScriptlet )
-						previous.code += current.code;
+						previous.sourceCode += current.sourceCode;
 					else
 					{
 						LanguageAdapter adapter = languageManager.getAdapterByTag( current.languageTag );
 						if( adapter == null )
-							throw ExecutableInitializationException.adapterNotFound( name, current.languageTag );
+							throw ParsingException.adapterNotFound( name, current.startLineNumber, current.startColumnNumber, current.languageTag );
 
-						// ScriptEngineFactory factory =
-						// scriptEngine.getFactory();
-						// previous.text += factory.getProgram(
-						// factory.getOutputStatement(
-						// scriptletHelper.getTextAsScript(
-						// scriptEngine,
-						// current.text ) ) );
-
-						previous.code += adapter.getCodeForLiteralOutput( current.code, this );
+						previous.sourceCode += adapter.getSourceCodeForLiteralOutput( current.sourceCode, this );
 					}
 
 					current = previous;
@@ -511,10 +524,10 @@ public class Executable
 			previous = current;
 		}
 
-		// Resolve scriptlets
+		// Create scriptlets
 		for( ExecutableSegment segment : segments )
 			if( segment.isScriptlet )
-				segment.createScriptlet( this, languageManager, allowCompilation );
+				segment.createScriptlet( this, languageManager, prepare );
 
 		// Flatten list into array
 		this.segments = new ExecutableSegment[segments.size()];
@@ -526,13 +539,13 @@ public class Executable
 	//
 
 	/**
-	 * The executable name, used for debugging and logging.
+	 * The document name, used for debugging and logging.
 	 * 
-	 * @return The name
+	 * @return The document name
 	 */
-	public String getName()
+	public String getDocumentName()
 	{
-		return name;
+		return documentName;
 	}
 
 	/**
@@ -549,9 +562,9 @@ public class Executable
 	 * The start delimiter used.
 	 * 
 	 * @return The start delimiter, or null if none was used
-	 * @see #getDelimiterEnd()
+	 * @see #getScriptletEndDelimiter()
 	 */
-	public String getDelimiterStart()
+	public String getScriptletStartDelimiter()
 	{
 		return delimiterStart;
 	}
@@ -560,9 +573,9 @@ public class Executable
 	 * The end delimiter used.
 	 * 
 	 * @return The end delimiter, or null if none was used
-	 * @see #getDelimiterStart()
+	 * @see #getScriptletStartDelimiter()
 	 */
-	public String getDelimiterEnd()
+	public String getScriptletEndDelimiter()
 	{
 		return delimiterEnd;
 	}
@@ -601,7 +614,7 @@ public class Executable
 		{
 			ExecutableSegment sole = segments[0];
 			if( !sole.isScriptlet )
-				return sole.code;
+				return sole.sourceCode;
 		}
 		return null;
 	}
@@ -614,7 +627,7 @@ public class Executable
 	 */
 	public ExecutionContext getExecutionContextForInvocations()
 	{
-		return executionContextForInvocations;
+		return executionContextForInvocationsReference.get();
 	}
 
 	//
@@ -631,14 +644,12 @@ public class Executable
 	 * @param checkIfExecutedBefore
 	 *        Run only if we've never ran before -- this will affect the return
 	 *        value
-	 * @param writer
-	 *        Standard output
-	 * @param errorWriter
-	 *        Standard error output
 	 * @param flushLines
 	 *        Whether to flush the writers after every line
 	 * @param executionContext
-	 *        The execution context
+	 *        The execution context (can be null, in which case we will try to
+	 *        default to the last used context of the executable, or the last
+	 *        used context in the thread)
 	 * @param container
 	 *        The container (can be null)
 	 * @param executionController
@@ -647,12 +658,11 @@ public class Executable
 	 * @return True if execution happened, false if it didn't because
 	 *         checkIfExecutedBefore was set to true and we've already executed
 	 *         once
-	 * @throws ExecutableInitializationException
+	 * @throws ParsingException
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean execute( boolean checkIfExecutedBefore, Writer writer, Writer errorWriter, boolean flushLines, ExecutionContext executionContext, Object container, ExecutionController executionController )
-		throws ExecutableInitializationException, ExecutionException, IOException
+	public boolean execute( boolean checkIfExecutedBefore, ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
 		if( checkIfExecutedBefore )
 		{
@@ -661,8 +671,8 @@ public class Executable
 				return false;
 		}
 
-		Writer oldWriter = executionContext.setWriter( writer, flushLines );
-		Writer oldErrorWriter = executionContext.setErrorWriter( writer, flushLines );
+		if( executionContext == null )
+			throw new ExecutionException( documentName, "Execute does not have an execution context" );
 
 		if( executionController != null )
 			executionController.initialize( executionContext );
@@ -673,12 +683,12 @@ public class Executable
 			{
 				if( !segment.isScriptlet )
 					// Plain text
-					writer.write( segment.code );
+					executionContext.getWriter().write( segment.sourceCode );
 				else
 				{
 					LanguageAdapter languageAdapter = executionContext.getManager().getAdapterByTag( segment.languageTag );
 					if( languageAdapter == null )
-						throw ExecutableInitializationException.adapterNotFound( name, segment.languageTag );
+						throw ParsingException.adapterNotFound( documentName, segment.startLineNumber, segment.startColumnNumber, segment.languageTag );
 
 					executionContext.setAdapter( languageAdapter );
 
@@ -706,14 +716,11 @@ public class Executable
 		}
 		finally
 		{
-			executionContext.setWriter( oldWriter );
-			executionContext.setErrorWriter( oldErrorWriter );
-
 			if( executionController != null )
 				executionController.finalize( executionContext );
 		}
 
-		this.executionContextForInvocations = executionContext;
+		executionContextForInvocationsReference.set( executionContext );
 		lastExecuted = System.currentTimeMillis();
 		return true;
 	}
@@ -746,15 +753,16 @@ public class Executable
 	 *        An optional {@link ExecutionController} to be applied to the
 	 *        execution context
 	 * @return The value returned by the invocation
-	 * @throws ExecutableInitializationException
+	 * @throws ParsingException
 	 * @throws ExecutionException
 	 * @throws NoSuchMethodException
 	 *         If the method is not found
 	 */
-	public Object invoke( String entryPointName, Object container, ExecutionController executionController ) throws ExecutableInitializationException, ExecutionException, NoSuchMethodException
+	public Object invoke( String entryPointName, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, NoSuchMethodException
 	{
+		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.get();
 		if( executionContextForInvocations == null )
-			throw new ExecutionException( name, "Document must be run at least once before calling invoke" );
+			throw new ExecutionException( documentName, "Executable must be executed at least once before calling invoke" );
 
 		LanguageAdapter languageAdapter = executionContextForInvocations.getAdapter();
 
@@ -775,14 +783,24 @@ public class Executable
 			if( executionController != null )
 				executionController.finalize( executionContextForInvocations );
 
-			// Restore old script value (this is desirable for scripts that run
-			// other scripts)
+			// Restore old exposed executable value (this is desirable for
+			// executable that run other executables)
 			if( oldExposedExecutable != null )
 				executionContextForInvocations.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
 
 			if( !languageAdapter.isThreadSafe() )
 				languageAdapter.getLock().unlock();
 		}
+	}
+
+	/**
+	 * 
+	 */
+	public void release()
+	{
+		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.getAndSet( null );
+		if( executionContextForInvocations != null )
+			executionContextForInvocations.release();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -792,7 +810,7 @@ public class Executable
 
 	private static final AtomicInteger inFlowCounter = new AtomicInteger();
 
-	private final String name;
+	private final String documentName;
 
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
@@ -806,5 +824,5 @@ public class Executable
 
 	private volatile long lastExecuted = 0;
 
-	private volatile ExecutionContext executionContextForInvocations;
+	private final AtomicReference<ExecutionContext> executionContextForInvocationsReference = new AtomicReference<ExecutionContext>();
 }

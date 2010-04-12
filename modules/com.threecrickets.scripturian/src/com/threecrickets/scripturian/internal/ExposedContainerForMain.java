@@ -18,7 +18,7 @@ import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.Main;
 import com.threecrickets.scripturian.document.DocumentDescriptor;
-import com.threecrickets.scripturian.exception.ExecutableInitializationException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
@@ -33,37 +33,40 @@ public class ExposedContainerForMain
 	// Construction
 	//
 
-	public ExposedContainerForMain( Main mainDocument )
+	/**
+	 * @param mainDocument
+	 * @param executionContext
+	 */
+	public ExposedContainerForMain( Main mainDocument, ExecutionContext executionContext )
 	{
 		this.mainDocument = mainDocument;
-		executionContext = new ExecutionContext( mainDocument.getManager() );
+		this.executionContext = executionContext;
 	}
+
+	//
+	// Attributes
+	//
 
 	//
 	// Operations
 	//
 
 	/**
-	 * This powerful method allows scriptlets to execute other documents in
+	 * This powerful method allows executables to execute other executables in
 	 * place, and is useful for creating large, maintainable applications based
-	 * on documents. Included documents can act as a library or toolkit and can
-	 * even be shared among many applications. The included document does not
-	 * have to be in the same programming language or use the same engine as the
-	 * calling scriptlet. However, if they do use the same engine, then methods,
-	 * functions, modules, etc., could be shared.
-	 * <p>
-	 * It is important to note that how this works varies a lot per engine. For
-	 * example, in JRuby, every scriptlet is run in its own scope, so that
-	 * sharing would have to be done explicitly in the global scope. See the
-	 * included JRuby examples for a discussion of various ways to do this.
+	 * on executables. Included executables can act as a library or toolkit and
+	 * can even be shared among many applications. The included executable does
+	 * not have to be in the same programming language or use the same engine as
+	 * the calling executable. However, if they do use the same engine, then
+	 * methods, functions, modules, etc., could be shared.
 	 * 
 	 * @param name
 	 *        The document name
 	 * @throws IOException
-	 * @throws ExecutableInitializationException
+	 * @throws ParsingException
 	 * @throws ExecutionException
 	 */
-	public void includeDocument( String name ) throws IOException, ExecutableInitializationException, ExecutionException
+	public void includeDocument( String name ) throws IOException, ParsingException, ExecutionException
 	{
 		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocument( name );
 		Executable document = documentDescriptor.getDocument();
@@ -77,7 +80,7 @@ public class ExposedContainerForMain
 				document = existing;
 		}
 
-		document.execute( false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
+		document.execute( false, executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	/**
@@ -88,10 +91,10 @@ public class ExposedContainerForMain
 	 * @param name
 	 *        The document name
 	 * @throws IOException
-	 * @throws ExecutableInitializationException
+	 * @throws ParsingException
 	 * @throws ExecutionException
 	 */
-	public void include( String name ) throws IOException, ExecutableInitializationException, ExecutionException
+	public void include( String name ) throws IOException, ParsingException, ExecutionException
 	{
 		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocument( name );
 		Executable document = documentDescriptor.getDocument();
@@ -107,7 +110,7 @@ public class ExposedContainerForMain
 				document = existing;
 		}
 
-		document.execute( false, mainDocument.getWriter(), mainDocument.getErrorWriter(), true, executionContext, this, mainDocument.getScriptletController() );
+		document.execute( false, executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	//

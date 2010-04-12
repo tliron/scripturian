@@ -9,17 +9,18 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.adapter;
+package com.threecrickets.scripturian.adapter.jsr223;
 
 import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.exception.LanguageInitializationException;
+import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * An {@link LanguageAdapter} that supports the <a
- * href="http://juel.sourceforge.net/">JUEL</a> expression language.
+ * A {@link LanguageAdapter} that supports the <a
+ * href="http://juel.sourceforge.net/">JUEL</a> language via its JSR-223
+ * scripting engine.
  * 
  * @author Tal Liron
  */
@@ -30,34 +31,38 @@ import com.threecrickets.scripturian.exception.LanguageInitializationException;
 public class JuelAdapter extends Jsr223LanguageAdapter
 {
 	//
-	// ScriptletHelper
+	// Construction
 	//
 
-	public JuelAdapter() throws LanguageInitializationException
+	public JuelAdapter() throws LanguageAdapterException
 	{
 		super();
 	}
 
+	//
+	// Jsr223LanguageAdapter
+	//
+
 	@Override
-	public String getTextAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return content;
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "${" + content.trim() + "}";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable document, ScriptEngine scriptEngine, String content )
+	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}
 
 	@Override
-	public String getInvocationAsProgram( Executable document, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return null;
 	}
