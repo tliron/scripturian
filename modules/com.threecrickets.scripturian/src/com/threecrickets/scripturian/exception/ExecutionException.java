@@ -31,7 +31,7 @@ public class ExecutionException extends Exception
 
 	public ExecutionException( String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
 	{
-		super( message, cause );
+		super( message != null ? message : cause.getClass().getName(), cause );
 		stack.add( new StackFrame( documentName, lineNumber, columnNumber ) );
 	}
 
@@ -43,7 +43,7 @@ public class ExecutionException extends Exception
 
 	public ExecutionException( String documentName, String message, Throwable cause )
 	{
-		super( message, cause );
+		super( message != null ? message : cause.getClass().getName(), cause );
 		stack.add( new StackFrame( documentName ) );
 	}
 
@@ -55,7 +55,7 @@ public class ExecutionException extends Exception
 
 	public ExecutionException( String message, Throwable cause )
 	{
-		super( message, cause );
+		super( message != null ? message : cause.getClass().getName(), cause );
 	}
 
 	//

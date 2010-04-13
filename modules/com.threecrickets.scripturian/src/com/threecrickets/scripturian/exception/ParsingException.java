@@ -40,7 +40,7 @@ public class ParsingException extends Exception
 
 	public ParsingException( String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
 	{
-		super( message, cause );
+		super( message != null ? message : cause.getClass().getName(), cause );
 		stack.add( new StackFrame( documentName, lineNumber, columnNumber ) );
 	}
 
@@ -52,7 +52,7 @@ public class ParsingException extends Exception
 
 	public ParsingException( String documentName, String message, Throwable cause )
 	{
-		super( message, cause );
+		super( message != null ? message : cause.getClass().getName(), cause );
 		stack.add( new StackFrame( documentName ) );
 	}
 
@@ -64,7 +64,7 @@ public class ParsingException extends Exception
 
 	public ParsingException( String message, Throwable cause )
 	{
-		super( message, cause );
+		super( message != null ? message : cause.getClass().getName(), cause );
 	}
 
 	//
