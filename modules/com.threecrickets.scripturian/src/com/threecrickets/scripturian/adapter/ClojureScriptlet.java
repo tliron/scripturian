@@ -11,7 +11,9 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import java.io.FileWriter;
 import java.io.StringReader;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -20,6 +22,7 @@ import clojure.lang.LineNumberingPushbackReader;
 import clojure.lang.LispReader;
 import clojure.lang.Namespace;
 import clojure.lang.RT;
+import clojure.lang.Symbol;
 import clojure.lang.Var;
 import clojure.lang.Compiler.CompilerException;
 import clojure.lang.LispReader.ReaderException;
@@ -79,60 +82,69 @@ public class ClojureScriptlet implements Scriptlet
 			// Note that we can only detect the first column
 			throw new PreparationException( executable.getDocumentName(), startLineNumber + pushbackReader.getLineNumber(), pushbackReader.atLineStart() ? 0 : -1, x );
 		}
+	}
 
-		// compile = true;
+	/**
+	 * An unused experiment to compile into bytecode. Not very successful. The
+	 * main problem is that we can only compile a known namespace, and we cannot
+	 * trivially execute in an on-the-fly namespace we create per thread.
+	 * <p>
+	 * It remains an open question, too, whether this would significantly
+	 * improve performance. Clojure's highly dynamic nature would make compiled
+	 * code quite uninteresting. It's likely that the JVM's optimization would
+	 * work just as well on "interpreted" Clojure.
+	 */
+	@SuppressWarnings("unused")
+	private void prepare2()
+	{
+		String compilationName;
+		Symbol LOGGER_NAME = Symbol.create( "-logger-name" );
+		Symbol COMPILE = Symbol.create( "compile" );
 
-		/*
-		 * try { compilationName = "ScripturianClojure" + this.hashCode();
-		 * FileWriter writer = new FileWriter( "data/code/clojure/" +
-		 * compilationName + ".clj" ); String sourceCode = "(ns " +
-		 * compilationName +
-		 * ")(clojure.core/refer 'clojure.core)(defn run [executable prudence]"
-		 * + this.sourceCode + ")"; writer.write( sourceCode ); writer.close();
-		 * Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(),
-		 * Compiler.COMPILE_PATH, "data/code/clojure", LOGGER_NAME, "" ) ); try
-		 * { COMPILE.invoke( Symbol.intern( compilationName ) ); // compiled =
-		 * true; } finally { Var.popThreadBindings(); } } catch( Exception e1 )
-		 * { e1.printStackTrace(); }
-		 */
+		try
+		{
+			compilationName = "ScripturianClojure" + this.hashCode();
+			FileWriter writer = new FileWriter( "data/code/clojure/" + compilationName + ".clj" );
+			String sourceCode = "(ns " + compilationName
+				+ " (:gen-class :constructors {[String] []} :init init :state state)) (defn -init [s] [[] (quote s)]) (clojure.core/in-ns 'user) (clojure.core/refer 'clojure.core) " + this.sourceCode;
+			writer.write( sourceCode );
+			writer.close();
+			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), Compiler.COMPILE_PATH, "data/code/clojure", LOGGER_NAME, "" ) );
+			try
+			{
+				COMPILE.invoke( Symbol.intern( compilationName ) );
+			}
+			finally
+			{
+				Var.popThreadBindings();
+			}
+
+			// An attempt to run our compiled class.
+
+			try
+			{
+				Class<?> cls = Class.forName( compilationName + "__init" );
+				System.out.println( cls );
+				Method load = cls.getMethod( "load" );
+				Object r = load.invoke( null );
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace();
+			}
+		}
+		catch( Exception e1 )
+		{
+			e1.printStackTrace();
+		}
 	}
 
 	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		/*
-		 * if( compiled ) { try { Class<?> cls = Class.forName( compilationName
-		 * + "__init" ); System.out.println( cls ); Method load = cls.getMethod(
-		 * "load" ); return load.invoke( null ); } catch( Exception e ) { //
-		 * TODO Auto-generated catch block e.printStackTrace(); } }
-		 */
-
 		try
 		{
 			// We must push *ns* in order to use (in-ns) below
 			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), RT.OUT, executionContext.getWriter(), RT.ERR, executionContext.getErrorWriter() ) );
-
-			/*
-			 * try { Var.pushThreadBindings( RT.map( RT.CURRENT_NS,
-			 * RT.CURRENT_NS.deref(), RT.OUT, executionContext.getWriter(),
-			 * RT.ERR, executionContext.getErrorWriter(), Compiler.COMPILE_PATH,
-			 * "data/code/clojure", LOGGER_NAME, "" ) ); if( compile ) { compile
-			 * = false; compilationName = "ScripturianClojure" +
-			 * this.hashCode(); Namespace cns = Namespace.findOrCreate(
-			 * Symbol.intern( compilationName ) ); for( Map.Entry<String,
-			 * Object> entry : executionContext.getExposedVariables().entrySet()
-			 * ) Var.intern( cns, Symbol.intern( entry.getKey() ),
-			 * entry.getValue() ); // FileWriter writer = new FileWriter( //
-			 * "data/code/clojure/" + compilationName + ".clj" ); // String
-			 * sourceCode = "(ns " + compilationName + //
-			 * " (:gen-class :constructors {[String] []} :init init :state state)) (defn -init [s] [[] (quote s)]) (clojure.core/in-ns 'user) (clojure.core/refer 'clojure.core) "
-			 * // + this.sourceCode; // writer.write( sourceCode ); //
-			 * writer.close(); // Compiler.compile( new StringReader( sourceCode
-			 * ), // compilationName + ".clj", compilationName + ".clj" ); //
-			 * FnExpr e = new FnExpr("fish"); load( new StringReader( sourceCode
-			 * ), null, "Name Goes Here" ); // COMPILE.invoke( Symbol.intern(
-			 * compilationName ) ); // compiled = true; } } catch( Exception x )
-			 * { x.printStackTrace(); }
-			 */
 
 			Object r = null;
 
@@ -183,9 +195,6 @@ public class ClojureScriptlet implements Scriptlet
 			}
 			else
 			{
-				// r = Compiler.load( new StringReader( sourceCode ),
-				// executable.getName(), executable.getName() );
-
 				// This code mostly identical to Compiler.load().
 
 				Object EOF = new Object();
