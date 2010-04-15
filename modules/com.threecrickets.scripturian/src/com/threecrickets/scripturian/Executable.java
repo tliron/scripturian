@@ -19,11 +19,10 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.document.DocumentSource;
-import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.internal.ExecutableSegment;
 import com.threecrickets.scripturian.internal.ExposedExecutable;
 
@@ -625,14 +624,16 @@ public class Executable
 	 * 
 	 * @return The execution context
 	 */
-	public ExecutionContext getExecutionContextForInvocations()
-	{
-		return executionContextForInvocationsReference.get();
-	}
+	// public ExecutionContext getExecutionContextForInvocations()
+	// {
+	// return executionContextForInvocationsReference.get();
+	// }
 
 	//
 	// Operations
 	//
+
+	private static final String EXECUTED = "executed";
 
 	/**
 	 * Executes the executable.
@@ -641,9 +642,7 @@ public class Executable
 	 *        Run only if we've never ran before -- this will affect the return
 	 *        value
 	 * @param executionContext
-	 *        The execution context (can be null, in which case we will try to
-	 *        default to the last used context of the executable, or the last
-	 *        used context in the thread)
+	 *        The execution context
 	 * @param container
 	 *        The container (can be null)
 	 * @param executionController
@@ -661,8 +660,11 @@ public class Executable
 		if( checkIfExecutedBefore )
 		{
 			// TODO: ughghghghghghgh!!!!
-			if( lastExecuted != 0 )
-				return false;
+			// if( lastExecuted != 0 )
+			// return false;
+			Boolean lastExecuted = (Boolean) executionContext.getAttributes().get( EXECUTED );
+			if( lastExecuted != null && lastExecuted.booleanValue() )
+				return true;
 		}
 
 		if( executionContext == null )
@@ -714,8 +716,8 @@ public class Executable
 				executionController.finalize( executionContext );
 		}
 
-		executionContextForInvocationsReference.set( executionContext );
 		lastExecuted = System.currentTimeMillis();
+		executionContext.getAttributes().put( EXECUTED, true );
 		return true;
 	}
 
@@ -725,22 +727,17 @@ public class Executable
 	 * script first (via
 	 * {@link #execute(boolean, ExecutionContext, Object, ExecutionController)}
 	 * ) is not absolutely required for this, but probably will be necessary in
-	 * most useful scenarios, where running the script causes useful entry point
-	 * to be initialized.
+	 * most useful scenarios, where running the executable causes useful entry
+	 * point to be initialized.
 	 * <p>
 	 * Note that this call does not support sending arguments to the method. If
 	 * you need to pass data to the executable, expose it via the optional
 	 * {@link ExecutionController}.
-	 * <p>
-	 * Concurrency note: The invoke mechanism allows for multi-threaded access,
-	 * so it's the responsibility of your executable to be thread-safe. Also
-	 * note that, internally, invoke relies on the {@link ExecutionContext} from
-	 * {@link #getExecutionContextForInvocations()}. This is set to be the one
-	 * used in the last call to
-	 * {@link #execute(boolean, ExecutionContext, Object, ExecutionController)}
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
+	 * @param executionContext
+	 *        The execution context
 	 * @param container
 	 *        The container (can be null)
 	 * @param executionController
@@ -752,35 +749,43 @@ public class Executable
 	 * @throws NoSuchMethodException
 	 *         If the method is not found
 	 */
-	public Object invoke( String entryPointName, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, NoSuchMethodException
+	public Object invoke( String entryPointName, ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, NoSuchMethodException
 	{
-		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.get();
-		if( executionContextForInvocations == null )
-			throw new ExecutionException( documentName, "Executable must be executed at least once before calling invoke" );
+		// ExecutionContext executionContextForInvocations =
+		// executionContextForInvocationsReference.get();
+		// if( executionContextForInvocations == null )
+		// throw new ExecutionException( documentName,
+		// "Executable must be executed at least once before calling invoke" );
 
-		LanguageAdapter languageAdapter = executionContextForInvocations.getAdapter();
+		// executionContext.makeImmutable();
+
+		LanguageAdapter languageAdapter = executionContext.getAdapter();
 
 		if( !languageAdapter.isThreadSafe() )
 			languageAdapter.getLock().lock();
 
-		Object oldExposedExecutable = executionContextForInvocations.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContextForInvocations, container ) );
+		// Object oldExposedExecutable =
+		// executionContextForInvocations.getExposedVariables().put(
+		// exposedExecutableName, new ExposedExecutable(
+		// executionContextForInvocations, container ) );
 
 		try
 		{
 			if( executionController != null )
-				executionController.initialize( executionContextForInvocations );
+				executionController.initialize( executionContext );
 
-			return languageAdapter.invoke( entryPointName, this, executionContextForInvocations );
+			return languageAdapter.invoke( entryPointName, this, executionContext );
 		}
 		finally
 		{
 			if( executionController != null )
-				executionController.finalize( executionContextForInvocations );
+				executionController.finalize( executionContext );
 
 			// Restore old exposed executable value (this is desirable for
 			// executable that run other executables)
-			if( oldExposedExecutable != null )
-				executionContextForInvocations.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
+			// if( oldExposedExecutable != null )
+			// executionContextForInvocations.getExposedVariables().put(
+			// exposedExecutableName, oldExposedExecutable );
 
 			if( !languageAdapter.isThreadSafe() )
 				languageAdapter.getLock().unlock();
@@ -792,9 +797,10 @@ public class Executable
 	 */
 	public void release()
 	{
-		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.getAndSet( null );
-		if( executionContextForInvocations != null )
-			executionContextForInvocations.release();
+		// ExecutionContext executionContextForInvocations =
+		// executionContextForInvocationsReference.getAndSet( null );
+		// if( executionContextForInvocations != null )
+		// executionContextForInvocations.release();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -818,5 +824,7 @@ public class Executable
 
 	private volatile long lastExecuted = 0;
 
-	private final AtomicReference<ExecutionContext> executionContextForInvocationsReference = new AtomicReference<ExecutionContext>();
+	// private final AtomicReference<ExecutionContext>
+	// executionContextForInvocationsReference = new
+	// AtomicReference<ExecutionContext>();
 }

@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -144,7 +145,7 @@ public class ClojureScriptlet implements Scriptlet
 		try
 		{
 			// We must push *ns* in order to use (in-ns) below
-			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), RT.OUT, executionContext.getWriter(), RT.ERR, executionContext.getErrorWriter() ) );
+			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), RT.OUT, new PrintWriter( executionContext.getWriter() ), RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) ) );
 
 			Object r = null;
 

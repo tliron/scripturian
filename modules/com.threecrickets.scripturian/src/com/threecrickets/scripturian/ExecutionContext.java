@@ -13,15 +13,32 @@ package com.threecrickets.scripturian;
 
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
- * Encapsulates context for an {@link Executable}. Every thread calling
+ * Encapsulates context for an {@link Executable}.
+ * <p>
+ * An execution context is not in itself thread-safe. However, it supports two
+ * use cases with different threading behavior.
+ * <p>
+ * The first occurs when
  * {@link Executable#execute(boolean, ExecutionContext, Object, ExecutionController)}
- * must use its own context.
+ * is callable by concurrent threads. In this case, each thread should create
+ * <i>its own execution</i> context, and the context is essentially
+ * thread-local. Just be aware that if your executable spawns threads, they
+ * would need to coordinate access to the context if they need it.
+ * <p>
+ * TODO: this is wrong!!! The second occurs when
+ * {@link Executable#execute(boolean, ExecutionContext, Object, ExecutionController)}
+ * is run once, and then
+ * {@link Executable#invoke(String, ExecutionContext, Object, ExecutionController)}
+ * is callable by concurrent threads. In this case, <i>all invoking threads
+ * share the same context</i>. Because the context is immutable (internally
+ * {@link #makeImmutable()} is called), it is thread-safe.
  * 
  * @author Tal Liron
  */
@@ -47,7 +64,10 @@ public class ExecutionContext
 	 */
 	public Map<String, Object> getAttributes()
 	{
-		return attributes;
+		if( immutable )
+			return Collections.unmodifiableMap( attributes );
+		else
+			return attributes;
 	}
 
 	/**
@@ -55,7 +75,10 @@ public class ExecutionContext
 	 */
 	public Map<String, Object> getExposedVariables()
 	{
-		return exposedVariables;
+		if( immutable )
+			return Collections.unmodifiableMap( exposedVariables );
+		else
+			return exposedVariables;
 	}
 
 	/**
@@ -72,22 +95,12 @@ public class ExecutionContext
 	 */
 	public Writer setWriter( Writer writer )
 	{
+		if( immutable )
+			throw new UnsupportedOperationException( "Cannot modify an immutable execution context" );
 		Writer old = this.writer;
 		this.writer = new PrintWriter( writer, true );
 		return old;
 	}
-
-	/**
-	 * @param writer
-	 * @param flushLines
-	 * @return The previous writer
-	 */
-	/*
-	 * public Writer setWriter( Writer writer, boolean flushLines ) { // Note
-	 * that some script engines (such as Rhino) expect a // PrintWriter, even
-	 * though the spec defines just a Writer return setWriter( new PrintWriter(
-	 * writer, flushLines ) ); }
-	 */
 
 	/**
 	 * @return The error writer
@@ -103,22 +116,12 @@ public class ExecutionContext
 	 */
 	public Writer setErrorWriter( Writer writer )
 	{
+		if( immutable )
+			throw new UnsupportedOperationException( "Cannot modify an immutable execution context" );
 		Writer old = this.errorWriter;
 		this.errorWriter = writer;
 		return old;
 	}
-
-	/**
-	 * @param writer
-	 * @param flushLines
-	 * @return The previous error writer
-	 */
-	/*
-	 * public Writer setErrorWriter( Writer writer, boolean flushLines ) { //
-	 * Note that some script engines (such as Rhino) expect a // PrintWriter,
-	 * even though the spec defines just a Writer return setErrorWriter( new
-	 * PrintWriter( writer, flushLines ) ); }
-	 */
 
 	/**
 	 * @return The language adapter
@@ -133,6 +136,8 @@ public class ExecutionContext
 	 */
 	public void setAdapter( LanguageAdapter languageAdapter )
 	{
+		if( immutable )
+			throw new UnsupportedOperationException( "Cannot modify an immutable execution context" );
 		this.languageAdapter = languageAdapter;
 		languageAdapters.add( languageAdapter );
 	}
@@ -144,6 +149,22 @@ public class ExecutionContext
 	{
 		return languageManager;
 	}
+
+	/**
+	 * Makes this context immutable. Any attempt to alter it or its structures
+	 * will result in an {@link UnsupportedOperationException}.
+	 * <p>
+	 * Calling this method more than once will have no effect. Once made
+	 * immutable, execution contexts cannot become mutable again.
+	 */
+	public void makeImmutable()
+	{
+		immutable = true;
+	}
+
+	//
+	// Operations
+	//
 
 	/**
 	 * Calls {@link LanguageAdapter#releaseContext(ExecutionContext)} on all
@@ -158,11 +179,11 @@ public class ExecutionContext
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private Map<String, Object> attributes = new HashMap<String, Object>();
+	private final Map<String, Object> attributes = new HashMap<String, Object>();
 
-	private Map<String, Object> exposedVariables = new HashMap<String, Object>();
+	private final Map<String, Object> exposedVariables = new HashMap<String, Object>();
 
-	private Set<LanguageAdapter> languageAdapters = new CopyOnWriteArraySet<LanguageAdapter>();
+	private final Set<LanguageAdapter> languageAdapters = new HashSet<LanguageAdapter>();
 
 	private Writer writer;
 
@@ -171,4 +192,6 @@ public class ExecutionContext
 	private LanguageManager languageManager;
 
 	private LanguageAdapter languageAdapter;
+
+	private volatile boolean immutable;
 }

@@ -11,6 +11,7 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -177,7 +178,7 @@ public class ClojureAdapter implements LanguageAdapter
 		try
 		{
 			// We must push *ns* in order to use (in-ns) below
-			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), RT.OUT, executionContext.getWriter(), RT.ERR, executionContext.getErrorWriter() ) );
+			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), RT.OUT, new PrintWriter( executionContext.getWriter() ), RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) ) );
 
 			IN_NS.invoke( ns.getName() );
 			REFER.invoke( CLOJURE_CORE );
