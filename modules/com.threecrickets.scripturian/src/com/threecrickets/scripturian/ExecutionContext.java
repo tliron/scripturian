@@ -26,24 +26,35 @@ import java.util.Set;
  * use cases with different threading behavior.
  * <p>
  * The first occurs when
- * {@link Executable#execute(boolean, ExecutionContext, Object, ExecutionController)}
- * is callable by concurrent threads. In this case, each thread should create
+ * {@link Executable#execute(ExecutionContext, Object, ExecutionController)} is
+ * callable by concurrent threads. In this case, each thread should create
  * <i>its own execution</i> context, and the context is essentially
  * thread-local. Just be aware that if your executable spawns threads, they
  * would need to coordinate access to the context if they need it.
  * <p>
- * TODO: this is wrong!!! The second occurs when
- * {@link Executable#execute(boolean, ExecutionContext, Object, ExecutionController)}
- * is run once, and then
- * {@link Executable#invoke(String, ExecutionContext, Object, ExecutionController)}
- * is callable by concurrent threads. In this case, <i>all invoking threads
- * share the same context</i>. Because the context is immutable (internally
- * {@link #makeImmutable()} is called), it is thread-safe.
+ * The second occurs when
+ * {@link Executable#prepareForInvocation(ExecutionContext, Object, ExecutionController)}
+ * is called,, and then {@link Executable#invoke(String, Object...)} is callable
+ * by concurrent threads. In this case, <i>all invoking threads share the same
+ * context</i>. Because the context is immutable (internally
+ * {@link #makeImmutable()} is called), it is inherently thread-safe.
  * 
  * @author Tal Liron
  */
 public class ExecutionContext
 {
+	//
+	// Static attributes
+	//
+
+	/**
+	 * @return
+	 */
+	public static ExecutionContext getCurrent()
+	{
+		return threadLocalExecutionContext.get();
+	}
+
 	//
 	// Construction
 	//
@@ -151,6 +162,18 @@ public class ExecutionContext
 	}
 
 	/**
+	 * @return
+	 */
+	public boolean isImmutable()
+	{
+		return immutable;
+	}
+
+	//
+	// Operations
+	//
+
+	/**
 	 * Makes this context immutable. Any attempt to alter it or its structures
 	 * will result in an {@link UnsupportedOperationException}.
 	 * <p>
@@ -162,9 +185,16 @@ public class ExecutionContext
 		immutable = true;
 	}
 
-	//
-	// Operations
-	//
+	/**
+	 * @param executionContext
+	 * @return
+	 */
+	public ExecutionContext makeCurrent()
+	{
+		ExecutionContext old = threadLocalExecutionContext.get();
+		threadLocalExecutionContext.set( this );
+		return old;
+	}
 
 	/**
 	 * Calls {@link LanguageAdapter#releaseContext(ExecutionContext)} on all
@@ -172,12 +202,22 @@ public class ExecutionContext
 	 */
 	public void release()
 	{
-		for( LanguageAdapter languageAdapter : languageAdapters )
-			languageAdapter.releaseContext( this );
+		if( immutable )
+			throw new UnsupportedOperationException( "Cannot modify an immutable execution context" );
+		safeRelease();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private static final ThreadLocal<ExecutionContext> threadLocalExecutionContext = new ThreadLocal<ExecutionContext>()
+	{
+		@Override
+		protected ExecutionContext initialValue()
+		{
+			return null;
+		}
+	};
 
 	private final Map<String, Object> attributes = new HashMap<String, Object>();
 
@@ -194,4 +234,10 @@ public class ExecutionContext
 	private LanguageAdapter languageAdapter;
 
 	private volatile boolean immutable;
+
+	protected void safeRelease()
+	{
+		for( LanguageAdapter languageAdapter : languageAdapters )
+			languageAdapter.releaseContext( this );
+	}
 }

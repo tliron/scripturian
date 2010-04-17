@@ -20,6 +20,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import clojure.lang.Namespace;
+import clojure.lang.PersistentVector;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
@@ -171,7 +172,7 @@ public class ClojureAdapter implements LanguageAdapter
 		return new ClojureScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ParsingException, ExecutionException
+	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toClojureStyle( entryPointName );
 		Namespace ns = getClojureNamespace( executionContext );
@@ -187,7 +188,7 @@ public class ClojureAdapter implements LanguageAdapter
 			if( function == null )
 				throw new NoSuchMethodException( entryPointName );
 
-			return function.invoke();
+			return function.applyTo( PersistentVector.create( arguments ).seq() );
 		}
 		catch( NoSuchMethodException x )
 		{

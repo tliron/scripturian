@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.exception.ExecutionException;
@@ -599,11 +600,11 @@ public class Executable
 	}
 
 	/**
-	 * Returns the entire source code in the trivial case of a
-	 * "text with scriptlets" executable that contains no scriptlets.
-	 * Identifying such documents can save you from making unnecessary calls to
-	 * {@link #execute(boolean, ExecutionContext, Object, ExecutionController)}
-	 * in some situations.
+	 * Returns the source code in the trivial case of a "text with scriptlets"
+	 * executable that contains no scriptlets. Identifying such executables can
+	 * save you from making unnecessary calls to
+	 * {@link #execute(ExecutionContext, Object, ExecutionController)} in some
+	 * situations.
 	 * 
 	 * @return The soure code if it's pure text, null if not
 	 */
@@ -620,57 +621,68 @@ public class Executable
 
 	/**
 	 * The execution context to be used for calls to
-	 * {@link #invoke(String, Object, ExecutionController)}.
+	 * {@link #invoke(String, Object...)}.
 	 * 
 	 * @return The execution context
 	 */
-	// public ExecutionContext getExecutionContextForInvocations()
-	// {
-	// return executionContextForInvocationsReference.get();
-	// }
+	public ExecutionContext getExecutionContextForInvocations()
+	{
+		return executionContextForInvocationsReference.get();
+	}
 
 	//
 	// Operations
 	//
 
-	private static final String EXECUTED = "executed";
+	/**
+	 * Executes the executable with the current execution context.
+	 * 
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 * @see ExecutionContext#getCurrent()
+	 */
+	public void execute() throws ParsingException, ExecutionException, IOException
+	{
+		execute( ExecutionContext.getCurrent(), null, null );
+	}
 
 	/**
 	 * Executes the executable.
 	 * 
-	 * @param checkIfExecutedBefore
-	 *        Run only if we've never ran before -- this will affect the return
-	 *        value
 	 * @param executionContext
 	 *        The execution context
-	 * @param container
-	 *        The container (can be null)
-	 * @param executionController
-	 *        An optional {@link ExecutionController} to be applied to the
-	 *        execution context
-	 * @return True if execution happened, false if it didn't because
-	 *         checkIfExecutedBefore was set to true and we've already executed
-	 *         once
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean execute( boolean checkIfExecutedBefore, ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
+	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException, IOException
 	{
-		if( checkIfExecutedBefore )
-		{
-			// TODO: ughghghghghghgh!!!!
-			// if( lastExecuted != 0 )
-			// return false;
-			Boolean lastExecuted = (Boolean) executionContext.getAttributes().get( EXECUTED );
-			if( lastExecuted != null && lastExecuted.booleanValue() )
-				return true;
-		}
+		execute( executionContext, null, null );
+	}
 
+	/**
+	 * Executes the executable.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @param container
+	 *        The optional container
+	 * @param executionController
+	 *        The optional {@link ExecutionController} to be applied to the
+	 *        execution context
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 */
+	public void execute( ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
+	{
 		if( executionContext == null )
 			throw new ExecutionException( documentName, "Execute does not have an execution context" );
 
-		if( executionController != null )
+		executionContext.makeCurrent();
+
+		if( !executionContext.isImmutable() && executionController != null )
 			executionController.initialize( executionContext );
 
 		try
@@ -686,12 +698,15 @@ public class Executable
 					if( languageAdapter == null )
 						throw ParsingException.adapterNotFound( documentName, segment.startLineNumber, segment.startColumnNumber, segment.languageTag );
 
-					executionContext.setAdapter( languageAdapter );
+					if( !executionContext.isImmutable() )
+						executionContext.setAdapter( languageAdapter );
 
 					if( !languageAdapter.isThreadSafe() )
 						languageAdapter.getLock().lock();
 
-					Object oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContext, container ) );
+					Object oldExposedExecutable = null;
+					if( !executionContext.isImmutable() )
+						oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContext, container ) );
 
 					try
 					{
@@ -699,9 +714,7 @@ public class Executable
 					}
 					finally
 					{
-						// Restore old document value (this is desirable for
-						// documents that run other documents)
-						if( oldExposedExecutable != null )
+						if( !executionContext.isImmutable() && oldExposedExecutable != null )
 							executionContext.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
 
 						if( !languageAdapter.isThreadSafe() )
@@ -712,54 +725,75 @@ public class Executable
 		}
 		finally
 		{
-			if( executionController != null )
+			if( !executionContext.isImmutable() && executionController != null )
 				executionController.finalize( executionContext );
 		}
 
 		lastExecuted = System.currentTimeMillis();
-		executionContext.getAttributes().put( EXECUTED, true );
+	}
+
+	/**
+	 * Executes the executable in preparation for calling
+	 * {@link #invoke(String, Object...)}.
+	 * <p>
+	 * Note that this can only be done once per executable. If it succeeds and
+	 * returns true, the execution context should be considered "consumed" by
+	 * this executable. At this point it is immutable, and can only be released
+	 * by calling {@link #release()} on the executable.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @param container
+	 *        The optional container
+	 * @param executionController
+	 *        The optional {@link ExecutionController} to be applied to the
+	 *        execution context
+	 * @return False if we're already prepared and the execution context was not
+	 *         consumed, true if preparation succeeded and execution context was
+	 *         consumed
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 */
+	public boolean prepareForInvocation( ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
+	{
+		if( executionContextForInvocationsReference.get() != null )
+			return false;
+
+		execute( executionContext, container, executionController );
+
+		executionContext.makeImmutable();
+		executionContextForInvocationsReference.set( executionContext );
 		return true;
 	}
 
 	/**
 	 * Invokes an entry point in the executable: a function, method, closure,
-	 * etc., according to how the language handles invocations. Executing the
-	 * script first (via
-	 * {@link #execute(boolean, ExecutionContext, Object, ExecutionController)}
-	 * ) is not absolutely required for this, but probably will be necessary in
-	 * most useful scenarios, where running the executable causes useful entry
-	 * point to be initialized.
+	 * etc., according to how the language handles invocations.
 	 * <p>
-	 * Note that this call does not support sending arguments to the method. If
-	 * you need to pass data to the executable, expose it via the optional
-	 * {@link ExecutionController}.
+	 * The executable must have been previously prepared by a call to
+	 * {@link #prepareForInvocation(ExecutionContext, Object, ExecutionController)}
+	 * .
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
-	 * @param executionContext
-	 *        The execution context
-	 * @param container
-	 *        The container (can be null)
-	 * @param executionController
-	 *        An optional {@link ExecutionController} to be applied to the
-	 *        execution context
+	 * @param arguments
+	 *        The invocation arguments
 	 * @return The value returned by the invocation
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 * @throws NoSuchMethodException
 	 *         If the method is not found
 	 */
-	public Object invoke( String entryPointName, ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, NoSuchMethodException
+	public Object invoke( String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
 	{
-		// ExecutionContext executionContextForInvocations =
-		// executionContextForInvocationsReference.get();
-		// if( executionContextForInvocations == null )
-		// throw new ExecutionException( documentName,
-		// "Executable must be executed at least once before calling invoke" );
+		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.get();
+		if( executionContextForInvocations == null )
+			throw new ExecutionException( documentName, "Executable must have prepareForInvocation called before calling invoke" );
 
-		// executionContext.makeImmutable();
+		executionContextForInvocations.makeCurrent();
 
-		LanguageAdapter languageAdapter = executionContext.getAdapter();
+		LanguageAdapter languageAdapter = executionContextForInvocations.getAdapter();
 
 		if( !languageAdapter.isThreadSafe() )
 			languageAdapter.getLock().lock();
@@ -771,15 +805,15 @@ public class Executable
 
 		try
 		{
-			if( executionController != null )
-				executionController.initialize( executionContext );
+			// if( executionController != null )
+			// executionController.initialize( executionContext );
 
-			return languageAdapter.invoke( entryPointName, this, executionContext );
+			return languageAdapter.invoke( entryPointName, this, executionContextForInvocations, arguments );
 		}
 		finally
 		{
-			if( executionController != null )
-				executionController.finalize( executionContext );
+			// if( executionController != null )
+			// executionController.finalize( executionContext );
 
 			// Restore old exposed executable value (this is desirable for
 			// executable that run other executables)
@@ -793,14 +827,15 @@ public class Executable
 	}
 
 	/**
+	 * Releases consumed execution contexts.
 	 * 
+	 * @see #prepareForInvocation(ExecutionContext, Object, ExecutionController)
 	 */
 	public void release()
 	{
-		// ExecutionContext executionContextForInvocations =
-		// executionContextForInvocationsReference.getAndSet( null );
-		// if( executionContextForInvocations != null )
-		// executionContextForInvocations.release();
+		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.getAndSet( null );
+		if( executionContextForInvocations != null )
+			executionContextForInvocations.safeRelease();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -824,7 +859,5 @@ public class Executable
 
 	private volatile long lastExecuted = 0;
 
-	// private final AtomicReference<ExecutionContext>
-	// executionContextForInvocationsReference = new
-	// AtomicReference<ExecutionContext>();
+	private final AtomicReference<ExecutionContext> executionContextForInvocationsReference = new AtomicReference<ExecutionContext>();
 }

@@ -62,7 +62,7 @@ public class JuelAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content, Object... arguments )
 	{
 		return null;
 	}

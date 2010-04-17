@@ -127,11 +127,12 @@ public class JRubyAdapter implements LanguageAdapter
 		return new JRubyScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ParsingException, ExecutionException
+	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toRubyStyle( entryPointName );
-		Ruby ruby = getRubyRuntime( executionContext );
-		IRubyObject value = ruby.getTopSelf().callMethod( ruby.getCurrentContext(), entryPointName );
+		Ruby rubyRuntime = getRubyRuntime( executionContext );
+		IRubyObject[] rubyArguments = JavaUtil.convertJavaArrayToRuby( rubyRuntime, arguments );
+		IRubyObject value = rubyRuntime.getTopSelf().callMethod( rubyRuntime.getCurrentContext(), entryPointName, rubyArguments );
 		return value.toJava( Object.class );
 	}
 

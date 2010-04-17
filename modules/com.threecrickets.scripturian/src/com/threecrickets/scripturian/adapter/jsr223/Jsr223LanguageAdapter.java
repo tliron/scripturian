@@ -368,10 +368,11 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The script engine
 	 * @param content
 	 *        The content
+	 * @param arguments TODO
 	 * @return A command or series of commands to call the entry point, or null
 	 *         to signify that {@link Invocable} should be used
 	 */
-	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content, Object... arguments )
 	{
 		return null;
 	}
@@ -430,12 +431,12 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return new Jsr223Scriptlet( sourceCode, startLineNumber, startColumnNumber, this, executable );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext ) throws NoSuchMethodException, ParsingException, ExecutionException
+	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		ScriptEngine scriptEngine = getScriptEngine( executable, executionContext );
 		scriptEngine.setContext( getScriptContext( executionContext ) );
 
-		String code = getInvocationAsProgram( executable, scriptEngine, entryPointName );
+		String code = getInvocationAsProgram( executable, scriptEngine, entryPointName, arguments );
 		if( code == null )
 		{
 			if( scriptEngine instanceof Invocable )
@@ -443,7 +444,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				try
 				{
 					beforeCall( scriptEngine, executionContext );
-					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName );
+					return ( (Invocable) scriptEngine ).invokeFunction( entryPointName, arguments );
 				}
 				catch( ScriptException x )
 				{

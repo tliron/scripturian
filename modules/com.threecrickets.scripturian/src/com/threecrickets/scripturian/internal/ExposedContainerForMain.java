@@ -80,7 +80,7 @@ public class ExposedContainerForMain
 				document = existing;
 		}
 
-		document.execute( false, executionContext, this, mainDocument.getScriptletController() );
+		document.execute( executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class ExposedContainerForMain
 				document = existing;
 		}
 
-		document.execute( false, executionContext, this, mainDocument.getScriptletController() );
+		document.execute( executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	//
