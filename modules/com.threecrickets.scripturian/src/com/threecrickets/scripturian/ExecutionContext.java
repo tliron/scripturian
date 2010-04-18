@@ -326,8 +326,8 @@ public class ExecutionContext
 
 	protected void safeRelease()
 	{
-		released = true;
 		for( LanguageAdapter languageAdapter : languageAdapters )
 			languageAdapter.releaseContext( this );
+		released = true;
 	}
 }
