@@ -31,17 +31,17 @@ public interface DocumentSource<D>
 	/**
 	 * Gets a document by its name.
 	 * 
-	 * @param name
+	 * @param documentName
 	 *        The document's name
 	 * @return The document's descriptor
 	 * @throws IOException
 	 */
-	public DocumentDescriptor<D> getDocument( String name ) throws IOException;
+	public DocumentDescriptor<D> getDocument( String documentName ) throws IOException;
 
 	/**
 	 * Allows adding or changing documents.
 	 * 
-	 * @param name
+	 * @param documentName
 	 *        The document's name
 	 * @param sourceCode
 	 *        The source code for the document
@@ -51,12 +51,12 @@ public interface DocumentSource<D>
 	 *        The document
 	 * @return The existing document descriptor before we changed it
 	 */
-	public DocumentDescriptor<D> setDocument( String name, String sourceCode, String tag, D document );
+	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document );
 
 	/**
 	 * Allows adding or changing documents, with an atomic check for null.
 	 * 
-	 * @param name
+	 * @param documentName
 	 *        The document's name
 	 * @param sourceCode
 	 *        The source code for the document
@@ -66,7 +66,7 @@ public interface DocumentSource<D>
 	 *        The document instance
 	 * @return The existing document descriptor before we changed it
 	 */
-	public DocumentDescriptor<D> setDocumentIfAbsent( String name, String sourceCode, String tag, D document );
+	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document );
 
 	/**
 	 * Access to all available documents.

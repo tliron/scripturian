@@ -68,4 +68,11 @@ public interface DocumentDescriptor<D>
 	 * @see #getDocument()
 	 */
 	public D setDocumentIfAbsent( D value );
+
+	/**
+	 * The document source from whence this document came
+	 * 
+	 * @return The document source
+	 */
+	public DocumentSource<D> getSource();
 }

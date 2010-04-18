@@ -44,8 +44,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * @param basePath
 	 *        The base path
 	 * @param defaultName
-	 *        If the name used in {@link #getDocument(String)} points
-	 *        to a directory, then this file name in that directory will be used
+	 *        If the name used in {@link #getDocument(String)} points to a
+	 *        directory, then this file name in that directory will be used
 	 *        instead; note that if an extension is not specified, then the
 	 *        first file in the directory with this name, with any extension,
 	 *        will be used
@@ -67,8 +67,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * @param basePath
 	 *        The base path
 	 * @param defaultName
-	 *        If the name used in {@link #getDocument(String)} points
-	 *        to a directory, then this file name in that directory will be used
+	 *        If the name used in {@link #getDocument(String)} points to a
+	 *        directory, then this file name in that directory will be used
 	 *        instead; note that if an extension is not specified, then the
 	 *        first file in the directory with this name, with any extension,
 	 *        will be used
@@ -95,8 +95,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * If the name used in {@link #getDocument(String)} points to a
-	 * directory, then this file name in that directory will be used instead.
+	 * If the name used in {@link #getDocument(String)} points to a directory,
+	 * then this file name in that directory will be used instead.
 	 * 
 	 * @return The default name
 	 */
@@ -118,27 +118,27 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * 
 	 * @see DocumentSource#getDocument(String)
 	 */
-	public DocumentDescriptor<D> getDocument( String name ) throws IOException
+	public DocumentDescriptor<D> getDocument( String documentName ) throws IOException
 	{
 		// See if we already have a descriptor for this name
-		FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptors.get( name );
+		FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptors.get( documentName );
 		if( filedDocumentDescriptor != null )
-			filedDocumentDescriptor = removeIfInvalid( name, filedDocumentDescriptor );
+			filedDocumentDescriptor = removeIfInvalid( documentName, filedDocumentDescriptor );
 
 		if( filedDocumentDescriptor == null )
 		{
-			File file = getFileForName( name );
+			File file = getFileForName( documentName );
 
 			// See if we already have a descriptor for this file
 			filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
 			if( filedDocumentDescriptor != null )
-				filedDocumentDescriptor = removeIfInvalid( name, filedDocumentDescriptor );
+				filedDocumentDescriptor = removeIfInvalid( documentName, filedDocumentDescriptor );
 
 			if( filedDocumentDescriptor == null )
 			{
 				// Create a new descriptor
 				filedDocumentDescriptor = new FiledDocumentDescriptor( file );
-				FiledDocumentDescriptor existing = filedDocumentDescriptors.putIfAbsent( name, filedDocumentDescriptor );
+				FiledDocumentDescriptor existing = filedDocumentDescriptors.putIfAbsent( documentName, filedDocumentDescriptor );
 				if( existing != null )
 					filedDocumentDescriptor = existing;
 				else
@@ -153,18 +153,17 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * @see DocumentSource#setDocument(String, String, String, Object)
 	 */
-	public DocumentDescriptor<D> setDocument( String name, String text, String tag, D script )
+	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D script )
 	{
-		return filedDocumentDescriptors.put( name, new FiledDocumentDescriptor( name, text, tag, script ) );
+		return filedDocumentDescriptors.put( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, script ) );
 	}
 
 	/**
-	 * @see DocumentSource#setDocumentIfAbsent(String, String, String,
-	 *      Object)
+	 * @see DocumentSource#setDocumentIfAbsent(String, String, String, Object)
 	 */
-	public DocumentDescriptor<D> setDocumentIfAbsent( String name, String text, String tag, D script )
+	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D script )
 	{
-		return filedDocumentDescriptors.putIfAbsent( name, new FiledDocumentDescriptor( name, text, tag, script ) );
+		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, script ) );
 	}
 
 	/***
@@ -180,10 +179,10 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	//
 
 	/**
-	 * Attempts to call {@link #getDocument(String)} for a specific
-	 * name within less than this time from the previous call will return the
-	 * cached descriptor without checking if it is valid. A value of -1 disables
-	 * all validity checking.
+	 * Attempts to call {@link #getDocument(String)} for a specific name within
+	 * less than this time from the previous call will return the cached
+	 * descriptor without checking if it is valid. A value of -1 disables all
+	 * validity checking.
 	 * 
 	 * @return The minimum time between validity checks in milliseconds
 	 * @see #setMinimumTimeBetweenValidityChecks(long)
@@ -322,12 +321,12 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	{
 		public String getDefaultName()
 		{
-			return name;
+			return defaultName;
 		}
 
 		public String getSourceCode()
 		{
-			return text;
+			return sourceCode;
 		}
 
 		public String getTag()
@@ -395,16 +394,21 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			}
 		}
 
+		public DocumentSource<D> getSource()
+		{
+			return DocumentFileSource.this;
+		}
+
 		// //////////////////////////////////////////////////////////////////////////
 		// Private
 
-		private final String name;
+		private final String defaultName;
 
 		private final File file;
 
 		private final long timestamp;
 
-		private final String text;
+		private final String sourceCode;
 
 		private final String tag;
 
@@ -414,22 +418,22 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		private D document;
 
-		private FiledDocumentDescriptor( String name, String text, String tag, D document )
+		private FiledDocumentDescriptor( String defaultName, String sourceCode, String tag, D document )
 		{
-			this.name = name;
+			this.defaultName = defaultName;
 			file = null;
 			timestamp = -1;
-			this.text = text;
+			this.sourceCode = sourceCode;
 			this.tag = tag;
 			this.document = document;
 		}
 
 		private FiledDocumentDescriptor( File file ) throws IOException
 		{
-			this.name = getRelativeFilePath( file );
+			this.defaultName = getRelativeFilePath( file );
 			this.file = file;
 			timestamp = file.lastModified();
-			text = ScripturianUtil.getString( file );
+			sourceCode = ScripturianUtil.getString( file );
 			tag = ScripturianUtil.getExtension( file );
 		}
 

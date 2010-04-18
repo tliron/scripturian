@@ -90,6 +90,15 @@ public class LanguageManager
 		return languageAdapterByExtension.get( extension );
 	}
 
+	public String getLanguageTagByExtension( String name, String defaultExtension ) throws ParsingException
+	{
+		LanguageAdapter languageAdapter = getAdapterByExtension( name, defaultExtension );
+		if( languageAdapter != null )
+			return (String) languageAdapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG );
+		else
+			return null;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

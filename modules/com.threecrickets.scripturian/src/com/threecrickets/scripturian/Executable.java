@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -174,16 +175,106 @@ public class Executable
 	public static final String DEFAULT_EXECUTABLE_VARIABLE_NAME = "executable";
 
 	//
+	// Static operations
+	//
+
+	/**
+	 * If the executable does not yet exist, parses source code into a compact,
+	 * optimized, executable. Parsing requires the appropriate
+	 * {@link LanguageAdapter} implementations to be available in the language
+	 * manager.
+	 * 
+	 * @param documentName
+	 * @param documentSource
+	 * @param isTextWithScriptlets
+	 *        See {@code sourceCode} and {@code defaultLanguageTag}
+	 * @param languageManager
+	 *        The language manager used to parse and prepare the executable
+	 * @param prepare
+	 *        Whether to prepare the source code: preparation increases
+	 *        initialization time and reduces execution time; note that not all
+	 *        languages support preparation as a separate operation
+	 * @return A document descriptor with a valid executable as its document
+	 * @throws ParsingException
+	 *         In case of a parsing error
+	 * @throws IOException
+	 *         In case of a document source error
+	 */
+	public static DocumentDescriptor<Executable> createOnce( String documentName, DocumentSource<Executable> documentSource, boolean isTextWithScriptlets, LanguageManager languageManager, boolean prepare )
+		throws ParsingException, IOException
+	{
+		DocumentDescriptor<Executable> documentDescriptor = documentSource.getDocument( documentName );
+		createOnce( documentDescriptor, isTextWithScriptlets, languageManager, prepare );
+		return documentDescriptor;
+	}
+
+	/**
+	 * If the executable does not yet exist, parses source code into a compact,
+	 * optimized, executable. Parsing requires the appropriate
+	 * {@link LanguageAdapter} implementations to be available in the language
+	 * manager.
+	 * 
+	 * @param documentDescriptor
+	 *        The document descriptor
+	 * @param isTextWithScriptlets
+	 *        See {@code sourceCode} and {@code defaultLanguageTag}
+	 * @param languageManager
+	 *        The language manager used to parse and prepare the executable
+	 * @param prepare
+	 *        Whether to prepare the source code: preparation increases
+	 *        initialization time and reduces execution time; note that not all
+	 *        languages support preparation as a separate operation
+	 * @return A new executable or the existing one
+	 * @throws ParsingException
+	 *         In case of a parsing error
+	 */
+	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, boolean prepare ) throws ParsingException
+	{
+		Executable executable = documentDescriptor.getDocument();
+		if( executable == null )
+		{
+			executable = new Executable( documentDescriptor, isTextWithScriptlets, languageManager, prepare );
+			Executable existing = documentDescriptor.setDocumentIfAbsent( executable );
+			if( existing != null )
+				executable = existing;
+		}
+		return executable;
+	}
+
+	//
 	// Construction
 	//
 
 	/**
-	 * Parses a text stream containing plain text and scriptlets into a compact,
-	 * optimized document. Parsing requires the appropriate
-	 * {@link LanguageAdapter} implementations to be installed for the script
-	 * engines.
+	 * Parses source code into a compact, optimized, executable. Parsing
+	 * requires the appropriate {@link LanguageAdapter} implementations to be
+	 * available in the language manager.
 	 * 
-	 * @param name
+	 * @param documentDescriptor
+	 *        The document descriptor
+	 * @param isTextWithScriptlets
+	 *        See {@code sourceCode} and {@code defaultLanguageTag}
+	 * @param languageManager
+	 *        The language manager used to parse and prepare the executable
+	 * @param prepare
+	 *        Whether to prepare the source code: preparation increases
+	 *        initialization time and reduces execution time; note that not all
+	 *        languages support preparation as a separate operation
+	 * @throws ParsingException
+	 *         In case of a parsing error
+	 */
+	public Executable( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, boolean prepare ) throws ParsingException
+	{
+		this( documentDescriptor.getDefaultName(), documentDescriptor.getSourceCode(), isTextWithScriptlets, languageManager, languageManager.getLanguageTagByExtension( documentDescriptor.getDefaultName(),
+			documentDescriptor.getTag() ), documentDescriptor.getSource(), prepare );
+	}
+
+	/**
+	 * Parses source code into a compact, optimized, executable. Parsing
+	 * requires the appropriate {@link LanguageAdapter} implementations to be
+	 * available in the language manager.
+	 * 
+	 * @param documentName
 	 *        Name used for error messages
 	 * @param sourceCode
 	 *        The source code -- when {@code isTextWithScriptlets} is false,
@@ -193,7 +284,7 @@ public class Executable
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
 	 * @param languageManager
-	 *        The language manager used to parse and compile the executable
+	 *        The language manager used to parse and prepare the executable
 	 * @param defaultLanguageTag
 	 *        When {@code isTextWithScriptlets} is true, this is the language
 	 *        used for scriptlets if none is specified
@@ -207,20 +298,19 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare )
+	public Executable( String documentName, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare )
 		throws ParsingException
 	{
-		this( name, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
+		this( documentName, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
 			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
 	/**
-	 * Parses a text stream containing plain text and scriptlets into a compact,
-	 * optimized document. Parsing requires the appropriate
-	 * {@link LanguageAdapter} implementations to be installed for the script
-	 * engines.
+	 * Parses source code into a compact, optimized, executable. Parsing
+	 * requires the appropriate {@link LanguageAdapter} implementations to be
+	 * available in the language manager.
 	 * 
-	 * @param name
+	 * @param documentName
 	 *        Name used for error messages
 	 * @param sourceCode
 	 *        The source code -- when {@code isTextWithScriptlets} is false,
@@ -264,11 +354,11 @@ public class Executable
 	 *         In case of a parsing or compilation error
 	 * @see LanguageAdapter
 	 */
-	public Executable( String name, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare,
+	public Executable( String documentName, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare,
 		String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
 		throws ParsingException
 	{
-		this.documentName = name;
+		this.documentName = documentName;
 		this.exposedExecutableName = exposedExecutableName;
 
 		if( !isTextWithScriptlets )
@@ -398,7 +488,7 @@ public class Executable
 						{
 							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
-								throw ParsingException.adapterNotFound( name, startLineNumber, startColumnNumber, languageTag );
+								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
 							if( isExpression )
 								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionOutput( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, languageTag ) );
@@ -409,7 +499,7 @@ public class Executable
 						{
 							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
-								throw ParsingException.adapterNotFound( name, startLineNumber, startColumnNumber, languageTag );
+								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
 							String inFlowCode = delimiterStart + languageTag + " " + sourceCode.substring( start, end ) + delimiterEnd;
 							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
@@ -417,7 +507,7 @@ public class Executable
 							// Note that the in-flow executable is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Executable inFlowExecutable = new Executable( name + "/" + inFlowName, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName, delimiterStart, delimiterEnd,
+							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName, delimiterStart, delimiterEnd,
 								delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
@@ -442,13 +532,6 @@ public class Executable
 				if( start != -1 )
 					for( int i = sourceCode.indexOf( '\n', last ); i >= 0 && i < start; i = sourceCode.indexOf( '\n', i + 1 ) )
 						startLineNumber++;
-
-				/*
-				 * if( documentName.equals( "/test/clojure.html" ) ) if( start
-				 * != -1 ) System.out.println( "" + startLineNumber + " " +
-				 * sourceCode.substring( start, start + 10 ) );
-				 * System.out.flush();
-				 */
 			}
 
 			// Add remaining non-scriptlet segment
@@ -512,7 +595,7 @@ public class Executable
 					{
 						LanguageAdapter adapter = languageManager.getAdapterByTag( current.languageTag );
 						if( adapter == null )
-							throw ParsingException.adapterNotFound( name, current.startLineNumber, current.startColumnNumber, current.languageTag );
+							throw ParsingException.adapterNotFound( documentName, current.startLineNumber, current.startColumnNumber, current.languageTag );
 
 						previous.sourceCode += adapter.getSourceCodeForLiteralOutput( current.sourceCode, this );
 					}
@@ -762,8 +845,11 @@ public class Executable
 
 		execute( executionContext, container, executionController );
 
+		ExecutionContext existing = executionContextForInvocationsReference.getAndSet( executionContext );
+		if( existing != null )
+			return false;
+
 		executionContext.makeImmutable();
-		executionContextForInvocationsReference.set( executionContext );
 		return true;
 	}
 
@@ -798,29 +884,12 @@ public class Executable
 		if( !languageAdapter.isThreadSafe() )
 			languageAdapter.getLock().lock();
 
-		// Object oldExposedExecutable =
-		// executionContextForInvocations.getExposedVariables().put(
-		// exposedExecutableName, new ExposedExecutable(
-		// executionContextForInvocations, container ) );
-
 		try
 		{
-			// if( executionController != null )
-			// executionController.initialize( executionContext );
-
 			return languageAdapter.invoke( entryPointName, this, executionContextForInvocations, arguments );
 		}
 		finally
 		{
-			// if( executionController != null )
-			// executionController.finalize( executionContext );
-
-			// Restore old exposed executable value (this is desirable for
-			// executable that run other executables)
-			// if( oldExposedExecutable != null )
-			// executionContextForInvocations.getExposedVariables().put(
-			// exposedExecutableName, oldExposedExecutable );
-
 			if( !languageAdapter.isThreadSafe() )
 				languageAdapter.getLock().unlock();
 		}
