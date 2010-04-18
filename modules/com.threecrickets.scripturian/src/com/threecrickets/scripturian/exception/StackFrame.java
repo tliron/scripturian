@@ -32,6 +32,13 @@ public class StackFrame
 		this( documentName, -1, -1 );
 	}
 
+	public StackFrame( StackTraceElement stackTraceElement )
+	{
+		documentName = stackTraceElement.getFileName();
+		lineNumber = stackTraceElement.getLineNumber();
+		columnNumber = -1;
+	}
+
 	//
 	// Attributes
 	//

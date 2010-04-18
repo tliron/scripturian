@@ -53,14 +53,19 @@ class JRubyScriptlet implements Scriptlet
 			// one we will run in. It's unclear what the repercussions of
 			// this would be, but we haven't detected any trouble yet.
 
-			Node node = compilerRuntime.parseEval( sourceCode, "prudence", compilerRuntime.getCurrentContext().getCurrentScope(), 0 );
+			Node node = compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), compilerRuntime.getCurrentContext().getCurrentScope(), startLineNumber - 1 );
 			script = compilerRuntime.tryCompile( node );
-			// if( script != null )
-			// script.setFilename( "prudence" );
 		}
 		catch( RaiseException x )
 		{
-			// TODO: extract line number
+			// JRuby does not fill in the stack trace correctly, though the
+			// error message is fine
+
+			// StackTraceElement[] stack = x.getStackTrace();
+			// if( ( stack != null ) && stack.length > 0 )
+			// throw new PreparationException( stack[0].getFileName(),
+			// stack[0].getLineNumber(), -1, x );
+
 			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
 		}
 	}
@@ -78,14 +83,14 @@ class JRubyScriptlet implements Scriptlet
 			}
 			else
 			{
-				IRubyObject value = rubyRuntime.evalScriptlet( sourceCode );
+				IRubyObject value = rubyRuntime.executeScript( sourceCode, executable.getDocumentName() );
+				// IRubyObject value = rubyRuntime.evalScriptlet( sourceCode );
 				return value.toJava( Object.class );
 			}
 		}
 		catch( RaiseException x )
 		{
-			// TODO: extract line number
-			throw new ExecutionException( executable.getDocumentName(), x.getMessage(), x );
+			throw JRubyAdapter.createExecutionException( x );
 		}
 	}
 

@@ -103,12 +103,6 @@ public class Main implements Runnable
 	{
 		this.arguments = arguments;
 
-		// Fixes problems with JRuby
-		// System.setProperty( "org.jruby.embed.localcontext.scope",
-		// "threadsafe" );
-		// System.setProperty( "org.jruby.embed.localcontext.scope",
-		// "singlethread" );
-
 		manager = new LanguageManager();
 		allowCompilation = false;
 		defaultName = "default";
@@ -137,7 +131,7 @@ public class Main implements Runnable
 	 * 
 	 * @return The script engine manager
 	 */
-	public LanguageManager getManager()
+	public LanguageManager getLanguageManager()
 	{
 		return manager;
 	}
@@ -213,7 +207,7 @@ public class Main implements Runnable
 	 * @return The document source
 	 * @see #setDocumentSource(DocumentSource)
 	 */
-	public DocumentSource<Executable> getDocumentSource()
+	public DocumentSource<Executable> getSource()
 	{
 		return documentSource;
 	}
@@ -221,7 +215,7 @@ public class Main implements Runnable
 	/**
 	 * @param documentSource
 	 *        The document source
-	 * @see #getDocumentSource()
+	 * @see #getSource()
 	 */
 	public void setDocumentSource( DocumentSource<Executable> documentSource )
 	{

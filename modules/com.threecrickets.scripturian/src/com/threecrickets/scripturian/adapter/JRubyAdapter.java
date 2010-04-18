@@ -19,8 +19,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.jruby.NativeException;
 import org.jruby.Ruby;
+import org.jruby.RubyException;
 import org.jruby.embed.io.WriterOutputStream;
+import org.jruby.exceptions.RaiseException;
 import org.jruby.javasupport.JavaUtil;
 import org.jruby.runtime.Constants;
 import org.jruby.runtime.builtin.IRubyObject;
@@ -32,6 +35,8 @@ import com.threecrickets.scripturian.Scriptlet;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.exception.StackFrame;
+import com.threecrickets.scripturian.internal.SwitchableOutputStream;
 
 /**
  * A {@link LanguageAdapter} that supports the Ruby language as implemented by
@@ -64,19 +69,32 @@ public class JRubyAdapter implements LanguageAdapter
 	public static Ruby getRubyRuntime( ExecutionContext executionContext )
 	{
 		Ruby rubyRuntime = (Ruby) executionContext.getAttributes().get( JRUBY_RUNTIME );
+		SwitchableOutputStream switchableOut = (SwitchableOutputStream) executionContext.getAttributes().get( JRUBY_OUT );
+		SwitchableOutputStream switchableErr = (SwitchableOutputStream) executionContext.getAttributes().get( JRUBY_ERR );
+
 		if( rubyRuntime == null )
 		{
 			// We need to create a fresh runtime for each execution context,
 			// because it's impossible to have the same runtime support multiple
 			// threads running with different standard outs.
 
-			PrintStream out = new PrintStream( new WriterOutputStream( executionContext.getWriter() ) );
-			PrintStream err = new PrintStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
-			rubyRuntime = Ruby.newInstance( System.in, out, err );
-			executionContext.getAttributes().put( JRUBY_RUNTIME, rubyRuntime );
-		}
+			switchableOut = new SwitchableOutputStream( new WriterOutputStream( executionContext.getWriter() ) );
+			switchableErr = new SwitchableOutputStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
 
-		// TODO: what are we going to do about our/err?!?!
+			// System.setProperty( "jruby.backtrace.style", "ruby_framed" );
+			rubyRuntime = Ruby.newInstance( System.in, new PrintStream( switchableOut ), new PrintStream( switchableErr ) );
+			executionContext.getAttributes().put( JRUBY_RUNTIME, rubyRuntime );
+			executionContext.getAttributes().put( JRUBY_OUT, switchableOut );
+			executionContext.getAttributes().put( JRUBY_ERR, switchableErr );
+		}
+		else
+		{
+			// Out switchable output stream lets us change the Ruby runtime's
+			// standard output/error after it's been created.
+
+			switchableOut.use( new WriterOutputStream( executionContext.getWriter() ) );
+			switchableErr.use( new WriterOutputStream( executionContext.getErrorWriter() ) );
+		}
 
 		// Expose variables as Ruby globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
@@ -86,6 +104,37 @@ public class JRubyAdapter implements LanguageAdapter
 		}
 
 		return rubyRuntime;
+	}
+
+	/**
+	 * @param x
+	 * @return
+	 */
+	public static ExecutionException createExecutionException( RaiseException x )
+	{
+		RubyException rubyException = x.getException();
+		if( rubyException instanceof NativeException )
+		{
+			NativeException nativeException = (NativeException) rubyException;
+			Throwable cause = nativeException.getCause();
+			if( cause instanceof ExecutionException )
+				// Pass through
+				return (ExecutionException) cause;
+
+			ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
+			for( StackTraceElement stackTraceElement : cause.getStackTrace() )
+				if( stackTraceElement.getFileName().length() > 0 )
+					executionException.getStack().add( new StackFrame( stackTraceElement ) );
+			return executionException;
+		}
+		else
+		{
+			ExecutionException executionException = new ExecutionException( x.getMessage(), x );
+			for( StackTraceElement stackTraceElement : x.getStackTrace() )
+				if( stackTraceElement.getFileName().length() > 0 )
+					executionException.getStack().add( new StackFrame( stackTraceElement ) );
+			return executionException;
+		}
 	}
 
 	//
@@ -134,8 +183,15 @@ public class JRubyAdapter implements LanguageAdapter
 		entryPointName = toRubyStyle( entryPointName );
 		Ruby rubyRuntime = getRubyRuntime( executionContext );
 		IRubyObject[] rubyArguments = JavaUtil.convertJavaArrayToRuby( rubyRuntime, arguments );
-		IRubyObject value = rubyRuntime.getTopSelf().callMethod( rubyRuntime.getCurrentContext(), entryPointName, rubyArguments );
-		return value.toJava( Object.class );
+		try
+		{
+			IRubyObject value = rubyRuntime.getTopSelf().callMethod( rubyRuntime.getCurrentContext(), entryPointName, rubyArguments );
+			return value.toJava( Object.class );
+		}
+		catch( RaiseException x )
+		{
+			throw createExecutionException( x );
+		}
 	}
 
 	public void releaseContext( ExecutionContext executionContext )
@@ -146,6 +202,10 @@ public class JRubyAdapter implements LanguageAdapter
 	// Private
 
 	private static final String JRUBY_RUNTIME = "jruby.rubyRuntime";
+
+	private static final String JRUBY_OUT = "jruby.out";
+
+	private static final String JRUBY_ERR = "jruby.err";
 
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 

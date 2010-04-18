@@ -15,11 +15,9 @@ import java.io.IOException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
-import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.Main;
-import com.threecrickets.scripturian.document.DocumentDescriptor;
-import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
  * This is the <code>document.container</code> variable exposed to scriptlets.
@@ -60,27 +58,16 @@ public class ExposedContainerForMain
 	 * the calling executable. However, if they do use the same engine, then
 	 * methods, functions, modules, etc., could be shared.
 	 * 
-	 * @param name
+	 * @param documentName
 	 *        The document name
 	 * @throws IOException
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 */
-	public void includeDocument( String name ) throws IOException, ParsingException, ExecutionException
+	public void includeDocument( String documentName ) throws IOException, ParsingException, ExecutionException
 	{
-		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocument( name );
-		Executable document = documentDescriptor.getDocument();
-		if( document == null )
-		{
-			String text = documentDescriptor.getSourceCode();
-			document = new Executable( name, text, true, mainDocument.getManager(), getDefaultEngineName(), mainDocument.getDocumentSource(), mainDocument.isAllowCompilation() );
-
-			Executable existing = documentDescriptor.setDocumentIfAbsent( document );
-			if( existing != null )
-				document = existing;
-		}
-
-		document.execute( executionContext, this, mainDocument.getScriptletController() );
+		Executable executable = Executable.createOnce( documentName, mainDocument.getSource(), true, mainDocument.getLanguageManager(), false ).getDocument();
+		executable.execute( executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	/**
@@ -88,29 +75,16 @@ public class ExposedContainerForMain
 	 * as a single, non-delimited script with the engine name derived from the
 	 * document descriptor's tag.
 	 * 
-	 * @param name
+	 * @param documentName
 	 *        The document name
 	 * @throws IOException
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 */
-	public void include( String name ) throws IOException, ParsingException, ExecutionException
+	public void include( String documentName ) throws IOException, ParsingException, ExecutionException
 	{
-		DocumentDescriptor<Executable> documentDescriptor = mainDocument.getDocumentSource().getDocument( name );
-		Executable document = documentDescriptor.getDocument();
-		if( document == null )
-		{
-			LanguageAdapter adapter = mainDocument.getManager().getAdapterByExtension( name, documentDescriptor.getTag() );
-			String text = documentDescriptor.getSourceCode();
-			document = new Executable( name, text, false, mainDocument.getManager(), (String) adapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), mainDocument.getDocumentSource(), mainDocument
-				.isAllowCompilation() );
-
-			Executable existing = documentDescriptor.setDocumentIfAbsent( document );
-			if( existing != null )
-				document = existing;
-		}
-
-		document.execute( executionContext, this, mainDocument.getScriptletController() );
+		Executable executable = Executable.createOnce( documentName, mainDocument.getSource(), false, mainDocument.getLanguageManager(), false ).getDocument();
+		executable.execute( executionContext, this, mainDocument.getScriptletController() );
 	}
 
 	//
