@@ -76,6 +76,8 @@ public class JRubyAdapter implements LanguageAdapter
 			executionContext.getAttributes().put( JRUBY_RUNTIME, rubyRuntime );
 		}
 
+		// TODO: what are we going to do about our/err?!?!
+
 		// Expose variables as Ruby globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 		{

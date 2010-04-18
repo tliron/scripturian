@@ -62,6 +62,8 @@ public class ClojureAdapter implements LanguageAdapter
 
 	public static final Var IN_NS = RT.var( "clojure.core", "in-ns" );
 
+	public static final Var ALLOW_UNRESOLVED_VARS = RT.var( "clojure.core", "*allow-unresolved-vars*" );
+
 	public static final Var REFER = RT.var( "clojure.core", "refer" );
 
 	//
@@ -81,8 +83,9 @@ public class ClojureAdapter implements LanguageAdapter
 		}
 
 		// Expose our variables by interning them in the namespace
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			Var.intern( ns, Symbol.intern( entry.getKey() ), entry.getValue() );
+		// for( Map.Entry<String, Object> entry :
+		// executionContext.getExposedVariables().entrySet() )
+		// Var.intern( ns, Symbol.intern( entry.getKey() ), entry.getValue() );
 
 		return ns;
 	}
@@ -179,10 +182,9 @@ public class ClojureAdapter implements LanguageAdapter
 		try
 		{
 			// We must push *ns* in order to use (in-ns) below
-			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), RT.OUT, new PrintWriter( executionContext.getWriter() ), RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) ) );
+			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, ns, RT.OUT, new PrintWriter( executionContext.getWriter() ), RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) ) );
 
 			IN_NS.invoke( ns.getName() );
-			REFER.invoke( CLOJURE_CORE );
 
 			Var function = ns.findInternedVar( Symbol.intern( entryPointName ) );
 			if( function == null )
@@ -218,11 +220,6 @@ public class ClojureAdapter implements LanguageAdapter
 	private static final String CLOJURE_NAMESPACE = "clojure.namespace";
 
 	private static final String NAMESPACE_PREFIX = "scripturian";
-
-	// private static final Var COMPILE = RT.var( "clojure.core", "compile" );
-
-	// private static final Var LOGGER_NAME = RT.var( "clojure.core",
-	// "-logger-name" );
 
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 

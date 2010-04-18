@@ -17,11 +17,14 @@ import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import clojure.lang.Compiler;
 import clojure.lang.LineNumberingPushbackReader;
 import clojure.lang.LispReader;
 import clojure.lang.Namespace;
+import clojure.lang.PersistentArrayMap;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
@@ -142,34 +145,46 @@ public class ClojureScriptlet implements Scriptlet
 
 	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
+		Namespace ns = ClojureAdapter.getClojureNamespace( executionContext );
+
+		HashMap<Var, Object> threadBindings = new HashMap<Var, Object>();
+
+		// We must push *ns* in order to use (in-ns) below
+		// bindings.put( RT.CURRENT_NS, RT.CURRENT_NS.deref() );
+		threadBindings.put( RT.CURRENT_NS, ns );
+
+		// threadBindings.put( ClojureAdapter.ALLOW_UNRESOLVED_VARS, RT.T );
+		threadBindings.put( Compiler.LOADER, RT.makeClassLoader() );
+		threadBindings.put( Compiler.SOURCE_PATH, executable.getDocumentName() );
+		threadBindings.put( Compiler.SOURCE, executable.getDocumentName() );
+		threadBindings.put( Compiler.LINE_BEFORE, startLineNumber );
+		threadBindings.put( Compiler.LINE_AFTER, startLineNumber );
+		threadBindings.put( Compiler.LINE, startLineNumber );
+
+		threadBindings.put( RT.OUT, new PrintWriter( executionContext.getWriter() ) );
+		threadBindings.put( RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) );
+
+		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+			threadBindings.put( Var.intern( ns, Symbol.intern( entry.getKey() ) ), entry.getValue() );
+
 		try
 		{
-			// We must push *ns* in order to use (in-ns) below
-			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, RT.CURRENT_NS.deref(), RT.OUT, new PrintWriter( executionContext.getWriter() ), RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) ) );
+			Var.pushThreadBindings( PersistentArrayMap.create( threadBindings ) );
 
 			Object r = null;
-
-			Namespace ns = ClojureAdapter.getClojureNamespace( executionContext );
 
 			try
 			{
 				ClojureAdapter.IN_NS.invoke( ns.getName() );
 				ClojureAdapter.REFER.invoke( ClojureAdapter.CLOJURE_CORE );
-			}
-			catch( Exception x )
-			{
-				throw new ExecutionException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
-			}
 
-			if( forms != null )
-			{
-				// This code is mostly identical to Compiler.load().
+				for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+					Var.intern( ns, Symbol.intern( entry.getKey() ), entry.getValue() );
 
-				Var.pushThreadBindings( RT.map( Compiler.LOADER, RT.makeClassLoader(), Compiler.SOURCE_PATH, executable.getDocumentName(), Compiler.SOURCE, executable.getDocumentName(), RT.CURRENT_NS, RT.CURRENT_NS
-					.deref(), Compiler.LINE_BEFORE, startLineNumber, Compiler.LINE_AFTER, startLineNumber, Compiler.LINE, startLineNumber ) );
-
-				try
+				if( forms != null )
 				{
+					// This code is mostly identical to Compiler.load().
+
 					ClojureScriptlet.Form lastForm = null;
 					for( ClojureScriptlet.Form form : forms )
 					{
@@ -181,56 +196,37 @@ public class ClojureScriptlet implements Scriptlet
 						lastForm = form;
 					}
 				}
-				catch( CompilerException x )
+				else
 				{
-					throw createExecutionException( x );
-				}
-				catch( Exception x )
-				{
-					throw new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
-				}
-				finally
-				{
-					Var.popThreadBindings();
-				}
-			}
-			else
-			{
-				// This code mostly identical to Compiler.load().
+					// This code mostly identical to Compiler.load().
 
-				Object EOF = new Object();
-				LineNumberingPushbackReader pushbackReader = new LineNumberingPushbackReader( new StringReader( sourceCode ) );
+					Object EOF = new Object();
+					LineNumberingPushbackReader pushbackReader = new LineNumberingPushbackReader( new StringReader( sourceCode ) );
 
-				Var.pushThreadBindings( RT.map( Compiler.LOADER, RT.makeClassLoader(), Compiler.SOURCE_PATH, executable.getDocumentName(), Compiler.SOURCE, executable.getDocumentName(), RT.CURRENT_NS, RT.CURRENT_NS
-					.deref(), Compiler.LINE_BEFORE, startLineNumber, Compiler.LINE_AFTER, startLineNumber, Compiler.LINE, startLineNumber ) );
-
-				try
-				{
-					for( Object form = LispReader.read( pushbackReader, false, EOF, false ); form != EOF; form = LispReader.read( pushbackReader, false, EOF, false ) )
+					try
 					{
-						Compiler.LINE_AFTER.set( pushbackReader.getLineNumber() );
-						Compiler.LINE.set( pushbackReader.getLineNumber() );
-						r = Compiler.eval( form );
-						Compiler.LINE_BEFORE.set( pushbackReader.getLineNumber() );
+						for( Object form = LispReader.read( pushbackReader, false, EOF, false ); form != EOF; form = LispReader.read( pushbackReader, false, EOF, false ) )
+						{
+							Compiler.LINE_AFTER.set( pushbackReader.getLineNumber() );
+							Compiler.LINE.set( pushbackReader.getLineNumber() );
+							r = Compiler.eval( form );
+							Compiler.LINE_BEFORE.set( pushbackReader.getLineNumber() );
+						}
+					}
+					catch( ReaderException x )
+					{
+						// Note that we can only detect the first column
+						throw new ParsingException( executable.getDocumentName(), startLineNumber + pushbackReader.getLineNumber(), pushbackReader.atLineStart() ? 1 : -1, x );
 					}
 				}
-				catch( ReaderException x )
-				{
-					// Note that we can only detect the first column
-					throw new ParsingException( executable.getDocumentName(), startLineNumber + pushbackReader.getLineNumber(), pushbackReader.atLineStart() ? 1 : -1, x );
-				}
-				catch( CompilerException x )
-				{
-					throw createExecutionException( x );
-				}
-				catch( Exception x )
-				{
-					throw new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
-				}
-				finally
-				{
-					Var.popThreadBindings();
-				}
+			}
+			catch( CompilerException x )
+			{
+				throw createExecutionException( x );
+			}
+			catch( Exception x )
+			{
+				throw new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
 			}
 
 			return r;
@@ -253,6 +249,7 @@ public class ClojureScriptlet implements Scriptlet
 
 	private final int startLineNumber;
 
+	@SuppressWarnings("unused")
 	private final int startColumnNumber;
 
 	private final Executable executable;
