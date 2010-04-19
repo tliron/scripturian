@@ -66,7 +66,7 @@ public class ExposedContainerForMain
 	 */
 	public void includeDocument( String documentName ) throws IOException, ParsingException, ExecutionException
 	{
-		Executable executable = Executable.createOnce( documentName, mainDocument.getSource(), true, mainDocument.getLanguageManager(), false ).getDocument();
+		Executable executable = Executable.createOnce( documentName, mainDocument.getSource(), true, mainDocument.getLanguageManager(), defaultLanguageTag, false ).getDocument();
 		executable.execute( executionContext, this, mainDocument.getScriptletController() );
 	}
 
@@ -83,7 +83,7 @@ public class ExposedContainerForMain
 	 */
 	public void include( String documentName ) throws IOException, ParsingException, ExecutionException
 	{
-		Executable executable = Executable.createOnce( documentName, mainDocument.getSource(), false, mainDocument.getLanguageManager(), false ).getDocument();
+		Executable executable = Executable.createOnce( documentName, mainDocument.getSource(), false, mainDocument.getLanguageManager(), defaultLanguageTag, false ).getDocument();
 		executable.execute( executionContext, this, mainDocument.getScriptletController() );
 	}
 
@@ -102,25 +102,25 @@ public class ExposedContainerForMain
 	}
 
 	/**
-	 * The default script engine name to be used if the first scriptlet doesn't
+	 * The default language tag to be used if the first scriptlet doesn't
 	 * specify one. Defaults to "js".
 	 * 
-	 * @return The default script engine name
-	 * @see #setDefaultEngineName(String)
+	 * @return The default script language tag
+	 * @see #setDefaultLanguageTag(String)
 	 */
-	public String getDefaultEngineName()
+	public String getDefaultLanguageTag()
 	{
-		return defaultEngineName;
+		return defaultLanguageTag;
 	}
 
 	/**
-	 * @param defaultEngineName
-	 *        The default script engine name
-	 * @see #getDefaultEngineName()
+	 * @param defaultLanguageTag
+	 *        The default language tag
+	 * @see #getDefaultLanguageTag()
 	 */
-	public void setDefaultEngineName( String defaultEngineName )
+	public void setDefaultLanguageTag( String defaultLanguageTag )
 	{
-		this.defaultEngineName = defaultEngineName;
+		this.defaultLanguageTag = defaultLanguageTag;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -130,5 +130,5 @@ public class ExposedContainerForMain
 
 	private final ExecutionContext executionContext;
 
-	private String defaultEngineName = "js";
+	private String defaultLanguageTag = "js";
 }

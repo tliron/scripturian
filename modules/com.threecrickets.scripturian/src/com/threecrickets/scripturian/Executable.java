@@ -190,6 +190,9 @@ public class Executable
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
 	 * @param languageManager
 	 *        The language manager used to parse and prepare the executable
+	 * @param defaultLanguageTag
+	 *        When {@code isTextWithScriptlets} is true, this is the language
+	 *        used for scriptlets if none is specified
 	 * @param prepare
 	 *        Whether to prepare the source code: preparation increases
 	 *        initialization time and reduces execution time; note that not all
@@ -200,11 +203,11 @@ public class Executable
 	 * @throws IOException
 	 *         In case of a document source error
 	 */
-	public static DocumentDescriptor<Executable> createOnce( String documentName, DocumentSource<Executable> documentSource, boolean isTextWithScriptlets, LanguageManager languageManager, boolean prepare )
-		throws ParsingException, IOException
+	public static DocumentDescriptor<Executable> createOnce( String documentName, DocumentSource<Executable> documentSource, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag,
+		boolean prepare ) throws ParsingException, IOException
 	{
 		DocumentDescriptor<Executable> documentDescriptor = documentSource.getDocument( documentName );
-		createOnce( documentDescriptor, isTextWithScriptlets, languageManager, prepare );
+		createOnce( documentDescriptor, isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
 		return documentDescriptor;
 	}
 
@@ -220,6 +223,9 @@ public class Executable
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
 	 * @param languageManager
 	 *        The language manager used to parse and prepare the executable
+	 * @param defaultLanguageTag
+	 *        When {@code isTextWithScriptlets} is true, this is the language
+	 *        used for scriptlets if none is specified
 	 * @param prepare
 	 *        Whether to prepare the source code: preparation increases
 	 *        initialization time and reduces execution time; note that not all
@@ -228,12 +234,13 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, boolean prepare ) throws ParsingException
+	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare )
+		throws ParsingException
 	{
 		Executable executable = documentDescriptor.getDocument();
 		if( executable == null )
 		{
-			executable = new Executable( documentDescriptor, isTextWithScriptlets, languageManager, prepare );
+			executable = new Executable( documentDescriptor, isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
 			Executable existing = documentDescriptor.setDocumentIfAbsent( executable );
 			if( existing != null )
 				executable = existing;
@@ -256,6 +263,9 @@ public class Executable
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
 	 * @param languageManager
 	 *        The language manager used to parse and prepare the executable
+	 * @param defaultLanguageTag
+	 *        When {@code isTextWithScriptlets} is true, this is the language
+	 *        used for scriptlets if none is specified
 	 * @param prepare
 	 *        Whether to prepare the source code: preparation increases
 	 *        initialization time and reduces execution time; note that not all
@@ -263,10 +273,10 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, boolean prepare ) throws ParsingException
+	public Executable( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare ) throws ParsingException
 	{
 		this( documentDescriptor.getDefaultName(), documentDescriptor.getSourceCode(), isTextWithScriptlets, languageManager, languageManager.getLanguageTagByExtension( documentDescriptor.getDefaultName(),
-			documentDescriptor.getTag() ), documentDescriptor.getSource(), prepare );
+			documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
 	}
 
 	/**

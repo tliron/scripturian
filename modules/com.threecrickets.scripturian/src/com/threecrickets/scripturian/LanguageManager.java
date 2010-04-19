@@ -73,6 +73,8 @@ public class LanguageManager
 
 	public LanguageAdapter getAdapterByTag( String tag ) throws ParsingException
 	{
+		if( tag == null )
+			return null;
 		return languageAdapterByTag.get( tag );
 	}
 
@@ -90,9 +92,11 @@ public class LanguageManager
 		return languageAdapterByExtension.get( extension );
 	}
 
-	public String getLanguageTagByExtension( String name, String defaultExtension ) throws ParsingException
+	public String getLanguageTagByExtension( String name, String defaultExtension, String defaultTag ) throws ParsingException
 	{
 		LanguageAdapter languageAdapter = getAdapterByExtension( name, defaultExtension );
+		if( languageAdapter == null )
+			languageAdapter = getAdapterByTag( defaultTag );
 		if( languageAdapter != null )
 			return (String) languageAdapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG );
 		else
