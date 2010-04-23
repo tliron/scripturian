@@ -15,18 +15,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Used as global space for sharing objects between executables. Metas will stay
+ * Used as global space for sharing state between executables. Metas will stay
  * alive for the duration of the Java virtual machine. Any object can be stored
  * here.
  * 
  * @author Tal Liron
  */
-public class MetaScope
+public final class MetaScope
 {
 	//
 	// Static attributes
 	//
 
+	/**
+	 * The meta scope.
+	 * 
+	 * @return The meta scope
+	 */
 	public static MetaScope getInstance()
 	{
 		return instance;
@@ -43,11 +48,13 @@ public class MetaScope
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The meta scope singleton.
+	 */
 	private final static MetaScope instance = new MetaScope();
 
+	/**
+	 * The values.
+	 */
 	private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
-
-	private MetaScope()
-	{
-	}
 }

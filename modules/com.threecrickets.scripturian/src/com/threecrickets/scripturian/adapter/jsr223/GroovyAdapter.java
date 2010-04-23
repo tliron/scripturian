@@ -38,6 +38,11 @@ public class GroovyAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	@SuppressWarnings("unchecked")
 	public GroovyAdapter() throws LanguageAdapterException
 	{

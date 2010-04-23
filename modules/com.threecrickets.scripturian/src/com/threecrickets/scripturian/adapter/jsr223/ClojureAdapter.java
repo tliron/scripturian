@@ -34,6 +34,11 @@ public class ClojureAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public ClojureAdapter() throws LanguageAdapterException
 	{
 		super();

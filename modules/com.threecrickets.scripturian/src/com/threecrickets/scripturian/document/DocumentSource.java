@@ -18,8 +18,8 @@ import java.util.Collection;
  * Manages retrieval of text-based documents and caching of arbitrary document
  * implementations via descriptors.
  * <p>
- * Implementations are expected to be thread safe! This includes returned
- * descriptors.
+ * Implementations are expected to be safe for concurrent access. This includes
+ * returned descriptors.
  * 
  * @author Tal Liron
  * @param <D>
@@ -54,7 +54,7 @@ public interface DocumentSource<D>
 	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document );
 
 	/**
-	 * Allows adding or changing documents, with an atomic check for null.
+	 * Allows for atomically adding or changing documents.
 	 * 
 	 * @param documentName
 	 *        The document's name
@@ -73,7 +73,7 @@ public interface DocumentSource<D>
 	 * <p>
 	 * Note that not all implementations support this operation.
 	 * 
-	 * @return An collection of document descriptors
+	 * @return A collection of document descriptors
 	 * @throws UnsupportedOperationException
 	 */
 	public Collection<DocumentDescriptor<D>> getDocuments();

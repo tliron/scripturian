@@ -14,6 +14,8 @@ package com.threecrickets.scripturian.internal;
 import com.threecrickets.scripturian.ExecutionContext;
 
 /**
+ * Thread-local reference to an {@link ExecutionContext}.
+ * 
  * @author Tal Liron
  */
 public class ThreadLocalExecutionContext extends ThreadLocal<ExecutionContext>
@@ -22,6 +24,9 @@ public class ThreadLocalExecutionContext extends ThreadLocal<ExecutionContext>
 	// Static attributes
 	//
 
+	/**
+	 * The thread-local execution context.
+	 */
 	public static final ThreadLocalExecutionContext current = new ThreadLocalExecutionContext();
 
 	//

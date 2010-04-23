@@ -40,6 +40,11 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public RhinoAdapter() throws LanguageAdapterException
 	{
 		try

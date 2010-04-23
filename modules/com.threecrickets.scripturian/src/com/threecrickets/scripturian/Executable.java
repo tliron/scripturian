@@ -29,41 +29,83 @@ import com.threecrickets.scripturian.internal.ExecutableSegment;
 import com.threecrickets.scripturian.internal.ExposedExecutable;
 
 /**
- * Handles the parsing, compilation, execution and invocation of executable
- * units in any supported languages.
+ * Executables are general-purpose operational units that are manifestations of
+ * textual "source code" in any supported "language" (see
+ * {@link LanguageAdapter} ). Outside of this definition, there is no real limit
+ * to how executables are executed. Execution can happen in-process,
+ * out-of-process, or on a device somewhere in the network. A common use case is
+ * to support various programming and templating languages that run in the JVM,
+ * adapters for which are included in Scripturian.
  * <p>
- * Executables can be constructed in three modes:
+ * The primary design goal is to decouple the code asking for execution from the
+ * execution's implementation, while providing clear, predictable concurrent
+ * behavior. This abstraction thus lets you 1) plug in diverse execution
+ * technologies into your code, 2) dynamically load and execute source code in
+ * runtime.
  * <p>
- * <ul>
- * <li><b>Pure source code.</b> These are constructed when any of the
- * constructors is called with {@code isTextWithScriptlets} as false. The code
- * must be in a single programming language defined by {@code
- * defaultLanguageTag}.</li>
- * <li><b>Text with scriptlets.</b> These are constructed when any of the
- * constructors is called with {@code isTextWithScriptlets} as true. This
- * powerful mode supports executables with scriptlets in various languages,
- * in-flow scriptlets, and other features detailed below.</li>
- * <li><b>Pure text.</b> This is a trivial case of "text with scriptlets" -- no
- * scriptlets are included. If executed, the executable will simply output the
- * text. You can detect plain text executables via {@link #getAsPureText()} to
- * optimize for this edge case.</li>
- * </ul>
- * "Text with scriptlets" executable source code is a mix of text with
- * "scriptlets" -- source code embedded between special delimiters, with an
- * optional specification of which language to use. During construction, the
- * entire document is converted into code and optionally compiled. When the code
- * is executed, the non-scriptlet text segments are sent to output via whatever
- * method is appropriate for the language (see {@link LanguageAdapter}).
+ * Exact performance characteristics are left up to language implementations,
+ * but the hope is that this architecture will allow for very high performance,
+ * reusability of operational units, and scalability.
  * <p>
- * (The exception to this behavior is when the first segment is text -- in such
+ * Source code can be conveniently provided by an implementation of
+ * Scripturian's {@link DocumentSource}, which is designed for concurrent use,
+ * though you can use any system you like.
+ * <p>
+ * Usage is divided into three phases: creation, execution and invocation.
+ * <p>
+ * 1. <b>Creation.</b> In this phase, the source code is parsed and possibly
+ * otherwise analyzed for errors by the language implementation. The intent is
+ * for the implementation to perform the bare minimum required for detecting
+ * errors in the source code.
+ * <p>
+ * This phase supports an optional "preparation" sub-phase, with the intent of
+ * speeding up usage of later phases at the expense of higher cost during
+ * creation. It would be most useful if the executable is intended to be reused.
+ * In many implementations, "preparation" would involve compiling the code, and
+ * possibly caching the results on disk.
+ * <p>
+ * The creation phase supports a powerful "text-with-scriptlets" mode, in which
+ * source code, wrapped in special delimiters, can be inserted into plain text.
+ * "Scriptlets" written in several languages can be mixed into a single
+ * executable. The plain text outside of the scriptlets is sent directly to the
+ * {@link ExecutionContext} writer.
+ * <p>
+ * The "text-with-scriptlets" functionality is implemented entirely in this
+ * class, and does not have to explicitly supported by language implementations.
+ * <p>
+ * 2. <b>Execution.</b> This phase uses an {@link ExecutionContext} for passing
+ * state between the user and the executable, as well as maintaining
+ * implementation-specific state. Concurrent reuse is allowed as long as each
+ * calling thread uses its own context.
+ * <p>
+ * 3. <b>Invocation.</b> This phase allows fine-grained execution via
+ * well-defined "entry points" in the executable. Depending on the language
+ * implementation, invocation can mean calling a function, method, closure or
+ * macro, or sending a network request. This phase follow a special execution
+ * phase via a call to
+ * {@link #prepareForInvocation(ExecutionContext, Object, ExecutionController)},
+ * after which all invocations use the same {@link ExecutionContext}. Passing
+ * state is handled differently in invocation vs. execution: in invocation,
+ * support is for sending a list of "argument" states and returning a single
+ * value.
+ * <p>
+ * Depending on the language implementation, invocation can involve better
+ * performance than execution due to the use of a single execution context.
+ * <p>
+ * <h2>More on "text-with-scriptlets" executables</h2>
+ * <p>
+ * During the creation phase, the entire source code document is converted into
+ * pure source code. When the code is executed, the non-scriptlet text segments
+ * are sent to output via whatever method is appropriate for the language (see
+ * {@link LanguageAdapter}).
+ * <p>
+ * The exception to this behavior is when the first segment is text -- in such
  * cases, just that first segment is sent to output from Java. This is just an
- * optimization.)
+ * optimization.
  * <p>
- * Source code can be provided by an implementation of {@link DocumentSource},
- * though you can use your own system.
- * <p>
- * "Text with scriptlets" is useful for building applications with a lot of
- * textual output -- for example, HTML-based web applications.
+ * You can detect the trivial case of "text with scriptlets" in which no
+ * scriptlets are used at all via {@link #getAsPureText()}, and optimize
+ * accordingly.
  * <p>
  * Executables can have scriptlets in multiple languages within the same source
  * code. You can specify a different language for each scriptlet in its opening
@@ -78,28 +120,27 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * In addition to regular scriptlets, Scripturian supports a few shorthand
  * scriptlets for common tasks:
  * <p>
- * The expression scriptlet (with an equals sign) causes the expression to be
- * sent to standard output. It can allow for more compact and cleaner code.
+ * The "expression scriptlet (with an equals sign) causes the expression to be
+ * sent to standard output. It allows for more readable templates.
  * <p>
- * The include scriptlet (with an ampersand) invokes the
+ * The "include scriptlet" (with an ampersand) invokes the
  * <code>executable.container.include(name)</code> command as appropriate for
- * the language. Note that you need the "include" command to be supported by
- * your container environment.
+ * the language. Again, it allows for more readable templates.
  * <p>
- * Finally, the in-flow scriptlet (with a colon) works like a combination of
- * regular scriptlets with include scriptlets. Read the FAQ for more
- * information.
+ * Finally, the "in-flow scriptlet" (with a colon) works like a combination of
+ * regular scriptlets with include scriptlets. "In-flow" scriptlets require the
+ * use of a {@link DocumentSource}. Read the FAQ for more information.
  * <p>
  * Examples:
  * <ul>
  * <li><b>JSP/ASP-style delimiters</b>: <code>&lt;% print('Hello World'); %&gt;</code></li>
  * <li><b>PHP-style delimiters</b>: <code>&lt;? document.cacheDuration.set 5000
  * ?&gt;</code></li>
- * <li><b>Specifying engine name</b>:
- * <code>&lt;%groovy print myVariable %&gt; &lt;?php $document->container->include(lib_name); ?&gt;</code>
+ * <li><b>Specifying a language tag</b>:
+ * <code>&lt;%groovy print myVariable %&gt; &lt;?php $executable->container->include(lib_name); ?&gt;</code>
  * </li>
  * <li><b>Output expression</b>: <code>&lt;?= 15 * 6 ?&gt;</code></li>
- * <li><b>Output expression with specifying engine name</b>:
+ * <li><b>Output expression with specifying a language tag</b>:
  * <code>&lt;?=js sqrt(myVariable) ?&gt;</code></li>
  * <li><b>Include</b>: <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' ?&gt;</code></li>
  * <li><b>In-flow</b>:
@@ -107,9 +148,10 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * </li>
  * </ul>
  * <p>
- * A special container environment is exposed to your executable, with some
- * useful services. It is exposed to your executable as a global variable named
- * <code>executable</code> (this name can be changed via the
+ * <h3>The exposed "executable" service</h3>
+ * <p>
+ * The "executable" variable is exposed to your executable with some useful
+ * services (this name can be changed via the
  * {@link #Executable(String, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
@@ -122,7 +164,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * used by the executable. Your code may use it to get access to the
  * {@link Writer} objects used for standard output and standard error.</li>
  * <li><code>executable.meta</code>: This {@link ConcurrentMap} provides a
- * convenient location for global values shared by all executables.</li>
+ * convenient location for global state shared by all executables.</li>
  * </ul>
  * 
  * @author Tal Liron
@@ -179,10 +221,10 @@ public class Executable
 	//
 
 	/**
-	 * If the executable does not yet exist, parses source code into a compact,
-	 * optimized, executable. Parsing requires the appropriate
-	 * {@link LanguageAdapter} implementations to be available in the language
-	 * manager.
+	 * If the executable does not yet exist in the document source, retrieves
+	 * the source code and parses it into a compact, optimized, executable.
+	 * Parsing requires the appropriate {@link LanguageAdapter} implementations
+	 * to be available in the language manager.
 	 * 
 	 * @param documentName
 	 * @param documentSource
@@ -212,10 +254,10 @@ public class Executable
 	}
 
 	/**
-	 * If the executable does not yet exist, parses source code into a compact,
-	 * optimized, executable. Parsing requires the appropriate
-	 * {@link LanguageAdapter} implementations to be available in the language
-	 * manager.
+	 * If the executable does not yet exist in the document descriptor,
+	 * retrieves the source code and parses it into a compact, optimized,
+	 * executable. Parsing requires the appropriate {@link LanguageAdapter}
+	 * implementations to be available in the language manager.
 	 * 
 	 * @param documentDescriptor
 	 *        The document descriptor
@@ -652,7 +694,7 @@ public class Executable
 	}
 
 	/**
-	 * The start delimiter used.
+	 * The scriptlet start delimiter used.
 	 * 
 	 * @return The start delimiter, or null if none was used
 	 * @see #getScriptletEndDelimiter()
@@ -663,7 +705,7 @@ public class Executable
 	}
 
 	/**
-	 * The end delimiter used.
+	 * The scrtiplet end delimiter used.
 	 * 
 	 * @return The end delimiter, or null if none was used
 	 * @see #getScriptletStartDelimiter()
@@ -674,7 +716,7 @@ public class Executable
 	}
 
 	/**
-	 * The default variable name for the {@link ExposedExecutable} instance.
+	 * The default name for the {@link ExposedExecutable} instance.
 	 */
 	public String getExposedExecutableName()
 	{
@@ -717,6 +759,7 @@ public class Executable
 	 * {@link #invoke(String, Object...)}.
 	 * 
 	 * @return The execution context
+	 * @see #prepareForInvocation(ExecutionContext, Object, ExecutionController)
 	 */
 	public ExecutionContext getExecutionContextForInvocations()
 	{
@@ -914,29 +957,63 @@ public class Executable
 	{
 		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.getAndSet( null );
 		if( executionContextForInvocations != null )
-			executionContextForInvocations.safeRelease();
+			executionContextForInvocations.release();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * Prefix prepended to in-flow scriptlets stores in the document source.
+	 */
 	private static final String IN_FLOW_PREFIX = "_IN_FLOW_";
 
+	/**
+	 * Used to ensure unique names for in-flow scriptlets.
+	 */
 	private static final AtomicInteger inFlowCounter = new AtomicInteger();
 
+	/**
+	 * The executable's document name, used for debug messages.
+	 */
 	private final String documentName;
 
+	/**
+	 * User-defined attributes.
+	 */
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
+	/**
+	 * The segments, whcih can be scriptlets or plain-text.
+	 */
 	private final ExecutableSegment[] segments;
 
+	/**
+	 * The scriptlet start delimiter used.
+	 */
 	private final String delimiterStart;
 
+	/**
+	 * The scriptlet end delimiter used.
+	 */
 	private final String delimiterEnd;
 
+	/**
+	 * The default name for the {@link ExposedExecutable} instance.
+	 */
 	private final String exposedExecutableName;
 
+	/**
+	 * Timestamp of when the executable last finished executing successfully, or
+	 * 0 if it was never executed.
+	 */
 	private volatile long lastExecuted = 0;
 
+	/**
+	 * The execution context to be used for calls to
+	 * {@link #invoke(String, Object...)}.
+	 * 
+	 * @see #prepareForInvocation(ExecutionContext, Object, ExecutionController)
+	 */
 	private final AtomicReference<ExecutionContext> executionContextForInvocationsReference = new AtomicReference<ExecutionContext>();
 }

@@ -34,11 +34,31 @@ public class ServiceLoader<S> implements Iterable<S>
 	// Static operations
 	//
 
+	/**
+	 * Creates a service loader for a service using the system class loader.
+	 * 
+	 * @param <S>
+	 *        The service class
+	 * @param service
+	 *        The service
+	 * @return The service loader
+	 */
 	public static <S> ServiceLoader<S> load( Class<S> service )
 	{
 		return load( service, ClassLoader.getSystemClassLoader() );
 	}
 
+	/**
+	 * Creates a service loader for a service.
+	 * 
+	 * @param <S>
+	 *        The service class
+	 * @param service
+	 *        The service
+	 * @param loader
+	 *        The class loader
+	 * @return The service loader
+	 */
 	public static <S> ServiceLoader<S> load( Class<S> service, ClassLoader loader )
 	{
 		return new ServiceLoader<S>( service, loader );
@@ -56,8 +76,19 @@ public class ServiceLoader<S> implements Iterable<S>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The service instances.
+	 */
 	private ArrayList<S> services = new ArrayList<S>();
 
+	/**
+	 * Construction.
+	 * 
+	 * @param service
+	 *        The service class
+	 * @param loader
+	 *        The class loader
+	 */
 	@SuppressWarnings("unchecked")
 	private ServiceLoader( Class<S> service, ClassLoader loader )
 	{

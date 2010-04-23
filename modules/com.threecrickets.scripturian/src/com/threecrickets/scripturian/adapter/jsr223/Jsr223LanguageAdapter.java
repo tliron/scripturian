@@ -40,6 +40,8 @@ import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
+ * Common implementation base for language adapters over JSR-223.
+ * 
  * @author Tal Liron
  */
 public abstract class Jsr223LanguageAdapter implements LanguageAdapter
@@ -60,26 +62,15 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	// Static operations
 	//
 
-	public static ScriptContext getScriptContext( ExecutionContext executionContext )
-	{
-		ScriptContext scriptContext = (ScriptContext) executionContext.getAttributes().get( JSR223_SCRIPT_CONTEXT );
-
-		if( scriptContext == null )
-		{
-			scriptContext = new SimpleScriptContext();
-			executionContext.getAttributes().put( JSR223_SCRIPT_CONTEXT, scriptContext );
-			scriptContext.setBindings( new SimpleBindings(), ScriptContext.ENGINE_SCOPE );
-			scriptContext.setBindings( new SimpleBindings(), ScriptContext.GLOBAL_SCOPE );
-		}
-
-		scriptContext.setWriter( executionContext.getWriter() );
-		scriptContext.setErrorWriter( executionContext.getErrorWriter() );
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			scriptContext.setAttribute( entry.getKey(), entry.getValue(), ScriptContext.ENGINE_SCOPE );
-
-		return scriptContext;
-	}
-
+	/**
+	 * Gets a JSR-223 script engine manager stored in the language manager
+	 * associated with the execution context, creating it if it doesn't exist.
+	 * Each language manager is guaranteed to have its own script context.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The language manager
+	 */
 	public static ScriptEngineManager getScriptEngineManager( ExecutionContext executionContext )
 	{
 		ScriptEngineManager scriptEngineManager = (ScriptEngineManager) executionContext.getManager().getAttributes().get( JSR223_SCRIPT_ENGINE_MANAGER );
@@ -93,65 +84,18 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return scriptEngineManager;
 	}
 
-	public static ExecutionException createExecutionException( String documentName, ScriptException scriptException )
-	{
-		return new ExecutionException( documentName, scriptException.getLineNumber(), scriptException.getColumnNumber(), scriptException.getMessage(), scriptException.getCause() );
-	}
-
-	public static ExecutionException createExecutionException( String documentName, LanguageManager manager, Throwable throwable )
-	{
-		Throwable wrapped = throwable;
-		while( wrapped != null )
-		{
-			if( wrapped instanceof ExecutionException )
-				return (ExecutionException) wrapped;
-
-			// Try helpers
-			Throwable causeOrDocumentRunException = null;
-			for( LanguageAdapter adapter : manager.getAdapters() )
-			{
-				if( adapter instanceof Jsr223LanguageAdapter )
-				{
-					causeOrDocumentRunException = ( (Jsr223LanguageAdapter) adapter ).getCauseOrExecutionException( documentName, wrapped );
-					if( causeOrDocumentRunException != null )
-						break;
-				}
-			}
-
-			if( causeOrDocumentRunException != null )
-			{
-				// Found it!
-				if( causeOrDocumentRunException instanceof ExecutionException )
-					return (ExecutionException) causeOrDocumentRunException;
-
-				// We are unwrapped
-				wrapped = causeOrDocumentRunException;
-				continue;
-			}
-
-			// Unwrap
-			wrapped = wrapped.getCause();
-		}
-
-		if( throwable instanceof ScriptException )
-			// Extract from ScriptException
-			return createExecutionException( documentName, (ScriptException) throwable );
-		else
-			// Unknown
-			return new ExecutionException( documentName, throwable.getMessage(), throwable );
-	}
-
 	/**
-	 * A cached script engine. All script engines will use the same
-	 * {@link ScriptContext}.
+	 * Gets a JSR-223 script engine stored in the execution context, creating it
+	 * if it doesn't exist. Each execution context is guaranteed to have at most
+	 * one script engine instance per script engine.
 	 * 
 	 * @param scriptEngineName
 	 *        The script engine name
 	 * @param executable
-	 *        The document for debugging
+	 *        The executable
 	 * @param executionContext
-	 *        The document context
-	 * @return The cached script engine
+	 *        The execution context
+	 * @return The script engine
 	 * @throws ParsingException
 	 */
 	@SuppressWarnings("unchecked")
@@ -184,10 +128,115 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return scriptEngine;
 	}
 
+	/**
+	 * Gets a JSR-223 script context stored in the execution context, creating
+	 * it if it doesn't exist. Each execution context is guaranteed to have its
+	 * own script context.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The script context
+	 */
+	public static ScriptContext getScriptContext( ExecutionContext executionContext )
+	{
+		ScriptContext scriptContext = (ScriptContext) executionContext.getAttributes().get( JSR223_SCRIPT_CONTEXT );
+
+		if( scriptContext == null )
+		{
+			scriptContext = new SimpleScriptContext();
+			executionContext.getAttributes().put( JSR223_SCRIPT_CONTEXT, scriptContext );
+			scriptContext.setBindings( new SimpleBindings(), ScriptContext.ENGINE_SCOPE );
+			scriptContext.setBindings( new SimpleBindings(), ScriptContext.GLOBAL_SCOPE );
+		}
+
+		scriptContext.setWriter( executionContext.getWriter() );
+		scriptContext.setErrorWriter( executionContext.getErrorWriter() );
+		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+			scriptContext.setAttribute( entry.getKey(), entry.getValue(), ScriptContext.ENGINE_SCOPE );
+
+		return scriptContext;
+	}
+
+	/**
+	 * Creates an execution exception from a JSR-223 script exception.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param scriptException
+	 *        The script exception
+	 * @return The execution exception
+	 */
+	public static ExecutionException createExecutionException( String documentName, ScriptException scriptException )
+	{
+		return new ExecutionException( documentName, scriptException.getLineNumber(), scriptException.getColumnNumber(), scriptException.getMessage(), scriptException.getCause() );
+	}
+
+	/**
+	 * Creates an execution exception from a throwable, making sure to let every
+	 * JSR-223 language adapter have a chance at unpacking it.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param manager
+	 *        The language manager
+	 * @param throwable
+	 *        The throwable
+	 * @return The execution exception
+	 */
+	public static ExecutionException createExecutionException( String documentName, LanguageManager manager, Throwable throwable )
+	{
+		Throwable wrapped = throwable;
+		while( wrapped != null )
+		{
+			if( wrapped instanceof ExecutionException )
+				return (ExecutionException) wrapped;
+
+			// Try JSR-223 language adapters
+			Throwable causeOrExecutionException = null;
+			for( LanguageAdapter adapter : manager.getAdapters() )
+			{
+				if( adapter instanceof Jsr223LanguageAdapter )
+				{
+					causeOrExecutionException = ( (Jsr223LanguageAdapter) adapter ).getCauseOrExecutionException( documentName, wrapped );
+					if( causeOrExecutionException != null )
+						break;
+				}
+			}
+
+			if( causeOrExecutionException != null )
+			{
+				// Found it!
+				if( causeOrExecutionException instanceof ExecutionException )
+					return (ExecutionException) causeOrExecutionException;
+
+				// We are unwrapped
+				wrapped = causeOrExecutionException;
+				continue;
+			}
+
+			// Unwrap
+			wrapped = wrapped.getCause();
+		}
+
+		if( throwable instanceof ScriptException )
+			// Extract from ScriptException
+			return createExecutionException( documentName, (ScriptException) throwable );
+		else
+			// Unknown
+			return new ExecutionException( documentName, throwable.getMessage(), throwable );
+	}
+
 	//
 	// Construction
 	//
 
+	/**
+	 * Construction. Uses the JSR-223 script engine factory to gather the
+	 * language adapter attributes. Sub-classes must be annotated with
+	 * {@link ScriptEngines}.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public Jsr223LanguageAdapter() throws LanguageAdapterException
 	{
 		ScriptEngines scriptEngineNames = getClass().getAnnotation( ScriptEngines.class );
@@ -202,7 +251,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 
 		ScriptEngineFactory factory = scriptEngine.getFactory();
 
-		attributes.put( NAME, factory.getEngineName() );
+		attributes.put( NAME, "JSR-223/" + factory.getEngineName() );
 		attributes.put( VERSION, factory.getEngineVersion() );
 		attributes.put( LANGUAGE_NAME, factory.getLanguageName() );
 		attributes.put( LANGUAGE_VERSION, factory.getLanguageVersion() );
@@ -218,6 +267,17 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	// Attributes
 	//
 
+	/**
+	 * Gets a JSR-223 script engine for this language stored in the execution
+	 * context, creating it if it doesn't exist.
+	 * 
+	 * @param executable
+	 *        The executable
+	 * @param executionContext
+	 *        The execution context
+	 * @return The script engine
+	 * @throws ExecutionException
+	 */
 	public ScriptEngine getScriptEngine( Executable executable, ExecutionContext executionContext ) throws ExecutionException
 	{
 		String scriptEngineName = (String) attributes.get( JSR223_SCRIPT_ENGINE_NAME );
@@ -231,6 +291,11 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		}
 	}
 
+	/**
+	 * A shared script engine for this language, to be used for compilation.
+	 * 
+	 * @return The script engine
+	 */
 	public ScriptEngine getStaticScriptEngine()
 	{
 		return scriptEngine;
@@ -238,8 +303,8 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 
 	/**
 	 * Though some scripting engines support {@link Compilable}, their
-	 * implementation is broken for our purposes. This allows us to bypass
-	 * compilation.
+	 * implementation is broken for the purposes of Scripturian. This allows us
+	 * to bypass compilation.
 	 * 
 	 * @return True if compilation is allowed
 	 */
@@ -259,10 +324,26 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return false;
 	}
 
+	/**
+	 * Lets implementations do special work before each call.
+	 * 
+	 * @param scriptEngine
+	 *        The script engine
+	 * @param executionContext
+	 *        The execution context
+	 */
 	public void beforeCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
 	{
 	}
 
+	/**
+	 * Lets implementations do special work before each call.
+	 * 
+	 * @param scriptEngine
+	 *        The script engine
+	 * @param executionContext
+	 *        The execution context
+	 */
 	public void afterCall( ScriptEngine scriptEngine, ExecutionContext executionContext )
 	{
 	}
@@ -309,8 +390,8 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * @param scriptEngine
 	 *        The script engine
 	 * @param text
-	 *        The content
-	 * @return A command or series of commands to print the content
+	 *        The text
+	 * @return A command or series of commands to print the text
 	 */
 	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String text )
 	{
@@ -368,11 +449,26 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The script engine
 	 * @param content
 	 *        The content
-	 * @param arguments TODO
+	 * @param arguments
+	 *        The arguments
 	 * @return A command or series of commands to call the entry point, or null
 	 *         to signify that {@link Invocable} should be used
 	 */
 	public String getInvocationAsProgram( Executable executable, ScriptEngine scriptEngine, String content, Object... arguments )
+	{
+		return null;
+	}
+
+	/**
+	 * Lets implementations do their own exception processing.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param throwable
+	 *        The throwable
+	 * @return The processes throwable
+	 */
+	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable )
 	{
 		return null;
 	}
@@ -409,11 +505,6 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		return getExpressionAsInclude( executable, scriptEngine, expression );
-	}
-
-	public Throwable getCauseOrExecutionException( String documentName, Throwable throwable )
-	{
-		return null;
 	}
 
 	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
@@ -456,8 +547,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				}
 				catch( Exception x )
 				{
-					// Some script engines (notably Quercus) throw their
-					// own special exceptions
+					// Some script engines throw their own special exceptions
 					throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
 				}
 				finally
@@ -502,9 +592,18 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The attributes.
+	 */
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
+	/**
+	 * The lock.
+	 */
 	private final Lock lock = new ReentrantLock();
 
+	/**
+	 * The shared script engine for compilation.
+	 */
 	private final ScriptEngine scriptEngine;
 }

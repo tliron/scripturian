@@ -18,6 +18,10 @@ import com.threecrickets.scripturian.Scriptlet;
 import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
+ * A segment within an executable. "Text-with-scriptlets" executables can have
+ * multiple segments, some of which are plain text and some of which are
+ * scriptlets in various languages.
+ * 
  * @author Tal Liron
  * @see Executable
  */
@@ -27,6 +31,20 @@ public class ExecutableSegment
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param sourceCode
+	 *        The source code
+	 * @param startLineNumber
+	 *        The start line number
+	 * @param startColumnNumber
+	 *        The start column number
+	 * @param isScriptlet
+	 *        Whether this segment is a scriptlet
+	 * @param languageTag
+	 *        The language tag for scriptlets
+	 */
 	public ExecutableSegment( String sourceCode, int startLineNumber, int startColumnNumber, boolean isScriptlet, String languageTag )
 	{
 		this.sourceCode = sourceCode;
@@ -40,22 +58,57 @@ public class ExecutableSegment
 	// Attributes
 	//
 
+	/**
+	 * Whether this segment is a scriptlet.
+	 */
 	public final boolean isScriptlet;
 
+	/**
+	 * The language tag for scriptlets.
+	 */
 	public final String languageTag;
 
+	/**
+	 * The source code.
+	 */
 	public String sourceCode;
 
+	/**
+	 * The start line number.
+	 */
 	public int startLineNumber;
 
+	/**
+	 * The start column number.
+	 */
 	public int startColumnNumber;
 
+	/**
+	 * The scriptlet.
+	 * 
+	 * @see #createScriptlet(Executable, LanguageManager, boolean)
+	 */
 	public Scriptlet scriptlet;
 
 	//
 	// Operations
 	//
 
+	/**
+	 * Creates a scriptlet for this segment using the appropriate language
+	 * adapter.
+	 * 
+	 * @param executable
+	 *        The executable
+	 * @param manager
+	 *        The language manager
+	 * @param prepare
+	 *        Whether to prepare the scriptlet
+	 * @throws ParsingException
+	 * @see #isScriptlet
+	 * @see #languageTag
+	 * @see #scriptlet
+	 */
 	public void createScriptlet( Executable executable, LanguageManager manager, boolean prepare ) throws ParsingException
 	{
 		LanguageAdapter adapter = manager.getAdapterByTag( languageTag );

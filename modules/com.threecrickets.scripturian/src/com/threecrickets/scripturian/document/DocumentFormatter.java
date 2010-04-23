@@ -17,8 +17,20 @@ package com.threecrickets.scripturian.document;
  * 
  * @author Tal Liron
  * @param <D>
+ *        The document type
  */
 public interface DocumentFormatter<D>
 {
+	/**
+	 * Formats the document or its source code.
+	 * 
+	 * @param documentDescriptor
+	 *        The document descriptor
+	 * @param title
+	 *        The result title
+	 * @param highlightLineNumber
+	 *        The line number to highlight
+	 * @return The formatted document
+	 */
 	public String format( DocumentDescriptor<D> documentDescriptor, String title, int highlightLineNumber );
 }

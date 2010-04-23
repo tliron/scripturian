@@ -20,18 +20,29 @@ import com.threecrickets.scripturian.document.DocumentFormatter;
  * 
  * @author Tal Liron
  */
-public class SyntaxHighlighterSourceRepresenter<D> implements DocumentFormatter<D>
+public class SyntaxHighlighterFormatter<D> implements DocumentFormatter<D>
 {
 	//
 	// Construction
 	//
 
-	public SyntaxHighlighterSourceRepresenter()
+	/**
+	 * Construction.
+	 */
+	public SyntaxHighlighterFormatter()
 	{
 		this( "syntaxhighlighter/", "Midnight" );
 	}
 
-	public SyntaxHighlighterSourceRepresenter( String baseUrl, String theme )
+	/**
+	 * Construction.
+	 * 
+	 * @param baseUrl
+	 *        Base URL for syntaxhighlighter (can be relative)
+	 * @param theme
+	 *        Theme to use
+	 */
+	public SyntaxHighlighterFormatter( String baseUrl, String theme )
 	{
 		this.baseUrl = baseUrl;
 		this.theme = theme;

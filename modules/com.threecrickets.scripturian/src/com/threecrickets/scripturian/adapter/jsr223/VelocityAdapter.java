@@ -34,6 +34,11 @@ public class VelocityAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public VelocityAdapter() throws LanguageAdapterException
 	{
 		super();

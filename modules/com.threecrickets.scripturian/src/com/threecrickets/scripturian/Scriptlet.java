@@ -11,12 +11,18 @@
 
 package com.threecrickets.scripturian;
 
-import com.threecrickets.scripturian.exception.PreparationException;
-import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.exception.PreparationException;
 
 /**
+ * Executable segments within executables. Scriptlets are used internally
+ * between executables and languages adapters, and you would rarely need to
+ * access them directly.
+ * 
  * @author Tal Liron
+ * @see Executable
+ * @see LanguageAdapter
  */
 public interface Scriptlet
 {
@@ -25,7 +31,9 @@ public interface Scriptlet
 	//
 
 	/**
-	 * @return
+	 * The source code.
+	 * 
+	 * @return The source code
 	 */
 	public String getSourceCode();
 
@@ -34,15 +42,23 @@ public interface Scriptlet
 	//
 
 	/**
+	 * The optional "preparation" sub-phase is intended to speed up usage of
+	 * later phases at the expense of higher cost during creation. It would be
+	 * most useful if the executable is intended to be reused. In many
+	 * implementations, "preparation" would involve compiling the code, and
+	 * possibly caching the results on disk.
+	 * 
 	 * @throws PreparationException
 	 */
 	public void prepare() throws PreparationException;
 
 	/**
+	 * Executes the scriptlet.
+	 * 
 	 * @param executionContext
-	 * @return
+	 *        The execution context
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 */
-	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException;
+	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException;
 }

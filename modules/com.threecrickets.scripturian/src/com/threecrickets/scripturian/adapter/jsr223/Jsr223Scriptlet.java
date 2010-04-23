@@ -21,37 +21,45 @@ import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
-import com.threecrickets.scripturian.Scriptlet;
-import com.threecrickets.scripturian.exception.PreparationException;
-import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.adapter.ScriptletBase;
 import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.exception.PreparationException;
 
 /**
+ * Common implementation base for language adapters over JSR-223.
+ * 
  * @author Tal Liron
  */
-public class Jsr223Scriptlet implements Scriptlet
+public class Jsr223Scriptlet extends ScriptletBase
 {
 	//
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param sourceCode
+	 *        The source code
+	 * @param startLineNumber
+	 *        The start line number
+	 * @param startColumnNumber
+	 *        The start column number
+	 * @param languageAdapter
+	 *        The language adapter
+	 * @param executable
+	 *        The executable
+	 */
 	public Jsr223Scriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Jsr223LanguageAdapter languageAdapter, Executable executable )
 	{
-		this.sourceCode = sourceCode;
-		this.startLineNumber = startLineNumber;
-		this.startColumnNumber = startColumnNumber;
+		super( sourceCode, startLineNumber, startColumnNumber, executable );
 		this.languageAdapter = languageAdapter;
-		this.executable = executable;
 	}
 
 	//
 	// Scriptlet
 	//
-
-	public String getSourceCode()
-	{
-		return sourceCode;
-	}
 
 	public void prepare() throws PreparationException
 	{
@@ -73,7 +81,7 @@ public class Jsr223Scriptlet implements Scriptlet
 		}
 	}
 
-	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
+	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		ScriptEngine scriptEngine = languageAdapter.getScriptEngine( executable, executionContext );
 		ScriptContext scriptContext = Jsr223LanguageAdapter.getScriptContext( executionContext );
@@ -110,22 +118,18 @@ public class Jsr223Scriptlet implements Scriptlet
 		{
 			languageAdapter.afterCall( scriptEngine, executionContext );
 		}
-
-		return value;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final String sourceCode;
-
-	private final int startLineNumber;
-
-	private final int startColumnNumber;
-
+	/**
+	 * The language adapter.
+	 */
 	private final Jsr223LanguageAdapter languageAdapter;
 
-	private final Executable executable;
-
+	/**
+	 * The compiled script.
+	 */
 	private CompiledScript compiledScript;
 }

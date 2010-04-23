@@ -38,6 +38,11 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public JythonAdapter() throws LanguageAdapterException
 	{
 		try

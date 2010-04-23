@@ -11,7 +11,8 @@
 
 package com.threecrickets.scripturian;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -21,6 +22,8 @@ import com.threecrickets.scripturian.internal.ServiceLoader;
 
 /**
  * Provides access to {@link LanguageAdapter} instances.
+ * <p>
+ * Instances of this class are safe for concurrent access.
  * 
  * @author Tal Liron
  * @see LanguageAdapter
@@ -31,7 +34,13 @@ public class LanguageManager
 	// Construction
 	//
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * Adds all language adapters found in the {@code
+	 * META-INF/services/com.threecrickets.scripturian.LanguageAdapter}
+	 * resource.
+	 * 
+	 * @see ServiceLoader
+	 */
 	public LanguageManager()
 	{
 		// Initialize adapters
@@ -40,15 +49,7 @@ public class LanguageManager
 		{
 			try
 			{
-				languageAdapters.add( adapter );
-
-				Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
-				for( String tag : tags )
-					languageAdapterByTag.put( tag, adapter );
-
-				Iterable<String> extensions = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.EXTENSIONS );
-				for( String extension : extensions )
-					languageAdapterByExtension.put( extension, adapter );
+				addAdapter( adapter );
 			}
 			catch( Throwable x )
 			{
@@ -61,16 +62,36 @@ public class LanguageManager
 	// Attributes
 	//
 
+	/**
+	 * General-purpose attributes for this language manager. Language adapters
+	 * can use this for sharing state with other language adapters.
+	 * 
+	 * @return The attributes
+	 */
 	public ConcurrentMap<String, Object> getAttributes()
 	{
 		return attributes;
 	}
 
-	public Collection<LanguageAdapter> getAdapters()
+	/**
+	 * All language adapters. Note that this set is unmodifiable. To add an
+	 * adapter use {@link #addAdapter(LanguageAdapter)}
+	 * 
+	 * @return The adapters
+	 */
+	public Set<LanguageAdapter> getAdapters()
 	{
-		return languageAdapters;
+		return Collections.unmodifiableSet( languageAdapters );
 	}
 
+	/**
+	 * A language adapter for a scriptlet tag.
+	 * 
+	 * @param tag
+	 *        The scriptlet adapter
+	 * @return The language adapter or null if not found
+	 * @throws ParsingException
+	 */
 	public LanguageAdapter getAdapterByTag( String tag ) throws ParsingException
 	{
 		if( tag == null )
@@ -78,23 +99,50 @@ public class LanguageManager
 		return languageAdapterByTag.get( tag );
 	}
 
-	public LanguageAdapter getAdapterByExtension( String name, String defaultExtension ) throws ParsingException
+	/**
+	 * A language adapter for a document name according to its filename
+	 * extension.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param defaultExtension
+	 *        The default extension to assume in case the document name does not
+	 *        have one
+	 * @return The language adapter or null if not found
+	 * @throws ParsingException
+	 */
+	public LanguageAdapter getAdapterByExtension( String documentName, String defaultExtension ) throws ParsingException
 	{
-		int slash = name.lastIndexOf( '/' );
+		int slash = documentName.lastIndexOf( '/' );
 		if( slash != -1 )
-			name = name.substring( slash + 1 );
+			documentName = documentName.substring( slash + 1 );
 
-		int dot = name.lastIndexOf( '.' );
-		String extension = dot != -1 ? name.substring( dot + 1 ) : defaultExtension;
+		int dot = documentName.lastIndexOf( '.' );
+		String extension = dot != -1 ? documentName.substring( dot + 1 ) : defaultExtension;
 		if( extension == null )
-			throw new ParsingException( name, -1, -1, "Name must have an extension" );
+			throw new ParsingException( documentName, -1, -1, "Name must have an extension" );
 
 		return languageAdapterByExtension.get( extension );
 	}
 
-	public String getLanguageTagByExtension( String name, String defaultExtension, String defaultTag ) throws ParsingException
+	/**
+	 * A language adapter for a document name according to its filename
+	 * extension.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param defaultExtension
+	 *        The default extension to assume in case the document name does not
+	 *        have one
+	 * @param defaultTag
+	 *        The language tag to use in case a language adapter wasn't found
+	 *        according to the extension
+	 * @return The default language adapter tag or null if not found
+	 * @throws ParsingException
+	 */
+	public String getLanguageTagByExtension( String documentName, String defaultExtension, String defaultTag ) throws ParsingException
 	{
-		LanguageAdapter languageAdapter = getAdapterByExtension( name, defaultExtension );
+		LanguageAdapter languageAdapter = getAdapterByExtension( documentName, defaultExtension );
 		if( languageAdapter == null )
 			languageAdapter = getAdapterByTag( defaultTag );
 		if( languageAdapter != null )
@@ -103,45 +151,51 @@ public class LanguageManager
 			return null;
 	}
 
+	//
+	// Operations
+	//
+
+	/**
+	 * Adds a language adapter to this manager.
+	 * 
+	 * @param adapter
+	 *        The language adapter
+	 */
+	@SuppressWarnings("unchecked")
+	public void addAdapter( LanguageAdapter adapter )
+	{
+		languageAdapters.add( adapter );
+
+		Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
+		for( String tag : tags )
+			languageAdapterByTag.put( tag, adapter );
+
+		Iterable<String> extensions = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.EXTENSIONS );
+		for( String extension : extensions )
+			languageAdapterByExtension.put( extension, adapter );
+
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * General-purpose attributes for this language manager.
+	 */
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
+	/**
+	 * The language adapters.
+	 */
 	private final CopyOnWriteArraySet<LanguageAdapter> languageAdapters = new CopyOnWriteArraySet<LanguageAdapter>();
 
 	/**
-	 * A map of script engine names to their {@link LanguageAdapter}. Note that
-	 * Scripturian documents will not work without the appropriate adapters
-	 * installed.
-	 * <p>
-	 * This map is automatically initialized when this class loads according to
-	 * resources named
-	 * <code>META-INF/services/com.threecrickets.scripturian.ScripturianAdapter</code>
-	 * . Each resource is a simple text file with class names, one per line.
-	 * Each class listed must implement the {@link LanguageAdapter} interface.
-	 * <p>
-	 * You may also manipulate this map yourself, adding and removing helpers as
-	 * necessary.
-	 * <p>
-	 * The default implementation of this library already contains a few useful
-	 * adapter, under the com.threecrickets.scripturian.adapter package.
+	 * A map of language tags to their {@link LanguageAdapter} instances.
 	 */
 	private final ConcurrentMap<String, LanguageAdapter> languageAdapterByTag = new ConcurrentHashMap<String, LanguageAdapter>();
 
 	/**
-	 * Map of extensions named to script engine names. For Scripturian, these
-	 * mappings supplement and override those extensions declared by individual
-	 * script engines.
-	 * <p>
-	 * This map is automatically initialized when this class loads according to
-	 * resources named
-	 * <code>META-INF/services/com.threecrickets.scripturian.ScriptletParsingHelper</code>
-	 * . Each resource is a simple text file with class names, one per line.
-	 * Each class listed must implement the {@link LanguageAdapter} interface.
-	 * <p>
-	 * You may also manipulate this map yourself, adding and removing helpers as
-	 * necessary.
+	 * A map of filename extensions to their {@link LanguageAdapter} instances.
 	 */
 	private final ConcurrentMap<String, LanguageAdapter> languageAdapterByExtension = new ConcurrentHashMap<String, LanguageAdapter>();
 }

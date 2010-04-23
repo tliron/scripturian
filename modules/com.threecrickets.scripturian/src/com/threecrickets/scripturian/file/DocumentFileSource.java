@@ -127,7 +127,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		if( filedDocumentDescriptor == null )
 		{
-			File file = getFileForName( documentName );
+			File file = getFileForDocumentName( documentName );
 
 			// See if we already have a descriptor for this file
 			filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
@@ -153,17 +153,17 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * @see DocumentSource#setDocument(String, String, String, Object)
 	 */
-	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D script )
+	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document )
 	{
-		return filedDocumentDescriptors.put( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, script ) );
+		return filedDocumentDescriptors.put( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, document ) );
 	}
 
 	/**
 	 * @see DocumentSource#setDocumentIfAbsent(String, String, String, Object)
 	 */
-	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D script )
+	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document )
 	{
-		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, script ) );
+		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, document ) );
 	}
 
 	/***
@@ -204,18 +204,47 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The document descriptors.
+	 */
 	private final ConcurrentMap<String, FiledDocumentDescriptor> filedDocumentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor>();
 
+	/**
+	 * The document descriptors.
+	 */
 	private final ConcurrentMap<File, FiledDocumentDescriptor> filedDocumentDescriptorsByFile = new ConcurrentHashMap<File, FiledDocumentDescriptor>();
 
+	/**
+	 * The base path.
+	 */
 	private final File basePath;
 
+	/**
+	 * Length of the base path cached for performance.
+	 */
 	private final int basePathLength;
 
+	/**
+	 * If the name used in {@link #getDocument(String)} points to a directory,
+	 * then this file name in that directory will be used instead; note that if
+	 * an extension is not specified, then the first file in the directory with
+	 * this name, with any extension, will be used.
+	 */
 	private final String defaultName;
 
+	/**
+	 * See {@link #getMinimumTimeBetweenValidityChecks()}
+	 */
 	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
+	/**
+	 * Recursively collects document descriptors for all files under a base
+	 * path.
+	 * 
+	 * @param basePath
+	 *        The base path
+	 * @return The document descriptors
+	 */
 	private Collection<DocumentDescriptor<D>> getDocumentDescriptors( File basePath )
 	{
 		ArrayList<DocumentDescriptor<D>> list = new ArrayList<DocumentDescriptor<D>>();
@@ -252,26 +281,43 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return list;
 	}
 
+	/**
+	 * Filters all filenames that start with a prefix.
+	 * 
+	 * @author Tal Liron
+	 */
 	private static class StartsWithFilter implements FilenameFilter
 	{
-		private final String name;
+		private final String prefix;
 
-		private StartsWithFilter( String name )
+		private StartsWithFilter( String prefix )
 		{
-			this.name = name + ".";
+			this.prefix = prefix + ".";
 		}
 
 		public boolean accept( File dir, String name )
 		{
-			return name.startsWith( this.name );
+			return name.startsWith( prefix );
 		}
 	}
 
+	/**
+	 * Filters all filenames that start with a prefix.
+	 */
 	private final StartsWithFilter defaultNameFilter;
 
-	private File getFileForName( String name )
+	/**
+	 * Returns a non-directory file, treating the document name as if it were a
+	 * path under our base path. If the path specifies a directory, the file
+	 * with default name under that directory is used.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @return The file
+	 */
+	private File getFileForDocumentName( String documentName )
 	{
-		File file = new File( basePath, name );
+		File file = new File( basePath, documentName );
 
 		if( ( defaultName != null ) && file.isDirectory() )
 		{
@@ -294,18 +340,34 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return file;
 	}
 
+	/**
+	 * Gets the file's path relative to the base path.
+	 * 
+	 * @param file
+	 *        The file
+	 * @return The path
+	 */
 	private String getRelativeFilePath( File file )
 	{
 		return file.getPath().substring( basePathLength );
 	}
 
-	private FiledDocumentDescriptor removeIfInvalid( String name, FiledDocumentDescriptor filedDocumentDescriptor )
+	/**
+	 * Removes a file descriptor if it is no longer valid.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param filedDocumentDescriptor
+	 *        The document descriptor
+	 * @return The document descriptor or null if it was removed
+	 */
+	private FiledDocumentDescriptor removeIfInvalid( String documentName, FiledDocumentDescriptor filedDocumentDescriptor )
 	{
 		// Make sure the existing descriptor is valid
 		if( !filedDocumentDescriptor.isValid() )
 		{
 			// Remove invalid descriptor if it's still there
-			if( filedDocumentDescriptors.remove( name, filedDocumentDescriptor ) )
+			if( filedDocumentDescriptors.remove( documentName, filedDocumentDescriptor ) )
 			{
 				if( filedDocumentDescriptor.file != null )
 					// This is atomically safe, because we'll only get here once
@@ -317,6 +379,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return filedDocumentDescriptor;
 	}
 
+	/**
+	 * Our document descriptor.
+	 * 
+	 * @author Tal Liron
+	 */
 	private class FiledDocumentDescriptor implements DocumentDescriptor<D>
 	{
 		public String getDefaultName()

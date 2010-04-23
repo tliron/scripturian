@@ -87,6 +87,12 @@ public abstract class ScripturianUtil
 		return getString( reader );
 	}
 
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	/**
+	 * Disallow inheritance.
+	 */
 	private ScripturianUtil()
 	{
 	}

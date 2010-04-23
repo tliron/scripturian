@@ -18,7 +18,8 @@ import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
- * A {@link LanguageAdapter} that supports the Java language.
+ * A {@link LanguageAdapter} that supports the Java language. Experimental code!
+ * Doesn't work!
  * 
  * @author Tal Liron
  */
@@ -29,6 +30,11 @@ public class JavaAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public JavaAdapter() throws LanguageAdapterException
 	{
 		super();

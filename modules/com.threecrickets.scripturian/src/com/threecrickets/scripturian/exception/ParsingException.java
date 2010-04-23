@@ -14,8 +14,14 @@ package com.threecrickets.scripturian.exception;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.threecrickets.scripturian.Executable;
+
 /**
+ * A parsing exception. Can occur during the construction phase of an
+ * executable.
+ * 
  * @author Tal Liron
+ * @see Executable
  */
 public class ParsingException extends Exception
 {
@@ -71,6 +77,11 @@ public class ParsingException extends Exception
 	// Attributes
 	//
 
+	/**
+	 * The call stack.
+	 * 
+	 * @return The call stack
+	 */
 	public Collection<StackFrame> getStack()
 	{
 		return stack;
@@ -81,5 +92,8 @@ public class ParsingException extends Exception
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * The call stack.
+	 */
 	private final ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
 }

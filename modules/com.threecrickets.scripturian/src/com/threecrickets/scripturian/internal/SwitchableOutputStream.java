@@ -15,6 +15,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
+ * A wrapper for {@link OutputStream} that allows runtime switching of the
+ * underlying stream. It is safe to switch by concurrent threads, though there's
+ * no way to determine which thread will switch first unless you specifically
+ * coordinate access.
+ * 
  * @author Tal Liron
  */
 public class SwitchableOutputStream extends OutputStream
@@ -23,6 +28,12 @@ public class SwitchableOutputStream extends OutputStream
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param outputStream
+	 *        The initial underlying output stream
+	 */
 	public SwitchableOutputStream( OutputStream outputStream )
 	{
 		use( outputStream );
@@ -32,6 +43,12 @@ public class SwitchableOutputStream extends OutputStream
 	// Operations
 	//
 
+	/**
+	 * Switch the underlying output stream.
+	 * 
+	 * @param outputStream
+	 *        The output stream
+	 */
 	public void use( OutputStream outputStream )
 	{
 		this.outputStream = outputStream;
@@ -47,5 +64,11 @@ public class SwitchableOutputStream extends OutputStream
 		outputStream.write( b );
 	}
 
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	/**
+	 * The underlying output stream.
+	 */
 	private volatile OutputStream outputStream;
 }

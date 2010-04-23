@@ -14,6 +14,8 @@ package com.threecrickets.scripturian.exception;
 import com.threecrickets.scripturian.LanguageAdapter;
 
 /**
+ * A language adapter exception.
+ * 
  * @author Tal Liron
  */
 public class LanguageAdapterException extends Exception
@@ -44,6 +46,11 @@ public class LanguageAdapterException extends Exception
 	// Attributes
 	//
 
+	/**
+	 * The language adapter class.
+	 * 
+	 * @return The language adapter class
+	 */
 	public Class<? extends LanguageAdapter> getLanguage()
 	{
 		return language;
@@ -54,5 +61,8 @@ public class LanguageAdapterException extends Exception
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * The language adapter class.
+	 */
 	private final Class<? extends LanguageAdapter> language;
 }

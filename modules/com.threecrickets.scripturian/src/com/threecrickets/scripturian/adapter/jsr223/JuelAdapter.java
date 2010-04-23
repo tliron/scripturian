@@ -34,6 +34,11 @@ public class JuelAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public JuelAdapter() throws LanguageAdapterException
 	{
 		super();

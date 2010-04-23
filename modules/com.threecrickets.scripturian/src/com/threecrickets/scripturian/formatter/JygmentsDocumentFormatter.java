@@ -33,11 +33,20 @@ public class JygmentsDocumentFormatter<D> implements DocumentFormatter<D>
 	// Construction
 	//
 
+	/**
+	 * Construction. The theme used is "vs".
+	 */
 	public JygmentsDocumentFormatter()
 	{
 		this( "vs" );
 	}
 
+	/**
+	 * Construction.
+	 * 
+	 * @param theme
+	 *        The theme to use
+	 */
 	public JygmentsDocumentFormatter( String theme )
 	{
 		this.theme = theme;

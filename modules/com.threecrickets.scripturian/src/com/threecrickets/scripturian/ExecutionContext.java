@@ -76,7 +76,7 @@ public class ExecutionContext
 	//
 
 	/**
-	 * Construction
+	 * Construction.
 	 * 
 	 * @param languageManager
 	 * @param writer
@@ -300,34 +300,58 @@ public class ExecutionContext
 		if( released )
 			throw new IllegalStateException( "Cannot access released execution context" );
 
-		safeRelease();
+		for( LanguageAdapter languageAdapter : languageAdapters )
+			languageAdapter.releaseContext( this );
+
+		released = true;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * /** General-purpose attributes. Most useful for language adapters and
+	 * other users along the execution chain to store contextual state.
+	 */
 	private final Map<String, Object> attributes = new HashMap<String, Object>();
 
+	/**
+	 * 
+	 */
 	private final Map<String, Object> exposedVariables = new HashMap<String, Object>();
 
+	/**
+	 * 
+	 */
 	private final Set<LanguageAdapter> languageAdapters = new HashSet<LanguageAdapter>();
 
+	/**
+	 * The standard output set for executables using this context.
+	 */
 	private Writer writer;
 
+	/**
+	 * The standard error set for executables using this context.
+	 */
 	private Writer errorWriter;
 
+	/**
+	 * 
+	 */
 	private LanguageManager languageManager;
 
+	/**
+	 * The last language adapter used by the context.
+	 */
 	private LanguageAdapter languageAdapter;
 
+	/**
+	 * Whether this context is immutable.
+	 */
 	private volatile boolean immutable;
 
+	/**
+	 * Whether this context has been released.
+	 */
 	private volatile boolean released;
-
-	protected void safeRelease()
-	{
-		for( LanguageAdapter languageAdapter : languageAdapters )
-			languageAdapter.releaseContext( this );
-		released = true;
-	}
 }

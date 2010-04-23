@@ -24,7 +24,7 @@ public interface DocumentDescriptor<D>
 	/**
 	 * Documents may have many names, but this one is preferred to others.
 	 * 
-	 * @return The preferred name
+	 * @return The default name
 	 */
 	public String getDefaultName();
 
@@ -52,22 +52,22 @@ public interface DocumentDescriptor<D>
 	public D getDocument();
 
 	/**
-	 * @param value
+	 * @param document
 	 *        The document instance
 	 * @return The existing document instance before we changed it
 	 * @see #getDocument()
 	 */
-	public D setDocument( D value );
+	public D setDocument( D document );
 
 	/**
 	 * Like {@link #setDocument(Object)}, with an atomic check for null.
 	 * 
-	 * @param value
+	 * @param document
 	 *        The document instance
 	 * @return The existing document instance before we changed it
 	 * @see #getDocument()
 	 */
-	public D setDocumentIfAbsent( D value );
+	public D setDocumentIfAbsent( D document );
 
 	/**
 	 * The document source from whence this document came

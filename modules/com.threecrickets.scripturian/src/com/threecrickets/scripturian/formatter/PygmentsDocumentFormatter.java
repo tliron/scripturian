@@ -36,11 +36,20 @@ public class PygmentsDocumentFormatter<D> implements DocumentFormatter<D>
 	// Construction
 	//
 
+	/**
+	 * Construction. The theme used is "vs".
+	 */
 	public PygmentsDocumentFormatter()
 	{
 		this( "vs" );
 	}
 
+	/**
+	 * Construction.
+	 * 
+	 * @param theme
+	 *        The theme to use
+	 */
 	public PygmentsDocumentFormatter( String theme )
 	{
 		this.theme = theme;

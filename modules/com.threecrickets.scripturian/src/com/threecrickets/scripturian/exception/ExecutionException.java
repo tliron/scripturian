@@ -14,8 +14,14 @@ package com.threecrickets.scripturian.exception;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.threecrickets.scripturian.Executable;
+
 /**
+ * An execution exception. Can occur during the execution and invocation phases
+ * of an executable.
+ * 
  * @author Tal Liron
+ * @see Executable
  */
 public class ExecutionException extends Exception
 {
@@ -62,6 +68,11 @@ public class ExecutionException extends Exception
 	// Attributes
 	//
 
+	/**
+	 * The call stack.
+	 * 
+	 * @return The call stack
+	 */
 	public Collection<StackFrame> getStack()
 	{
 		return stack;
@@ -72,5 +83,8 @@ public class ExecutionException extends Exception
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * The call stack.
+	 */
 	private final ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
 }

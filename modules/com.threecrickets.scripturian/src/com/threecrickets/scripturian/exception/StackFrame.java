@@ -12,7 +12,11 @@
 package com.threecrickets.scripturian.exception;
 
 /**
+ * A frame within a call stack.
+ * 
  * @author Tal Liron
+ * @see ExecutionException
+ * @see ParsingException
  */
 public class StackFrame
 {
@@ -20,6 +24,13 @@ public class StackFrame
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param documentName
+	 * @param lineNumber
+	 * @param columnNumber
+	 */
 	public StackFrame( String documentName, int lineNumber, int columnNumber )
 	{
 		this.documentName = documentName;
@@ -27,11 +38,17 @@ public class StackFrame
 		this.columnNumber = columnNumber;
 	}
 
+	/**
+	 * @param documentName
+	 */
 	public StackFrame( String documentName )
 	{
 		this( documentName, -1, -1 );
 	}
 
+	/**
+	 * @param stackTraceElement
+	 */
 	public StackFrame( StackTraceElement stackTraceElement )
 	{
 		documentName = stackTraceElement.getFileName();
@@ -43,16 +60,31 @@ public class StackFrame
 	// Attributes
 	//
 
+	/**
+	 * The document name.
+	 * 
+	 * @return The document name
+	 */
 	public String getDocumentName()
 	{
 		return documentName;
 	}
 
+	/**
+	 * The line number.
+	 * 
+	 * @return The line number
+	 */
 	public int getLineNumber()
 	{
 		return lineNumber;
 	}
 
+	/**
+	 * The column number.
+	 * 
+	 * @return The column number
+	 */
 	public int getColumnNumber()
 	{
 		return columnNumber;
@@ -61,9 +93,18 @@ public class StackFrame
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The document name.
+	 */
 	private final String documentName;
 
+	/**
+	 * The line number.
+	 */
 	private final int lineNumber;
 
+	/**
+	 * The column number.
+	 */
 	private final int columnNumber;
 }

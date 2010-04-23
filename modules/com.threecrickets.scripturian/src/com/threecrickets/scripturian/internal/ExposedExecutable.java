@@ -30,6 +30,14 @@ public class ExposedExecutable
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @param container
+	 *        The container or null
+	 */
 	public ExposedExecutable( ExecutionContext executionContext, Object container )
 	{
 		this.executionContext = executionContext;
@@ -64,7 +72,7 @@ public class ExposedExecutable
 
 	/**
 	 * This {@link ConcurrentMap} provides a convenient location for global
-	 * values shared by all scriptlets in all documents.
+	 * state shared by all executables.
 	 * 
 	 * @return The values
 	 */
@@ -76,7 +84,13 @@ public class ExposedExecutable
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The execution context.
+	 */
 	private final ExecutionContext executionContext;
 
+	/**
+	 * The container.
+	 */
 	private final Object container;
 }

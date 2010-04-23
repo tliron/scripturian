@@ -15,11 +15,9 @@ import org.jruby.Ruby;
 import org.jruby.ast.Node;
 import org.jruby.ast.executable.Script;
 import org.jruby.exceptions.RaiseException;
-import org.jruby.runtime.builtin.IRubyObject;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
-import com.threecrickets.scripturian.Scriptlet;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.PreparationException;
@@ -27,18 +25,27 @@ import com.threecrickets.scripturian.exception.PreparationException;
 /**
  * @author Tal Liron
  */
-class JRubyScriptlet implements Scriptlet
+class JRubyScriptlet extends ScriptletBase
 {
 	//
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param sourceCode
+	 *        The source code
+	 * @param startLineNumber
+	 *        The start line number
+	 * @param startColumnNumber
+	 *        The start column number
+	 * @param executable
+	 *        The executable
+	 */
 	public JRubyScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable )
 	{
-		this.sourceCode = sourceCode;
-		this.startLineNumber = startLineNumber;
-		this.startColumnNumber = startColumnNumber;
-		this.executable = executable;
+		super( sourceCode, startLineNumber, startColumnNumber, executable );
 	}
 
 	//
@@ -70,7 +77,7 @@ class JRubyScriptlet implements Scriptlet
 		}
 	}
 
-	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
+	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		Ruby rubyRuntime = JRubyAdapter.getRubyRuntime( executionContext );
 
@@ -78,14 +85,14 @@ class JRubyScriptlet implements Scriptlet
 		{
 			if( script != null )
 			{
-				IRubyObject value = rubyRuntime.runScript( script );
-				return value.toJava( Object.class );
+				rubyRuntime.runScript( script );
+				// return value.toJava( Object.class );
 			}
 			else
 			{
-				IRubyObject value = rubyRuntime.executeScript( sourceCode, executable.getDocumentName() );
-				// IRubyObject value = rubyRuntime.evalScriptlet( sourceCode );
-				return value.toJava( Object.class );
+				rubyRuntime.executeScript( sourceCode, executable.getDocumentName() );
+				// rubyRuntime.evalScriptlet( sourceCode );
+				// return value.toJava( Object.class );
 			}
 		}
 		catch( RaiseException x )
@@ -94,23 +101,16 @@ class JRubyScriptlet implements Scriptlet
 		}
 	}
 
-	public String getSourceCode()
-	{
-		return sourceCode;
-	}
-
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * A shared Ruby runtime instance used only for compilation.
+	 */
 	private static final Ruby compilerRuntime = Ruby.newInstance();
 
-	private final String sourceCode;
-
-	private final int startLineNumber;
-
-	private final int startColumnNumber;
-
-	private final Executable executable;
-
+	/**
+	 * The compiled script.
+	 */
 	private Script script;
 }

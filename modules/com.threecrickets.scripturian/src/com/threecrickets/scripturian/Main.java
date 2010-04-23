@@ -16,64 +16,49 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
-import javax.script.ScriptEngineManager;
-
 import com.threecrickets.scripturian.document.DocumentSource;
-import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
 import com.threecrickets.scripturian.file.DocumentFileSource;
 import com.threecrickets.scripturian.internal.ExposedContainerForMain;
 
 /**
- * Delegates the main() call to a {@link Executable}, in effect using it as the
+ * Delegates the main() call to an {@link Executable}, in effect using it as the
  * entry point of a Java platform application. The path to the document file can
- * be supplied as the first argument. If it's not supplied, {@link #defaultName}
- * is used instead.
+ * be supplied as the first argument. If it's not supplied,
+ * {@link #defaultDocumentName} is used instead.
  * <p>
- * The scripting engine's standard output is directed to the system standard
- * output. Note that this output is not captured or buffered, and sent directly
- * as the document runs.
+ * The executable's standard output is directed to the system standard output.
+ * Note that this output is not captured or buffered, and sent directly as the
+ * executable runs.
  * <p>
- * A special container environment is created for scriptlets, with some useful
- * services. It is available to code as a global variable named
- * <code>document.container</code>. For some other global variables, see
- * {@link Executable}.
+ * A special container environment is exposed to the executable, with some
+ * useful services. It is available to code as a global variable named
+ * <code>executable.container</code>.
  * <p>
  * Operations:
  * <ul>
- * <li><code>document.container.includeDocument(name)</code>: This powerful
- * method allows documents to execute other documents in place, and is useful
- * for creating large, maintainable applications based on documents. Included
- * documents can act as a library or toolkit and can even be shared among many
- * applications. The included document does not have to be in the same
- * programming language or use the same engine as the calling code. However, if
- * they do use the same engine, then methods, functions, modules, etc., could be
- * shared.
- * <p>
- * It is important to note that how this works varies a lot per engine. For
- * example, in JRuby, every scriptlet is run in its own scope, so that sharing
- * would have to be done explicitly in the global scope. See the included JRuby
- * examples for a discussion of various ways to do this.
- * </li>
- * <li><code>document.container.include(name)</code>: As above, except that the
- * document is parsed as a single, non-delimited script with the engine name
- * derived from the name's extension.</li>
+ * <li><code>executable.container.include(documentName)</code>: Executes another
+ * executable, with the language determined according to the document's
+ * extension. Note that the executed executable does not have to be in same
+ * language as the executing executable.</li>
+ * <li><code>executable.container.includeDocument(documentName)</code>: As
+ * above, except that the included source code is parsed as a
+ * "text-with-scriptlets" executable.</li>
  * </ul>
  * Read-only attributes:
  * <ul>
- * <li><code>document.container.arguments</code>: An array of the string
+ * <li><code>executable.container.arguments</code>: An array of the string
  * arguments sent to {@link #main(String[])}</li>
  * </ul>
  * Modifiable attributes:
  * <ul>
- * <li><code>document.container.defaultEngineName</code>: The default script
- * engine name to be used if the first scriptlet doesn't specify one. Defaults
- * to "js". Scriptlets can change this value.</li>
+ * <li><code>executable.container.defaultLanguageTag</code>: For use with
+ * <code>executable.container.includeDocument(documentName)</code>, this is the
+ * default language tag used for scriptlets in case none is specified. Defaults
+ * to "js".</li>
  * </ul>
- * <p>
- * In addition to the above, a {@link #executionController} can be set to add
- * your own global variables to scriptlets.
  * 
  * @author Tal Liron
  */
@@ -85,7 +70,7 @@ public class Main implements Runnable
 
 	/**
 	 * Delegates to an {@link Executable} file specified by the first argument,
-	 * or to {@link Main#defaultName} if not specified.
+	 * or to {@link Main#defaultDocumentName} if not specified.
 	 * 
 	 * @param arguments
 	 *        Supplied arguments (usually from a command line)
@@ -99,16 +84,22 @@ public class Main implements Runnable
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param arguments
+	 *        Supplied arguments (usually from a command line)
+	 */
 	public Main( String[] arguments )
 	{
 		this.arguments = arguments;
 
 		manager = new LanguageManager();
-		allowCompilation = false;
-		defaultName = "default";
+		prepare = false;
+		defaultDocumentName = "default";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Executable>( new File( "." ), defaultName, -1 );
+		documentSource = new DocumentFileSource<Executable>( new File( "." ), defaultDocumentName, -1 );
 	}
 
 	//
@@ -126,10 +117,10 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * The {@link ScriptEngineManager} used to create the script engines for the
-	 * scripts. Uses a default instance, but can be set to something else.
+	 * The {@link LanguageManager} used to get language adapters for
+	 * executables.
 	 * 
-	 * @return The script engine manager
+	 * @return The language manager
 	 */
 	public LanguageManager getLanguageManager()
 	{
@@ -137,30 +128,28 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * Whether or not compilation is attempted for script engines that support
-	 * it. Defaults to false.
+	 * Whether or not executables are prepared.
 	 * 
-	 * @return Whether to allow compilation
+	 * @return Whether to prepare executables.
 	 */
-	public boolean isAllowCompilation()
+	public boolean isPrepare()
 	{
-		return allowCompilation;
+		return prepare;
 	}
 
 	/**
 	 * If the path to the document to run if not supplied as the first argument
-	 * to {@link #main(String[])}, this is used instead, Defaults to
-	 * "main.script".
+	 * to {@link #main(String[])}, this is used instead. Defaults to "instance".
 	 * 
-	 * @return The default path
+	 * @return The default document name
 	 */
-	public String getDefaultPath()
+	public String getDefaultDocumentName()
 	{
-		return defaultName;
+		return defaultDocumentName;
 	}
 
 	/**
-	 * The writer to use for {@link Executable}.
+	 * The writer to use for {@link ExecutionContext} instances.
 	 * 
 	 * @return The writer
 	 */
@@ -170,7 +159,7 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * As {@link #getWriter()}, for error.
+	 * The error writer to use for {@link ExecutionContext} instances.
 	 * 
 	 * @return The error writer
 	 */
@@ -180,32 +169,33 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * An optional {@link ExecutionController} to be used with exeuctables.
-	 * Useful for exposing your own global variables to exeuctables.
+	 * An optional {@link ExecutionController} to be used with executables.
+	 * Useful for exposing your own global variables to executables.
 	 * 
-	 * @return The scriptlet controller
-	 * @see #setScriptletController(ExecutionController)
+	 * @return The execution controller
+	 * @see #setExecutionController(ExecutionController)
 	 */
-	public ExecutionController getScriptletController()
+	public ExecutionController getExecutionController()
 	{
 		return executionController;
 	}
 
 	/**
 	 * @param executionController
-	 * @see #getScriptletController()
+	 *        The execution controller
+	 * @see #getExecutionController()
 	 */
-	public void setScriptletController( ExecutionController executionController )
+	public void setExecutionController( ExecutionController executionController )
 	{
 		this.executionController = executionController;
 	}
 
 	/**
-	 * Used to load the executables, Defaults to a {@link DocumentFileSource}
+	 * Used to load the executables. Defaults to a {@link DocumentFileSource}
 	 * set for the current directory, with no validity checking.
 	 * 
 	 * @return The document source
-	 * @see #setDocumentSource(DocumentSource)
+	 * @see #setSource(DocumentSource)
 	 */
 	public DocumentSource<Executable> getSource()
 	{
@@ -217,7 +207,7 @@ public class Main implements Runnable
 	 *        The document source
 	 * @see #getSource()
 	 */
-	public void setDocumentSource( DocumentSource<Executable> documentSource )
+	public void setSource( DocumentSource<Executable> documentSource )
 	{
 		this.documentSource = documentSource;
 	}
@@ -232,7 +222,7 @@ public class Main implements Runnable
 		if( arguments.length > 0 )
 			name = arguments[0];
 		else
-			name = defaultName;
+			name = defaultDocumentName;
 
 		ExecutionContext executionContext = new ExecutionContext( manager, getWriter(), getErrorWriter() );
 		try
@@ -282,19 +272,45 @@ public class Main implements Runnable
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * Supplied arguments (usually from a command line).
+	 */
 	private final String[] arguments;
 
+	/**
+	 * The {@link LanguageManager} used to get language adapters for
+	 * executables.
+	 */
 	private final LanguageManager manager;
 
-	private final boolean allowCompilation;
+	/**
+	 * Whether to prepare executables.
+	 */
+	private final boolean prepare;
 
-	private final String defaultName;
+	/**
+	 * If the path to the document to run if not supplied as the first argument
+	 * to {@link #main(String[])}, this is used instead.
+	 */
+	private final String defaultDocumentName;
 
+	/**
+	 * The writer to use for {@link ExecutionContext} instances.
+	 */
 	private final Writer writer;
 
+	/**
+	 * The error writer to use for {@link ExecutionContext} instances.
+	 */
 	private final Writer errorWriter;
 
+	/**
+	 * An optional {@link ExecutionController} to be used with executables.
+	 */
 	private volatile ExecutionController executionController;
 
+	/**
+	 * Used to load the executables.
+	 */
 	private volatile DocumentSource<Executable> documentSource;
 }

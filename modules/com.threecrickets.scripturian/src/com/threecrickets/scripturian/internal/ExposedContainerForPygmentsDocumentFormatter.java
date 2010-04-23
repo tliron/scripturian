@@ -23,6 +23,17 @@ public class ExposedContainerForPygmentsDocumentFormatter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param text
+	 * @param lineNumber
+	 * @param language
+	 * @param title
+	 * @param style
+	 * @param background
+	 * @param highlight
+	 */
 	public ExposedContainerForPygmentsDocumentFormatter( String text, int lineNumber, String language, String title, String style, String background, String highlight )
 	{
 		this.text = text;

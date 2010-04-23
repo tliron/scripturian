@@ -14,10 +14,6 @@ package com.threecrickets.scripturian.adapter;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.jruby.NativeException;
 import org.jruby.Ruby;
@@ -44,7 +40,7 @@ import com.threecrickets.scripturian.internal.SwitchableOutputStream;
  * 
  * @author Tal Liron
  */
-public class JRubyAdapter implements LanguageAdapter
+public class JRubyAdapter extends LanguageAdapterBase
 {
 	//
 	// Construction
@@ -52,20 +48,22 @@ public class JRubyAdapter implements LanguageAdapter
 
 	public JRubyAdapter() throws LanguageAdapterException
 	{
-		attributes.put( NAME, "JRuby" );
-		attributes.put( VERSION, Constants.VERSION );
-		attributes.put( LANGUAGE_NAME, "Ruby" );
-		attributes.put( LANGUAGE_VERSION, Constants.RUBY_VERSION );
-		attributes.put( EXTENSIONS, Arrays.asList( "rb" ) );
-		attributes.put( DEFAULT_EXTENSION, "rb" );
-		attributes.put( TAGS, Arrays.asList( "ruby", "jruby" ) );
-		attributes.put( DEFAULT_TAG, "ruby" );
+		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), "rb", Arrays.asList( "ruby", "jruby" ), "ruby" );
 	}
 
 	//
 	// Static operations
 	//
 
+	/**
+	 * Gets a Ruby runtime isntance stored in the execution context, creating it
+	 * if it doesn't exist. Each execution context is guaranteed to have its own
+	 * Ruby runtime.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The Ruby runtime
+	 */
 	public static Ruby getRubyRuntime( ExecutionContext executionContext )
 	{
 		Ruby rubyRuntime = (Ruby) executionContext.getAttributes().get( JRUBY_RUNTIME );
@@ -81,7 +79,6 @@ public class JRubyAdapter implements LanguageAdapter
 			switchableOut = new SwitchableOutputStream( new WriterOutputStream( executionContext.getWriter() ) );
 			switchableErr = new SwitchableOutputStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
 
-			// System.setProperty( "jruby.backtrace.style", "ruby_framed" );
 			rubyRuntime = Ruby.newInstance( System.in, new PrintStream( switchableOut ), new PrintStream( switchableErr ) );
 			executionContext.getAttributes().put( JRUBY_RUNTIME, rubyRuntime );
 			executionContext.getAttributes().put( JRUBY_OUT, switchableOut );
@@ -89,7 +86,7 @@ public class JRubyAdapter implements LanguageAdapter
 		}
 		else
 		{
-			// Out switchable output stream lets us change the Ruby runtime's
+			// Our switchable output stream lets us change the Ruby runtime's
 			// standard output/error after it's been created.
 
 			switchableOut.use( new WriterOutputStream( executionContext.getWriter() ) );
@@ -107,8 +104,11 @@ public class JRubyAdapter implements LanguageAdapter
 	}
 
 	/**
+	 * Creates an execution exception with a full stack.
+	 * 
 	 * @param x
-	 * @return
+	 *        The Ruby exception
+	 * @return The execution exception
 	 */
 	public static ExecutionException createExecutionException( RaiseException x )
 	{
@@ -140,21 +140,6 @@ public class JRubyAdapter implements LanguageAdapter
 	//
 	// LanguageAdapter
 	//
-
-	public Map<String, Object> getAttributes()
-	{
-		return attributes;
-	}
-
-	public boolean isThreadSafe()
-	{
-		return true;
-	}
-
-	public Lock getLock()
-	{
-		return lock;
-	}
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
@@ -194,28 +179,30 @@ public class JRubyAdapter implements LanguageAdapter
 		}
 	}
 
-	public void releaseContext( ExecutionContext executionContext )
-	{
-	}
-
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The Ruby runtime instance attribute.
+	 */
 	private static final String JRUBY_RUNTIME = "jruby.rubyRuntime";
 
+	/**
+	 * The switchable standard output attribute for the Ruby runtime.
+	 */
 	private static final String JRUBY_OUT = "jruby.out";
 
+	/**
+	 * The switchable standard error attribute for the Ruby runtime.
+	 */
 	private static final String JRUBY_ERR = "jruby.err";
-
-	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
-
-	private final ReentrantLock lock = new ReentrantLock();
 
 	/**
 	 * From somethingLikeThis to something_like_this.
 	 * 
 	 * @param camelCase
-	 * @return
+	 *        somethingLikeThis
+	 * @return something_like_this
 	 */
 	private static String toRubyStyle( String camelCase )
 	{

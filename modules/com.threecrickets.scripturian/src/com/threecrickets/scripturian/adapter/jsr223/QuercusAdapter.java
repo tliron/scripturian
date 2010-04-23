@@ -40,6 +40,11 @@ public class QuercusAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public QuercusAdapter() throws LanguageAdapterException
 	{
 		super();

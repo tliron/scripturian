@@ -40,6 +40,11 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public JRubyAdapter() throws LanguageAdapterException
 	{
 		try

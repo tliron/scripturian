@@ -33,7 +33,6 @@ import clojure.lang.LispReader.ReaderException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
-import com.threecrickets.scripturian.Scriptlet;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.PreparationException;
@@ -42,18 +41,27 @@ import com.threecrickets.scripturian.exception.StackFrame;
 /**
  * @author Tal Liron
  */
-public class ClojureScriptlet implements Scriptlet
+public class ClojureScriptlet extends ScriptletBase
 {
 	//
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @param sourceCode
+	 *        The source code
+	 * @param startLineNumber
+	 *        The start line number
+	 * @param startColumnNumber
+	 *        The start column number
+	 * @param executable
+	 *        The executable
+	 */
 	public ClojureScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable )
 	{
-		this.sourceCode = sourceCode;
-		this.startLineNumber = startLineNumber;
-		this.startColumnNumber = startColumnNumber;
-		this.executable = executable;
+		super( sourceCode, startLineNumber, startColumnNumber, executable );
 	}
 
 	//
@@ -143,7 +151,7 @@ public class ClojureScriptlet implements Scriptlet
 		}
 	}
 
-	public Object execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
+	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		Namespace ns = ClojureAdapter.getClojureNamespace( executionContext );
 
@@ -171,8 +179,6 @@ public class ClojureScriptlet implements Scriptlet
 		{
 			Var.pushThreadBindings( PersistentArrayMap.create( threadBindings ) );
 
-			Object r = null;
-
 			try
 			{
 				ClojureAdapter.IN_NS.invoke( ns.getName() );
@@ -192,7 +198,7 @@ public class ClojureScriptlet implements Scriptlet
 							Compiler.LINE_BEFORE.set( lastForm.lineNumber );
 						Compiler.LINE_AFTER.set( form.lineNumber );
 						Compiler.LINE.set( form.lineNumber );
-						r = Compiler.eval( form.form );
+						Compiler.eval( form.form );
 						lastForm = form;
 					}
 				}
@@ -209,7 +215,7 @@ public class ClojureScriptlet implements Scriptlet
 						{
 							Compiler.LINE_AFTER.set( pushbackReader.getLineNumber() );
 							Compiler.LINE.set( pushbackReader.getLineNumber() );
-							r = Compiler.eval( form );
+							Compiler.eval( form );
 							Compiler.LINE_BEFORE.set( pushbackReader.getLineNumber() );
 						}
 					}
@@ -228,8 +234,6 @@ public class ClojureScriptlet implements Scriptlet
 			{
 				throw new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
 			}
-
-			return r;
 		}
 		finally
 		{
@@ -237,23 +241,12 @@ public class ClojureScriptlet implements Scriptlet
 		}
 	}
 
-	public String getSourceCode()
-	{
-		return sourceCode;
-	}
-
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final String sourceCode;
-
-	private final int startLineNumber;
-
-	@SuppressWarnings("unused")
-	private final int startColumnNumber;
-
-	private final Executable executable;
-
+	/**
+	 * The parsed forms.
+	 */
 	private Collection<ClojureScriptlet.Form> forms;
 
 	/**
@@ -264,8 +257,10 @@ public class ClojureScriptlet implements Scriptlet
 	 * data!
 	 * 
 	 * @param message
+	 *        The exception message
 	 * @param stack
-	 * @return
+	 *        The stack
+	 * @return New exception message
 	 */
 	private String extractStack( String message, Collection<StackFrame> stack )
 	{
@@ -304,8 +299,11 @@ public class ClojureScriptlet implements Scriptlet
 	}
 
 	/**
+	 * Creates an execution exception with a full stack.
+	 * 
 	 * @param x
-	 * @return
+	 *        The Clojure compiler exception
+	 * @return The execution exception
 	 */
 	private ExecutionException createExecutionException( CompilerException x )
 	{
@@ -333,6 +331,12 @@ public class ClojureScriptlet implements Scriptlet
 			return new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
 	}
 
+	/**
+	 * A simple wrapper for parsed Clojure forms that adds line number
+	 * information.
+	 * 
+	 * @author Tal Liron
+	 */
 	private static class Form
 	{
 		public Form( Object form, int lineNumber )

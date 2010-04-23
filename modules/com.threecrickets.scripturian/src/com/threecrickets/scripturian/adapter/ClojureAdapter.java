@@ -13,11 +13,6 @@ package com.threecrickets.scripturian.adapter;
 
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import clojure.lang.Namespace;
 import clojure.lang.PersistentVector;
@@ -52,24 +47,21 @@ import com.threecrickets.scripturian.exception.ParsingException;
  * 
  * @author Tal Liron
  */
-public class ClojureAdapter implements LanguageAdapter
+public class ClojureAdapter extends LanguageAdapterBase
 {
-	//
-	// Constants
-	//
-
-	public static final Symbol CLOJURE_CORE = Symbol.create( "clojure.core" );
-
-	public static final Var IN_NS = RT.var( "clojure.core", "in-ns" );
-
-	public static final Var ALLOW_UNRESOLVED_VARS = RT.var( "clojure.core", "*allow-unresolved-vars*" );
-
-	public static final Var REFER = RT.var( "clojure.core", "refer" );
-
 	//
 	// Static operations
 	//
 
+	/**
+	 * Gets a Clojure namespace stored in the execution context, creating it if
+	 * it doesn't exist. Each execution context is guaranteed to have its own
+	 * namespace.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The Clojure namespace
+	 */
 	public static Namespace getClojureNamespace( ExecutionContext executionContext )
 	{
 		Namespace ns = (Namespace) executionContext.getAttributes().get( CLOJURE_NAMESPACE );
@@ -94,7 +86,8 @@ public class ClojureAdapter implements LanguageAdapter
 	 * From somethingLikeThis to something-like-this.
 	 * 
 	 * @param camelCase
-	 * @return
+	 *        somethingLikeThis
+	 * @return something-like-this
 	 */
 	public static String toClojureStyle( String camelCase )
 	{
@@ -122,36 +115,19 @@ public class ClojureAdapter implements LanguageAdapter
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public ClojureAdapter() throws LanguageAdapterException
 	{
-		attributes.put( NAME, "Clojure" );
-		attributes.put( VERSION, "?" );
-		attributes.put( LANGUAGE_NAME, "Clojure" );
-		attributes.put( LANGUAGE_VERSION, "?" );
-		attributes.put( EXTENSIONS, Arrays.asList( "clj" ) );
-		attributes.put( DEFAULT_EXTENSION, "clj" );
-		attributes.put( TAGS, Arrays.asList( "clojure" ) );
-		attributes.put( DEFAULT_TAG, "clojure" );
+		super( "Clojure", "?", "Clojure", "?", Arrays.asList( "clj" ), "clj", Arrays.asList( "clojure" ), "clojure" );
 	}
 
 	//
 	// LanguageAdapter
 	//
-
-	public Map<String, Object> getAttributes()
-	{
-		return attributes;
-	}
-
-	public boolean isThreadSafe()
-	{
-		return true;
-	}
-
-	public Lock getLock()
-	{
-		return lock;
-	}
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
@@ -206,6 +182,7 @@ public class ClojureAdapter implements LanguageAdapter
 		}
 	}
 
+	@Override
 	public void releaseContext( ExecutionContext executionContext )
 	{
 		// Remove our namespace
@@ -215,13 +192,38 @@ public class ClojureAdapter implements LanguageAdapter
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
+	// Protected
+
+	/**
+	 * clojure.core
+	 */
+	protected static final Symbol CLOJURE_CORE = Symbol.create( "clojure.core" );
+
+	/**
+	 * (in-ns)
+	 */
+	protected static final Var IN_NS = RT.var( "clojure.core", "in-ns" );
+
+	/**
+	 * clojure.core/*allow-unresolved-vars*
+	 */
+	protected static final Var ALLOW_UNRESOLVED_VARS = RT.var( "clojure.core", "*allow-unresolved-vars*" );
+
+	/**
+	 * (clojure.core/refer)
+	 */
+	protected static final Var REFER = RT.var( "clojure.core", "refer" );
+
+	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * Namespace attribute.
+	 */
 	private static final String CLOJURE_NAMESPACE = "clojure.namespace";
 
+	/**
+	 * Prefix prepended to all namespace names created by this adapter.
+	 */
 	private static final String NAMESPACE_PREFIX = "scripturian";
-
-	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
-
-	private final ReentrantLock lock = new ReentrantLock();
 }

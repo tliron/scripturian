@@ -26,7 +26,10 @@ import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.document.DocumentSource;
 
 /**
+ * Defrosts all documents within a {@link DocumentSource}.
+ * 
  * @author Tal Liron
+ * @see DefrostTask
  */
 public class Defroster
 {
@@ -41,15 +44,15 @@ public class Defroster
 	 *        The document source for executables
 	 * @param languageManager
 	 *        The language manager for executable initialization
-	 * @param allowCompilation
-	 *        Whether to compile executables
+	 * @param prepare
+	 *        Whether to prepare executables
 	 */
-	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean allowCompilation )
+	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean prepare )
 	{
 		super();
 		this.documentSource = documentSource;
 		this.languageManager = languageManager;
-		this.allowCompilation = allowCompilation;
+		this.prepare = prepare;
 	}
 
 	//
@@ -77,17 +80,17 @@ public class Defroster
 	}
 
 	/**
-	 * Whether to compile executables.
+	 * Whether to prepare executables.
 	 * 
-	 * @return True if compilation is to be attempted
+	 * @return Whether to prepare executables
 	 */
-	public boolean isAllowCompilation()
+	public boolean isPrepare()
 	{
-		return allowCompilation;
+		return prepare;
 	}
 
 	/**
-	 * @return True if execution was interrupted
+	 * @return True if defrosting was interrupted
 	 */
 	public boolean wasInterrupted()
 	{
@@ -174,14 +177,25 @@ public class Defroster
 	private final LanguageManager languageManager;
 
 	/**
-	 * Whether to compile executables.
+	 * Whether to prepare executables.
 	 */
-	private final boolean allowCompilation;
+	private final boolean prepare;
 
+	/**
+	 * Whether defrosting was interrupted.
+	 */
 	private volatile boolean wasInterrupted;
 
+	/**
+	 * Defrosting errors.
+	 */
 	private final CopyOnWriteArrayList<Throwable> errors = new CopyOnWriteArrayList<Throwable>();
 
+	/**
+	 * A task to start all defrosting tasks.
+	 * 
+	 * @author Tal Liron
+	 */
 	private class Task implements Runnable
 	{
 		private Task( ExecutorService executorService, boolean block )
@@ -196,7 +210,7 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, allowCompilation );
+			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, prepare );
 			List<Future<Executable>> futures;
 			try
 			{

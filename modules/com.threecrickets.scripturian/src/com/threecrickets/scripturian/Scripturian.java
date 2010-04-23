@@ -12,7 +12,7 @@
 package com.threecrickets.scripturian;
 
 /**
- * Shared static attributes for Scripturian.
+ * Delegates to {@link Main}.
  * 
  * @author Tal Liron
  */

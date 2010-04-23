@@ -21,9 +21,8 @@ import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentSource;
 
 /**
- * A {@link Callable} that makes sure that a {@link Executable} is tied to a
- * {@link DocumentDescriptor}, making it ready to use without the delay of
- * initialization, parsing, compilation, etc.
+ * A {@link Callable} that makes sure that a {@link Executable} is loaded and
+ * possibly prepared, making it ready to execute without delay.
  * <p>
  * It may be easier to use a {@link Defroster}, which is at a higher level than
  * this class.
@@ -44,18 +43,18 @@ public class DefrostTask implements Callable<Executable>
 	 *        The document source for executables
 	 * @param languageManager
 	 *        The language manager for executable initialization
-	 * @param allowCompilation
-	 *        Whether to compile executables
+	 * @param prepare
+	 *        Whether to prepare executables
 	 * @return An array of tasks
 	 * @see DocumentSource#getDocument(String)
 	 */
-	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean allowCompilation )
+	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean prepare )
 	{
 		Collection<DocumentDescriptor<Executable>> documentDescriptors = documentSource.getDocuments();
 		DefrostTask[] defrostTasks = new DefrostTask[documentDescriptors.size()];
 		int i = 0;
 		for( DocumentDescriptor<Executable> documentDescriptor : documentDescriptors )
-			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, languageManager, allowCompilation );
+			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, languageManager, prepare );
 
 		return defrostTasks;
 	}
@@ -74,15 +73,15 @@ public class DefrostTask implements Callable<Executable>
 	 *        in-flow tags during executable initialization
 	 * @param languageManager
 	 *        The language manager for executable initialization
-	 * @param allowCompilation
-	 *        Whether to compile executables
+	 * @param prepare
+	 *        Whether to prepare executables
 	 */
-	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean allowCompilation )
+	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean prepare )
 	{
 		this.documentDescriptor = documentDescriptor;
 		this.documentSource = documentSource;
 		this.languageManager = languageManager;
-		this.allowCompilation = allowCompilation;
+		this.prepare = prepare;
 	}
 
 	//
@@ -97,7 +96,7 @@ public class DefrostTask implements Callable<Executable>
 		{
 			LanguageAdapter scriptEngine = languageManager.getAdapterByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag() );
 			String sourceCode = documentDescriptor.getSourceCode();
-			executable = new Executable( documentDescriptor.getDefaultName(), sourceCode, false, languageManager, (String) scriptEngine.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), documentSource, allowCompilation );
+			executable = new Executable( documentDescriptor.getDefaultName(), sourceCode, false, languageManager, (String) scriptEngine.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), documentSource, prepare );
 
 			Executable existing = documentDescriptor.setDocumentIfAbsent( executable );
 			if( existing != null )
@@ -137,7 +136,7 @@ public class DefrostTask implements Callable<Executable>
 	private final LanguageManager languageManager;
 
 	/**
-	 * Whether to compile executables.
+	 * Whether to prepare executables.
 	 */
-	private final boolean allowCompilation;
+	private final boolean prepare;
 }

@@ -11,8 +11,14 @@
 
 package com.threecrickets.scripturian.exception;
 
+import com.threecrickets.scripturian.Executable;
+
 /**
+ * A preparation exception. Can occur during the construction phase of an
+ * executable.
+ * 
  * @author Tal Liron
+ * @see Executable
  */
 public class PreparationException extends ParsingException
 {
