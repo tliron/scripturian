@@ -43,42 +43,78 @@
 
 		<h3>Python</h3>
 		<p>
-			Two implementations exist for Python: <a href="http://www.jython.org/">Jython</a> and <a href="http://jepp.sourceforge.net/">Jepp</a>.
-			The former is 100% Java, while the latter uses a Java bridge to a natively compiled CPython of your choice, and is generally more complicated to install.
+			Two implementations exist for Python on the JVM: <a href="http://www.jython.org/">Jython</a> and <a href="http://jepp.sourceforge.net/">Jepp</a>.
+			The former is 100% Java, while the latter uses a Java bridge to a natively compiled CPython of your choice, and is generally more complicated to install
+			and performs poorly.
 		</p>
 		<p>
-			Jython requires a small library for
-			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
-			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. (This was true for version 2.2.1.)
-			See the <a href="requirements.html">requirement notes</a> if you are using Java 5.
+			Jython 2.5.2 is supported via its JSR-223 interface, with some fixes for odd behavior.
+			Compilation to byetcode is supported, though it is currently cached to memory and thus executables are re-compiled every time
+			the JVM is restarted.
+		</p>
+		<p class="note">
+			Though 2.5.2 is not yet available at the time of this writing, you can
+			get a recent snapshot.
+			Unfortunately, Jython 2.5.1 could not support Scripturian's threading model over JSR-223. We are grateful to the Jython team for accepting
+			a patch we submitted to fix it!
+		</p>
+		<p>
+			Jepp is supported via its JSR-223 interface. It does not support invocation of entry points.
 		</p>
 		
 		<h3>Ruby</h3>
 		<p>
-			Ruby is implemented by <a href="http://jruby.codehaus.org/">JRuby</a>. Note that you also need a small library for
-			<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>, which is available 
-			at the <a href="https://scripting.dev.java.net/">Java scripting project</a>. (This was true for version 1.3.1.)
-			See the <a href="requirements.html">requirement notes</a> if you are using Java 5.
-		</p> 
-		
-		<h3>Groovy and Clojure</h3>
-		<p>
-			Both <a href="http://groovy.codehaus.org/">Groovy</a> and <a href="http://clojure.org/">Clojure</a>
-			are designed for the JVM.
+			Ruby is implemented by <a href="http://jruby.codehaus.org/">JRuby</a> over our custom interface.
+			Version 1.4 is supported.
+			Compilation to byetcode is supported, though it is currently cached to memory and thus executables are re-compiled every time
+			the JVM is restarted.
 		</p>
+		<p>
+			JRuby comes with JSR-223 support, and configurable threading models. However, after considerable experimentation, we found all of them incompatible
+			with Scripturian's requirements, and so devised our own adapter. Ours is based on creating separate JRuby
+			runtimes per execution context, with a trick to allow changing the standard output and standard error and thus reusing the runtime.
+		</p>
+		<p class="note">
+			You will need a snapshot of JRuby 1.5 if you wish to combine JRuby and Jython on the same VM.
+			We are grateful to the JRuby team for accommodating our request to allow this, and cooperating
+			with the Jython team to make it happen!
+		</p>
+		
+		<h3>Groovy</h3>
+		<p>
+			<a href="http://groovy.codehaus.org/">Groovy</a> is designed for the JVM and works quite transparently via its built-in JSR-223 interface.
+		</p>
+
+		<h3>Clojure</h3>
+		<p>
+			<a href="http://clojure.org/">Clojure</a> is designed for the JVM and implemented via our custom interface. Our implementation involves
+			creating lightweight namespaces on-the-fly for each execution context. Clojure compilation to JVM bytecode is not supported, but
+	 		it remains an open question, too, whether this would significantly
+	 		improve performance. Clojure's highly dynamic nature would make compiled
+	 		code quite uninteresting. It's likely that the JVM's optimization would
+	 		work just as well on "interpreted" Clojure.
+		</p>
+		<p>
+			A <a href="http://code.google.com/p/clojure-jsr223/">JSR-223 interface</a> exists, but we found it unusable for Scripturian's
+			concurrency requirements.
+		</p>
+
+	</td>
+	<td width="50%">
 
 		<h3>PHP</h3>
 		<p>
-			PHP5 is implemented by Caucho's <a href="http://quercus.caucho.com/">Quercus</a>.
+			PHP5 is implemented by Caucho's <a href="http://quercus.caucho.com/">Quercus</a>. Note that Quercus license is GPL, which puts limitations
+			on your ability to distribute it with your product.
+		</p>
+		<p>
+			Scripturian support is over Quercus' included JSR-223 interface. It does not support invocation of entry points.
 		</p>
 		<p class="note">
 			Note that Scripturian
 			replaces PHP's scriptlet scheme with its own. Usage and performance should be identical, but Scripturian's scheme is more powerful than PHP's,
 			because it allows for mixing languages in one file.
 		</p>
-
-	</td>
-	<td width="50%">
 
 		<h3>JavaScript</h3>
 		<p>
