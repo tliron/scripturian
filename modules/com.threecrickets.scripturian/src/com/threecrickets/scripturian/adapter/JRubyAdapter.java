@@ -18,11 +18,15 @@ import java.util.Map;
 import org.jruby.NativeException;
 import org.jruby.Ruby;
 import org.jruby.RubyException;
+import org.jruby.RubyInstanceConfig;
+import org.jruby.RubyInstanceConfig.CompileMode;
+import org.jruby.ast.executable.Script;
 import org.jruby.embed.io.WriterOutputStream;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.javasupport.JavaUtil;
 import org.jruby.runtime.Constants;
 import org.jruby.runtime.builtin.IRubyObject;
+import org.jruby.util.ClassCache;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -49,11 +53,35 @@ public class JRubyAdapter extends LanguageAdapterBase
 	public JRubyAdapter() throws LanguageAdapterException
 	{
 		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), "rb", Arrays.asList( "ruby", "jruby" ), "ruby" );
+
+		RubyInstanceConfig config = new RubyInstanceConfig();
+		config.setClassCache( getRubyClassCache() );
+		config.setCompileMode( CompileMode.OFF );
+		compilerRuntime = Ruby.newInstance( config );
 	}
 
 	//
 	// Static operations
 	//
+
+	/**
+	 * The class cache shared between all Ruby runtime instances
+	 * 
+	 * @return The class cache
+	 */
+	@SuppressWarnings("unchecked")
+	public ClassCache<Script> getRubyClassCache()
+	{
+		ClassCache<Script> classCache = (ClassCache<Script>) getAttributes().get( JRUBY_CLASS_CACHE );
+		if( classCache == null )
+		{
+			classCache = new ClassCache<Script>( ClassLoader.getSystemClassLoader(), 4096 );
+			ClassCache<Script> existing = (ClassCache<Script>) getAttributes().put( JRUBY_CLASS_CACHE, classCache );
+			if( existing != null )
+				classCache = existing;
+		}
+		return classCache;
+	}
 
 	/**
 	 * Gets a Ruby runtime isntance stored in the execution context, creating it
@@ -64,7 +92,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 	 *        The execution context
 	 * @return The Ruby runtime
 	 */
-	public static Ruby getRubyRuntime( ExecutionContext executionContext )
+	public Ruby getRubyRuntime( ExecutionContext executionContext )
 	{
 		Ruby rubyRuntime = (Ruby) executionContext.getAttributes().get( JRUBY_RUNTIME );
 		SwitchableOutputStream switchableOut = (SwitchableOutputStream) executionContext.getAttributes().get( JRUBY_OUT );
@@ -79,7 +107,15 @@ public class JRubyAdapter extends LanguageAdapterBase
 			switchableOut = new SwitchableOutputStream( new WriterOutputStream( executionContext.getWriter() ) );
 			switchableErr = new SwitchableOutputStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
 
-			rubyRuntime = Ruby.newInstance( System.in, new PrintStream( switchableOut ), new PrintStream( switchableErr ) );
+			// System.setProperty( "jruby.jit.cache", "true" );
+			// System.setProperty( "jruby.jit.codeCache", "ttt" );
+
+			RubyInstanceConfig config = new RubyInstanceConfig();
+			config.setClassCache( getRubyClassCache() );
+			config.setCompileMode( CompileMode.OFF );
+			config.setOutput( new PrintStream( switchableOut ) );
+			config.setError( new PrintStream( switchableErr ) );
+			rubyRuntime = Ruby.newInstance( config );
 			executionContext.getAttributes().put( JRUBY_RUNTIME, rubyRuntime );
 			executionContext.getAttributes().put( JRUBY_OUT, switchableOut );
 			executionContext.getAttributes().put( JRUBY_ERR, switchableErr );
@@ -158,9 +194,9 @@ public class JRubyAdapter extends LanguageAdapterBase
 		return "$" + executable.getExposedExecutableName() + ".container.include_document(" + expression + ");";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new JRubyScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );
+		return new JRubyScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
@@ -180,12 +216,25 @@ public class JRubyAdapter extends LanguageAdapterBase
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
+	// Protected
+
+	/**
+	 * A shared Ruby runtime instance used only for compilation.
+	 */
+	protected final Ruby compilerRuntime;
+
+	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	/**
 	 * The Ruby runtime instance attribute.
 	 */
 	private static final String JRUBY_RUNTIME = "jruby.rubyRuntime";
+
+	/**
+	 * The Ruby class cache attribute.
+	 */
+	private static final String JRUBY_CLASS_CACHE = "jruby.classCache";
 
 	/**
 	 * The switchable standard output attribute for the Ruby runtime.

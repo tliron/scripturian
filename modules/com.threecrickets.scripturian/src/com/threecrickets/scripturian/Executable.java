@@ -152,7 +152,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * <p>
  * The "executable" variable is exposed to your executable with some useful
  * services (this name can be changed via the
- * {@link #Executable(String, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
+ * {@link #Executable(String, String, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
@@ -227,7 +227,9 @@ public class Executable
 	 * to be available in the language manager.
 	 * 
 	 * @param documentName
+	 *        The document name
 	 * @param documentSource
+	 *        The document source
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
 	 * @param languageManager
@@ -249,7 +251,7 @@ public class Executable
 		boolean prepare ) throws ParsingException, IOException
 	{
 		DocumentDescriptor<Executable> documentDescriptor = documentSource.getDocument( documentName );
-		createOnce( documentDescriptor, isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
+		createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
 		return documentDescriptor;
 	}
 
@@ -261,6 +263,8 @@ public class Executable
 	 * 
 	 * @param documentDescriptor
 	 *        The document descriptor
+	 * @param partition
+	 *        The executable partition
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
 	 * @param languageManager
@@ -276,13 +280,13 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare )
+	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare )
 		throws ParsingException
 	{
 		Executable executable = documentDescriptor.getDocument();
 		if( executable == null )
 		{
-			executable = new Executable( documentDescriptor, isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
+			executable = new Executable( documentDescriptor, partition, isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
 			Executable existing = documentDescriptor.setDocumentIfAbsent( executable );
 			if( existing != null )
 				executable = existing;
@@ -301,6 +305,8 @@ public class Executable
 	 * 
 	 * @param documentDescriptor
 	 *        The document descriptor
+	 * @param partition
+	 *        The executable partition
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
 	 * @param languageManager
@@ -315,9 +321,10 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare ) throws ParsingException
+	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare )
+		throws ParsingException
 	{
-		this( documentDescriptor.getDefaultName(), documentDescriptor.getSourceCode(), isTextWithScriptlets, languageManager, languageManager.getLanguageTagByExtension( documentDescriptor.getDefaultName(),
+		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getSourceCode(), isTextWithScriptlets, languageManager, languageManager.getLanguageTagByExtension( documentDescriptor.getDefaultName(),
 			documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
 	}
 
@@ -327,7 +334,9 @@ public class Executable
 	 * available in the language manager.
 	 * 
 	 * @param documentName
-	 *        Name used for error messages
+	 *        The document name
+	 * @param partition
+	 *        The executable partition
 	 * @param sourceCode
 	 *        The source code -- when {@code isTextWithScriptlets} is false,
 	 *        it's considered as pure source code in the language defined by
@@ -350,10 +359,10 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( String documentName, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare )
-		throws ParsingException
+	public Executable( String documentName, String partition, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource,
+		boolean prepare ) throws ParsingException
 	{
-		this( documentName, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
+		this( documentName, partition, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
 			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
@@ -363,7 +372,9 @@ public class Executable
 	 * available in the language manager.
 	 * 
 	 * @param documentName
-	 *        Name used for error messages
+	 *        The document name
+	 * @param partition
+	 *        The executable partition
 	 * @param sourceCode
 	 *        The source code -- when {@code isTextWithScriptlets} is false,
 	 *        it's considered as pure source code in the language defined by
@@ -406,11 +417,12 @@ public class Executable
 	 *         In case of a parsing or compilation error
 	 * @see LanguageAdapter
 	 */
-	public Executable( String documentName, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource, boolean prepare,
-		String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude, String delimiterInFlow )
-		throws ParsingException
+	public Executable( String documentName, String partition, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource,
+		boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude,
+		String delimiterInFlow ) throws ParsingException
 	{
 		this.documentName = documentName;
+		this.partition = partition;
 		this.exposedExecutableName = exposedExecutableName;
 
 		if( !isTextWithScriptlets )
@@ -559,8 +571,8 @@ public class Executable
 							// Note that the in-flow executable is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName, delimiterStart, delimiterEnd,
-								delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
+							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName, delimiterStart,
+								delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
 							// TODO: would it ever be possible to remove the
@@ -659,10 +671,14 @@ public class Executable
 			previous = current;
 		}
 
-		// Create scriptlets
+		// Update positions and create scriptlets
+		int position = 0;
 		for( ExecutableSegment segment : segments )
+		{
+			segment.position = position++;
 			if( segment.isScriptlet )
 				segment.createScriptlet( this, languageManager, prepare );
+		}
 
 		// Flatten list into array
 		this.segments = new ExecutableSegment[segments.size()];
@@ -674,13 +690,23 @@ public class Executable
 	//
 
 	/**
-	 * The document name, used for debugging and logging.
+	 * The executable's document name.
 	 * 
 	 * @return The document name
 	 */
 	public String getDocumentName()
 	{
 		return documentName;
+	}
+
+	/**
+	 * The executable partition.
+	 * 
+	 * @return The executable partition
+	 */
+	public String getPartition()
+	{
+		return partition;
 	}
 
 	/**
@@ -974,7 +1000,12 @@ public class Executable
 	private static final AtomicInteger inFlowCounter = new AtomicInteger();
 
 	/**
-	 * The executable's document name, used for debug messages.
+	 * The executable's partition.
+	 */
+	private final String partition;
+
+	/**
+	 * The executable's document name.
 	 */
 	private final String documentName;
 

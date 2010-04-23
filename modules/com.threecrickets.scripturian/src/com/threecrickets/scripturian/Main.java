@@ -95,7 +95,7 @@ public class Main implements Runnable
 		this.arguments = arguments;
 
 		manager = new LanguageManager();
-		prepare = false;
+		prepare = true;
 		defaultDocumentName = "default";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
@@ -122,7 +122,7 @@ public class Main implements Runnable
 	 * 
 	 * @return The language manager
 	 */
-	public LanguageManager getLanguageManager()
+	public LanguageManager getManager()
 	{
 		return manager;
 	}

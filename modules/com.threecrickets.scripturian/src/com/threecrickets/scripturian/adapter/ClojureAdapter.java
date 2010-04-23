@@ -146,9 +146,9 @@ public class ClojureAdapter extends LanguageAdapterBase
 		return "(.. " + executable.getExposedExecutableName() + " getContainer (includeDocument " + expression + "))";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new ClojureScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );
+		return new ClojureScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException

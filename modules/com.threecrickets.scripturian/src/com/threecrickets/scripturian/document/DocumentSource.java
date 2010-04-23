@@ -77,4 +77,6 @@ public interface DocumentSource<D>
 	 * @throws UnsupportedOperationException
 	 */
 	public Collection<DocumentDescriptor<D>> getDocuments();
+
+	public String getIdentifier();
 }

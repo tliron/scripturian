@@ -31,7 +31,7 @@ import com.threecrickets.scripturian.exception.PreparationException;
  * 
  * @author Tal Liron
  */
-public class Jsr223Scriptlet extends ScriptletBase
+public class Jsr223Scriptlet extends ScriptletBase<Jsr223LanguageAdapter>
 {
 	//
 	// Construction
@@ -42,19 +42,20 @@ public class Jsr223Scriptlet extends ScriptletBase
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param position
+	 *        The scriptlet position in the document
 	 * @param startLineNumber
 	 *        The start line number
 	 * @param startColumnNumber
 	 *        The start column number
-	 * @param languageAdapter
-	 *        The language adapter
 	 * @param executable
 	 *        The executable
+	 * @param adapter
+	 *        The language adapter
 	 */
-	public Jsr223Scriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Jsr223LanguageAdapter languageAdapter, Executable executable )
+	public Jsr223Scriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, Jsr223LanguageAdapter adapter )
 	{
-		super( sourceCode, startLineNumber, startColumnNumber, executable );
-		this.languageAdapter = languageAdapter;
+		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//
@@ -63,9 +64,9 @@ public class Jsr223Scriptlet extends ScriptletBase
 
 	public void prepare() throws PreparationException
 	{
-		if( languageAdapter.isCompilable() )
+		if( adapter.isCompilable() )
 		{
-			ScriptEngine scriptEngine = languageAdapter.getStaticScriptEngine();
+			ScriptEngine scriptEngine = adapter.getStaticScriptEngine();
 			if( scriptEngine instanceof Compilable )
 			{
 				try
@@ -74,7 +75,7 @@ public class Jsr223Scriptlet extends ScriptletBase
 				}
 				catch( ScriptException x )
 				{
-					String scriptEngineName = (String) languageAdapter.getAttributes().get( Jsr223LanguageAdapter.JSR223_SCRIPT_ENGINE_NAME );
+					String scriptEngineName = (String) adapter.getAttributes().get( Jsr223LanguageAdapter.JSR223_SCRIPT_ENGINE_NAME );
 					throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, "Compilation error in " + scriptEngineName, x );
 				}
 			}
@@ -83,13 +84,13 @@ public class Jsr223Scriptlet extends ScriptletBase
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		ScriptEngine scriptEngine = languageAdapter.getScriptEngine( executable, executionContext );
+		ScriptEngine scriptEngine = adapter.getScriptEngine( executable, executionContext );
 		ScriptContext scriptContext = Jsr223LanguageAdapter.getScriptContext( executionContext );
 
 		Object value;
 		try
 		{
-			languageAdapter.beforeCall( scriptEngine, executionContext );
+			adapter.beforeCall( scriptEngine, executionContext );
 
 			if( compiledScript != null )
 				value = compiledScript.eval( scriptContext );
@@ -101,7 +102,7 @@ public class Jsr223Scriptlet extends ScriptletBase
 				// mean only one line of code.
 				value = scriptEngine.eval( new StringReader( sourceCode ), scriptContext );
 
-			if( ( value != null ) && languageAdapter.isPrintOnEval() )
+			if( ( value != null ) && adapter.isPrintOnEval() )
 				executionContext.getWriter().write( value.toString() );
 		}
 		catch( ScriptException x )
@@ -116,17 +117,12 @@ public class Jsr223Scriptlet extends ScriptletBase
 		}
 		finally
 		{
-			languageAdapter.afterCall( scriptEngine, executionContext );
+			adapter.afterCall( scriptEngine, executionContext );
 		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	/**
-	 * The language adapter.
-	 */
-	private final Jsr223LanguageAdapter languageAdapter;
 
 	/**
 	 * The compiled script.

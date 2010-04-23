@@ -74,6 +74,11 @@ public class ExecutableSegment
 	public String sourceCode;
 
 	/**
+	 * The scriptlet position in the document.
+	 */
+	public int position = 0;
+
+	/**
 	 * The start line number.
 	 */
 	public int startLineNumber;
@@ -115,7 +120,7 @@ public class ExecutableSegment
 		if( adapter == null )
 			throw ParsingException.adapterNotFound( executable.getDocumentName(), startLineNumber, startColumnNumber, languageTag );
 
-		scriptlet = adapter.createScriptlet( sourceCode, startLineNumber, startColumnNumber, executable );
+		scriptlet = adapter.createScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable );
 
 		if( prepare )
 			scriptlet.prepare();

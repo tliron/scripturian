@@ -18,15 +18,45 @@ import com.threecrickets.scripturian.LanguageAdapter;
  * 
  * @author Tal Liron
  */
-public class LanguageAdapterException extends Exception
+public class LanguageAdapterException extends ParsingException
 {
 	//
 	// Construction
 	//
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String message )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, int lineNumber, int columnNumber, String message )
 	{
-		super( message );
+		super( documentName, lineNumber, columnNumber, message );
+		this.language = language;
+	}
+
+	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
+	{
+		super( documentName, lineNumber, columnNumber, message, cause );
+		this.language = language;
+	}
+
+	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, int lineNumber, int columnNumber, Throwable cause )
+	{
+		super( documentName, lineNumber, columnNumber, cause );
+		this.language = language;
+	}
+
+	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, String message, Throwable cause )
+	{
+		super( documentName, message, cause );
+		this.language = language;
+	}
+
+	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, String message )
+	{
+		super( documentName, message );
+		this.language = language;
+	}
+
+	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String message, Throwable cause )
+	{
+		super( message, cause );
 		this.language = language;
 	}
 
@@ -36,9 +66,9 @@ public class LanguageAdapterException extends Exception
 		this.language = language;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String message, Throwable cause )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String message )
 	{
-		super( message, cause );
+		super( message );
 		this.language = language;
 	}
 

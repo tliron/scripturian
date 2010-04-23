@@ -103,7 +103,7 @@ public class ExposedContainerForMain
 	 */
 	public void include( String documentName ) throws IOException, ParsingException, ExecutionException
 	{
-		Executable executable = Executable.createOnce( documentName, main.getSource(), false, main.getLanguageManager(), defaultLanguageTag, false ).getDocument();
+		Executable executable = Executable.createOnce( documentName, main.getSource(), false, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
 		executable.execute( executionContext, this, main.getExecutionController() );
 	}
 
@@ -119,7 +119,7 @@ public class ExposedContainerForMain
 	 */
 	public void includeDocument( String documentName ) throws IOException, ParsingException, ExecutionException
 	{
-		Executable executable = Executable.createOnce( documentName, main.getSource(), true, main.getLanguageManager(), defaultLanguageTag, false ).getDocument();
+		Executable executable = Executable.createOnce( documentName, main.getSource(), true, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
 		executable.execute( executionContext, this, main.getExecutionController() );
 	}
 

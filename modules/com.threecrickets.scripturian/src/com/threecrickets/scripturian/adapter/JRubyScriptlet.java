@@ -11,10 +11,18 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import org.jruby.Ruby;
 import org.jruby.ast.Node;
 import org.jruby.ast.executable.Script;
+import org.jruby.compiler.ASTCompiler;
+import org.jruby.compiler.ASTInspector;
+import org.jruby.compiler.impl.StandardASMCompiler;
 import org.jruby.exceptions.RaiseException;
+import org.jruby.util.JRubyClassLoader;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -25,7 +33,7 @@ import com.threecrickets.scripturian.exception.PreparationException;
 /**
  * @author Tal Liron
  */
-class JRubyScriptlet extends ScriptletBase
+class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 {
 	//
 	// Construction
@@ -36,21 +44,54 @@ class JRubyScriptlet extends ScriptletBase
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param position
+	 *        The scriptlet position in the document
 	 * @param startLineNumber
 	 *        The start line number
 	 * @param startColumnNumber
 	 *        The start column number
 	 * @param executable
 	 *        The executable
+	 * @param adapter
+	 *        The language adapter
 	 */
-	public JRubyScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable )
+	public JRubyScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, JRubyAdapter adapter )
 	{
-		super( sourceCode, startLineNumber, startColumnNumber, executable );
+		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//
 	// Scriptlet
 	//
+
+	private File getClassFileForDocument()
+	{
+		String filename = executable.getPartition() + executable.getDocumentName();
+		int lastDot = filename.lastIndexOf( '.' );
+		if( lastDot != -1 )
+			filename = filename.substring( 0, lastDot );
+		filename = filename.replace( ".", "_" );
+		filename += "_" + position + ".class";
+		File file = new File( new File( "cache/ruby" ), filename );
+		//System.out.println( file.getPath() );
+		return file;
+	}
+
+	private static String getClassNameForFile( File file )
+	{
+		String className = file.getPath().replace( '/', '.' );
+		// Remove ".class"
+		className = className.substring( 0, className.length() - 6 );
+		return className;
+	}
+
+	private static String getFixedClassNameForFile( File file )
+	{
+		String className = file.getPath();
+		// Remove ".class"
+		className = className.substring( 0, className.length() - 6 );
+		return className;
+	}
 
 	public void prepare() throws PreparationException
 	{
@@ -60,8 +101,38 @@ class JRubyScriptlet extends ScriptletBase
 			// one we will run in. It's unclear what the repercussions of
 			// this would be, but we haven't detected any trouble yet.
 
-			Node node = compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), compilerRuntime.getCurrentContext().getCurrentScope(), startLineNumber - 1 );
-			script = compilerRuntime.tryCompile( node );
+			File file = getClassFileForDocument();
+			String className = getClassNameForFile( file );
+
+			/*
+			 * if( file.exists() ) { // Use cached compiled code byte[]
+			 * classByteArray = ScripturianUtil.getBytes( file );
+			 * JRubyClassLoader classLoader = new JRubyClassLoader(
+			 * compilerRuntime.getJRubyClassLoader() ); classLoader.defineClass(
+			 * className, classByteArray ); Class<?> scriptClass =
+			 * classLoader.loadClass( className ); script = (Script)
+			 * scriptClass.newInstance(); } else
+			 */
+			{
+				Node node = adapter.compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), adapter.compilerRuntime.getCurrentContext().getCurrentScope(), startLineNumber - 1 );
+
+				ASTInspector astInspector = new ASTInspector();
+				ASTCompiler astCompiler = adapter.compilerRuntime.getInstanceConfig().newCompiler();
+				StandardASMCompiler asmCompiler = new StandardASMCompiler( getFixedClassNameForFile( file ), executable.getDocumentName() );
+				JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+
+				astInspector.inspect( node );
+				astCompiler.compileRoot( node, asmCompiler, astInspector, true, false );
+				script = (Script) asmCompiler.loadClass( classLoader ).newInstance();
+
+				// Cache it!
+				file.getParentFile().mkdirs();
+				FileOutputStream stream = new FileOutputStream( file );
+				stream.write( asmCompiler.getClassByteArray() );
+				stream.close();
+
+				// script = compilerRuntime.tryCompile( node );
+			}
 		}
 		catch( RaiseException x )
 		{
@@ -75,11 +146,27 @@ class JRubyScriptlet extends ScriptletBase
 
 			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
 		}
+		catch( InstantiationException x )
+		{
+			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+		}
+		catch( IllegalAccessException x )
+		{
+			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+		}
+		catch( ClassNotFoundException x )
+		{
+			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+		}
+		catch( IOException x )
+		{
+			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+		}
 	}
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		Ruby rubyRuntime = JRubyAdapter.getRubyRuntime( executionContext );
+		Ruby rubyRuntime = adapter.getRubyRuntime( executionContext );
 
 		try
 		{
@@ -103,11 +190,6 @@ class JRubyScriptlet extends ScriptletBase
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	/**
-	 * A shared Ruby runtime instance used only for compilation.
-	 */
-	private static final Ruby compilerRuntime = Ruby.newInstance();
 
 	/**
 	 * The compiled script.

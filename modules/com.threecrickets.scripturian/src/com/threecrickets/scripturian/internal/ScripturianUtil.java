@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -85,6 +86,48 @@ public abstract class ScripturianUtil
 	{
 		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFER_SIZE );
 		return getString( reader );
+	}
+
+	/**
+	 * Reads a file into a bute array.
+	 * 
+	 * @param file
+	 *        The file
+	 * @return The byte array
+	 * @throws IOException
+	 */
+	public static byte[] getBytes( File file ) throws IOException
+	{
+		InputStream is = new FileInputStream( file );
+
+		// Get the size of the file
+		long length = file.length();
+
+		if( length > Integer.MAX_VALUE )
+		{
+			// File is too large
+		}
+
+		// Create the byte array to hold the data
+		byte[] bytes = new byte[(int) length];
+
+		// Read in the bytes
+		int offset = 0;
+		int numRead = 0;
+		while( offset < bytes.length && ( numRead = is.read( bytes, offset, bytes.length - offset ) ) >= 0 )
+		{
+			offset += numRead;
+		}
+
+		// Ensure all the bytes have been read in
+		if( offset < bytes.length )
+		{
+			throw new IOException( "Could not completely read file " + file.getName() );
+		}
+
+		// Close the input stream and return bytes
+		is.close();
+		return bytes;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

@@ -507,7 +507,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return getExpressionAsInclude( executable, scriptEngine, expression );
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
 		// Add header
 		String header = getScriptletHeader( executable, scriptEngine );
@@ -519,7 +519,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		if( footer != null )
 			sourceCode += footer;
 
-		return new Jsr223Scriptlet( sourceCode, startLineNumber, startColumnNumber, this, executable );
+		return new Jsr223Scriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException

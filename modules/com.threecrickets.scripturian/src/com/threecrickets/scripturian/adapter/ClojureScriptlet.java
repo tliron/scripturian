@@ -41,7 +41,7 @@ import com.threecrickets.scripturian.exception.StackFrame;
 /**
  * @author Tal Liron
  */
-public class ClojureScriptlet extends ScriptletBase
+public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
 {
 	//
 	// Construction
@@ -52,16 +52,20 @@ public class ClojureScriptlet extends ScriptletBase
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param position
+	 *        The scriptlet position in the document
 	 * @param startLineNumber
 	 *        The start line number
 	 * @param startColumnNumber
 	 *        The start column number
 	 * @param executable
 	 *        The executable
+	 * @param adapter
+	 *        The language adapter
 	 */
-	public ClojureScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable )
+	public ClojureScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, ClojureAdapter adapter )
 	{
-		super( sourceCode, startLineNumber, startColumnNumber, executable );
+		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//

@@ -73,6 +73,16 @@ public class ParsingException extends Exception
 		super( message != null ? message : cause.getClass().getName(), cause );
 	}
 
+	public ParsingException( String message )
+	{
+		super( message );
+	}
+
+	public ParsingException( Throwable cause )
+	{
+		super( cause );
+	}
+
 	//
 	// Attributes
 	//

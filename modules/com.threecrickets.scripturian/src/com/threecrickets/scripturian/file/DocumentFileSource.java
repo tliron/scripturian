@@ -29,6 +29,9 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 /**
  * Reads document stored in files under a base directory. The file contents are
  * cached, and checked for validity according to their modification timestamps.
+ * <p>
+ * Documents added to the file source exist only in memory, and are not actually
+ * saved to a file.
  * 
  * @author Tal Liron
  */
@@ -105,6 +108,29 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return defaultName;
 	}
 
+	/**
+	 * Attempts to call {@link #getDocument(String)} for a specific name within
+	 * less than this time from the previous call will return the cached
+	 * descriptor without checking if it is valid. A value of -1 disables all
+	 * validity checking.
+	 * 
+	 * @return The minimum time between validity checks in milliseconds
+	 * @see #setMinimumTimeBetweenValidityChecks(long)
+	 */
+	public long getMinimumTimeBetweenValidityChecks()
+	{
+		return minimumTimeBetweenValidityChecks.get();
+	}
+
+	/**
+	 * @param minimumTimeBetweenValidityChecks
+	 * @see #getMinimumTimeBetweenValidityChecks()
+	 */
+	public void setMinimumTimeBetweenValidityChecks( long minimumTimeBetweenValidityChecks )
+	{
+		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
+	}
+
 	//
 	// DocumentSource
 	//
@@ -166,7 +192,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, document ) );
 	}
 
-	/***
+	/**
 	 * @see DocumentSource#getDocuments()
 	 */
 	public Collection<DocumentDescriptor<D>> getDocuments()
@@ -174,31 +200,12 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return getDocumentDescriptors( basePath );
 	}
 
-	//
-	// Attributes
-	//
-
 	/**
-	 * Attempts to call {@link #getDocument(String)} for a specific name within
-	 * less than this time from the previous call will return the cached
-	 * descriptor without checking if it is valid. A value of -1 disables all
-	 * validity checking.
-	 * 
-	 * @return The minimum time between validity checks in milliseconds
-	 * @see #setMinimumTimeBetweenValidityChecks(long)
+	 * @see com.threecrickets.scripturian.document.DocumentSource#getIdentifier()
 	 */
-	public long getMinimumTimeBetweenValidityChecks()
+	public String getIdentifier()
 	{
-		return minimumTimeBetweenValidityChecks.get();
-	}
-
-	/**
-	 * @param minimumTimeBetweenValidityChecks
-	 * @see #getMinimumTimeBetweenValidityChecks()
-	 */
-	public void setMinimumTimeBetweenValidityChecks( long minimumTimeBetweenValidityChecks )
-	{
-		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
+		return basePath.toString();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

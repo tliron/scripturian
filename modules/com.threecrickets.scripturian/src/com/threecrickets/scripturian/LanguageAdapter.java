@@ -144,6 +144,8 @@ public interface LanguageAdapter
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param position
+	 *        The scriptlet position in the document
 	 * @param startLineNumber
 	 *        The line number in the document for where this source code begins
 	 * @param startColumnNumber
@@ -154,7 +156,7 @@ public interface LanguageAdapter
 	 * @return A scriptlet
 	 * @throws ParsingException
 	 */
-	public Scriptlet createScriptlet( String sourceCode, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException;
+	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException;
 
 	/**
 	 * Invokes an entry point in an executable.
