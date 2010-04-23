@@ -71,14 +71,64 @@ public class ExposedExecutable
 	}
 
 	/**
-	 * This {@link ConcurrentMap} provides a convenient location for global
-	 * state shared by all executables.
+	 * A map of all values global to the current VM.
 	 * 
-	 * @return The values
+	 * @return The globals
 	 */
-	public ConcurrentMap<String, Object> getMeta()
+	public ConcurrentMap<String, Object> getGlobals()
 	{
-		return MetaScope.getInstance().getValues();
+		return GlobalScope.getInstance().getAttributes();
+	}
+
+	/**
+	 * Gets a value global to the current VM.
+	 * 
+	 * @param name
+	 *        The name of the global
+	 * @return The global's current value
+	 */
+	public Object getGlobal( String name )
+	{
+		return getGlobal( name, null );
+	}
+
+	/**
+	 * Gets a value global to the current VM, atomically setting it to a default
+	 * value if it doesn't exist.
+	 * 
+	 * @param name
+	 *        The name of the global
+	 * @param defaultValue
+	 *        The default value
+	 * @return The global's current value
+	 */
+	public Object getGlobal( String name, Object defaultValue )
+	{
+		ConcurrentMap<String, Object> attributes = GlobalScope.getInstance().getAttributes();
+		Object value = attributes.get( name );
+		if( ( value == null ) && ( defaultValue != null ) )
+		{
+			value = defaultValue;
+			Object existing = attributes.putIfAbsent( name, value );
+			if( existing != null )
+				value = existing;
+		}
+		return value;
+	}
+
+	/**
+	 * Sets the value global to the current VM.
+	 * 
+	 * @param name
+	 *        The name of the global
+	 * @param value
+	 *        The global's new value
+	 * @return The global's previous value
+	 */
+	public Object setGlobal( String name, Object value )
+	{
+		ConcurrentMap<String, Object> attributes = GlobalScope.getInstance().getAttributes();
+		return attributes.put( name, value );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
