@@ -53,7 +53,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * <p>
  * Usage is divided into three phases: creation, execution and invocation.
  * <p>
- * 1. <b>Creation.</b> In this phase, the source code is parsed and possibly
+ * <b>1. Creation.</b> In this phase, the source code is parsed and possibly
  * otherwise analyzed for errors by the language implementation. The intent is
  * for the implementation to perform the bare minimum required for detecting
  * errors in the source code.
@@ -73,12 +73,12 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * The "text-with-scriptlets" functionality is implemented entirely in this
  * class, and does not have to explicitly supported by language implementations.
  * <p>
- * 2. <b>Execution.</b> This phase uses an {@link ExecutionContext} for passing
+ * <b>2. Execution.</b> This phase uses an {@link ExecutionContext} for passing
  * state between the user and the executable, as well as maintaining
  * implementation-specific state. Concurrent reuse is allowed as long as each
  * calling thread uses its own context.
  * <p>
- * 3. <b>Invocation.</b> This phase allows fine-grained execution via
+ * <b>3. Invocation.</b> This phase allows fine-grained execution via
  * well-defined "entry points" in the executable. Depending on the language
  * implementation, invocation can mean calling a function, method, closure or
  * macro, or sending a network request. This phase follow a special execution
@@ -92,7 +92,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * Depending on the language implementation, invocation can involve better
  * performance than execution due to the use of a single execution context.
  * <p>
- * <h2>More on "text-with-scriptlets" executables</h2>
+ * <h3>"Text-with-scriptlets" executables</h3>
  * <p>
  * During the creation phase, the entire source code document is converted into
  * pure source code. When the code is executed, the non-scriptlet text segments
