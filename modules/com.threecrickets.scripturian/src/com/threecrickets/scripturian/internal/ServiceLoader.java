@@ -119,7 +119,7 @@ public class ServiceLoader<S> implements Iterable<S>
 						catch( ClassNotFoundException x )
 						{
 						}
-						catch( Exception x )
+						catch( Throwable x )
 						{
 						}
 					}
