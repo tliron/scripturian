@@ -42,13 +42,15 @@
 
 <h2>About Scripturian</h2>
 <p>
-Scripturian is an open source library that makes it easy to integrate programming and templating languages into your JVM-based software:
+Scripturian is an open source library that makes it easy to integrate various programming and templating languages into your JVM-based software.
+It is designed from the ground-up for high performance concurrent execution, and as such offers a scalable alternative to the
+<a href="http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/">Java scripting standard (JSR-223)</a>.
 </p>
 
 		<p align="center">
 			<img src="images/kitten.png">
 		</p>
-<h3>1. Embed Scriptlets Into Text Documents</h3>
+<h3>1. "Text-with-scriptlets"</h3>
 <p>
 Scripturian <a href="http://threecrickets.com/scripturian/api/index.html?com/threecrickets/scripturian/Exeuctable.html">executables</a>
 allow you to mix plain text and "scriptlets," in the style of PHP, JSP and ASP. This can serve as a powerful
@@ -56,10 +58,10 @@ templating solution for generating text and textual formats, such as HTML and XM
 mixing scriptlets of multiple programming and templating languages in a single document.
 </p>
 
-<h3>2. Automatic Configuration and Starting of Language Engines</h3>
+<h3>2. Automatic Configuration and Starting of Language Implementations</h3>
 <p>
-Scripturian does it all for you. For example, any document
-with <span style="font-family: monospace;">&lt;%python</span> at the beginning will start the Jython engine and run the code.
+Scripturian does it all for you. For example, any file with a ".py" extension, or any scriptlet that starts with <span style="font-family: monospace;">&lt;%python</span>
+will start the Jython engine and run the code.
 It's a straightforward equivalent of the <span style="font-family: monospace;">#!/</span> used by shells.
 </p>
 
