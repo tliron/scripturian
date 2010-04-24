@@ -64,6 +64,12 @@ public class ExecutionException extends Exception
 		super( message != null ? message : cause.getClass().getName(), cause );
 	}
 
+	public ExecutionException( ParsingException parsingException )
+	{
+		this( parsingException.getCause() != null ? parsingException.getCause().getMessage() : parsingException.getMessage(), parsingException );
+		stack.addAll( parsingException.getStack() );
+	}
+
 	//
 	// Attributes
 	//

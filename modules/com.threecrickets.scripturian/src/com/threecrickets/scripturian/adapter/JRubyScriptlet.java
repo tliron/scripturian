@@ -29,6 +29,7 @@ import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.PreparationException;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * @author Tal Liron
@@ -67,17 +68,15 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 	private File getClassFileForDocument()
 	{
 		String filename = executable.getPartition() + executable.getDocumentName();
-		int lastDot = filename.lastIndexOf( '.' );
-		if( lastDot != -1 )
-			filename = filename.substring( 0, lastDot );
+		filename = ScripturianUtil.removeExtensionFromFilename( filename );
 		filename = filename.replace( ".", "_" );
-		filename += "_" + position + ".class";
+		filename += "_" + position + "_" + executable.getDocumentTimestamp() + ".class";
 		File file = new File( new File( "cache/ruby" ), filename );
-		//System.out.println( file.getPath() );
+		// System.out.println( file.getPath() );
 		return file;
 	}
 
-	private static String getClassNameForFile( File file )
+	private static String getClassNameForClassFile( File file )
 	{
 		String className = file.getPath().replace( '/', '.' );
 		// Remove ".class"
@@ -85,7 +84,7 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 		return className;
 	}
 
-	private static String getFixedClassNameForFile( File file )
+	private static String getAsmClassNameForClassFile( File file )
 	{
 		String className = file.getPath();
 		// Remove ".class"
@@ -102,23 +101,24 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 			// this would be, but we haven't detected any trouble yet.
 
 			File file = getClassFileForDocument();
-			String className = getClassNameForFile( file );
 
-			/*
-			 * if( file.exists() ) { // Use cached compiled code byte[]
-			 * classByteArray = ScripturianUtil.getBytes( file );
-			 * JRubyClassLoader classLoader = new JRubyClassLoader(
-			 * compilerRuntime.getJRubyClassLoader() ); classLoader.defineClass(
-			 * className, classByteArray ); Class<?> scriptClass =
-			 * classLoader.loadClass( className ); script = (Script)
-			 * scriptClass.newInstance(); } else
-			 */
+			if( file.exists() )
+			{
+				// Use cached compiled code
+				byte[] classByteArray = ScripturianUtil.getBytes( file );
+				JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+				String className = getClassNameForClassFile( file );
+				classLoader.defineClass( className, classByteArray );
+				Class<?> scriptClass = classLoader.loadClass( className );
+				script = (Script) scriptClass.newInstance();
+			}
+			else
 			{
 				Node node = adapter.compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), adapter.compilerRuntime.getCurrentContext().getCurrentScope(), startLineNumber - 1 );
 
 				ASTInspector astInspector = new ASTInspector();
 				ASTCompiler astCompiler = adapter.compilerRuntime.getInstanceConfig().newCompiler();
-				StandardASMCompiler asmCompiler = new StandardASMCompiler( getFixedClassNameForFile( file ), executable.getDocumentName() );
+				StandardASMCompiler asmCompiler = new StandardASMCompiler( getAsmClassNameForClassFile( file ), executable.getDocumentName() );
 				JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 
 				astInspector.inspect( node );

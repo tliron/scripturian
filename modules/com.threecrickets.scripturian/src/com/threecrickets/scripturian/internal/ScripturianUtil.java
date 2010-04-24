@@ -130,6 +130,21 @@ public abstract class ScripturianUtil
 		return bytes;
 	}
 
+	/**
+	 * If the path is to a file with an extension, removes that extension.
+	 * 
+	 * @param path
+	 *        Old path
+	 * @return New path
+	 */
+	public static String removeExtensionFromFilename( String path )
+	{
+		int lastDot = path.lastIndexOf( '.' );
+		if( lastDot != -1 )
+			path = path.substring( 0, lastDot );
+		return path;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

@@ -19,12 +19,9 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentSource;
-import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * Reads document stored in files under a base directory. The file contents are
@@ -147,7 +144,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public DocumentDescriptor<D> getDocument( String documentName ) throws IOException
 	{
 		// See if we already have a descriptor for this name
-		FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptors.get( documentName );
+		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptors.get( documentName );
 		if( filedDocumentDescriptor != null )
 			filedDocumentDescriptor = removeIfInvalid( documentName, filedDocumentDescriptor );
 
@@ -163,8 +160,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			if( filedDocumentDescriptor == null )
 			{
 				// Create a new descriptor
-				filedDocumentDescriptor = new FiledDocumentDescriptor( file );
-				FiledDocumentDescriptor existing = filedDocumentDescriptors.putIfAbsent( documentName, filedDocumentDescriptor );
+				filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file );
+				FiledDocumentDescriptor<D> existing = filedDocumentDescriptors.putIfAbsent( documentName, filedDocumentDescriptor );
 				if( existing != null )
 					filedDocumentDescriptor = existing;
 				else
@@ -181,7 +178,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document )
 	{
-		return filedDocumentDescriptors.put( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, document ) );
+		return filedDocumentDescriptors.put( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
 	}
 
 	/**
@@ -189,7 +186,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document )
 	{
-		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor( documentName, sourceCode, tag, document ) );
+		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
 	}
 
 	/**
@@ -214,12 +211,12 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * The document descriptors.
 	 */
-	private final ConcurrentMap<String, FiledDocumentDescriptor> filedDocumentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor>();
+	private final ConcurrentMap<String, FiledDocumentDescriptor<D>> filedDocumentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor<D>>();
 
 	/**
 	 * The document descriptors.
 	 */
-	private final ConcurrentMap<File, FiledDocumentDescriptor> filedDocumentDescriptorsByFile = new ConcurrentHashMap<File, FiledDocumentDescriptor>();
+	private final ConcurrentMap<File, FiledDocumentDescriptor<D>> filedDocumentDescriptorsByFile = new ConcurrentHashMap<File, FiledDocumentDescriptor<D>>();
 
 	/**
 	 * The base path.
@@ -242,7 +239,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
-	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
+	final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
 	/**
 	 * Recursively collects document descriptors for all files under a base
@@ -266,13 +263,13 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 					list.addAll( getDocumentDescriptors( file ) );
 				else
 				{
-					FiledDocumentDescriptor filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
+					FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
 					if( filedDocumentDescriptor == null )
 					{
 						try
 						{
-							filedDocumentDescriptor = new FiledDocumentDescriptor( file );
-							FiledDocumentDescriptor existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
+							filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file );
+							FiledDocumentDescriptor<D> existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
 							if( existing != null )
 								filedDocumentDescriptor = existing;
 						}
@@ -354,7 +351,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        The file
 	 * @return The path
 	 */
-	private String getRelativeFilePath( File file )
+	String getRelativeFilePath( File file )
 	{
 		return file.getPath().substring( basePathLength );
 	}
@@ -368,7 +365,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        The document descriptor
 	 * @return The document descriptor or null if it was removed
 	 */
-	private FiledDocumentDescriptor removeIfInvalid( String documentName, FiledDocumentDescriptor filedDocumentDescriptor )
+	private FiledDocumentDescriptor<D> removeIfInvalid( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
 	{
 		// Make sure the existing descriptor is valid
 		if( !filedDocumentDescriptor.isValid() )
@@ -384,155 +381,5 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		}
 
 		return filedDocumentDescriptor;
-	}
-
-	/**
-	 * Our document descriptor.
-	 * 
-	 * @author Tal Liron
-	 */
-	private class FiledDocumentDescriptor implements DocumentDescriptor<D>
-	{
-		public String getDefaultName()
-		{
-			return defaultName;
-		}
-
-		public String getSourceCode()
-		{
-			return sourceCode;
-		}
-
-		public String getTag()
-		{
-			return tag;
-		}
-
-		public D getDocument()
-		{
-			documentLock.readLock().lock();
-			try
-			{
-				return document;
-			}
-			finally
-			{
-				documentLock.readLock().unlock();
-			}
-		}
-
-		public D setDocument( D document )
-		{
-			documentLock.writeLock().lock();
-			try
-			{
-				D last = this.document;
-				this.document = document;
-				return last;
-			}
-			finally
-			{
-				documentLock.writeLock().unlock();
-			}
-		}
-
-		public D setDocumentIfAbsent( D document )
-		{
-			documentLock.readLock().lock();
-			try
-			{
-				if( this.document != null )
-					return this.document;
-
-				documentLock.readLock().unlock();
-				// (Might change here!)
-				documentLock.writeLock().lock();
-				try
-				{
-					if( this.document != null )
-						return this.document;
-
-					D last = this.document;
-					this.document = document;
-					return last;
-				}
-				finally
-				{
-					documentLock.writeLock().unlock();
-					documentLock.readLock().lock();
-				}
-			}
-			finally
-			{
-				documentLock.readLock().unlock();
-			}
-		}
-
-		public DocumentSource<D> getSource()
-		{
-			return DocumentFileSource.this;
-		}
-
-		// //////////////////////////////////////////////////////////////////////////
-		// Private
-
-		private final String defaultName;
-
-		private final File file;
-
-		private final long timestamp;
-
-		private final String sourceCode;
-
-		private final String tag;
-
-		private volatile long lastValidityCheck;
-
-		private final ReadWriteLock documentLock = new ReentrantReadWriteLock();
-
-		private D document;
-
-		private FiledDocumentDescriptor( String defaultName, String sourceCode, String tag, D document )
-		{
-			this.defaultName = defaultName;
-			file = null;
-			timestamp = -1;
-			this.sourceCode = sourceCode;
-			this.tag = tag;
-			this.document = document;
-		}
-
-		private FiledDocumentDescriptor( File file ) throws IOException
-		{
-			this.defaultName = getRelativeFilePath( file );
-			this.file = file;
-			timestamp = file.lastModified();
-			sourceCode = ScripturianUtil.getString( file );
-			tag = ScripturianUtil.getExtension( file );
-		}
-
-		private boolean isValid()
-		{
-			if( file == null )
-				// Always valid if not built from a file
-				return true;
-
-			long minimumTimeBetweenValidityChecks = DocumentFileSource.this.minimumTimeBetweenValidityChecks.get();
-			if( minimumTimeBetweenValidityChecks == -1 )
-				// -1 means never check for validity
-				return true;
-
-			long now = System.currentTimeMillis();
-
-			// Are we in the threshold for checking for validity?
-			if( ( now - lastValidityCheck ) > minimumTimeBetweenValidityChecks )
-			{
-				// Check for validity
-				lastValidityCheck = now;
-				return file.lastModified() <= timestamp;
-			}
-			else
-				return true;
-		}
 	}
 }

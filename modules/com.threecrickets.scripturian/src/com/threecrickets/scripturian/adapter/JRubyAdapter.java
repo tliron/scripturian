@@ -25,6 +25,7 @@ import org.jruby.embed.io.WriterOutputStream;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.javasupport.JavaUtil;
 import org.jruby.runtime.Constants;
+import org.jruby.runtime.ThreadContext.RubyStackTraceElement;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ClassCache;
 
@@ -157,10 +158,23 @@ public class JRubyAdapter extends LanguageAdapterBase
 				// Pass through
 				return (ExecutionException) cause;
 
+			if( cause instanceof ParsingException )
+				// Wrap and pass through
+				return new ExecutionException( (ParsingException) cause );
+
 			ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
-			for( StackTraceElement stackTraceElement : cause.getStackTrace() )
-				if( stackTraceElement.getFileName().length() > 0 )
-					executionException.getStack().add( new StackFrame( stackTraceElement ) );
+			for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+				executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
+
+			/*
+			 * ExecutionException executionException = new ExecutionException(
+			 * cause.getMessage(), cause ); for( StackTraceElement
+			 * stackTraceElement : cause.getStackTrace() ) if(
+			 * stackTraceElement.getFileName().length() > 0 )
+			 * executionException.getStack().add( new StackFrame(
+			 * stackTraceElement ) );
+			 */
+
 			return executionException;
 		}
 		else

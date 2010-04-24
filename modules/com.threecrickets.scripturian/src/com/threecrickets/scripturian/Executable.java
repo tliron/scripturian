@@ -152,7 +152,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * <p>
  * The "executable" variable is exposed to your executable with some useful
  * services (this name can be changed via the
- * {@link #Executable(String, String, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
+ * {@link #Executable(String, String, long, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
  * constructor).
  * <p>
  * Read-only attributes:
@@ -324,8 +324,8 @@ public class Executable
 	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare )
 		throws ParsingException
 	{
-		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getSourceCode(), isTextWithScriptlets, languageManager, languageManager.getLanguageTagByExtension( documentDescriptor.getDefaultName(),
-			documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
+		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, languageManager, languageManager.getLanguageTagByExtension(
+			documentDescriptor.getDefaultName(), documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
 	}
 
 	/**
@@ -337,6 +337,8 @@ public class Executable
 	 *        The document name
 	 * @param partition
 	 *        The executable partition
+	 * @param documentTimestamp
+	 *        The executable's document timestamp
 	 * @param sourceCode
 	 *        The source code -- when {@code isTextWithScriptlets} is false,
 	 *        it's considered as pure source code in the language defined by
@@ -359,11 +361,11 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( String documentName, String partition, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource,
-		boolean prepare ) throws ParsingException
+	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag,
+		DocumentSource<Executable> documentSource, boolean prepare ) throws ParsingException
 	{
-		this( documentName, partition, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START, DEFAULT_DELIMITER1_END,
-			DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
+		this( documentName, partition, documentTimestamp, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START,
+			DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
 	/**
@@ -375,6 +377,8 @@ public class Executable
 	 *        The document name
 	 * @param partition
 	 *        The executable partition
+	 * @param documentTimestamp
+	 *        The executable's document timestamp
 	 * @param sourceCode
 	 *        The source code -- when {@code isTextWithScriptlets} is false,
 	 *        it's considered as pure source code in the language defined by
@@ -417,12 +421,13 @@ public class Executable
 	 *         In case of a parsing or compilation error
 	 * @see LanguageAdapter
 	 */
-	public Executable( String documentName, String partition, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, DocumentSource<Executable> documentSource,
-		boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression, String delimiterInclude,
-		String delimiterInFlow ) throws ParsingException
+	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag,
+		DocumentSource<Executable> documentSource, boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression,
+		String delimiterInclude, String delimiterInFlow ) throws ParsingException
 	{
 		this.documentName = documentName;
 		this.partition = partition;
+		this.documentTimestamp = documentTimestamp;
 		this.exposedExecutableName = exposedExecutableName;
 
 		if( !isTextWithScriptlets )
@@ -571,8 +576,8 @@ public class Executable
 							// Note that the in-flow executable is a
 							// single segment, so we can optimize parsing a
 							// bit
-							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName, delimiterStart,
-								delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
+							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName,
+								delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
 							// TODO: would it ever be possible to remove the
@@ -750,6 +755,16 @@ public class Executable
 	}
 
 	/**
+	 * The executable's document timestamp.
+	 * 
+	 * @return The timestamp
+	 */
+	public long getDocumentTimestamp()
+	{
+		return documentTimestamp;
+	}
+
+	/**
 	 * Timestamp of when the executable last finished executing successfully, or
 	 * 0 if it was never executed.
 	 * 
@@ -757,7 +772,7 @@ public class Executable
 	 */
 	public long getLastExecutedTimestamp()
 	{
-		return lastExecuted;
+		return lastExecutedTimestamp;
 	}
 
 	/**
@@ -891,7 +906,7 @@ public class Executable
 				executionController.finalize( executionContext );
 		}
 
-		lastExecuted = System.currentTimeMillis();
+		lastExecutedTimestamp = System.currentTimeMillis();
 	}
 
 	/**
@@ -1010,6 +1025,11 @@ public class Executable
 	private final String documentName;
 
 	/**
+	 * The executable's document timestamp.
+	 */
+	private final long documentTimestamp;
+
+	/**
 	 * User-defined attributes.
 	 */
 	private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
@@ -1038,7 +1058,7 @@ public class Executable
 	 * Timestamp of when the executable last finished executing successfully, or
 	 * 0 if it was never executed.
 	 */
-	private volatile long lastExecuted = 0;
+	private volatile long lastExecutedTimestamp = 0;
 
 	/**
 	 * The execution context to be used for calls to

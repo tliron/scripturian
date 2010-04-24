@@ -95,7 +95,7 @@ public class Main implements Runnable
 		this.arguments = arguments;
 
 		manager = new LanguageManager();
-		prepare = true;
+		prepare = false;
 		defaultDocumentName = "default";
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );

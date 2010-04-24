@@ -44,6 +44,13 @@ public interface DocumentDescriptor<D>
 	public String getTag();
 
 	/**
+	 * The document timestamp.
+	 * 
+	 * @return The document timestamp
+	 */
+	public long getTimestamp();
+
+	/**
 	 * The document instance. Should be null by default, as it is intended to be
 	 * set by the user of the {@link DocumentSource},
 	 * 
