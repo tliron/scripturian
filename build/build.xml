@@ -16,6 +16,7 @@
 				<fileset dir="${lib}/jruby/lib" />
 				<fileset dir="${lib}/jsr223/lib" />
 				<fileset dir="${lib}/jygments/lib" />
+				<fileset dir="${lib}/jython/lib" />
 			</classpath>
 		</javac>
 		<copy todir="${tmp}/META-INF">

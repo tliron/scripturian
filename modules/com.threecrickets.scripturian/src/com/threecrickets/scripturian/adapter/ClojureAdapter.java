@@ -50,6 +50,20 @@ import com.threecrickets.scripturian.exception.ParsingException;
 public class ClojureAdapter extends LanguageAdapterBase
 {
 	//
+	// Constants
+	//
+
+	/**
+	 * Namespace attribute.
+	 */
+	public static final String CLOJURE_NAMESPACE = "clojure.namespace";
+
+	/**
+	 * Prefix prepended to all namespace names created by this adapter.
+	 */
+	public static final String NAMESPACE_PREFIX = "scripturian";
+
+	//
 	// Static operations
 	//
 
@@ -213,17 +227,4 @@ public class ClojureAdapter extends LanguageAdapterBase
 	 * (clojure.core/refer)
 	 */
 	protected static final Var REFER = RT.var( "clojure.core", "refer" );
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Private
-
-	/**
-	 * Namespace attribute.
-	 */
-	private static final String CLOJURE_NAMESPACE = "clojure.namespace";
-
-	/**
-	 * Prefix prepended to all namespace names created by this adapter.
-	 */
-	private static final String NAMESPACE_PREFIX = "scripturian";
 }

@@ -22,6 +22,7 @@ import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
 import com.threecrickets.scripturian.file.DocumentFileSource;
 import com.threecrickets.scripturian.internal.ExposedContainerForMain;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * Delegates the main() call to an {@link Executable}, in effect using it as the
@@ -62,6 +63,9 @@ import com.threecrickets.scripturian.internal.ExposedContainerForMain;
  * 
  * @author Tal Liron
  */
+/**
+ * @author emblemparade
+ */
 public class Main implements Runnable
 {
 	//
@@ -85,7 +89,8 @@ public class Main implements Runnable
 	//
 
 	/**
-	 * Construction.
+	 * Construction. Interprets initial values from the arguments or falls back
+	 * to defaults.
 	 * 
 	 * @param arguments
 	 *        Supplied arguments (usually from a command line)
@@ -93,13 +98,42 @@ public class Main implements Runnable
 	public Main( String[] arguments )
 	{
 		this.arguments = arguments;
-
 		manager = new LanguageManager();
-		prepare = false;
-		defaultDocumentName = "default";
+		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "false" ).equals( "true" );
+		initialDocumentName = ScripturianUtil.getNonSwitchArgument( 0, arguments, "default" );
+		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Executable>( new File( "." ), defaultDocumentName, -1 );
+		documentSource = new DocumentFileSource<Executable>( new File( ScripturianUtil.getSwitchArgument( "base-path", arguments, "." ) ), defaultDocumentName, -1 );
+	}
+
+	/**
+	 * Construction.
+	 * 
+	 * @param manager
+	 *        The language manager
+	 * @param prepare
+	 *        Whether to prepare the executables
+	 * @param initialDocumentName
+	 *        The name of the document to run
+	 * @param defaultDocumentName
+	 *        The name to use for document names that point to a directory
+	 *        rather than a file.
+	 * @param basePath
+	 *        The base path for finding executable documents
+	 * @param arguments
+	 *        Supplied arguments (usually from a command line)
+	 */
+	public Main( LanguageManager manager, boolean prepare, String initialDocumentName, String defaultDocumentName, String basePath, String[] arguments )
+	{
+		this.arguments = arguments;
+		this.manager = manager;
+		this.prepare = prepare;
+		this.initialDocumentName = initialDocumentName;
+		this.defaultDocumentName = defaultDocumentName;
+		writer = new OutputStreamWriter( System.out );
+		errorWriter = new OutputStreamWriter( System.err );
+		documentSource = new DocumentFileSource<Executable>( new File( basePath ), defaultDocumentName, -1 );
 	}
 
 	//
@@ -218,23 +252,17 @@ public class Main implements Runnable
 
 	public void run()
 	{
-		String name;
-		if( arguments.length > 0 )
-			name = arguments[0];
-		else
-			name = defaultDocumentName;
-
 		ExecutionContext executionContext = new ExecutionContext( manager, getWriter(), getErrorWriter() );
 		try
 		{
 			ExposedContainerForMain container = new ExposedContainerForMain( this, executionContext );
-			container.include( name );
+			container.include( initialDocumentName );
 			writer.flush();
 			errorWriter.flush();
 		}
 		catch( IOException x )
 		{
-			System.err.print( "Error reading file \"" + name + "\": " );
+			System.err.print( "Error reading file for \"" + initialDocumentName + "\": " );
 			System.err.println( x.getMessage() );
 		}
 		catch( ParsingException x )
@@ -289,8 +317,13 @@ public class Main implements Runnable
 	private final boolean prepare;
 
 	/**
-	 * If the path to the document to run if not supplied as the first argument
-	 * to {@link #main(String[])}, this is used instead.
+	 * The name of the document to run.
+	 */
+	private final String initialDocumentName;
+
+	/**
+	 * The name to use for document names that point to a directory rather than
+	 * a file.
 	 */
 	private final String defaultDocumentName;
 

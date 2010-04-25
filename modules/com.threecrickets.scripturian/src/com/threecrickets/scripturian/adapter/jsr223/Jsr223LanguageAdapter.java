@@ -393,7 +393,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The text
 	 * @return A command or series of commands to print the text
 	 */
-	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String text )
+	public String getSourceCodeForLiteralOutput( Executable executable, ScriptEngine scriptEngine, String text )
 	{
 		return null;
 	}
@@ -412,7 +412,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The content
 	 * @return A command or series of commands to print the expression
 	 */
-	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String text )
+	public String getSourceCodeForExpressionOutput( Executable executable, ScriptEngine scriptEngine, String text )
 	{
 		return null;
 	}
@@ -433,7 +433,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *         the expression
 	 * @see Executable#getExposedExecutableName()
 	 */
-	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String text )
+	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String text )
 	{
 		return null;
 	}
@@ -494,17 +494,17 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		return getTextAsProgram( executable, scriptEngine, literal );
+		return getSourceCodeForLiteralOutput( executable, scriptEngine, literal );
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
-		return getExpressionAsProgram( executable, scriptEngine, expression );
+		return getSourceCodeForExpressionOutput( executable, scriptEngine, expression );
 	}
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		return getExpressionAsInclude( executable, scriptEngine, expression );
+		return getSourceCodeForExpressionInclude( executable, scriptEngine, expression );
 	}
 
 	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

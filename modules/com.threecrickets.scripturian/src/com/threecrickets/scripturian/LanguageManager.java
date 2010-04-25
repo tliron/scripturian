@@ -11,11 +11,13 @@
 
 package com.threecrickets.scripturian;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.internal.ServiceLoader;
@@ -30,6 +32,47 @@ import com.threecrickets.scripturian.internal.ServiceLoader;
  */
 public class LanguageManager
 {
+	//
+	// Constants
+	//
+
+	/**
+	 * The property name for the Scripturian cache path.
+	 * 
+	 * @see #getCachePath()
+	 */
+	public static final String SCRIPTURIAN_CACHE_PATH = "scripturian.cache";
+
+	/**
+	 * The default Scripturian cache path.
+	 * 
+	 * @see #getCachePath()
+	 */
+	public static final String SCRIPTURIAN_CACHE_PATH_DEFAULT = "scripturian/cache";
+
+	//
+	// Static attributes
+	//
+
+	/**
+	 * The base path for language adapter caches.
+	 * 
+	 * @return The cache path
+	 */
+	public static File getCachePath()
+	{
+		File cachePath = LanguageManager.cachePath.get();
+		if( cachePath == null )
+		{
+			// Parse properties
+			String cachePathProperty = System.getProperty( SCRIPTURIAN_CACHE_PATH );
+			cachePath = new File( cachePathProperty != null ? cachePathProperty : SCRIPTURIAN_CACHE_PATH_DEFAULT );
+			if( !LanguageManager.cachePath.compareAndSet( null, cachePath ) )
+				cachePath = LanguageManager.cachePath.get();
+		}
+		return cachePath;
+	}
+
 	//
 	// Construction
 	//
@@ -178,6 +221,11 @@ public class LanguageManager
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	/**
+	 * The base path for language adapter caches.
+	 */
+	private static final AtomicReference<File> cachePath = new AtomicReference<File>();
 
 	/**
 	 * General-purpose attributes for this language manager.

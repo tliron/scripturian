@@ -11,6 +11,7 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Map;
@@ -32,6 +33,7 @@ import org.jruby.util.ClassCache;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Scriptlet;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
@@ -48,6 +50,101 @@ import com.threecrickets.scripturian.internal.SwitchableOutputStream;
 public class JRubyAdapter extends LanguageAdapterBase
 {
 	//
+	// Constants
+	//
+
+	/**
+	 * The Ruby runtime instance attribute.
+	 */
+	public static final String JRUBY_RUNTIME = "jruby.rubyRuntime";
+
+	/**
+	 * The Ruby class cache attribute.
+	 */
+	public static final String JRUBY_CLASS_CACHE = "jruby.classCache";
+
+	/**
+	 * The switchable standard output attribute for the Ruby runtime.
+	 */
+	public static final String JRUBY_OUT = "jruby.out";
+
+	/**
+	 * The switchable standard error attribute for the Ruby runtime.
+	 */
+	public static final String JRUBY_ERR = "jruby.err";
+
+	/**
+	 * The default base directory for cached executables.
+	 */
+	public static final String RUBY_CACHE_DIR = "ruby";
+
+	//
+	// Static operations
+	//
+
+	/**
+	 * Creates an execution exception with a full stack.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param x
+	 *        The Ruby exception
+	 * @return The execution exception
+	 */
+	public static ExecutionException createExecutionException( String documentName, RaiseException x )
+	{
+		RubyException rubyException = x.getException();
+		if( rubyException instanceof NativeException )
+		{
+			NativeException nativeException = (NativeException) rubyException;
+			Throwable cause = nativeException.getCause();
+
+			if( cause instanceof ExecutionException )
+			{
+				ExecutionException executionException = new ExecutionException( documentName, cause.getMessage() );
+				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
+				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
+
+				return executionException;
+			}
+
+			if( cause instanceof ParsingException )
+			{
+				ExecutionException executionException = new ExecutionException( documentName, cause.getMessage() );
+				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
+				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
+
+				return executionException;
+			}
+
+			ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
+			for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+				executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
+
+			/*
+			 * ExecutionException executionException = new ExecutionException(
+			 * cause.getMessage(), cause ); for( StackTraceElement
+			 * stackTraceElement : cause.getStackTrace() ) if(
+			 * stackTraceElement.getFileName().length() > 0 )
+			 * executionException.getStack().add( new StackFrame(
+			 * stackTraceElement ) );
+			 */
+
+			return executionException;
+		}
+		else
+		{
+			ExecutionException executionException = new ExecutionException( x.getMessage(), x );
+			for( StackTraceElement stackTraceElement : x.getStackTrace() )
+				if( stackTraceElement.getFileName().length() > 0 )
+					executionException.getStack().add( new StackFrame( stackTraceElement ) );
+			return executionException;
+		}
+	}
+
+	//
 	// Construction
 	//
 
@@ -62,11 +159,11 @@ public class JRubyAdapter extends LanguageAdapterBase
 	}
 
 	//
-	// Static operations
+	// Attributes
 	//
 
 	/**
-	 * The class cache shared between all Ruby runtime instances
+	 * The class cache shared between all Ruby runtime instances.
 	 * 
 	 * @return The class cache
 	 */
@@ -85,7 +182,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 	}
 
 	/**
-	 * Gets a Ruby runtime isntance stored in the execution context, creating it
+	 * Gets a Ruby runtime instance stored in the execution context, creating it
 	 * if it doesn't exist. Each execution context is guaranteed to have its own
 	 * Ruby runtime.
 	 * 
@@ -141,50 +238,13 @@ public class JRubyAdapter extends LanguageAdapterBase
 	}
 
 	/**
-	 * Creates an execution exception with a full stack.
+	 * The base directory for cached executables.
 	 * 
-	 * @param x
-	 *        The Ruby exception
-	 * @return The execution exception
+	 * @return The cache directory
 	 */
-	public static ExecutionException createExecutionException( RaiseException x )
+	public File getCacheDir()
 	{
-		RubyException rubyException = x.getException();
-		if( rubyException instanceof NativeException )
-		{
-			NativeException nativeException = (NativeException) rubyException;
-			Throwable cause = nativeException.getCause();
-			if( cause instanceof ExecutionException )
-				// Pass through
-				return (ExecutionException) cause;
-
-			if( cause instanceof ParsingException )
-				// Wrap and pass through
-				return new ExecutionException( (ParsingException) cause );
-
-			ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
-			for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
-				executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
-
-			/*
-			 * ExecutionException executionException = new ExecutionException(
-			 * cause.getMessage(), cause ); for( StackTraceElement
-			 * stackTraceElement : cause.getStackTrace() ) if(
-			 * stackTraceElement.getFileName().length() > 0 )
-			 * executionException.getStack().add( new StackFrame(
-			 * stackTraceElement ) );
-			 */
-
-			return executionException;
-		}
-		else
-		{
-			ExecutionException executionException = new ExecutionException( x.getMessage(), x );
-			for( StackTraceElement stackTraceElement : x.getStackTrace() )
-				if( stackTraceElement.getFileName().length() > 0 )
-					executionException.getStack().add( new StackFrame( stackTraceElement ) );
-			return executionException;
-		}
+		return new File( LanguageManager.getCachePath(), RUBY_CACHE_DIR );
 	}
 
 	//
@@ -225,7 +285,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 		}
 		catch( RaiseException x )
 		{
-			throw createExecutionException( x );
+			throw createExecutionException( executable.getDocumentName(), x );
 		}
 	}
 
@@ -233,32 +293,12 @@ public class JRubyAdapter extends LanguageAdapterBase
 	// Protected
 
 	/**
-	 * A shared Ruby runtime instance used only for compilation.
+	 * A shared Ruby runtime instance used for scriptlet preparation.
 	 */
 	protected final Ruby compilerRuntime;
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	/**
-	 * The Ruby runtime instance attribute.
-	 */
-	private static final String JRUBY_RUNTIME = "jruby.rubyRuntime";
-
-	/**
-	 * The Ruby class cache attribute.
-	 */
-	private static final String JRUBY_CLASS_CACHE = "jruby.classCache";
-
-	/**
-	 * The switchable standard output attribute for the Ruby runtime.
-	 */
-	private static final String JRUBY_OUT = "jruby.out";
-
-	/**
-	 * The switchable standard error attribute for the Ruby runtime.
-	 */
-	private static final String JRUBY_ERR = "jruby.err";
 
 	/**
 	 * From somethingLikeThis to something_like_this.

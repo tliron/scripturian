@@ -55,7 +55,7 @@ public class VelocityAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getSourceCodeForLiteralOutput( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		// 
 		// content = content.replaceAll( "\\#", "\\\\#" );
@@ -71,13 +71,13 @@ public class VelocityAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getSourceCodeForExpressionOutput( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "${" + content.trim() + "}";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "#if($" + executable.getExposedExecutableName() + ".container.includeDocument(" + content + "))#end ";
 	}

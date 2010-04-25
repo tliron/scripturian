@@ -12,7 +12,7 @@
 package com.threecrickets.scripturian.exception;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 import com.threecrickets.scripturian.Executable;
 
@@ -79,7 +79,7 @@ public class ExecutionException extends Exception
 	 * 
 	 * @return The call stack
 	 */
-	public Collection<StackFrame> getStack()
+	public List<StackFrame> getStack()
 	{
 		return stack;
 	}

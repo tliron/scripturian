@@ -103,7 +103,7 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getTextAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getSourceCodeForLiteralOutput( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		content = content.replaceAll( "\\n", "\\\\n" );
 		content = content.replaceAll( "\\\"", "\\\\\"" );
@@ -111,13 +111,13 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	}
 
 	@Override
-	public String getExpressionAsProgram( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getSourceCodeForExpressionOutput( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		return "print(" + content + ");";
 	}
 
 	@Override
-	public String getExpressionAsInclude( Executable executable, ScriptEngine scriptEngine, String content )
+	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		// return "require $" + executable.getDocumentVariableName() +
 		// ".container.source.basePath.toString + '/' + " + content + ";";

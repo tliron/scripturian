@@ -19,6 +19,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.regex.Pattern;
+
+import com.threecrickets.scripturian.Executable;
 
 /**
  * Utility methods.
@@ -131,18 +134,122 @@ public abstract class ScripturianUtil
 	}
 
 	/**
-	 * If the path is to a file with an extension, removes that extension.
+	 * Gets the value of a switch-style command line argument.
 	 * 
-	 * @param path
-	 *        Old path
-	 * @return New path
+	 * @param name
+	 *        The argument name
+	 * @param arguments
+	 *        The arguments
+	 * @param defaultValue
+	 *        The default value
+	 * @return The value or the default value if not found
 	 */
-	public static String removeExtensionFromFilename( String path )
+	public static String getSwitchArgument( String name, String[] arguments, String defaultValue )
 	{
-		int lastDot = path.lastIndexOf( '.' );
-		if( lastDot != -1 )
-			path = path.substring( 0, lastDot );
-		return path;
+		name = "--" + name + "=";
+		for( String argument : arguments )
+			if( argument.startsWith( name ) )
+				return argument.substring( name.length() );
+
+		return defaultValue;
+	}
+
+	/**
+	 * Gets the value of a command line argument, while skipping switch-style
+	 * arguments.
+	 * 
+	 * @param index
+	 *        The index of the non-switch argument
+	 * @param arguments
+	 *        The arguments
+	 * @param defaultValue
+	 *        The default value
+	 * @return The value or the default value if not found
+	 */
+	public static String getNonSwitchArgument( int index, String[] arguments, String defaultValue )
+	{
+		int i = 0;
+		for( String argument : arguments )
+			if( !argument.startsWith( "--" ) )
+				if( index == i++ )
+					return argument;
+
+		return defaultValue;
+	}
+
+	/**
+	 * Calculates a filename for a JVM class based on executable partition,
+	 * executable document name and scriptlet position.
+	 * 
+	 * @param executable
+	 *        The executable
+	 * @param position
+	 *        The scriptlet position
+	 * @return The file
+	 */
+	public static String getFilenameForScriptletClass( Executable executable, int position )
+	{
+		String filename = executable.getDocumentName();
+		int lastSlash = filename.lastIndexOf( '/' );
+		if( lastSlash != -1 )
+			filename = filename.substring( 0, lastSlash ).replace( ".", "_" ) + filename.substring( lastSlash ).replace( ".", "$" );
+		else
+			filename = filename.replace( ".", "$" );
+		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
+		return executable.getPartition() + filename;
+	}
+
+	public static String getClassnameForScriptlet( Executable executable, int position )
+	{
+		String classname = executable.getPartition() + executable.getDocumentName();
+		classname = classname.replace( ".", "$" );
+		classname = classname.replace( "/", "." );
+		classname += "$" + position + "$" + executable.getDocumentTimestamp();
+		return classname;
+	}
+
+	/**
+	 * Returns the path of one file relative to another.
+	 * 
+	 * @param target
+	 *        the target directory
+	 * @param base
+	 *        the base directory
+	 * @return target's path relative to the base directory
+	 * @throws IOException
+	 *         if an error occurs while resolving the files' canonical names
+	 */
+	public static File getRelativeFile( File target, File base )
+	{
+		// See:
+		// http://stackoverflow.com/questions/204784/how-to-construct-a-relative-path-in-java-from-two-absolute-paths-or-urls
+
+		String[] baseComponents = base.getAbsolutePath().split( Pattern.quote( File.separator ) );
+		String[] targetComponents = target.getAbsolutePath().split( Pattern.quote( File.separator ) );
+
+		// skip common components
+		int index = 0;
+		for( ; index < targetComponents.length && index < baseComponents.length; ++index )
+		{
+			if( !targetComponents[index].equals( baseComponents[index] ) )
+				break;
+		}
+
+		StringBuilder result = new StringBuilder();
+		if( index != baseComponents.length )
+		{
+			// backtrack to base directory
+			for( int i = index; i < baseComponents.length; ++i )
+				result.append( ".." + File.separator );
+		}
+		for( ; index < targetComponents.length; ++index )
+			result.append( targetComponents[index] + File.separator );
+		if( !target.getPath().endsWith( "/" ) && !target.getPath().endsWith( "\\" ) )
+		{
+			// remove final path separator
+			result.delete( result.length() - "/".length(), result.length() );
+		}
+		return new File( result.toString() );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
