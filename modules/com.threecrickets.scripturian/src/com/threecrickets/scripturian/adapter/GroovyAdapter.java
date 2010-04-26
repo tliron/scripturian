@@ -21,7 +21,6 @@ import org.python.compiler.LegacyCompiler;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
-import org.python.core.PyObject;
 import org.python.core.PySystemState;
 import org.python.core.PythonCompiler;
 import org.python.util.PythonInterpreter;
@@ -38,12 +37,12 @@ import com.threecrickets.scripturian.exception.StackFrame;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
- * A {@link LanguageAdapter} that supports the Python language as implemented by
- * <a href="http://www.jython.org/">Jython</a>.
+ * A {@link LanguageAdapter} that supports the <a
+ * href="http://groovy.codehaus.org/">Groovy</a> language.
  * 
  * @author Tal Liron
  */
-public class JythonAdapter extends LanguageAdapterBase
+public class GroovyAdapter extends LanguageAdapterBase
 {
 	//
 	// Constants
@@ -110,7 +109,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	// Construction
 	//
 
-	public JythonAdapter() throws LanguageAdapterException
+	public GroovyAdapter() throws LanguageAdapterException
 	{
 		super( "Jython", Version.getVersion(), "Python", Version.getVersion(), Arrays.asList( "py" ), "py", Arrays.asList( "python", "jython" ), "python" );
 
@@ -186,13 +185,13 @@ public class JythonAdapter extends LanguageAdapterBase
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\\"", "\\\\\"" );
-		return "sys.stdout.write(\"" + literal + "\");";
+		literal = literal.replaceAll( "\\'", "\\\\'" );
+		return "print('" + literal + "');";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
-		return "sys.stdout.write(" + expression + ");";
+		return "print(" + expression + ");";
 	}
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
@@ -202,26 +201,12 @@ public class JythonAdapter extends LanguageAdapterBase
 
 	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new JythonScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new GroovyScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		entryPointName = toPythonStyle( entryPointName );
-		PythonInterpreter pythonInterpreter = getPythonInterpreter( executionContext );
-		PyObject method = pythonInterpreter.get( entryPointName );
-		if( method == null )
-			throw new NoSuchMethodException( entryPointName );
-		PyObject[] pythonArguments = Py.javas2pys( arguments );
-		try
-		{
-			PyObject r = method.__call__( pythonArguments );
-			return r.__tojava__( Object.class );
-		}
-		catch( Exception x )
-		{
-			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
-		}
+		return null;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -239,33 +224,4 @@ public class JythonAdapter extends LanguageAdapterBase
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	/**
-	 * From somethingLikeThis to something_like_this.
-	 * 
-	 * @param camelCase
-	 *        somethingLikeThis
-	 * @return something_like_this
-	 */
-	private static String toPythonStyle( String camelCase )
-	{
-		StringBuilder r = new StringBuilder();
-		char c = camelCase.charAt( 0 );
-		if( Character.isUpperCase( c ) )
-			r.append( Character.toLowerCase( c ) );
-		else
-			r.append( c );
-		for( int i = 1; i < camelCase.length(); i++ )
-		{
-			c = camelCase.charAt( i );
-			if( Character.isUpperCase( c ) )
-			{
-				r.append( '_' );
-				r.append( Character.toLowerCase( c ) );
-			}
-			else
-				r.append( c );
-		}
-		return r.toString();
-	}
 }

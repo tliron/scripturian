@@ -34,7 +34,7 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 /**
  * @author Tal Liron
  */
-class JythonScriptlet extends ScriptletBase<JythonAdapter>
+class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
 {
 	//
 	// Construction
@@ -56,7 +56,7 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public JythonScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, JythonAdapter adapter )
+	public GroovyScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, GroovyAdapter adapter )
 	{
 		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
@@ -82,10 +82,6 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 			{
 				x.printStackTrace();
 			}
-			catch( Exception x )
-			{
-				x.printStackTrace();
-			}
 		}
 		else
 		{
@@ -107,6 +103,8 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 				x.printStackTrace();
 			}
 		}
+
+		// bundle.saveCode( Options.proxyDebugDirectory );
 
 		// pyCode = adapter.compilerInterpreter.compile( sourceCode,
 		// executable.getDocumentName() );
@@ -132,7 +130,7 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 		}
 		catch( Exception x )
 		{
-			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
 	}
 
