@@ -192,7 +192,7 @@ public abstract class ScripturianUtil
 		String filename = executable.getDocumentName();
 		int lastSlash = filename.lastIndexOf( '/' );
 		if( lastSlash != -1 )
-			filename = filename.substring( 0, lastSlash ).replace( ".", "_" ) + filename.substring( lastSlash ).replace( ".", "$" );
+			filename = filename.substring( 0, lastSlash ).replace( ".", "_" ) + filename.substring( lastSlash ).replace( "-", "_" ).replace( ".", "$" );
 		else
 			filename = filename.replace( ".", "$" );
 		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
@@ -202,6 +202,7 @@ public abstract class ScripturianUtil
 	public static String getClassnameForScriptlet( Executable executable, int position )
 	{
 		String classname = executable.getPartition() + executable.getDocumentName();
+		classname = classname.replace( "-", "_" );
 		classname = classname.replace( ".", "$" );
 		classname = classname.replace( "/", "." );
 		classname += "$" + position + "$" + executable.getDocumentTimestamp();

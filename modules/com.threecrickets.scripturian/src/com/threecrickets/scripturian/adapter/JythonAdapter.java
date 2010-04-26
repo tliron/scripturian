@@ -112,7 +112,7 @@ public class JythonAdapter extends LanguageAdapterBase
 
 	public JythonAdapter() throws LanguageAdapterException
 	{
-		super( "Jython", Version.getVersion(), "Python", Version.getVersion(), Arrays.asList( "py" ), "py", Arrays.asList( "python", "jython" ), "python" );
+		super( "Jython", Version.PY_VERSION, "Python", Version.PY_VERSION, Arrays.asList( "py" ), "py", Arrays.asList( "python", "jython" ), "python" );
 
 		String homePath = System.getProperty( PYTHON_HOME );
 		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );
@@ -143,7 +143,8 @@ public class JythonAdapter extends LanguageAdapterBase
 	/**
 	 * Gets a Python interpreter instance stored in the execution context,
 	 * creating it if it doesn't exist. Each execution context is guaranteed to
-	 * have its own Python interpreter.
+	 * have its own Python interpreter. The interpreter is updated to match the
+	 * writers and exposed variables in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context

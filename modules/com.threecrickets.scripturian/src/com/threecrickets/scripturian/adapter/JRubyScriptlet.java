@@ -67,15 +67,15 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 
 	public void prepare() throws PreparationException
 	{
+		// Note that we parse the node for a different runtime than the
+		// one we will run in. It's unclear what the repercussions of
+		// this would be, but we haven't detected any trouble yet.
+
+		File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
+		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
+
 		try
 		{
-			// Note that we parse the node for a different runtime than the
-			// one we will run in. It's unclear what the repercussions of
-			// this would be, but we haven't detected any trouble yet.
-
-			File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
-			String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
-
 			if( classFile.exists() )
 			{
 				// Use cached compiled code
@@ -144,16 +144,9 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 		try
 		{
 			if( script != null )
-			{
 				rubyRuntime.runScript( script );
-				// return value.toJava( Object.class );
-			}
 			else
-			{
 				rubyRuntime.executeScript( sourceCode, executable.getDocumentName() );
-				// rubyRuntime.evalScriptlet( sourceCode );
-				// return value.toJava( Object.class );
-			}
 		}
 		catch( RaiseException x )
 		{

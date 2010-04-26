@@ -13,10 +13,12 @@
 		<javac srcdir="${src}" destdir="${tmp}" target="1.5" includeAntRuntime="false">
 			<classpath>
 				<fileset dir="${lib}/clojure/lib" />
+				<fileset dir="${lib}/groovy/lib" />
 				<fileset dir="${lib}/jruby/lib" />
 				<fileset dir="${lib}/jsr223/lib" />
 				<fileset dir="${lib}/jygments/lib" />
 				<fileset dir="${lib}/jython/lib" />
+				<fileset dir="${lib}/rhino/lib" />
 			</classpath>
 		</javac>
 		<copy todir="${tmp}/META-INF">
@@ -33,6 +35,7 @@
 		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<link href="http://java.sun.com/javase/6/docs/api/" />
+			<link href="http://www.mozilla.org/rhino/apidocs/" />
 			<classpath>
 				<fileset dir="${lib}/jsr223/lib" />
 			</classpath>

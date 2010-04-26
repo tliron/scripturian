@@ -14,16 +14,18 @@ package com.threecrickets.scripturian.adapter;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Properties;
 
-import org.python.Version;
-import org.python.compiler.LegacyCompiler;
-import org.python.core.CompilerFlags;
-import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PySystemState;
-import org.python.core.PythonCompiler;
-import org.python.util.PythonInterpreter;
+import org.mozilla.javascript.ClassCache;
+import org.mozilla.javascript.CompilerEnvirons;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.GeneratedClassLoader;
+import org.mozilla.javascript.ImporterTopLevel;
+import org.mozilla.javascript.RhinoException;
+import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Wrapper;
+import org.mozilla.javascript.optimizer.ClassCompiler;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -34,7 +36,6 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
-import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the JavaScript language as
@@ -49,25 +50,19 @@ public class RhinoAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * The Python interpreter attribute.
+	 * The Rhino context attribute.
 	 */
-	public static final String JYTHON_INTERPRETER = "jython.interpreter";
+	public static final String RHINO_CONTEXT = "rhino.context";
 
 	/**
-	 * The Python home property.
+	 * The Rhino scope attribute.
 	 */
-	public static final String PYTHON_HOME = "python.home";
-
-	/**
-	 * The default base directory for cached packages. (Jython will add a
-	 * "packages" subdirectory underneath.)
-	 */
-	public static final String PYTHON_PACKAGES_CACHE_DIR = "python";
+	public static final String RHINO_SCOPE = "rhino.scope";
 
 	/**
 	 * The default base directory for cached executables.
 	 */
-	public static final String PYTHON_EXECUTABLES_CACHE_DIR = "python/executables";
+	public static final String JAVASCRIPT_CACHE_DIR = "javascript";
 
 	//
 	// Static operations
@@ -84,22 +79,19 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 */
 	public static ExecutionException createExecutionException( String documentName, Exception x )
 	{
-		if( x instanceof PyException )
+		if( x instanceof RhinoException )
 		{
-			PyException pyException = (PyException) x;
-			pyException.normalize();
-
-			Throwable cause = x.getCause();
+			RhinoException rhinoException = (RhinoException) x;
+			Throwable cause = rhinoException.getCause();
 			if( cause instanceof ExecutionException )
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1 ) );
-
+				executionException.getStack().add( new StackFrame( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber() ) );
 				return executionException;
 			}
 
-			return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1, Py.formatException( pyException.type, pyException.value ), pyException.getCause() );
+			return new ExecutionException( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber(), rhinoException.getMessage(), x );
 		}
 
 		return new ExecutionException( x.getMessage(), x );
@@ -111,28 +103,13 @@ public class RhinoAdapter extends LanguageAdapterBase
 
 	public RhinoAdapter() throws LanguageAdapterException
 	{
-		super( "Jython", Version.getVersion(), "Python", Version.getVersion(), Arrays.asList( "py" ), "py", Arrays.asList( "python", "jython" ), "python" );
+		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", new ContextFactory().enterContext().getImplementationVersion(), Arrays.asList( "js" ), "js", Arrays.asList(
+			"javascript", "js" ), "javascript" );
 
-		String homePath = System.getProperty( PYTHON_HOME );
-		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );
-
-		// Initialize Jython registry (can only happen once per VM)
-		if( PySystemState.registry == null )
-		{
-			// The packages cache dir is calculate as relative to the home dir.
-			// Note that Jython will add a "packages" subdirectory underneath.
-			String packagesCacheDirPath = ScripturianUtil.getRelativeFile( packagesCacheDir, new File( homePath ) ).getPath();
-			// System.out.println( packagesCacheDirPath );
-
-			Properties overridingProperties = new Properties();
-			overridingProperties.put( PYTHON_HOME, homePath );
-			overridingProperties.put( PySystemState.PYTHON_CACHEDIR, packagesCacheDirPath );
-
-			PySystemState.initialize( System.getProperties(), overridingProperties );
-		}
-
-		compiler = new LegacyCompiler();
-		compilerFlags = CompilerFlags.getCompilerFlags();
+		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
+		classCompiler = new ClassCompiler( compilerEnvirons );
+		generatedClassLoader = Context.getCurrentContext().createClassLoader( ClassLoader.getSystemClassLoader() );
+		Context.exit();
 	}
 
 	//
@@ -140,32 +117,66 @@ public class RhinoAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Gets a Python interpreter instance stored in the execution context,
-	 * creating it if it doesn't exist. Each execution context is guaranteed to
-	 * have its own Python interpreter.
+	 * Enters a Rhino context stored in the execution context, creating it if it
+	 * doesn't exist. Each execution context is guaranteed to have its own Rhino
+	 * context. Make sure to exit the context when done with it!
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @return The Python interpreter
+	 * @return The Rhino context
 	 */
-	public PythonInterpreter getPythonInterpreter( ExecutionContext executionContext )
+	public Context enterContext( ExecutionContext executionContext )
 	{
-		PythonInterpreter pythonInterpreter = (PythonInterpreter) executionContext.getAttributes().get( JYTHON_INTERPRETER );
+		Context context = (Context) executionContext.getAttributes().get( RHINO_CONTEXT );
 
-		if( pythonInterpreter == null )
+		if( context == null )
 		{
-			pythonInterpreter = new PythonInterpreter();
-			executionContext.getAttributes().put( JYTHON_INTERPRETER, pythonInterpreter );
+			context = contextFactory.enterContext();
+			executionContext.getAttributes().put( RHINO_CONTEXT, context );
+		}
+		else
+			contextFactory.enterContext( context );
+
+		return context;
+	}
+
+	/**
+	 * Gets the Rhino scope associated with the Rhino context of the execution
+	 * context, creating it if it doesn't exist. Each execution context is
+	 * guaranteed to have its own Rhino scope. The scope is updated to match the
+	 * writers and exposed variables in the execution context.
+	 * 
+	 * @param executable
+	 *        The executable
+	 * @param executionContext
+	 *        The execution context
+	 * @param context
+	 *        The Rhino context
+	 * @param startLineNumber
+	 *        The start line number of the scriptlet
+	 * @return The Rhino scope
+	 * @see #enterContext(ExecutionContext)
+	 */
+	public ScriptableObject getScope( Executable executable, ExecutionContext executionContext, Context context, int startLineNumber )
+	{
+		ScriptableObject scope = (ScriptableObject) executionContext.getAttributes().get( RHINO_SCOPE );
+
+		if( scope == null )
+		{
+			scope = new ImporterTopLevel( context );
+			context.initStandardObjects( scope );
+			classChache.associate( scope );
+			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 		}
 
-		pythonInterpreter.setOut( executionContext.getWriter() );
-		pythonInterpreter.setErr( executionContext.getErrorWriter() );
+		context.evaluateString( scope, "print=function(s){" + executable.getExposedExecutableName() + ".context.writer.write(String(s));" + executable.getExposedExecutableName() + ".context.writer.flush();};",
+			executable.getDocumentName(), startLineNumber, null );
 
-		// Expose variables as Python globals
+		// Define exposed variables as properties in scope
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			pythonInterpreter.set( entry.getKey(), entry.getValue() );
+			scope.defineProperty( entry.getKey(), entry.getValue(), ScriptableObject.PERMANENT | ScriptableObject.READONLY );
 
-		return pythonInterpreter;
+		return scope;
 	}
 
 	/**
@@ -175,7 +186,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 */
 	public File getCacheDir()
 	{
-		return new File( LanguageManager.getCachePath(), PYTHON_EXECUTABLES_CACHE_DIR );
+		return new File( LanguageManager.getCachePath(), JAVASCRIPT_CACHE_DIR );
 	}
 
 	//
@@ -206,23 +217,52 @@ public class RhinoAdapter extends LanguageAdapterBase
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		return null;
+		Context context = enterContext( executionContext );
+		try
+		{
+			ScriptableObject scope = getScope( executable, executionContext, context, -1 );
+			Object o = scope.get( entryPointName, null );
+			if( !( o instanceof Function ) )
+				throw new NoSuchMethodException( entryPointName );
+			Function function = (Function) o;
+			Object r = function.call( context, scope, scope, arguments );
+			if( r instanceof Wrapper )
+				r = ( (Wrapper) r ).unwrap();
+			return r;
+		}
+		catch( Exception x )
+		{
+			throw RhinoAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		finally
+		{
+			Context.exit();
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
 	/**
-	 * The Python compiler used for scriptlet preparation.
+	 * Rhino class compiler.
 	 */
-	protected final PythonCompiler compiler;
+	protected final ClassCompiler classCompiler;
 
 	/**
-	 * The Python compiler flags used for scriptlet preparation.
+	 * Rhino class loader.
 	 */
-	protected final CompilerFlags compilerFlags;
+	protected final GeneratedClassLoader generatedClassLoader;
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * Used to generate and enter Rhino contexts.
+	 */
+	private final ContextFactory contextFactory = new ContextFactory();
+
+	/**
+	 * Class cache shared by all Rhino contexts.
+	 */
+	private final ClassCache classChache = new ClassCache();
 }

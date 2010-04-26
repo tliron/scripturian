@@ -11,18 +11,12 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.StringReader;
 
-import org.python.antlr.base.mod;
-import org.python.core.BytecodeLoader;
-import org.python.core.ParserFacade;
-import org.python.core.PyCode;
-import org.python.core.PythonCodeBundle;
-import org.python.util.PythonInterpreter;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.ScriptableObject;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -68,77 +62,56 @@ class RhinoScriptlet extends ScriptletBase<RhinoAdapter>
 	public void prepare() throws PreparationException
 	{
 		File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
+		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 
-		if( classFile.exists() )
+		try
 		{
-			// Use cached compiled code
-			try
+			byte[] classByteArray;
+			if( classFile.exists() )
+				classByteArray = ScripturianUtil.getBytes( classFile );
+			else
 			{
-				byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-				String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
-				pyCode = BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() );
-			}
-			catch( IOException x )
-			{
-				x.printStackTrace();
-			}
-		}
-		else
-		{
-			mod node = ParserFacade.parseExpressionOrModule( new StringReader( sourceCode ), executable.getDocumentName(), adapter.compilerFlags );
-			String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
-			try
-			{
-				PythonCodeBundle bundle = adapter.compiler.compile( node, classname, executable.getDocumentName(), true, false, adapter.compilerFlags );
-				pyCode = bundle.loadCode();
+				Object[] compiled = adapter.classCompiler.compileToClassFiles( sourceCode, executable.getDocumentName(), startLineNumber, classname );
+				classByteArray = (byte[]) compiled[1];
 
 				// Cache it!
 				classFile.getParentFile().mkdirs();
 				FileOutputStream stream = new FileOutputStream( classFile );
-				bundle.writeTo( stream );
+				stream.write( (byte[]) classByteArray );
 				stream.close();
 			}
-			catch( Exception x )
-			{
-				x.printStackTrace();
-			}
+
+			script = (Script) adapter.generatedClassLoader.defineClass( classname, classByteArray ).newInstance();
 		}
-
-		// bundle.saveCode( Options.proxyDebugDirectory );
-
-		// pyCode = adapter.compilerInterpreter.compile( sourceCode,
-		// executable.getDocumentName() );
+		catch( Exception x )
+		{
+			x.printStackTrace();
+		}
 	}
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		PythonInterpreter pythonInterpreter = adapter.getPythonInterpreter( executionContext );
-
+		Context context = adapter.enterContext( executionContext );
 		try
 		{
-			if( pyCode != null )
-			{
-				pythonInterpreter.exec( pyCode );
-			}
+			ScriptableObject scope = adapter.getScope( executable, executionContext, context, startLineNumber );
+			if( script != null )
+				script.exec( context, scope );
 			else
-			{
-				// We're using a stream because PythonInterpreter does not
-				// expose a string-based method that also accepts a filename.
-
-				pythonInterpreter.execfile( new ByteArrayInputStream( sourceCode.getBytes() ), executable.getDocumentName() );
-			}
+				context.evaluateString( scope, sourceCode, executable.getDocumentName(), startLineNumber, null );
 		}
 		catch( Exception x )
 		{
 			throw RhinoAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		finally
+		{
+			Context.exit();
 		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	/**
-	 * The compiled code.
-	 */
-	private PyCode pyCode;
+	private Script script;
 }

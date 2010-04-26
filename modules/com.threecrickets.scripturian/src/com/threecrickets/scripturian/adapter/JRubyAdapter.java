@@ -184,7 +184,8 @@ public class JRubyAdapter extends LanguageAdapterBase
 	/**
 	 * Gets a Ruby runtime instance stored in the execution context, creating it
 	 * if it doesn't exist. Each execution context is guaranteed to have its own
-	 * Ruby runtime.
+	 * Ruby runtime. The runtime instance is updated to match the writers and
+	 * exposed variables in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context

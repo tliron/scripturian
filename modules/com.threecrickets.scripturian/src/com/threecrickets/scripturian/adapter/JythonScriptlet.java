@@ -68,6 +68,7 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 	public void prepare() throws PreparationException
 	{
 		File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
+		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 
 		if( classFile.exists() )
 		{
@@ -75,7 +76,6 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 			try
 			{
 				byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-				String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 				pyCode = BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() );
 			}
 			catch( IOException x )
@@ -90,7 +90,6 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 		else
 		{
 			mod node = ParserFacade.parseExpressionOrModule( new StringReader( sourceCode ), executable.getDocumentName(), adapter.compilerFlags );
-			String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 			try
 			{
 				PythonCodeBundle bundle = adapter.compiler.compile( node, classname, executable.getDocumentName(), true, false, adapter.compilerFlags );
@@ -119,16 +118,11 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 		try
 		{
 			if( pyCode != null )
-			{
 				pythonInterpreter.exec( pyCode );
-			}
 			else
-			{
 				// We're using a stream because PythonInterpreter does not
 				// expose a string-based method that also accepts a filename.
-
 				pythonInterpreter.execfile( new ByteArrayInputStream( sourceCode.getBytes() ), executable.getDocumentName() );
-			}
 		}
 		catch( Exception x )
 		{
