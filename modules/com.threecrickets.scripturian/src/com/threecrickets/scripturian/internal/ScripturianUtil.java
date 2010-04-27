@@ -189,22 +189,20 @@ public abstract class ScripturianUtil
 	 */
 	public static String getFilenameForScriptletClass( Executable executable, int position )
 	{
-		String filename = executable.getDocumentName();
-		int lastSlash = filename.lastIndexOf( '/' );
+		String filename = executable.getPartition() + executable.getDocumentName();
+		/*int lastSlash = filename.lastIndexOf( '/' );
 		if( lastSlash != -1 )
 			filename = filename.substring( 0, lastSlash ).replace( ".", "_" ) + filename.substring( lastSlash ).replace( "-", "_" ).replace( ".", "$" );
-		else
-			filename = filename.replace( ".", "$" );
+		else*/
+		filename = filename.replace( "-", "_" ).replace( ".", "$" );
 		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
-		return executable.getPartition() + filename;
+		return filename;
 	}
 
 	public static String getClassnameForScriptlet( Executable executable, int position )
 	{
 		String classname = executable.getPartition() + executable.getDocumentName();
-		classname = classname.replace( "-", "_" );
-		classname = classname.replace( ".", "$" );
-		classname = classname.replace( "/", "." );
+		classname = classname.replace( "-", "_" ).replace( ".", "$" ).replace( "/", "." );
 		classname += "$" + position + "$" + executable.getDocumentTimestamp();
 		return classname;
 	}

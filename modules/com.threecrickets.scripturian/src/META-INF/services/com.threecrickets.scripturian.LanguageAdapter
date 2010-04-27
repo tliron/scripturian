@@ -1,5 +1,5 @@
 com.threecrickets.scripturian.adapter.ClojureAdapter
-com.threecrickets.scripturian.adapter.jsr223.GroovyAdapter
+com.threecrickets.scripturian.adapter.GroovyAdapter
 com.threecrickets.scripturian.adapter.jsr223.JavaAdapter
 com.threecrickets.scripturian.adapter.jsr223.JeppAdapter
 com.threecrickets.scripturian.adapter.JRubyAdapter

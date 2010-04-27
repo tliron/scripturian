@@ -11,19 +11,16 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import groovy.lang.Binding;
+import groovy.lang.Closure;
+import groovy.lang.GroovyClassLoader;
+import groovy.lang.GroovyRuntimeException;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Properties;
 
 import org.python.Version;
-import org.python.compiler.LegacyCompiler;
-import org.python.core.CompilerFlags;
-import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PySystemState;
-import org.python.core.PythonCompiler;
-import org.python.util.PythonInterpreter;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -33,8 +30,6 @@ import com.threecrickets.scripturian.Scriptlet;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
-import com.threecrickets.scripturian.exception.StackFrame;
-import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the <a
@@ -48,26 +43,12 @@ public class GroovyAdapter extends LanguageAdapterBase
 	// Constants
 	//
 
-	/**
-	 * The Python interpreter attribute.
-	 */
-	public static final String JYTHON_INTERPRETER = "jython.interpreter";
-
-	/**
-	 * The Python home property.
-	 */
-	public static final String PYTHON_HOME = "python.home";
-
-	/**
-	 * The default base directory for cached packages. (Jython will add a
-	 * "packages" subdirectory underneath.)
-	 */
-	public static final String PYTHON_PACKAGES_CACHE_DIR = "python";
+	public static final String GROOVY_BINDING = "groovy.binding";
 
 	/**
 	 * The default base directory for cached executables.
 	 */
-	public static final String PYTHON_EXECUTABLES_CACHE_DIR = "python/executables";
+	public static final String GROOVY_CACHE_DIR = "groovy";
 
 	//
 	// Static operations
@@ -84,22 +65,9 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 */
 	public static ExecutionException createExecutionException( String documentName, Exception x )
 	{
-		if( x instanceof PyException )
+		if( x instanceof GroovyRuntimeException )
 		{
-			PyException pyException = (PyException) x;
-			pyException.normalize();
 
-			Throwable cause = x.getCause();
-			if( cause instanceof ExecutionException )
-			{
-				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
-				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1 ) );
-
-				return executionException;
-			}
-
-			return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1, Py.formatException( pyException.type, pyException.value ), pyException.getCause() );
 		}
 
 		return new ExecutionException( x.getMessage(), x );
@@ -109,30 +77,18 @@ public class GroovyAdapter extends LanguageAdapterBase
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public GroovyAdapter() throws LanguageAdapterException
 	{
-		super( "Jython", Version.getVersion(), "Python", Version.getVersion(), Arrays.asList( "py" ), "py", Arrays.asList( "python", "jython" ), "python" );
+		super( "Groovy", Version.getVersion(), "Groovy", Version.getVersion(), Arrays.asList( "gv" ), "gv", Arrays.asList( "groovy", "gv" ), "groovy" );
 
-		String homePath = System.getProperty( PYTHON_HOME );
-		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );
-
-		// Initialize Jython registry (can only happen once per VM)
-		if( PySystemState.registry == null )
-		{
-			// The packages cache dir is calculate as relative to the home dir.
-			// Note that Jython will add a "packages" subdirectory underneath.
-			String packagesCacheDirPath = ScripturianUtil.getRelativeFile( packagesCacheDir, new File( homePath ) ).getPath();
-			// System.out.println( packagesCacheDirPath );
-
-			Properties overridingProperties = new Properties();
-			overridingProperties.put( PYTHON_HOME, homePath );
-			overridingProperties.put( PySystemState.PYTHON_CACHEDIR, packagesCacheDirPath );
-
-			PySystemState.initialize( System.getProperties(), overridingProperties );
-		}
-
-		compiler = new LegacyCompiler();
-		compilerFlags = CompilerFlags.getCompilerFlags();
+		// This will allow the class loader to load our auxiliary classes (see
+		// GroovyScriptlet.prepare)
+		groovyClassLoader.addClasspath( getCacheDir().getPath() );
 	}
 
 	//
@@ -140,32 +96,33 @@ public class GroovyAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Gets a Python interpreter instance stored in the execution context,
-	 * creating it if it doesn't exist. Each execution context is guaranteed to
-	 * have its own Python interpreter.
+	 * Gets a Groovy binding stored in the execution context, creating it if it
+	 * doesn't exist. Each execution context is guaranteed to have its own
+	 * Groovy binding. The binding is updated to match the writers and exposed
+	 * variables in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @return The Python interpreter
+	 * @return The Groovy binding
 	 */
-	public PythonInterpreter getPythonInterpreter( ExecutionContext executionContext )
+	public Binding getBinding( ExecutionContext executionContext )
 	{
-		PythonInterpreter pythonInterpreter = (PythonInterpreter) executionContext.getAttributes().get( JYTHON_INTERPRETER );
+		Binding binding = (Binding) executionContext.getAttributes().get( GROOVY_BINDING );
 
-		if( pythonInterpreter == null )
+		if( binding == null )
 		{
-			pythonInterpreter = new PythonInterpreter();
-			executionContext.getAttributes().put( JYTHON_INTERPRETER, pythonInterpreter );
+			binding = new Binding();
+			executionContext.getAttributes().put( GROOVY_BINDING, binding );
 		}
 
-		pythonInterpreter.setOut( executionContext.getWriter() );
-		pythonInterpreter.setErr( executionContext.getErrorWriter() );
+		binding.setVariable( "out", executionContext.getWriter() );
+		binding.setVariable( "err", executionContext.getErrorWriter() );
 
-		// Expose variables as Python globals
+		// Expose variables in binding
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			pythonInterpreter.set( entry.getKey(), entry.getValue() );
+			binding.setVariable( entry.getKey(), entry.getValue() );
 
-		return pythonInterpreter;
+		return binding;
 	}
 
 	/**
@@ -175,7 +132,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 */
 	public File getCacheDir()
 	{
-		return new File( LanguageManager.getCachePath(), PYTHON_EXECUTABLES_CACHE_DIR );
+		return new File( LanguageManager.getCachePath(), GROOVY_CACHE_DIR );
 	}
 
 	//
@@ -206,21 +163,19 @@ public class GroovyAdapter extends LanguageAdapterBase
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		return null;
+		Binding binding = getBinding( executionContext );
+
+		Object o = binding.getVariable( entryPointName );
+		if( !( o instanceof Closure ) )
+			throw new NoSuchMethodException( entryPointName );
+		Closure closure = (Closure) o;
+		return closure.call( arguments );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
-	/**
-	 * The Python compiler used for scriptlet preparation.
-	 */
-	protected final PythonCompiler compiler;
-
-	/**
-	 * The Python compiler flags used for scriptlet preparation.
-	 */
-	protected final CompilerFlags compilerFlags;
+	protected final GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private

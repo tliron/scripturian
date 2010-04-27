@@ -136,7 +136,7 @@ public class ClojureAdapter extends LanguageAdapterBase
 	 */
 	public ClojureAdapter() throws LanguageAdapterException
 	{
-		super( "Clojure", "?", "Clojure", "?", Arrays.asList( "clj" ), "clj", Arrays.asList( "clojure" ), "clojure" );
+		super( "Clojure", "?", "Clojure", "?", Arrays.asList( "clj" ), "clj", Arrays.asList( "clojure", "clj" ), "clojure" );
 	}
 
 	//

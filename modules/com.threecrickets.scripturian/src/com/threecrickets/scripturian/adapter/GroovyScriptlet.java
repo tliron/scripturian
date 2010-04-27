@@ -11,18 +11,16 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import java.io.ByteArrayInputStream;
+import groovy.lang.Binding;
+import groovy.lang.Script;
+
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.StringReader;
+import java.util.List;
 
-import org.python.antlr.base.mod;
-import org.python.core.BytecodeLoader;
-import org.python.core.ParserFacade;
-import org.python.core.PyCode;
-import org.python.core.PythonCodeBundle;
-import org.python.util.PythonInterpreter;
+import org.codehaus.groovy.control.CompilationUnit;
+import org.codehaus.groovy.control.Phases;
+import org.codehaus.groovy.tools.GroovyClass;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -65,68 +63,83 @@ class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
 	// Scriptlet
 	//
 
+	@SuppressWarnings("unchecked")
 	public void prepare() throws PreparationException
 	{
 		File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
-
-		if( classFile.exists() )
-		{
-			// Use cached compiled code
-			try
-			{
-				byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-				String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
-				pyCode = BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() );
-			}
-			catch( IOException x )
-			{
-				x.printStackTrace();
-			}
-		}
-		else
-		{
-			mod node = ParserFacade.parseExpressionOrModule( new StringReader( sourceCode ), executable.getDocumentName(), adapter.compilerFlags );
-			String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
-			try
-			{
-				PythonCodeBundle bundle = adapter.compiler.compile( node, classname, executable.getDocumentName(), true, false, adapter.compilerFlags );
-				pyCode = bundle.loadCode();
-
-				// Cache it!
-				classFile.getParentFile().mkdirs();
-				FileOutputStream stream = new FileOutputStream( classFile );
-				bundle.writeTo( stream );
-				stream.close();
-			}
-			catch( Exception x )
-			{
-				x.printStackTrace();
-			}
-		}
-
-		// bundle.saveCode( Options.proxyDebugDirectory );
-
-		// pyCode = adapter.compilerInterpreter.compile( sourceCode,
-		// executable.getDocumentName() );
-	}
-
-	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
-	{
-		PythonInterpreter pythonInterpreter = adapter.getPythonInterpreter( executionContext );
+		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 
 		try
 		{
-			if( pyCode != null )
+			Class<Script> scriptClass;
+			if( classFile.exists() )
 			{
-				pythonInterpreter.exec( pyCode );
+				byte[] classByteArray = ScripturianUtil.getBytes( classFile );
+				scriptClass = adapter.groovyClassLoader.defineClass( classname, classByteArray );
 			}
 			else
 			{
-				// We're using a stream because PythonInterpreter does not
-				// expose a string-based method that also accepts a filename.
+				CompilationUnit compilationUnit = new CompilationUnit( adapter.groovyClassLoader );
+				compilationUnit.addSource( classname + ".$", sourceCode );
+				compilationUnit.compile( Phases.CLASS_GENERATION );
 
-				pythonInterpreter.execfile( new ByteArrayInputStream( sourceCode.getBytes() ), executable.getDocumentName() );
+				// Groovy compiles each closure to its own class, meaning that
+				// we may very well have several classes as the result of our
+				// compilation. We'll save each of these classes separately.
+
+				for( GroovyClass auxiliaryClass : (List<GroovyClass>) compilationUnit.getClasses() )
+				{
+					String postfix = auxiliaryClass.getName().substring( classname.length() );
+					File auxiliaryClassFile = new File( classFile.getPath().substring( 0, classFile.getPath().length() - 6 ) + postfix + ".class" );
+
+					// Cache it!
+					auxiliaryClassFile.getParentFile().mkdirs();
+					FileOutputStream stream = new FileOutputStream( auxiliaryClassFile );
+					stream.write( auxiliaryClass.getBytes() );
+					stream.close();
+				}
+
+				scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
 			}
+
+			// What about the auxiliary classes mentioned above, requires for
+			// the instance to work? Well, we've added our cache path to the
+			// GroovyClassLoader, so it will load those automatically.
+
+			script = scriptClass.newInstance();
+		}
+		catch( Exception x )
+		{
+			x.printStackTrace();
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
+	{
+		Binding binding = adapter.getBinding( executionContext );
+
+		try
+		{
+			if( script == null )
+			{
+				// Note that we're caching the resulting parsed script for the
+				// future. Might as well!
+
+				Class<Script> scriptClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
+				script = scriptClass.newInstance();
+			}
+
+			script.setBinding( binding );
+			script.run();
+		}
+		catch( InstantiationException x )
+		{
+			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		catch( IllegalAccessException x )
+		{
+			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
 		catch( Exception x )
 		{
@@ -137,8 +150,5 @@ class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	/**
-	 * The compiled code.
-	 */
-	private PyCode pyCode;
+	private Script script;
 }

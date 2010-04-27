@@ -101,10 +101,15 @@ public class RhinoAdapter extends LanguageAdapterBase
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public RhinoAdapter() throws LanguageAdapterException
 	{
-		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", new ContextFactory().enterContext().getImplementationVersion(), Arrays.asList( "js" ), "js", Arrays.asList(
-			"javascript", "js" ), "javascript" );
+		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", new ContextFactory().enterContext().getImplementationVersion(), Arrays.asList( "js", "javascript" ), "js", Arrays
+			.asList( "javascript", "js", "rhino" ), "javascript" );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
 		classCompiler = new ClassCompiler( compilerEnvirons );

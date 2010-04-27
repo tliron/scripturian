@@ -148,9 +148,14 @@ public class JRubyAdapter extends LanguageAdapterBase
 	// Construction
 	//
 
+	/**
+	 * Construction.
+	 * 
+	 * @throws LanguageAdapterException
+	 */
 	public JRubyAdapter() throws LanguageAdapterException
 	{
-		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), "rb", Arrays.asList( "ruby", "jruby" ), "ruby" );
+		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), "rb", Arrays.asList( "ruby", "rb", "jruby" ), "ruby" );
 
 		RubyInstanceConfig config = new RubyInstanceConfig();
 		config.setClassCache( getRubyClassCache() );
