@@ -18,6 +18,7 @@
 				<fileset dir="${lib}/jsr223/lib" />
 				<fileset dir="${lib}/jygments/lib" />
 				<fileset dir="${lib}/jython/lib" />
+				<fileset dir="${lib}/quercus/lib" />
 				<fileset dir="${lib}/rhino/lib" />
 			</classpath>
 		</javac>
