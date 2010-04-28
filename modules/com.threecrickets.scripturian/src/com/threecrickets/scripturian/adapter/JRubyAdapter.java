@@ -56,7 +56,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 	/**
 	 * The Ruby runtime instance attribute.
 	 */
-	public static final String JRUBY_RUNTIME = "jruby.rubyRuntime";
+	public static final String JRUBY_RUNTIME = "jruby.runtime";
 
 	/**
 	 * The Ruby class cache attribute.

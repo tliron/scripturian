@@ -107,13 +107,13 @@ class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
 						stream.close();
 					}
 
+					// TODO: this doesn't work
 					scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
 				}
 
 				// What about the auxiliary classes mentioned above, requires
-				// for
-				// the instance to work? Well, we've added our cache path to the
-				// GroovyClassLoader, so it will load those automatically.
+				// for the instance to work? Well, we've added our cache path to
+				// the GroovyClassLoader, so it will load those automatically.
 
 				script = scriptClass.newInstance();
 			}

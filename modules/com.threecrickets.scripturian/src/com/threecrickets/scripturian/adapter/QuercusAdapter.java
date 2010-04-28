@@ -11,16 +11,18 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import groovy.lang.Binding;
-import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyRuntimeException;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.python.Version;
-
+import com.caucho.quercus.Quercus;
+import com.caucho.quercus.env.Env;
+import com.caucho.quercus.env.Value;
+import com.caucho.vfs.WriteStream;
+import com.caucho.vfs.WriterStreamImpl;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
@@ -43,12 +45,15 @@ public class QuercusAdapter extends LanguageAdapterBase
 	// Constants
 	//
 
-	public static final String GROOVY_BINDING = "groovy.binding";
+	/**
+	 * The Quercus environment attribute.
+	 */
+	public static final String QUERCUS_ENVIRONMENT = "quercus.environment";
 
 	/**
 	 * The default base directory for cached executables.
 	 */
-	public static final String GROOVY_CACHE_DIR = "groovy";
+	public static final String PHP_CACHE_DIR = "php";
 
 	//
 	// Static operations
@@ -102,11 +107,10 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 */
 	public QuercusAdapter() throws LanguageAdapterException
 	{
-		super( "Quercus", Version.getVersion(), "PHP", Version.getVersion(), Arrays.asList( "php" ), null, Arrays.asList( "php", "quercus" ), null );
+		super( "Quercus", staticQuercusRuntime.getVersion(), "PHP", staticQuercusRuntime.getPhpVersion(), Arrays.asList( "php" ), null, Arrays.asList( "php", "quercus" ), null );
 
-		// This will allow the class loader to load our auxiliary classes (see
-		// GroovyScriptlet.prepare)
-		groovyClassLoader.addClasspath( getCacheDir().getPath() );
+		quercusRuntime = new Quercus();
+		quercusRuntime.init();
 	}
 
 	//
@@ -114,33 +118,43 @@ public class QuercusAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Gets a Groovy binding stored in the execution context, creating it if it
-	 * doesn't exist. Each execution context is guaranteed to have its own
-	 * Groovy binding. The binding is updated to match the writers and exposed
-	 * variables in the execution context.
+	 * Gets a Quercus environment stored in the execution context, creating it
+	 * if it doesn't exist. Each execution context is guaranteed to have its own
+	 * Quercus environment. The environment is updated to match the writers and
+	 * exposed variables in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @return The Groovy binding
+	 * @return The Quercus environment
 	 */
-	public Binding getBinding( ExecutionContext executionContext )
+	public Env getEnvironment( ExecutionContext executionContext )
 	{
-		Binding binding = (Binding) executionContext.getAttributes().get( GROOVY_BINDING );
+		Env env = (Env) executionContext.getAttributes().get( QUERCUS_ENVIRONMENT );
 
-		if( binding == null )
+		if( env == null )
 		{
-			binding = new Binding();
-			executionContext.getAttributes().put( GROOVY_BINDING, binding );
+			WriterStreamImpl writerStream = new WriterStreamImpl();
+			writerStream.setWriter( executionContext.getWriter() );
+			WriteStream writeStream = new WriteStream( writerStream );
+			try
+			{
+				writeStream.setEncoding( "utf-8" );
+			}
+			catch( UnsupportedEncodingException x )
+			{
+			}
+
+			env = new Env( quercusRuntime, null, writeStream, null, null );
+
+			executionContext.getAttributes().put( QUERCUS_ENVIRONMENT, env );
 		}
 
-		binding.setVariable( "out", executionContext.getWriter() );
-		binding.setVariable( "err", executionContext.getErrorWriter() );
-
-		// Expose variables in binding
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			binding.setVariable( entry.getKey(), entry.getValue() );
+			env.setScriptGlobal( entry.getKey(), entry.getValue() );
 
-		return binding;
+		env.start();
+
+		return env;
 	}
 
 	/**
@@ -150,7 +164,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 */
 	public File getCacheDir()
 	{
-		return new File( LanguageManager.getCachePath(), GROOVY_CACHE_DIR );
+		return new File( LanguageManager.getCachePath(), PHP_CACHE_DIR );
 	}
 
 	//
@@ -160,8 +174,8 @@ public class QuercusAdapter extends LanguageAdapterBase
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\'", "\\\\'" );
-		return "print('" + literal + "');";
+		literal = literal.replaceAll( "\\\"", "\\\\\"" );
+		return "print(\"" + literal + "\");";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
@@ -171,7 +185,9 @@ public class QuercusAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		return executable.getExposedExecutableName() + ".container.includeDocument(" + expression + ");";
+		return "include $" + executable.getExposedExecutableName() + "->container->source->basePath . '/' . " + expression + ";";
+		// return executable.getExposedExecutableName() +
+		// ".container.includeDocument(" + expression + ");";
 	}
 
 	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
@@ -181,14 +197,77 @@ public class QuercusAdapter extends LanguageAdapterBase
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		return null;
+		entryPointName = toPhpStyle( entryPointName );
+		Env env = getEnvironment( executionContext );
+		try
+		{
+			Value[] quercusArguments = new Value[arguments.length];
+			for( int i = 0; i < arguments.length; i++ )
+				quercusArguments[i] = env.wrapJava( arguments[i] );
+			Value r = env.call( entryPointName, quercusArguments );
+			return r.toJavaObject();
+		}
+		catch( Exception x )
+		{
+			x.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public void releaseContext( ExecutionContext executionContext )
+	{
+		Env env = (Env) executionContext.getAttributes().get( QUERCUS_ENVIRONMENT );
+		if( env != null )
+		{
+			try
+			{
+				env.close();
+			}
+			catch( NullPointerException x )
+			{
+				// This fails in the middle because we don't have a page set for
+				// the env
+			}
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
-	protected final GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
+	protected final Quercus quercusRuntime;
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private static final Quercus staticQuercusRuntime = new Quercus();
+
+	/**
+	 * From somethingLikeThis to something_like_this.
+	 * 
+	 * @param camelCase
+	 *        somethingLikeThis
+	 * @return something_like_this
+	 */
+	private static String toPhpStyle( String camelCase )
+	{
+		StringBuilder r = new StringBuilder();
+		char c = camelCase.charAt( 0 );
+		if( Character.isUpperCase( c ) )
+			r.append( Character.toLowerCase( c ) );
+		else
+			r.append( c );
+		for( int i = 1; i < camelCase.length(); i++ )
+		{
+			c = camelCase.charAt( i );
+			if( Character.isUpperCase( c ) )
+			{
+				r.append( '_' );
+				r.append( Character.toLowerCase( c ) );
+			}
+			else
+				r.append( c );
+		}
+		return r.toString();
+	}
 }

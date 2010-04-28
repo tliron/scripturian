@@ -13,6 +13,14 @@ package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
 
+import com.caucho.quercus.QuercusExitException;
+import com.caucho.quercus.env.Env;
+import com.caucho.quercus.page.InterpretedPage;
+import com.caucho.quercus.page.QuercusPage;
+import com.caucho.quercus.parser.QuercusParser;
+import com.caucho.quercus.program.QuercusProgram;
+import com.caucho.vfs.Path;
+import com.caucho.vfs.StringPath;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.exception.ExecutionException;
@@ -66,6 +74,36 @@ class QuercusScriptlet extends ScriptletBase<QuercusAdapter>
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
+		Env env = adapter.getEnvironment( executionContext );
+
+		try
+		{
+			Path path = new StringPath( "<?php " + sourceCode + " ?>" );
+			QuercusParser parser = new QuercusParser( adapter.quercusRuntime, path, path.openRead() );
+			parser.setLocation( executable.getDocumentName(), startLineNumber );
+			QuercusProgram program = parser.parse();
+			QuercusPage page = new InterpretedPage( program );
+
+			if( page.getCompiledPage() != null )
+				page = page.getCompiledPage();
+
+			page.init( env );
+			page.importDefinitions( env );
+			page.execute( env );
+
+			env.getOut().flushBuffer();
+			env.getOut().free();
+
+			// program.execute( env );
+		}
+		catch( QuercusExitException x )
+		{
+			throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		catch( Exception x )
+		{
+			throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

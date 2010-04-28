@@ -44,6 +44,9 @@ public class GroovyAdapter extends LanguageAdapterBase
 	// Constants
 	//
 
+	/**
+	 * The Groovy binding attribute.
+	 */
 	public static final String GROOVY_BINDING = "groovy.binding";
 
 	/**
