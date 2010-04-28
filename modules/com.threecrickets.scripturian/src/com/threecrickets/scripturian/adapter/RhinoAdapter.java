@@ -90,11 +90,18 @@ public class RhinoAdapter extends LanguageAdapterBase
 				executionException.getStack().add( new StackFrame( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber() ) );
 				return executionException;
 			}
-
-			return new ExecutionException( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber(), rhinoException.getMessage(), x );
+			else if( cause instanceof ParsingException )
+			{
+				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
+				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
+				executionException.getStack().add( new StackFrame( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber() ) );
+				return executionException;
+			}
+			else
+				return new ExecutionException( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber(), rhinoException.getMessage(), x );
 		}
-
-		return new ExecutionException( x.getMessage(), x );
+		else
+			return new ExecutionException( x.getMessage(), x );
 	}
 
 	//
@@ -108,8 +115,8 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 */
 	public RhinoAdapter() throws LanguageAdapterException
 	{
-		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", new ContextFactory().enterContext().getImplementationVersion(), Arrays.asList( "js", "javascript" ), "js", Arrays
-			.asList( "javascript", "js", "rhino" ), "javascript" );
+		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", new ContextFactory().enterContext().getImplementationVersion(), Arrays.asList( "js", "javascript" ), null, Arrays
+			.asList( "javascript", "js", "rhino" ), null );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
 		classCompiler = new ClassCompiler( compilerEnvirons );
@@ -174,8 +181,9 @@ public class RhinoAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 		}
 
-		context.evaluateString( scope, "print=function(s){" + executable.getExposedExecutableName() + ".context.writer.write(String(s));" + executable.getExposedExecutableName() + ".context.writer.flush();};",
-			executable.getDocumentName(), startLineNumber, null );
+		String printSource = "function print(s){" + executable.getExposedExecutableName() + ".context.writer.write(String(s));" + executable.getExposedExecutableName() + ".context.writer.flush();};";
+		Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
+		scope.defineProperty( "print", printFunction, 0 );
 
 		// Define exposed variables as properties in scope
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )

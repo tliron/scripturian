@@ -66,51 +66,61 @@ class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
 	@SuppressWarnings("unchecked")
 	public void prepare() throws PreparationException
 	{
-		File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
+		File mainClassFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
 		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 
-		try
+		synchronized( mainClassFile )
 		{
-			Class<Script> scriptClass;
-			if( classFile.exists() )
+			try
 			{
-				byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-				scriptClass = adapter.groovyClassLoader.defineClass( classname, classByteArray );
-			}
-			else
-			{
-				CompilationUnit compilationUnit = new CompilationUnit( adapter.groovyClassLoader );
-				compilationUnit.addSource( classname + ".$", sourceCode );
-				compilationUnit.compile( Phases.CLASS_GENERATION );
-
-				// Groovy compiles each closure to its own class, meaning that
-				// we may very well have several classes as the result of our
-				// compilation. We'll save each of these classes separately.
-
-				for( GroovyClass auxiliaryClass : (List<GroovyClass>) compilationUnit.getClasses() )
+				Class<Script> scriptClass;
+				if( mainClassFile.exists() )
 				{
-					String postfix = auxiliaryClass.getName().substring( classname.length() );
-					File auxiliaryClassFile = new File( classFile.getPath().substring( 0, classFile.getPath().length() - 6 ) + postfix + ".class" );
+					byte[] classByteArray = ScripturianUtil.getBytes( mainClassFile );
+					scriptClass = adapter.groovyClassLoader.defineClass( classname, classByteArray );
+				}
+				else
+				{
+					CompilationUnit compilationUnit = new CompilationUnit( adapter.groovyClassLoader );
 
-					// Cache it!
-					auxiliaryClassFile.getParentFile().mkdirs();
-					FileOutputStream stream = new FileOutputStream( auxiliaryClassFile );
-					stream.write( auxiliaryClass.getBytes() );
-					stream.close();
+					// We're adding an extension to the classname, because
+					// Groovy expects one and will remove it. Note that it
+					// doesn't matter what the extension is.
+
+					compilationUnit.addSource( classname + ".$", sourceCode );
+					compilationUnit.compile( Phases.CLASS_GENERATION );
+
+					// Groovy compiles each closure to its own class, meaning
+					// that we may very well have several classes as the result
+					// of our compilation. We'll save each of these classes
+					// separately.
+
+					for( GroovyClass groovyClass : (List<GroovyClass>) compilationUnit.getClasses() )
+					{
+						String postfix = groovyClass.getName().substring( classname.length() );
+						File classFile = new File( mainClassFile.getPath().substring( 0, mainClassFile.getPath().length() - 6 ) + postfix + ".class" );
+
+						// Cache it!
+						classFile.getParentFile().mkdirs();
+						FileOutputStream stream = new FileOutputStream( classFile );
+						stream.write( groovyClass.getBytes() );
+						stream.close();
+					}
+
+					scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
 				}
 
-				scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
+				// What about the auxiliary classes mentioned above, requires
+				// for
+				// the instance to work? Well, we've added our cache path to the
+				// GroovyClassLoader, so it will load those automatically.
+
+				script = scriptClass.newInstance();
 			}
-
-			// What about the auxiliary classes mentioned above, requires for
-			// the instance to work? Well, we've added our cache path to the
-			// GroovyClassLoader, so it will load those automatically.
-
-			script = scriptClass.newInstance();
-		}
-		catch( Exception x )
-		{
-			x.printStackTrace();
+			catch( Exception x )
+			{
+				x.printStackTrace();
+			}
 		}
 	}
 

@@ -101,38 +101,27 @@ public class JRubyAdapter extends LanguageAdapterBase
 
 			if( cause instanceof ExecutionException )
 			{
-				ExecutionException executionException = new ExecutionException( documentName, cause.getMessage() );
+				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
 				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
 					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
-
 				return executionException;
 			}
-
-			if( cause instanceof ParsingException )
+			else if( cause instanceof ParsingException )
 			{
-				ExecutionException executionException = new ExecutionException( documentName, cause.getMessage() );
+				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
 				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
 					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
-
 				return executionException;
 			}
-
-			ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
-			for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
-				executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
-
-			/*
-			 * ExecutionException executionException = new ExecutionException(
-			 * cause.getMessage(), cause ); for( StackTraceElement
-			 * stackTraceElement : cause.getStackTrace() ) if(
-			 * stackTraceElement.getFileName().length() > 0 )
-			 * executionException.getStack().add( new StackFrame(
-			 * stackTraceElement ) );
-			 */
-
-			return executionException;
+			else
+			{
+				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
+				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
+				return executionException;
+			}
 		}
 		else
 		{
@@ -155,7 +144,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 	 */
 	public JRubyAdapter() throws LanguageAdapterException
 	{
-		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), "rb", Arrays.asList( "ruby", "rb", "jruby" ), "ruby" );
+		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), null, Arrays.asList( "ruby", "rb", "jruby" ), null );
 
 		RubyInstanceConfig config = new RubyInstanceConfig();
 		config.setClassCache( getRubyClassCache() );

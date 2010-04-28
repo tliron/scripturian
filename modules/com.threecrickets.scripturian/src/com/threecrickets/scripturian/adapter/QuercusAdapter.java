@@ -12,7 +12,6 @@
 package com.threecrickets.scripturian.adapter;
 
 import groovy.lang.Binding;
-import groovy.lang.Closure;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyRuntimeException;
 
@@ -33,12 +32,12 @@ import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
- * A {@link LanguageAdapter} that supports the <a
- * href="http://groovy.codehaus.org/">Groovy</a> language.
+ * A {@link LanguageAdapter} that supports the PHP language as implemented by <a
+ * href="http://quercus.caucho.com/">Quercus</a>.
  * 
  * @author Tal Liron
  */
-public class GroovyAdapter extends LanguageAdapterBase
+public class QuercusAdapter extends LanguageAdapterBase
 {
 	//
 	// Constants
@@ -101,9 +100,9 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 * 
 	 * @throws LanguageAdapterException
 	 */
-	public GroovyAdapter() throws LanguageAdapterException
+	public QuercusAdapter() throws LanguageAdapterException
 	{
-		super( "Groovy", Version.getVersion(), "Groovy", Version.getVersion(), Arrays.asList( "gv" ), null, Arrays.asList( "groovy", "gv" ), null );
+		super( "Quercus", Version.getVersion(), "PHP", Version.getVersion(), Arrays.asList( "php" ), null, Arrays.asList( "php", "quercus" ), null );
 
 		// This will allow the class loader to load our auxiliary classes (see
 		// GroovyScriptlet.prepare)
@@ -177,24 +176,12 @@ public class GroovyAdapter extends LanguageAdapterBase
 
 	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new GroovyScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new QuercusScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
 	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		Binding binding = getBinding( executionContext );
-		Object o = binding.getVariable( entryPointName );
-		if( !( o instanceof Closure ) )
-			throw new NoSuchMethodException( entryPointName );
-		try
-		{
-			Closure closure = (Closure) o;
-			return closure.call( arguments );
-		}
-		catch( Exception x )
-		{
-			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
-		}
+		return null;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

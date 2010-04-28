@@ -71,69 +71,72 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 		// one we will run in. It's unclear what the repercussions of
 		// this would be, but we haven't detected any trouble yet.
 
-		File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
+		File classFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
 		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 
-		try
+		synchronized( classFile )
 		{
-			if( classFile.exists() )
+			try
 			{
-				// Use cached compiled code
-				byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-				JRubyClassLoader rubyClassLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
-				rubyClassLoader.defineClass( classname, classByteArray );
-				Class<?> scriptClass = rubyClassLoader.loadClass( classname );
-				script = (Script) scriptClass.newInstance();
+				if( classFile.exists() )
+				{
+					// Use cached compiled code
+					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
+					JRubyClassLoader rubyClassLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+					rubyClassLoader.defineClass( classname, classByteArray );
+					Class<?> scriptClass = rubyClassLoader.loadClass( classname );
+					script = (Script) scriptClass.newInstance();
+				}
+				else
+				{
+					Node node = adapter.compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), adapter.compilerRuntime.getCurrentContext().getCurrentScope(), startLineNumber - 1 );
+
+					ASTInspector astInspector = new ASTInspector();
+					ASTCompiler astCompiler = adapter.compilerRuntime.getInstanceConfig().newCompiler();
+					StandardASMCompiler asmCompiler = new StandardASMCompiler( classname.replace( '.', '/' ), executable.getDocumentName() );
+					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+
+					astInspector.inspect( node );
+					astCompiler.compileRoot( node, asmCompiler, astInspector, true, false );
+					script = (Script) asmCompiler.loadClass( classLoader ).newInstance();
+
+					// Cache it!
+					classFile.getParentFile().mkdirs();
+					FileOutputStream stream = new FileOutputStream( classFile );
+					stream.write( asmCompiler.getClassByteArray() );
+					stream.close();
+
+					// script = compilerRuntime.tryCompile( node );
+				}
 			}
-			else
+			catch( RaiseException x )
 			{
-				Node node = adapter.compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), adapter.compilerRuntime.getCurrentContext().getCurrentScope(), startLineNumber - 1 );
+				// JRuby does not fill in the stack trace correctly, though the
+				// error message is fine
 
-				ASTInspector astInspector = new ASTInspector();
-				ASTCompiler astCompiler = adapter.compilerRuntime.getInstanceConfig().newCompiler();
-				StandardASMCompiler asmCompiler = new StandardASMCompiler( classname.replace( '.', '/' ), executable.getDocumentName() );
-				JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+				// StackTraceElement[] stack = x.getStackTrace();
+				// if( ( stack != null ) && stack.length > 0 )
+				// throw new PreparationException( stack[0].getFileName(),
+				// stack[0].getLineNumber(), -1, x );
 
-				astInspector.inspect( node );
-				astCompiler.compileRoot( node, asmCompiler, astInspector, true, false );
-				script = (Script) asmCompiler.loadClass( classLoader ).newInstance();
-
-				// Cache it!
-				classFile.getParentFile().mkdirs();
-				FileOutputStream stream = new FileOutputStream( classFile );
-				stream.write( asmCompiler.getClassByteArray() );
-				stream.close();
-
-				// script = compilerRuntime.tryCompile( node );
+				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
 			}
-		}
-		catch( RaiseException x )
-		{
-			// JRuby does not fill in the stack trace correctly, though the
-			// error message is fine
-
-			// StackTraceElement[] stack = x.getStackTrace();
-			// if( ( stack != null ) && stack.length > 0 )
-			// throw new PreparationException( stack[0].getFileName(),
-			// stack[0].getLineNumber(), -1, x );
-
-			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
-		}
-		catch( InstantiationException x )
-		{
-			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
-		}
-		catch( IllegalAccessException x )
-		{
-			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
-		}
-		catch( ClassNotFoundException x )
-		{
-			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
-		}
-		catch( IOException x )
-		{
-			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+			catch( InstantiationException x )
+			{
+				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+			}
+			catch( IllegalAccessException x )
+			{
+				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+			}
+			catch( ClassNotFoundException x )
+			{
+				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+			}
+			catch( IOException x )
+			{
+				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+			}
 		}
 	}
 

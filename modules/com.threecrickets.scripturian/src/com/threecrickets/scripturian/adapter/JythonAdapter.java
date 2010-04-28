@@ -96,14 +96,20 @@ public class JythonAdapter extends LanguageAdapterBase
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
 				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1 ) );
-
 				return executionException;
 			}
-
-			return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1, Py.formatException( pyException.type, pyException.value ), pyException.getCause() );
+			else if( cause instanceof ParsingException )
+			{
+				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
+				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
+				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1 ) );
+				return executionException;
+			}
+			else
+				return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1, Py.formatException( pyException.type, pyException.value ), pyException.getCause() );
 		}
-
-		return new ExecutionException( x.getMessage(), x );
+		else
+			return new ExecutionException( x.getMessage(), x );
 	}
 
 	//
@@ -117,7 +123,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	 */
 	public JythonAdapter() throws LanguageAdapterException
 	{
-		super( "Jython", Version.PY_VERSION, "Python", Version.PY_VERSION, Arrays.asList( "py" ), "py", Arrays.asList( "python", "py", "jython" ), "python" );
+		super( "Jython", Version.PY_VERSION, "Python", Version.PY_VERSION, Arrays.asList( "py" ), null, Arrays.asList( "python", "py", "jython" ), null );
 
 		String homePath = System.getProperty( PYTHON_HOME );
 		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );

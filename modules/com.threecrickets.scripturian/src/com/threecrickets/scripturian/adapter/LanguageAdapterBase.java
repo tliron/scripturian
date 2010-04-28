@@ -62,9 +62,9 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 		attributes.put( LANGUAGE_NAME, languageName );
 		attributes.put( LANGUAGE_VERSION, languageVersion );
 		attributes.put( EXTENSIONS, extensions );
-		attributes.put( DEFAULT_EXTENSION, defaultExtension );
+		attributes.put( DEFAULT_EXTENSION, defaultExtension != null ? defaultExtension : extensions.iterator().next() );
 		attributes.put( TAGS, tags );
-		attributes.put( DEFAULT_TAG, defaultTag );
+		attributes.put( DEFAULT_TAG, defaultTag != null ? defaultTag : tags.iterator().next() );
 	}
 
 	//

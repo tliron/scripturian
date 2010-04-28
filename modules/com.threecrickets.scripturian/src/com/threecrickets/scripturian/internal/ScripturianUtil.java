@@ -19,6 +19,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 
 import com.threecrickets.scripturian.Executable;
@@ -181,23 +183,33 @@ public abstract class ScripturianUtil
 	 * Calculates a filename for a JVM class based on executable partition,
 	 * executable document name and scriptlet position.
 	 * 
+	 * @param subdirectory
+	 *        The cache subdirectory
 	 * @param executable
 	 *        The executable
 	 * @param position
 	 *        The scriptlet position
 	 * @return The file
 	 */
-	public static String getFilenameForScriptletClass( Executable executable, int position )
+	public static File getFileForScriptletClass( File subdirectory, Executable executable, int position )
 	{
 		String filename = executable.getPartition() + executable.getDocumentName();
-		/*int lastSlash = filename.lastIndexOf( '/' );
-		if( lastSlash != -1 )
-			filename = filename.substring( 0, lastSlash ).replace( ".", "_" ) + filename.substring( lastSlash ).replace( "-", "_" ).replace( ".", "$" );
-		else*/
 		filename = filename.replace( "-", "_" ).replace( ".", "$" );
 		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
-		return filename;
+		File file = new File( subdirectory, filename );
+		File existing = scriptletClassFiles.get( file.getPath() );
+		if( existing != null )
+			file = existing;
+		else
+		{
+			existing = scriptletClassFiles.putIfAbsent( file.getPath(), file );
+			if( existing != null )
+				file = existing;
+		}
+		return file;
 	}
+
+	private static final ConcurrentMap<String, File> scriptletClassFiles = new ConcurrentHashMap<String, File>();
 
 	public static String getClassnameForScriptlet( Executable executable, int position )
 	{

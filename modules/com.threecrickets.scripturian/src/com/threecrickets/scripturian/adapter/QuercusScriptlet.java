@@ -12,11 +12,6 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
-import java.io.FileOutputStream;
-
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.ScriptableObject;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -28,7 +23,7 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 /**
  * @author Tal Liron
  */
-class RhinoScriptlet extends ScriptletBase<RhinoAdapter>
+class QuercusScriptlet extends ScriptletBase<QuercusAdapter>
 {
 	//
 	// Construction
@@ -50,7 +45,7 @@ class RhinoScriptlet extends ScriptletBase<RhinoAdapter>
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public RhinoScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, RhinoAdapter adapter )
+	public QuercusScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, QuercusAdapter adapter )
 	{
 		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
@@ -61,60 +56,18 @@ class RhinoScriptlet extends ScriptletBase<RhinoAdapter>
 
 	public void prepare() throws PreparationException
 	{
-		File classFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
+		File mainClassFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
 		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 
-		synchronized( classFile )
+		synchronized( mainClassFile )
 		{
-			try
-			{
-				byte[] classByteArray;
-				if( classFile.exists() )
-					classByteArray = ScripturianUtil.getBytes( classFile );
-				else
-				{
-					Object[] compiled = adapter.classCompiler.compileToClassFiles( sourceCode, executable.getDocumentName(), startLineNumber, classname );
-					classByteArray = (byte[]) compiled[1];
-
-					// Cache it!
-					classFile.getParentFile().mkdirs();
-					FileOutputStream stream = new FileOutputStream( classFile );
-					stream.write( (byte[]) classByteArray );
-					stream.close();
-				}
-
-				script = (Script) adapter.generatedClassLoader.defineClass( classname, classByteArray ).newInstance();
-			}
-			catch( Exception x )
-			{
-				x.printStackTrace();
-			}
 		}
 	}
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		Context context = adapter.enterContext( executionContext );
-		try
-		{
-			ScriptableObject scope = adapter.getScope( executable, executionContext, context, startLineNumber );
-			if( script != null )
-				script.exec( context, scope );
-			else
-				context.evaluateString( scope, sourceCode, executable.getDocumentName(), startLineNumber, null );
-		}
-		catch( Exception x )
-		{
-			throw RhinoAdapter.createExecutionException( executable.getDocumentName(), x );
-		}
-		finally
-		{
-			Context.exit();
-		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	private Script script;
 }

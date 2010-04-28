@@ -67,43 +67,46 @@ class JythonScriptlet extends ScriptletBase<JythonAdapter>
 
 	public void prepare() throws PreparationException
 	{
-		File classFile = new File( adapter.getCacheDir(), ScripturianUtil.getFilenameForScriptletClass( executable, position ) );
+		File classFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
 		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
 
-		if( classFile.exists() )
+		synchronized( classFile )
 		{
-			// Use cached compiled code
-			try
+			if( classFile.exists() )
 			{
-				byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-				pyCode = BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() );
+				// Use cached compiled code
+				try
+				{
+					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
+					pyCode = BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() );
+				}
+				catch( IOException x )
+				{
+					x.printStackTrace();
+				}
+				catch( Exception x )
+				{
+					x.printStackTrace();
+				}
 			}
-			catch( IOException x )
+			else
 			{
-				x.printStackTrace();
-			}
-			catch( Exception x )
-			{
-				x.printStackTrace();
-			}
-		}
-		else
-		{
-			mod node = ParserFacade.parseExpressionOrModule( new StringReader( sourceCode ), executable.getDocumentName(), adapter.compilerFlags );
-			try
-			{
-				PythonCodeBundle bundle = adapter.compiler.compile( node, classname, executable.getDocumentName(), true, false, adapter.compilerFlags );
-				pyCode = bundle.loadCode();
+				mod node = ParserFacade.parseExpressionOrModule( new StringReader( sourceCode ), executable.getDocumentName(), adapter.compilerFlags );
+				try
+				{
+					PythonCodeBundle bundle = adapter.compiler.compile( node, classname, executable.getDocumentName(), true, false, adapter.compilerFlags );
+					pyCode = bundle.loadCode();
 
-				// Cache it!
-				classFile.getParentFile().mkdirs();
-				FileOutputStream stream = new FileOutputStream( classFile );
-				bundle.writeTo( stream );
-				stream.close();
-			}
-			catch( Exception x )
-			{
-				x.printStackTrace();
+					// Cache it!
+					classFile.getParentFile().mkdirs();
+					FileOutputStream stream = new FileOutputStream( classFile );
+					bundle.writeTo( stream );
+					stream.close();
+				}
+				catch( Exception x )
+				{
+					x.printStackTrace();
+				}
 			}
 		}
 

@@ -313,14 +313,15 @@ public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
 	{
 		String message = x.getMessage();
 		ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
+		Throwable cause = x.getCause();
 
-		if( x.getCause() instanceof ExecutionException )
+		if( cause instanceof ExecutionException )
 		{
 			if( message.startsWith( "com.threecrickets.scripturian.exception.ExecutionException: " ) )
 				message = message.substring( "com.threecrickets.scripturian.exception.ExecutionException: ".length() );
 
 			// Add the cause's stack to ours
-			stack.addAll( ( (ExecutionException) x.getCause() ).getStack() );
+			stack.addAll( ( (ExecutionException) cause ).getStack() );
 		}
 
 		message = extractStack( message, stack );
