@@ -60,9 +60,10 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 	}
 
 	//
-	// Scriptlet
+	// Program
 	//
 
+	@Override
 	public void prepare() throws PreparationException
 	{
 		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );

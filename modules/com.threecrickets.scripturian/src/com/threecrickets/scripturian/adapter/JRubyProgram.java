@@ -66,9 +66,10 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	}
 
 	//
-	// Scriptlet
+	// Program
 	//
 
+	@Override
 	public void prepare() throws PreparationException
 	{
 		// Note that we parse the node for a different runtime than the

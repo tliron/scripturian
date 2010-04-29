@@ -11,14 +11,13 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import groovy.lang.GroovyRuntimeException;
-
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Map;
 
 import com.caucho.quercus.Quercus;
+import com.caucho.quercus.QuercusException;
 import com.caucho.quercus.env.Env;
 import com.caucho.quercus.env.Value;
 import com.caucho.vfs.WriteStream;
@@ -31,11 +30,12 @@ import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
-import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
  * A {@link LanguageAdapter} that supports the PHP language as implemented by <a
- * href="http://quercus.caucho.com/">Quercus</a>.
+ * href="http://quercus.caucho.com/">Quercus</a>. Note that Quercus compilation
+ * is only available in Resin Professional, and as such no compilation is
+ * supported in this adapter.
  * 
  * @author Tal Liron
  */
@@ -75,30 +75,39 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 */
 	public static ExecutionException createExecutionException( String documentName, Exception x )
 	{
-		if( x instanceof GroovyRuntimeException )
+		if( x instanceof QuercusException )
 		{
-			GroovyRuntimeException groovyRuntimeException = (GroovyRuntimeException) x;
+			// QuercusException quercusException = (QuercusException) x;
 			Throwable cause = x.getCause();
 			if( cause instanceof ExecutionException )
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber(), groovyRuntimeException.getNode().getColumnNumber() ) );
+				// executionException.getStack().add( new StackFrame(
+				// documentName,
+				// groovyRuntimeException.getNode().getLineNumber(),
+				// groovyRuntimeException.getNode().getColumnNumber() ) );
 				return executionException;
 			}
 			else if( cause instanceof ParsingException )
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber(), groovyRuntimeException.getNode().getColumnNumber() ) );
+				// executionException.getStack().add( new StackFrame(
+				// documentName,
+				// groovyRuntimeException.getNode().getLineNumber(),
+				// groovyRuntimeException.getNode().getColumnNumber() ) );
 				return executionException;
 			}
-			else
-				return new ExecutionException( documentName, groovyRuntimeException.getNode().getLineNumber(), groovyRuntimeException.getNode().getColumnNumber(), groovyRuntimeException.getMessageWithoutLocationText(),
-					x );
+			// else
+			// return new ExecutionException( documentName,
+			// groovyRuntimeException.getNode().getLineNumber(),
+			// groovyRuntimeException.getNode().getColumnNumber(),
+			// groovyRuntimeException.getMessageWithoutLocationText(),
+			// x );
 		}
-		else
-			return new ExecutionException( x.getMessage(), x );
+
+		return new ExecutionException( x.getMessage(), x );
 	}
 
 	//

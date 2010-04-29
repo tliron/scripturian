@@ -64,9 +64,10 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	}
 
 	//
-	// Scriptlet
+	// Program
 	//
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public void prepare() throws PreparationException
 	{

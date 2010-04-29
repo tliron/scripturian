@@ -11,8 +11,6 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import java.io.File;
-
 import com.caucho.quercus.QuercusExitException;
 import com.caucho.quercus.env.Env;
 import com.caucho.quercus.page.InterpretedPage;
@@ -24,8 +22,6 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
-import com.threecrickets.scripturian.exception.PreparationException;
-import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * @author Tal Liron
@@ -62,20 +58,8 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	}
 
 	//
-	// Scriptlet
+	// Program
 	//
-
-	public void prepare() throws PreparationException
-	{
-		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
-		String classname = ScripturianUtil.getClassnameForProgram( executable, position );
-
-		synchronized( classFile )
-		{
-			// if( page.getCompiledPage() != null )
-			// page = page.getCompiledPage();
-		}
-	}
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
@@ -93,6 +77,9 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 				parser.setLocation( executable.getDocumentName(), startLineNumber );
 				com.caucho.quercus.program.QuercusProgram program = parser.parse();
 				page = new InterpretedPage( program );
+
+				// if( page.getCompiledPage() != null )
+				// page = page.getCompiledPage();
 			}
 			catch( Exception x )
 			{

@@ -14,6 +14,7 @@ package com.threecrickets.scripturian.adapter;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.Program;
+import com.threecrickets.scripturian.exception.PreparationException;
 
 /**
  * Common implementation base for language adapters.
@@ -56,12 +57,16 @@ public abstract class ProgramBase<A extends LanguageAdapter> implements Program
 	}
 
 	//
-	// Scriptlet
+	// Program
 	//
 
 	public String getSourceCode()
 	{
 		return sourceCode;
+	}
+
+	public void prepare() throws PreparationException
+	{
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

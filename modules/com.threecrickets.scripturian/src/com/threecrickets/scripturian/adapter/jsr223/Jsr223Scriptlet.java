@@ -63,9 +63,10 @@ public class Jsr223Scriptlet extends ProgramBase<Jsr223LanguageAdapter>
 	}
 
 	//
-	// Scriptlet
+	// Program
 	//
 
+	@Override
 	public void prepare() throws PreparationException
 	{
 		if( adapter.isCompilable() )

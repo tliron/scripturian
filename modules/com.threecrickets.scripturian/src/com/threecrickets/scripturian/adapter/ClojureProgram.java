@@ -73,9 +73,10 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 	}
 
 	//
-	// Scriptlet
+	// Program
 	//
 
+	@Override
 	public void prepare() throws PreparationException
 	{
 		forms = new ArrayList<ClojureProgram.Form>();
