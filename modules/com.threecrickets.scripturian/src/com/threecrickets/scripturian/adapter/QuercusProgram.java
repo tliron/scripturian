@@ -18,7 +18,6 @@ import com.caucho.quercus.env.Env;
 import com.caucho.quercus.page.InterpretedPage;
 import com.caucho.quercus.page.QuercusPage;
 import com.caucho.quercus.parser.QuercusParser;
-import com.caucho.quercus.program.QuercusProgram;
 import com.caucho.vfs.Path;
 import com.caucho.vfs.StringPath;
 import com.threecrickets.scripturian.Executable;
@@ -31,7 +30,7 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 /**
  * @author Tal Liron
  */
-class QuercusScriptlet extends ScriptletBase<QuercusAdapter>
+class QuercusProgram extends ProgramBase<QuercusAdapter>
 {
 	//
 	// Construction
@@ -42,20 +41,24 @@ class QuercusScriptlet extends ScriptletBase<QuercusAdapter>
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public QuercusScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, QuercusAdapter adapter )
+	public QuercusProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable, QuercusAdapter adapter )
 	{
-		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
+		super( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//
@@ -64,37 +67,46 @@ class QuercusScriptlet extends ScriptletBase<QuercusAdapter>
 
 	public void prepare() throws PreparationException
 	{
-		File mainClassFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
-		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
+		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
+		String classname = ScripturianUtil.getClassnameForProgram( executable, position );
 
-		synchronized( mainClassFile )
+		synchronized( classFile )
 		{
+			// if( page.getCompiledPage() != null )
+			// page = page.getCompiledPage();
 		}
 	}
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		Env env = adapter.getEnvironment( executionContext );
+		Env environment = adapter.getEnvironment( executionContext );
+
+		if( page == null )
+		{
+			try
+			{
+				// Note that we're caching the resulting parsed page for the
+				// future. Might as well!
+
+				Path path = new StringPath( isScriptlet ? "<?php " + sourceCode + " ?>" : sourceCode );
+				QuercusParser parser = new QuercusParser( adapter.quercusRuntime, path, path.openRead() );
+				parser.setLocation( executable.getDocumentName(), startLineNumber );
+				com.caucho.quercus.program.QuercusProgram program = parser.parse();
+				page = new InterpretedPage( program );
+			}
+			catch( Exception x )
+			{
+				throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
+			}
+		}
 
 		try
 		{
-			Path path = new StringPath( "<?php " + sourceCode + " ?>" );
-			QuercusParser parser = new QuercusParser( adapter.quercusRuntime, path, path.openRead() );
-			parser.setLocation( executable.getDocumentName(), startLineNumber );
-			QuercusProgram program = parser.parse();
-			QuercusPage page = new InterpretedPage( program );
+			page.init( environment );
+			page.importDefinitions( environment );
+			page.execute( environment );
 
-			if( page.getCompiledPage() != null )
-				page = page.getCompiledPage();
-
-			page.init( env );
-			page.importDefinitions( env );
-			page.execute( env );
-
-			env.getOut().flushBuffer();
-			env.getOut().free();
-
-			// program.execute( env );
+			environment.getOut().flushBuffer();
 		}
 		catch( QuercusExitException x )
 		{
@@ -108,4 +120,6 @@ class QuercusScriptlet extends ScriptletBase<QuercusAdapter>
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private QuercusPage page;
 }

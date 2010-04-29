@@ -28,7 +28,7 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 /**
  * @author Tal Liron
  */
-class RhinoScriptlet extends ScriptletBase<RhinoAdapter>
+class RhinoProgram extends ProgramBase<RhinoAdapter>
 {
 	//
 	// Construction
@@ -39,20 +39,24 @@ class RhinoScriptlet extends ScriptletBase<RhinoAdapter>
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public RhinoScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, RhinoAdapter adapter )
+	public RhinoProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable, RhinoAdapter adapter )
 	{
-		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
+		super( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//
@@ -61,8 +65,8 @@ class RhinoScriptlet extends ScriptletBase<RhinoAdapter>
 
 	public void prepare() throws PreparationException
 	{
-		File classFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
-		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
+		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
+		String classname = ScripturianUtil.getClassnameForProgram( executable, position );
 
 		synchronized( classFile )
 		{

@@ -21,7 +21,7 @@ import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
-import com.threecrickets.scripturian.adapter.ScriptletBase;
+import com.threecrickets.scripturian.adapter.ProgramBase;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.PreparationException;
@@ -31,7 +31,7 @@ import com.threecrickets.scripturian.exception.PreparationException;
  * 
  * @author Tal Liron
  */
-public class Jsr223Scriptlet extends ScriptletBase<Jsr223LanguageAdapter>
+public class Jsr223Scriptlet extends ProgramBase<Jsr223LanguageAdapter>
 {
 	//
 	// Construction
@@ -42,20 +42,24 @@ public class Jsr223Scriptlet extends ScriptletBase<Jsr223LanguageAdapter>
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public Jsr223Scriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, Jsr223LanguageAdapter adapter )
+	public Jsr223Scriptlet( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable, Jsr223LanguageAdapter adapter )
 	{
-		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
+		super( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//

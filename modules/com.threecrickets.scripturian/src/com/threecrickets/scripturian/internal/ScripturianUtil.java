@@ -180,38 +180,51 @@ public abstract class ScripturianUtil
 	}
 
 	/**
-	 * Calculates a filename for a JVM class based on executable partition,
-	 * executable document name and scriptlet position.
+	 * Calculates a file for a JVM class based on executable partition,
+	 * executable document name and program position. <i>You must synchronize
+	 * access to this file</i> via the <code>synchronize</code> keyword, in
+	 * order to guarantee that another thread will not be writing to the file at
+	 * the same time. For this to work, File instances are guaranteed to be
+	 * unique in this VM per combination of executable partition, document name
+	 * and program position are the same.
 	 * 
 	 * @param subdirectory
 	 *        The cache subdirectory
 	 * @param executable
 	 *        The executable
 	 * @param position
-	 *        The scriptlet position
+	 *        The program's position in the executable
 	 * @return The file
 	 */
-	public static File getFileForScriptletClass( File subdirectory, Executable executable, int position )
+	public static File getFileForProgramClass( File subdirectory, Executable executable, int position )
 	{
 		String filename = executable.getPartition() + executable.getDocumentName();
 		filename = filename.replace( "-", "_" ).replace( ".", "$" );
 		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
 		File file = new File( subdirectory, filename );
-		File existing = scriptletClassFiles.get( file.getPath() );
+		File existing = programClassFiles.get( file.getPath() );
 		if( existing != null )
 			file = existing;
 		else
 		{
-			existing = scriptletClassFiles.putIfAbsent( file.getPath(), file );
+			existing = programClassFiles.putIfAbsent( file.getPath(), file );
 			if( existing != null )
 				file = existing;
 		}
 		return file;
 	}
 
-	private static final ConcurrentMap<String, File> scriptletClassFiles = new ConcurrentHashMap<String, File>();
-
-	public static String getClassnameForScriptlet( Executable executable, int position )
+	/**
+	 * Calculates a JVM classname for a program based on executable partition,
+	 * executable document name and program position.
+	 * 
+	 * @param executable
+	 *        The executable
+	 * @param position
+	 *        The program's position in the executable
+	 * @return The classname
+	 */
+	public static String getClassnameForProgram( Executable executable, int position )
 	{
 		String classname = executable.getPartition() + executable.getDocumentName();
 		classname = classname.replace( "-", "_" ).replace( ".", "$" ).replace( "/", "." );
@@ -265,6 +278,12 @@ public abstract class ScripturianUtil
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	/**
+	 * Used by {@link #getFileForProgramClass(File, Executable, int)} to
+	 * guarantee uniqueness.
+	 */
+	private static final ConcurrentMap<String, File> programClassFiles = new ConcurrentHashMap<String, File>();
 
 	/**
 	 * Disallow inheritance.

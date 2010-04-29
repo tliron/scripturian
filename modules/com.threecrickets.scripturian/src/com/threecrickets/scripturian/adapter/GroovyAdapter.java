@@ -26,7 +26,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -137,8 +137,8 @@ public class GroovyAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( GROOVY_BINDING, binding );
 		}
 
-		binding.setVariable( "out", executionContext.getWriter() );
-		binding.setVariable( "err", executionContext.getErrorWriter() );
+		binding.setVariable( "out", executionContext.getWriterOrDefault() );
+		binding.setVariable( "err", executionContext.getErrorWriterOrDefault() );
 
 		// Expose variables in binding
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
@@ -178,12 +178,13 @@ public class GroovyAdapter extends LanguageAdapterBase
 		return executable.getExposedExecutableName() + ".container.includeDocument(" + expression + ");";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new GroovyScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new GroovyProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	@Override
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		Binding binding = getBinding( executionContext );
 		Object o = binding.getVariable( entryPointName );

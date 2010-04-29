@@ -41,7 +41,7 @@ import com.threecrickets.scripturian.exception.StackFrame;
 /**
  * @author Tal Liron
  */
-public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
+public class ClojureProgram extends ProgramBase<ClojureAdapter>
 {
 	//
 	// Construction
@@ -52,20 +52,24 @@ public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public ClojureScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, ClojureAdapter adapter )
+	public ClojureProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable, ClojureAdapter adapter )
 	{
-		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
+		super( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//
@@ -74,7 +78,7 @@ public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
 
 	public void prepare() throws PreparationException
 	{
-		forms = new ArrayList<ClojureScriptlet.Form>();
+		forms = new ArrayList<ClojureProgram.Form>();
 
 		// This code was extracted from Compiler.load()
 
@@ -173,8 +177,8 @@ public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
 		threadBindings.put( Compiler.LINE_AFTER, startLineNumber );
 		threadBindings.put( Compiler.LINE, startLineNumber );
 
-		threadBindings.put( RT.OUT, new PrintWriter( executionContext.getWriter() ) );
-		threadBindings.put( RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) );
+		threadBindings.put( RT.OUT, new PrintWriter( executionContext.getWriterOrDefault() ) );
+		threadBindings.put( RT.ERR, new PrintWriter( executionContext.getErrorWriterOrDefault() ) );
 
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 			threadBindings.put( Var.intern( ns, Symbol.intern( entry.getKey() ) ), entry.getValue() );
@@ -195,8 +199,8 @@ public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
 				{
 					// This code is mostly identical to Compiler.load().
 
-					ClojureScriptlet.Form lastForm = null;
-					for( ClojureScriptlet.Form form : forms )
+					ClojureProgram.Form lastForm = null;
+					for( ClojureProgram.Form form : forms )
 					{
 						if( lastForm != null )
 							Compiler.LINE_BEFORE.set( lastForm.lineNumber );
@@ -251,7 +255,7 @@ public class ClojureScriptlet extends ScriptletBase<ClojureAdapter>
 	/**
 	 * The parsed forms.
 	 */
-	private Collection<ClojureScriptlet.Form> forms;
+	private Collection<ClojureProgram.Form> forms;
 
 	/**
 	 * Annoyingly, Clojure's CompilerException accepts stack information

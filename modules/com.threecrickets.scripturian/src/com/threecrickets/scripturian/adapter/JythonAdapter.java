@@ -30,7 +30,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -131,10 +131,10 @@ public class JythonAdapter extends LanguageAdapterBase
 		// Initialize Jython registry (can only happen once per VM)
 		if( PySystemState.registry == null )
 		{
-			// The packages cache dir is calculate as relative to the home dir.
-			// Note that Jython will add a "packages" subdirectory underneath.
+			// The packages cache dir is calculated as relative to the home dir,
+			// so we'll have to relatavize it back. Note that Jython will add a
+			// "packages" subdirectory underneath.
 			String packagesCacheDirPath = ScripturianUtil.getRelativeFile( packagesCacheDir, new File( homePath ) ).getPath();
-			// System.out.println( packagesCacheDirPath );
 
 			Properties overridingProperties = new Properties();
 			overridingProperties.put( PYTHON_HOME, homePath );
@@ -171,8 +171,8 @@ public class JythonAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( JYTHON_INTERPRETER, pythonInterpreter );
 		}
 
-		pythonInterpreter.setOut( executionContext.getWriter() );
-		pythonInterpreter.setErr( executionContext.getErrorWriter() );
+		pythonInterpreter.setOut( executionContext.getWriterOrDefault() );
+		pythonInterpreter.setErr( executionContext.getErrorWriterOrDefault() );
 
 		// Expose variables as Python globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
@@ -212,12 +212,13 @@ public class JythonAdapter extends LanguageAdapterBase
 		return executable.getExposedExecutableName() + ".container.includeDocument(" + expression + ");";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new JythonScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new JythonProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	@Override
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toPythonStyle( entryPointName );
 		PythonInterpreter pythonInterpreter = getPythonInterpreter( executionContext );

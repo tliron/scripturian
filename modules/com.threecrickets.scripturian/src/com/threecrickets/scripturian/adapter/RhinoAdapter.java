@@ -31,7 +31,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -181,7 +181,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 		}
 
-		String printSource = "function print(s){" + executable.getExposedExecutableName() + ".context.writer.write(String(s));" + executable.getExposedExecutableName() + ".context.writer.flush();};";
+		String printSource = "function print(s){" + executable.getExposedExecutableName() + ".context.writerOrDefault.write(String(s));" + executable.getExposedExecutableName() + ".context.writerOrDefault.flush();};";
 		Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
 		scope.defineProperty( "print", printFunction, 0 );
 
@@ -223,12 +223,13 @@ public class RhinoAdapter extends LanguageAdapterBase
 		return executable.getExposedExecutableName() + ".container.includeDocument(" + expression + ");";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new RhinoScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new RhinoProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	@Override
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		Context context = enterContext( executionContext );
 		try

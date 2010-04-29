@@ -34,7 +34,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -507,7 +507,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return getSourceCodeForExpressionInclude( executable, scriptEngine, expression );
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
 		// Add header
 		String header = getScriptletHeader( executable, scriptEngine );
@@ -519,10 +519,10 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		if( footer != null )
 			sourceCode += footer;
 
-		return new Jsr223Scriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new Jsr223Scriptlet( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		ScriptEngine scriptEngine = getScriptEngine( executable, executionContext );
 		scriptEngine.setContext( getScriptContext( executionContext ) );

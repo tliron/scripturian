@@ -34,7 +34,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -197,8 +197,8 @@ public class JRubyAdapter extends LanguageAdapterBase
 			// because it's impossible to have the same runtime support multiple
 			// threads running with different standard outs.
 
-			switchableOut = new SwitchableOutputStream( new WriterOutputStream( executionContext.getWriter() ) );
-			switchableErr = new SwitchableOutputStream( new WriterOutputStream( executionContext.getErrorWriter() ) );
+			switchableOut = new SwitchableOutputStream( new WriterOutputStream( executionContext.getWriterOrDefault() ) );
+			switchableErr = new SwitchableOutputStream( new WriterOutputStream( executionContext.getErrorWriterOrDefault() ) );
 
 			// System.setProperty( "jruby.jit.cache", "true" );
 			// System.setProperty( "jruby.jit.codeCache", "ttt" );
@@ -218,8 +218,8 @@ public class JRubyAdapter extends LanguageAdapterBase
 			// Our switchable output stream lets us change the Ruby runtime's
 			// standard output/error after it's been created.
 
-			switchableOut.use( new WriterOutputStream( executionContext.getWriter() ) );
-			switchableErr.use( new WriterOutputStream( executionContext.getErrorWriter() ) );
+			switchableOut.use( new WriterOutputStream( executionContext.getWriterOrDefault() ) );
+			switchableErr.use( new WriterOutputStream( executionContext.getErrorWriterOrDefault() ) );
 		}
 
 		// Expose variables as Ruby globals
@@ -263,12 +263,13 @@ public class JRubyAdapter extends LanguageAdapterBase
 		return "$" + executable.getExposedExecutableName() + ".container.include_document(" + expression + ");";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new JRubyScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new JRubyProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	@Override
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toRubyStyle( entryPointName );
 		Ruby rubyRuntime = getRubyRuntime( executionContext );

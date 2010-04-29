@@ -11,6 +11,7 @@
 
 package com.threecrickets.scripturian;
 
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collections;
@@ -19,6 +20,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.threecrickets.scripturian.exception.ExecutionException;
+import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.internal.ThreadLocalExecutionContext;
 
 /**
@@ -37,7 +40,7 @@ import com.threecrickets.scripturian.internal.ThreadLocalExecutionContext;
  * threads, they would need to coordinate access to the context if they need it.
  * <p>
  * The second occurs when
- * {@link Executable#prepareForInvocation(ExecutionContext, Object, ExecutionController)}
+ * {@link Executable#makeEnterable(ExecutionContext, Object, ExecutionController)}
  * is called, and then {@link Executable#invoke(String, Object...)} is callable
  * by concurrent threads. In this case, <i>all invoking threads share the same
  * execution context</i>. Because the context is immutable (internally
@@ -148,6 +151,19 @@ public class ExecutionContext
 	/**
 	 * The standard output set for executables using this context.
 	 * 
+	 * @return The writer or the default writer
+	 */
+	public Writer getWriterOrDefault()
+	{
+		if( released )
+			throw new IllegalStateException( "Cannot access released execution context" );
+
+		return writer != null ? writer : defaultWriter;
+	}
+
+	/**
+	 * The standard output set for executables using this context.
+	 * 
 	 * @param writer
 	 * @return The previous writer or null
 	 */
@@ -174,6 +190,19 @@ public class ExecutionContext
 			throw new IllegalStateException( "Cannot access released execution context" );
 
 		return errorWriter;
+	}
+
+	/**
+	 * The standard error set for executables using this context.
+	 * 
+	 * @return The error writer or the default error writer
+	 */
+	public Writer getErrorWriterOrDefault()
+	{
+		if( released )
+			throw new IllegalStateException( "Cannot access released execution context" );
+
+		return errorWriter != null ? errorWriter : defaultErrorWriter;
 	}
 
 	/**
@@ -240,6 +269,19 @@ public class ExecutionContext
 	}
 
 	/**
+	 * Whether this context is enterable.
+	 * 
+	 * @return True if enterable
+	 * @see #enter(Executable, String, Object...)
+	 * @see Executable#makeEnterable(ExecutionContext, Object,
+	 *      ExecutionController)
+	 */
+	public boolean isEnterable()
+	{
+		return enterable;
+	}
+
+	/**
 	 * Immutable contexts will throw an {@link IllegalStateException} whenever
 	 * an attempt is made to change them.
 	 * 
@@ -256,6 +298,50 @@ public class ExecutionContext
 	//
 	// Operations
 	//
+
+	/**
+	 * Enters the executable at a stored, named location, via the last language
+	 * adapter that used this context. According to the language, the entry
+	 * point can be a function, method, lambda, closure, etc.
+	 * <p>
+	 * The context must have been previously made enterable by a call to
+	 * {@link Executable#makeEnterable(ExecutionContext, Object, ExecutionController)}
+	 * .
+	 * 
+	 * @param executable
+	 *        The executable
+	 * @param entryPointName
+	 *        The name of the entry point
+	 * @param arguments
+	 *        Optional state to pass to the entry point
+	 * @return State returned from the entry point or null
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws NoSuchMethodException
+	 * @see #isEnterable()
+	 * @see #getAdapter()
+	 */
+	public Object enter( Executable executable, String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
+	{
+		if( !enterable )
+			throw new IllegalStateException( "This execution context is not enterable" );
+
+		makeCurrent();
+
+		LanguageAdapter languageAdapter = this.languageAdapter;
+		if( !languageAdapter.isThreadSafe() )
+			languageAdapter.getLock().lock();
+
+		try
+		{
+			return languageAdapter.enter( entryPointName, executable, this, arguments );
+		}
+		finally
+		{
+			if( !languageAdapter.isThreadSafe() )
+				languageAdapter.getLock().unlock();
+		}
+	}
 
 	/**
 	 * Makes this context immutable. Any attempt to change it will result in an
@@ -307,6 +393,14 @@ public class ExecutionContext
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
+	// Protected
+
+	/**
+	 * Whether this context is enterable.
+	 */
+	protected volatile boolean enterable;
+
+	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	/**
@@ -331,9 +425,19 @@ public class ExecutionContext
 	private Writer writer;
 
 	/**
+	 * The default standard output set for executables using this context.
+	 */
+	private static Writer defaultWriter = new OutputStreamWriter( System.out );
+
+	/**
 	 * The standard error set for executables using this context.
 	 */
 	private Writer errorWriter;
+
+	/**
+	 * The default standard output set for executables using this context.
+	 */
+	private static Writer defaultErrorWriter = new OutputStreamWriter( System.err );
 
 	/**
 	 * 

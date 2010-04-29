@@ -27,7 +27,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -49,6 +49,11 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 * The Quercus environment attribute.
 	 */
 	public static final String QUERCUS_ENVIRONMENT = "quercus.environment";
+
+	/**
+	 * The Quercus writer stream attribute.
+	 */
+	public static final String QUERCUS_WRITER_STREAM = "quercus.writerStream";
 
 	/**
 	 * The default base directory for cached executables.
@@ -129,12 +134,12 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 */
 	public Env getEnvironment( ExecutionContext executionContext )
 	{
-		Env env = (Env) executionContext.getAttributes().get( QUERCUS_ENVIRONMENT );
+		Env environment = (Env) executionContext.getAttributes().get( QUERCUS_ENVIRONMENT );
+		WriterStreamImpl writerStream = (WriterStreamImpl) executionContext.getAttributes().get( QUERCUS_WRITER_STREAM );
 
-		if( env == null )
+		if( environment == null )
 		{
-			WriterStreamImpl writerStream = new WriterStreamImpl();
-			writerStream.setWriter( executionContext.getWriter() );
+			writerStream = new WriterStreamImpl();
 			WriteStream writeStream = new WriteStream( writerStream );
 			try
 			{
@@ -143,18 +148,20 @@ public class QuercusAdapter extends LanguageAdapterBase
 			catch( UnsupportedEncodingException x )
 			{
 			}
-
-			env = new Env( quercusRuntime, null, writeStream, null, null );
-
-			executionContext.getAttributes().put( QUERCUS_ENVIRONMENT, env );
+			environment = new Env( quercusRuntime, null, writeStream, null, null );
+			executionContext.getAttributes().put( QUERCUS_ENVIRONMENT, environment );
+			executionContext.getAttributes().put( QUERCUS_WRITER_STREAM, writerStream );
 		}
 
+		writerStream.setWriter( executionContext.getWriterOrDefault() );
+
+		// Expose variables as script globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			env.setScriptGlobal( entry.getKey(), entry.getValue() );
+			environment.setScriptGlobal( entry.getKey(), entry.getValue() );
 
-		env.start();
+		environment.start();
 
-		return env;
+		return environment;
 	}
 
 	/**
@@ -185,17 +192,16 @@ public class QuercusAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		return "include $" + executable.getExposedExecutableName() + "->container->source->basePath . '/' . " + expression + ";";
-		// return executable.getExposedExecutableName() +
-		// ".container.includeDocument(" + expression + ");";
+		return "$" + executable.getExposedExecutableName() + "->container->includeDocument(" + expression + ");";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new QuercusScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new QuercusProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	@Override
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toPhpStyle( entryPointName );
 		Env env = getEnvironment( executionContext );
@@ -217,17 +223,17 @@ public class QuercusAdapter extends LanguageAdapterBase
 	@Override
 	public void releaseContext( ExecutionContext executionContext )
 	{
-		Env env = (Env) executionContext.getAttributes().get( QUERCUS_ENVIRONMENT );
-		if( env != null )
+		Env environment = (Env) executionContext.getAttributes().get( QUERCUS_ENVIRONMENT );
+		if( environment != null )
 		{
 			try
 			{
-				env.close();
+				environment.close();
 			}
 			catch( NullPointerException x )
 			{
 				// This fails in the middle because we don't have a page set for
-				// the env
+				// the environment
 			}
 		}
 	}
@@ -235,11 +241,17 @@ public class QuercusAdapter extends LanguageAdapterBase
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
+	/**
+	 * The Quercus runtime.
+	 */
 	protected final Quercus quercusRuntime;
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * A static Quercys runtime used for version information.
+	 */
 	private static final Quercus staticQuercusRuntime = new Quercus();
 
 	/**

@@ -24,7 +24,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -42,7 +42,7 @@ import com.threecrickets.scripturian.exception.ParsingException;
  * it. This means that two contexts cannot use different versions of a library
  * at the same time if the versions have the same namespace.
  * <p>
- * Note that {@link Scriptlet#prepare()} does not actually compile the source
+ * Note that {@link Program#prepare()} does not actually compile the source
  * code, but it does parse it, making it quicker to execute later.
  * 
  * @author Tal Liron
@@ -160,19 +160,20 @@ public class ClojureAdapter extends LanguageAdapterBase
 		return "(.. " + executable.getExposedExecutableName() + " getContainer (includeDocument " + expression + "))";
 	}
 
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
-		return new ClojureScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable, this );
+		return new ClojureProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
 
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	@Override
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toClojureStyle( entryPointName );
 		Namespace ns = getClojureNamespace( executionContext );
 		try
 		{
 			// We must push *ns* in order to use (in-ns) below
-			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, ns, RT.OUT, new PrintWriter( executionContext.getWriter() ), RT.ERR, new PrintWriter( executionContext.getErrorWriter() ) ) );
+			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, ns, RT.OUT, new PrintWriter( executionContext.getWriterOrDefault() ), RT.ERR, new PrintWriter( executionContext.getErrorWriterOrDefault() ) ) );
 
 			IN_NS.invoke( ns.getName() );
 

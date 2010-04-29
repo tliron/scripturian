@@ -100,7 +100,8 @@ public class DefrostTask implements Callable<Executable>
 		if( executable == null )
 		{
 			LanguageAdapter adapter = languageManager.getAdapterByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag() );
-			executable = Executable.createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, languageManager, (String) adapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG ), prepare );
+			executable = Executable.createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, languageManager, adapter != null ? (String) adapter.getAttributes().get(
+				LanguageAdapter.DEFAULT_TAG ) : null, prepare );
 		}
 
 		return executable;

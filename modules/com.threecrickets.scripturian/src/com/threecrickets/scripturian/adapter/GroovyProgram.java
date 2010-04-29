@@ -32,7 +32,7 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 /**
  * @author Tal Liron
  */
-class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
+class GroovyProgram extends ProgramBase<GroovyAdapter>
 {
 	//
 	// Construction
@@ -43,20 +43,24 @@ class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public GroovyScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, GroovyAdapter adapter )
+	public GroovyProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable, GroovyAdapter adapter )
 	{
-		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
+		super( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//
@@ -66,8 +70,8 @@ class GroovyScriptlet extends ScriptletBase<GroovyAdapter>
 	@SuppressWarnings("unchecked")
 	public void prepare() throws PreparationException
 	{
-		File mainClassFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
-		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
+		File mainClassFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
+		String classname = ScripturianUtil.getClassnameForProgram( executable, position );
 
 		synchronized( mainClassFile )
 		{

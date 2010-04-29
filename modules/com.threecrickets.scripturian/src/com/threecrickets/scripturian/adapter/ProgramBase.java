@@ -13,7 +13,7 @@ package com.threecrickets.scripturian.adapter;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 
 /**
  * Common implementation base for language adapters.
@@ -22,27 +22,32 @@ import com.threecrickets.scripturian.Scriptlet;
  * @param <A>
  *        The language adapter class
  */
-public abstract class ScriptletBase<A extends LanguageAdapter> implements Scriptlet
+public abstract class ProgramBase<A extends LanguageAdapter> implements Program
 {
 	/**
 	 * Construction.
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public ScriptletBase( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, A adapter )
+	public ProgramBase( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable, A adapter )
 	{
 		this.sourceCode = sourceCode;
+		this.isScriptlet = isScriptlet;
 		this.position = position;
 		this.startLineNumber = startLineNumber;
 		this.startColumnNumber = startColumnNumber;
@@ -68,17 +73,24 @@ public abstract class ScriptletBase<A extends LanguageAdapter> implements Script
 	protected final String sourceCode;
 
 	/**
-	 * The scriptlet position in the document.
+	 * Whether the source code is a scriptlet.
+	 */
+	protected final boolean isScriptlet;
+
+	/**
+	 * The program's position in the executable.
 	 */
 	protected final int position;
 
 	/**
-	 * The start line number.
+	 * The line number in the document for where the program's source code
+	 * begins.
 	 */
 	protected final int startLineNumber;
 
 	/**
-	 * The start column number.
+	 * The column number in the document for where the program's source code
+	 * begins.
 	 */
 	protected final int startColumnNumber;
 

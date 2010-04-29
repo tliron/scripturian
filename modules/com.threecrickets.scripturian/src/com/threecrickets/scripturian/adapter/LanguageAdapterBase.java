@@ -18,9 +18,12 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
+import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
  * Common implementation base for language adapters.
@@ -84,6 +87,11 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 	public Lock getLock()
 	{
 		return lock;
+	}
+
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	{
+		throw new UnsupportedOperationException();
 	}
 
 	public void releaseContext( ExecutionContext executionContext )

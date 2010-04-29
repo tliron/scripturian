@@ -14,7 +14,7 @@ package com.threecrickets.scripturian.internal;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Scriptlet;
+import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
@@ -37,19 +37,22 @@ public class ExecutableSegment
 	 * @param sourceCode
 	 *        The source code
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the segment begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the segment begins
 	 * @param isScriptlet
-	 *        Whether this segment is a scriptlet
+	 *        Whether this segment is a program
+	 * @param isScriptlet
+	 *        Whether this program is a scriptlet
 	 * @param languageTag
-	 *        The language tag for scriptlets
+	 *        The language tag for the program
 	 */
-	public ExecutableSegment( String sourceCode, int startLineNumber, int startColumnNumber, boolean isScriptlet, String languageTag )
+	public ExecutableSegment( String sourceCode, int startLineNumber, int startColumnNumber, boolean isProgram, boolean isScriptlet, String languageTag )
 	{
 		this.sourceCode = sourceCode;
 		this.startLineNumber = startLineNumber;
 		this.startColumnNumber = startColumnNumber;
+		this.isProgram = isProgram;
 		this.isScriptlet = isScriptlet;
 		this.languageTag = languageTag;
 	}
@@ -59,7 +62,12 @@ public class ExecutableSegment
 	//
 
 	/**
-	 * Whether this segment is a scriptlet.
+	 * Whether this segment is a program.
+	 */
+	public final boolean isProgram;
+
+	/**
+	 * Whether this program is a scriptlet.
 	 */
 	public final boolean isScriptlet;
 
@@ -74,33 +82,33 @@ public class ExecutableSegment
 	public String sourceCode;
 
 	/**
-	 * The scriptlet position in the document.
+	 * The segment's position in the executable.
 	 */
 	public int position = 0;
 
 	/**
-	 * The start line number.
+	 * The line number in the document for where the segment begins.
 	 */
 	public int startLineNumber;
 
 	/**
-	 * The start column number.
+	 * The column number in the document for where the segment begins.
 	 */
 	public int startColumnNumber;
 
 	/**
-	 * The scriptlet.
+	 * The program.
 	 * 
-	 * @see #createScriptlet(Executable, LanguageManager, boolean)
+	 * @see #createProgram(Executable, LanguageManager, boolean)
 	 */
-	public Scriptlet scriptlet;
+	public Program program;
 
 	//
 	// Operations
 	//
 
 	/**
-	 * Creates a scriptlet for this segment using the appropriate language
+	 * Creates a program for this segment using the appropriate language
 	 * adapter.
 	 * 
 	 * @param executable
@@ -108,21 +116,21 @@ public class ExecutableSegment
 	 * @param manager
 	 *        The language manager
 	 * @param prepare
-	 *        Whether to prepare the scriptlet
+	 *        Whether to prepare the program
 	 * @throws ParsingException
 	 * @see #isScriptlet
 	 * @see #languageTag
-	 * @see #scriptlet
+	 * @see #program
 	 */
-	public void createScriptlet( Executable executable, LanguageManager manager, boolean prepare ) throws ParsingException
+	public void createProgram( Executable executable, LanguageManager manager, boolean prepare ) throws ParsingException
 	{
 		LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
 		if( adapter == null )
 			throw ParsingException.adapterNotFound( executable.getDocumentName(), startLineNumber, startColumnNumber, languageTag );
 
-		scriptlet = adapter.createScriptlet( sourceCode, position, startLineNumber, startColumnNumber, executable );
+		program = adapter.createProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable );
 
 		if( prepare )
-			scriptlet.prepare();
+			program.prepare();
 	}
 }

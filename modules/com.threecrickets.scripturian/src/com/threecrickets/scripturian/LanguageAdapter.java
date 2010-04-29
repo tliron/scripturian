@@ -138,28 +138,34 @@ public interface LanguageAdapter
 	//
 
 	/**
-	 * Turns source code into an operational unit. The intent is for the
-	 * implementation to perform the bare minimum required for detecting errors
-	 * in the source code.
+	 * Turns source code into a program. The intent is for the implementation to
+	 * perform the bare minimum required for detecting errors in the source
+	 * code. For better initialization, likely at the cost of extra processing
+	 * up front, call {@link Program#prepare()} on the program.
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The line number in the document for where this source code begins
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The column number in the document for where this source code
-	 *        begins
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
-	 * @return A scriptlet
+	 * @return A program
 	 * @throws ParsingException
 	 */
-	public Scriptlet createScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException;
+	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException;
 
 	/**
-	 * Invokes an entry point in an executable.
+	 * Enters the executable at a stored, named location. According to the
+	 * language, the entry point can be a function, method, lambda, closure,
+	 * etc.
 	 * 
 	 * @param entryPointName
 	 *        The entry point name
@@ -168,14 +174,14 @@ public interface LanguageAdapter
 	 * @param executionContext
 	 *        The executable context
 	 * @param arguments
-	 *        Optional state passed to the executable
-	 * @return Optional value returned by the executable
+	 *        Optional state to pass to the entry point
+	 * @return State returned from to the entry point or null
 	 * @throws NoSuchMethodException
 	 *         If the entry point doesn't exist
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 */
-	public Object invoke( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException;
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException;
 
 	/**
 	 * Cleans up any resources used for an execution context.

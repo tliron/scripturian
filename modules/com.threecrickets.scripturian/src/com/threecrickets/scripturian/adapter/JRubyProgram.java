@@ -34,7 +34,7 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 /**
  * @author Tal Liron
  */
-class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
+class JRubyProgram extends ProgramBase<JRubyAdapter>
 {
 	//
 	// Construction
@@ -45,20 +45,24 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 	 * 
 	 * @param sourceCode
 	 *        The source code
+	 * @param isScriptlet
+	 *        Whether the source code is a scriptlet
 	 * @param position
-	 *        The scriptlet position in the document
+	 *        The program's position in the executable
 	 * @param startLineNumber
-	 *        The start line number
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param startColumnNumber
-	 *        The start column number
+	 *        The column number in the document for where the program's source
+	 *        code begins
 	 * @param executable
 	 *        The executable
 	 * @param adapter
 	 *        The language adapter
 	 */
-	public JRubyScriptlet( String sourceCode, int position, int startLineNumber, int startColumnNumber, Executable executable, JRubyAdapter adapter )
+	public JRubyProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable, JRubyAdapter adapter )
 	{
-		super( sourceCode, position, startLineNumber, startColumnNumber, executable, adapter );
+		super( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, adapter );
 	}
 
 	//
@@ -71,8 +75,8 @@ class JRubyScriptlet extends ScriptletBase<JRubyAdapter>
 		// one we will run in. It's unclear what the repercussions of
 		// this would be, but we haven't detected any trouble yet.
 
-		File classFile = ScripturianUtil.getFileForScriptletClass( adapter.getCacheDir(), executable, position );
-		String classname = ScripturianUtil.getClassnameForScriptlet( executable, position );
+		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
+		String classname = ScripturianUtil.getClassnameForProgram( executable, position );
 
 		synchronized( classFile )
 		{

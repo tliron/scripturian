@@ -32,10 +32,11 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * Executables are general-purpose operational units that are manifestations of
  * textual "source code" in any supported "language" (see
  * {@link LanguageAdapter} ). Outside of this definition, there is no real limit
- * to how executables are executed. Execution can happen in-process,
- * out-of-process, or on a device somewhere in the network. A common use case is
- * to support various programming and templating languages that run in the JVM,
- * adapters for which are included in Scripturian.
+ * to how executables are executed or what the language is. Execution can happen
+ * in-process, out-of-process, or on a device somewhere in the network. A common
+ * use case is to support various programming and templating languages that run
+ * in the JVM, adapters for which are included in Scripturian. Another common
+ * use case is for executing non-JVM services.
  * <p>
  * The primary design goal is to decouple the code asking for execution from the
  * execution's implementation, while providing clear, predictable concurrent
@@ -51,7 +52,7 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * Scripturian's {@link DocumentSource}, which is designed for concurrent use,
  * though you can use any system you like.
  * <p>
- * Usage is divided into three phases: creation, execution and invocation.
+ * Usage is divided into three phases: creation, execution and entry.
  * <p>
  * <b>1. Creation.</b> In this phase, the source code is parsed and possibly
  * otherwise analyzed for errors by the language implementation. The intent is
@@ -78,18 +79,17 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * implementation-specific state. Concurrent reuse is allowed as long as each
  * calling thread uses its own context.
  * <p>
- * <b>3. Invocation.</b> This phase allows fine-grained execution via
- * well-defined "entry points" in the executable. Depending on the language
- * implementation, invocation can mean calling a function, method, closure or
- * macro, or sending a network request. This phase follow a special execution
- * phase via a call to
- * {@link #prepareForInvocation(ExecutionContext, Object, ExecutionController)},
- * after which all invocations use the same {@link ExecutionContext}. Passing
- * state is handled differently in invocation vs. execution: in invocation,
- * support is for sending a list of "argument" states and returning a single
- * value.
+ * <b>3. Entry.</b> This phase allows fine-grained execution via well-defined
+ * "entry points" created by the executable during its execution phase.
+ * Depending on the language implementation, entry can mean calling a function,
+ * method, lambda, closure or macro, or even sending a network request. This
+ * phase follows a special execution phase via a call to
+ * {@link #makeEnterable(ExecutionContext, Object, ExecutionController)}, after
+ * which all entries use the same {@link ExecutionContext}. Passing state is
+ * handled differently in entry vs. execution: in entry, support is for sending
+ * a list of "argument" states and returning a single state value.
  * <p>
- * Depending on the language implementation, invocation can involve better
+ * Depending on the language implementation, entry can involve better
  * performance than execution due to the use of a single execution context.
  * <p>
  * <h3>"Text-with-scriptlets" executables</h3>
@@ -103,8 +103,8 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * cases, just that first segment is sent to output from Java. This is just an
  * optimization.
  * <p>
- * You can detect the trivial case of "text with scriptlets" in which no
- * scriptlets are used at all via {@link #getAsPureText()}, and optimize
+ * You can detect the trivial case of "text-with-scriptlets" in which no
+ * scriptlets are used at all via {@link #getAsPureLiteral()}, and optimize
  * accordingly.
  * <p>
  * Executables can have scriptlets in multiple languages within the same source
@@ -432,12 +432,12 @@ public class Executable
 
 		if( !isTextWithScriptlets )
 		{
-			ExecutableSegment segment = new ExecutableSegment( sourceCode, 1, 1, true, defaultLanguageTag );
+			ExecutableSegment segment = new ExecutableSegment( sourceCode, 1, 1, true, false, defaultLanguageTag );
 			segments = new ExecutableSegment[]
 			{
 				segment
 			};
-			segment.createScriptlet( this, languageManager, prepare );
+			segment.createProgram( this, languageManager, prepare );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -496,9 +496,9 @@ public class Executable
 
 			while( start != -1 )
 			{
-				// Add previous non-script segment
+				// Add previous literal segment
 				if( start != last )
-					segments.add( new ExecutableSegment( sourceCode.substring( last, start ), lastLineNumber, lastColumnNumber, false, lastLanguageTag ) );
+					segments.add( new ExecutableSegment( sourceCode.substring( last, start ), lastLineNumber, lastColumnNumber, false, false, lastLanguageTag ) );
 
 				start += delimiterStartLength;
 
@@ -560,9 +560,9 @@ public class Executable
 								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
 							if( isExpression )
-								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionOutput( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, languageTag ) );
+								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionOutput( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, true, languageTag ) );
 							else if( isInclude )
-								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, languageTag ) );
+								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, true, languageTag ) );
 						}
 						else if( isInFlow && ( documentSource != null ) )
 						{
@@ -573,9 +573,8 @@ public class Executable
 							String inFlowCode = delimiterStart + languageTag + " " + sourceCode.substring( start, end ) + delimiterEnd;
 							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
 
-							// Note that the in-flow executable is a
-							// single segment, so we can optimize parsing a
-							// bit
+							// Note that the in-flow executable is a single
+							// segment, so we can optimize parsing a bit
 							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName,
 								delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
@@ -583,11 +582,11 @@ public class Executable
 							// TODO: would it ever be possible to remove the
 							// dependent in-flow instances?
 
-							// Our include segment is in the last language
-							segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( "'" + inFlowName + "'", this ), startLineNumber, startColumnNumber, true, lastLanguageTag ) );
+							// Our include scriptlet is in the last language
+							segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( "'" + inFlowName + "'", this ), startLineNumber, startColumnNumber, true, true, lastLanguageTag ) );
 						}
 						else
-							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), startLineNumber, startColumnNumber, true, languageTag ) );
+							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), startLineNumber, startColumnNumber, true, true, languageTag ) );
 					}
 
 					if( !isInFlow )
@@ -603,16 +602,16 @@ public class Executable
 						startLineNumber++;
 			}
 
-			// Add remaining non-scriptlet segment
+			// Add remaining literal segment
 			if( last < sourceCode.length() )
-				segments.add( new ExecutableSegment( sourceCode.substring( last ), lastLineNumber, lastColumnNumber, false, lastLanguageTag ) );
+				segments.add( new ExecutableSegment( sourceCode.substring( last ), lastLineNumber, lastColumnNumber, false, false, lastLanguageTag ) );
 		}
 		else
 		{
 			// Trivial executable: does not contain scriptlets
 			this.segments = new ExecutableSegment[]
 			{
-				new ExecutableSegment( sourceCode, 1, 1, false, lastLanguageTag )
+				new ExecutableSegment( sourceCode, 1, 1, false, false, lastLanguageTag )
 			};
 			return;
 		}
@@ -626,7 +625,7 @@ public class Executable
 
 			if( previous != null )
 			{
-				if( previous.isScriptlet == current.isScriptlet )
+				if( previous.isProgram == current.isProgram )
 				{
 					if( current.languageTag.equals( previous.languageTag ) )
 					{
@@ -644,21 +643,21 @@ public class Executable
 		}
 
 		// Collapse segments of same language (does not convert first segment
-		// into scriptlet)
+		// into a program)
 		previous = null;
 		for( Iterator<ExecutableSegment> i = segments.iterator(); i.hasNext(); )
 		{
 			current = i.next();
 
-			if( ( previous != null ) && previous.isScriptlet )
+			if( ( previous != null ) && previous.isProgram )
 			{
 				if( previous.languageTag.equals( current.languageTag ) )
 				{
 					// Collapse current into previous
-					// (converting to scriptlet if necessary)
+					// (converting to program if necessary)
 					i.remove();
 
-					if( current.isScriptlet )
+					if( current.isProgram )
 						previous.sourceCode += current.sourceCode;
 					else
 					{
@@ -676,13 +675,13 @@ public class Executable
 			previous = current;
 		}
 
-		// Update positions and create scriptlets
+		// Update positions and create programs
 		int position = 0;
 		for( ExecutableSegment segment : segments )
 		{
 			segment.position = position++;
-			if( segment.isScriptlet )
-				segment.createScriptlet( this, languageManager, prepare );
+			if( segment.isProgram )
+				segment.createProgram( this, languageManager, prepare );
 		}
 
 		// Flatten list into array
@@ -698,6 +697,7 @@ public class Executable
 	 * The executable's document name.
 	 * 
 	 * @return The document name
+	 * @see #getPartition()
 	 */
 	public String getDocumentName()
 	{
@@ -705,9 +705,12 @@ public class Executable
 	}
 
 	/**
-	 * The executable partition.
+	 * The executable partition. It used in addition to the document name to
+	 * calculate unique IDs for documents. Partitioning allows you have the same
+	 * document name on multiple partitions.
 	 * 
 	 * @return The executable partition
+	 * @see #getDocumentName()
 	 */
 	public String getPartition()
 	{
@@ -776,35 +779,35 @@ public class Executable
 	}
 
 	/**
-	 * Returns the source code in the trivial case of a "text with scriptlets"
+	 * Returns the source code in the trivial case of a "text-with-scriptlets"
 	 * executable that contains no scriptlets. Identifying such executables can
 	 * save you from making unnecessary calls to
 	 * {@link #execute(ExecutionContext, Object, ExecutionController)} in some
 	 * situations.
 	 * 
-	 * @return The soure code if it's pure text, null if not
+	 * @return The source code if it's pure literal text, null if not
 	 */
-	public String getAsPureText()
+	public String getAsPureLiteral()
 	{
 		if( segments.length == 1 )
 		{
 			ExecutableSegment sole = segments[0];
-			if( !sole.isScriptlet )
+			if( !sole.isProgram )
 				return sole.sourceCode;
 		}
 		return null;
 	}
 
 	/**
-	 * The execution context to be used for calls to
-	 * {@link #invoke(String, Object...)}.
+	 * The enterable execution context.
 	 * 
 	 * @return The execution context
-	 * @see #prepareForInvocation(ExecutionContext, Object, ExecutionController)
+	 * @see #makeEnterable(ExecutionContext, Object, ExecutionController)
+	 * @see ExecutionContext#enter(Executable, String, Object...)
 	 */
-	public ExecutionContext getExecutionContextForInvocations()
+	public ExecutionContext getEnterableExecutionContext()
 	{
-		return executionContextForInvocationsReference.get();
+		return enterableExecutionContext.get();
 	}
 
 	//
@@ -866,8 +869,8 @@ public class Executable
 		{
 			for( ExecutableSegment segment : segments )
 			{
-				if( !segment.isScriptlet )
-					// Plain text
+				if( !segment.isProgram )
+					// Literal
 					executionContext.getWriter().write( segment.sourceCode );
 				else
 				{
@@ -887,7 +890,7 @@ public class Executable
 
 					try
 					{
-						segment.scriptlet.execute( executionContext );
+						segment.program.execute( executionContext );
 					}
 					finally
 					{
@@ -910,8 +913,8 @@ public class Executable
 	}
 
 	/**
-	 * Executes the executable in preparation for calling
-	 * {@link #invoke(String, Object...)}.
+	 * Makes an execution context enterable, in preparation for calling
+	 * {@link ExecutionContext#enter(Executable, String, Object...)}.
 	 * <p>
 	 * Note that this can only be done once per executable. If it succeeds and
 	 * returns true, the execution context should be considered "consumed" by
@@ -932,73 +935,73 @@ public class Executable
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean prepareForInvocation( ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
+	public boolean makeEnterable( ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
-		if( executionContextForInvocationsReference.get() != null )
+		if( enterableExecutionContext.get() != null )
 			return false;
 
 		execute( executionContext, container, executionController );
 
-		ExecutionContext existing = executionContextForInvocationsReference.getAndSet( executionContext );
+		ExecutionContext existing = enterableExecutionContext.getAndSet( executionContext );
 		if( existing != null )
 			return false;
 
+		executionContext.enterable = true;
 		executionContext.makeImmutable();
 		return true;
 	}
 
 	/**
-	 * Invokes an entry point in the executable: a function, method, closure,
-	 * etc., according to how the language handles invocations.
+	 * Enters the executable at a stored, named location, via the last language
+	 * adapter that used the enterable context. According to the language, the
+	 * entry point can be a function, method, lambda, closure, etc.
 	 * <p>
-	 * The executable must have been previously prepared by a call to
-	 * {@link #prepareForInvocation(ExecutionContext, Object, ExecutionController)}
-	 * .
+	 * The context must have been previously made enterable by a call to
+	 * {@link #makeEnterable(ExecutionContext, Object, ExecutionController)} .
 	 * 
 	 * @param entryPointName
 	 *        The name of the entry point
 	 * @param arguments
-	 *        The invocation arguments
-	 * @return The value returned by the invocation
+	 *        Optional state to pass to the entry point
+	 * @return State returned from the entry point or null
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 * @throws NoSuchMethodException
-	 *         If the method is not found
+	 * @see ExecutionContext#enter(Executable, String, Object...)
 	 */
-	public Object invoke( String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
+	public Object enter( String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
 	{
-		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.get();
-		if( executionContextForInvocations == null )
-			throw new ExecutionException( documentName, "Executable must have prepareForInvocation called before calling invoke" );
+		ExecutionContext enterableExecutionContext = this.enterableExecutionContext.get();
+		if( enterableExecutionContext == null )
+			throw new IllegalStateException( "Executable does not have an enterable execution context" );
 
-		executionContextForInvocations.makeCurrent();
-
-		LanguageAdapter languageAdapter = executionContextForInvocations.getAdapter();
-
-		if( !languageAdapter.isThreadSafe() )
-			languageAdapter.getLock().lock();
-
-		try
-		{
-			return languageAdapter.invoke( entryPointName, this, executionContextForInvocations, arguments );
-		}
-		finally
-		{
-			if( !languageAdapter.isThreadSafe() )
-				languageAdapter.getLock().unlock();
-		}
+		return enterableExecutionContext.enter( this, entryPointName, arguments );
 	}
 
 	/**
 	 * Releases consumed execution contexts.
 	 * 
-	 * @see #prepareForInvocation(ExecutionContext, Object, ExecutionController)
+	 * @see #makeEnterable(ExecutionContext, Object, ExecutionController)
+	 * @see #finalize()
 	 */
 	public void release()
 	{
-		ExecutionContext executionContextForInvocations = executionContextForInvocationsReference.getAndSet( null );
-		if( executionContextForInvocations != null )
-			executionContextForInvocations.release();
+		ExecutionContext enterableExecutionContext = this.enterableExecutionContext.getAndSet( null );
+		if( enterableExecutionContext != null )
+			enterableExecutionContext.release();
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Protected
+
+	//
+	// Object
+	//
+
+	@Override
+	protected void finalize()
+	{
+		release();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -1064,7 +1067,7 @@ public class Executable
 	 * The execution context to be used for calls to
 	 * {@link #invoke(String, Object...)}.
 	 * 
-	 * @see #prepareForInvocation(ExecutionContext, Object, ExecutionController)
+	 * @see #makeEnterable(ExecutionContext, Object, ExecutionController)
 	 */
-	private final AtomicReference<ExecutionContext> executionContextForInvocationsReference = new AtomicReference<ExecutionContext>();
+	private final AtomicReference<ExecutionContext> enterableExecutionContext = new AtomicReference<ExecutionContext>();
 }
