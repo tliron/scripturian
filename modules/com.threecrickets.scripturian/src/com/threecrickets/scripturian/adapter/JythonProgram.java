@@ -22,6 +22,7 @@ import org.python.core.BytecodeLoader;
 import org.python.core.ParserFacade;
 import org.python.core.PyCode;
 import org.python.core.PythonCodeBundle;
+import org.python.core.PyFileWriter;
 import org.python.util.PythonInterpreter;
 
 import com.threecrickets.scripturian.Executable;
@@ -130,6 +131,9 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 				// We're using a stream because PythonInterpreter does not
 				// expose a string-based method that also accepts a filename.
 				pythonInterpreter.execfile( new ByteArrayInputStream( sourceCode.getBytes() ), executable.getDocumentName() );
+
+			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
 		}
 		catch( Exception x )
 		{

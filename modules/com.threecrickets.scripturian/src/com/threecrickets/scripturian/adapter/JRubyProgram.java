@@ -154,6 +154,9 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 				rubyRuntime.runScript( script );
 			else
 				rubyRuntime.executeScript( sourceCode, executable.getDocumentName() );
+
+			rubyRuntime.getOut().flush();
+			rubyRuntime.getErr().flush();
 		}
 		catch( RaiseException x )
 		{
