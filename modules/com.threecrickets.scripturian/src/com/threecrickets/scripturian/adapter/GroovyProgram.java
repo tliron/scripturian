@@ -112,7 +112,11 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 						stream.close();
 					}
 
-					// TODO: this doesn't work
+					// We have to re-add the cache to the classpath so that it
+					// will recognize our new class files there.
+
+					adapter.groovyClassLoader.addClasspath( adapter.getCacheDir().getPath() );
+
 					scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
 				}
 

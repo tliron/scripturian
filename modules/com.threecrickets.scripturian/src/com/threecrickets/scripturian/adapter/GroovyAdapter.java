@@ -109,7 +109,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 		super( "Groovy", Version.getVersion(), "Groovy", Version.getVersion(), Arrays.asList( "gv" ), null, Arrays.asList( "groovy", "gv" ), null );
 
 		// This will allow the class loader to load our auxiliary classes (see
-		// GroovyScriptlet.prepare)
+		// GroovyProgram.prepare)
 		groovyClassLoader.addClasspath( getCacheDir().getPath() );
 	}
 
