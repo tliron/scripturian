@@ -82,8 +82,11 @@ public class ExecutionContext
 	 * Construction.
 	 * 
 	 * @param languageManager
+	 *        The language manager exposed to executables or null
 	 * @param writer
+	 *        The standard output set for executables using this context
 	 * @param errorWriter
+	 *        The standard error set for executables using this context
 	 */
 	public ExecutionContext( LanguageManager languageManager, Writer writer, Writer errorWriter )
 	{
@@ -206,7 +209,7 @@ public class ExecutionContext
 	}
 
 	/**
-	 * * The standard error set for executables using this context.
+	 * The standard error set for executables using this context.
 	 * 
 	 * @param writer
 	 * @return The previous error writer or null
@@ -237,8 +240,9 @@ public class ExecutionContext
 	}
 
 	/**
-	 * Sets an adapter as a user of this context. The adapter will then get a
-	 * change to release contextual state when {@link #release()} is called.
+	 * Sets a language adapter as a user of this context. The adapter will then
+	 * get a change to release contextual state when {@link #release()} is
+	 * called.
 	 * 
 	 * @param languageAdapter
 	 * @see LanguageAdapter#releaseContext(ExecutionContext)
@@ -255,10 +259,10 @@ public class ExecutionContext
 	}
 
 	/**
-	 * The language manager for which this context is set. Note that contexts
-	 * should not be shared between language managers.
+	 * The language manager exposed to executables. This value is otherwise
+	 * unused and can be null.
 	 * 
-	 * @return The language manager
+	 * @return The language manager or null
 	 */
 	public LanguageManager getManager()
 	{
@@ -278,6 +282,9 @@ public class ExecutionContext
 	 */
 	public boolean isEnterable()
 	{
+		if( released )
+			throw new IllegalStateException( "Cannot access released execution context" );
+
 		return enterable;
 	}
 
@@ -404,18 +411,20 @@ public class ExecutionContext
 	// Private
 
 	/**
-	 * /** General-purpose attributes. Most useful for language adapters and
-	 * other users along the execution chain to store contextual state.
+	 * General-purpose attributes. Most useful for language adapters and other
+	 * users along the execution chain to store contextual state.
 	 */
 	private final Map<String, Object> attributes = new HashMap<String, Object>();
 
 	/**
-	 * 
+	 * Variables exposed to executables using this context.
 	 */
 	private final Map<String, Object> exposedVariables = new HashMap<String, Object>();
 
 	/**
+	 * Language adapters that have used this context.
 	 * 
+	 * @see #release()
 	 */
 	private final Set<LanguageAdapter> languageAdapters = new HashSet<LanguageAdapter>();
 
@@ -440,7 +449,7 @@ public class ExecutionContext
 	private static Writer defaultErrorWriter = new OutputStreamWriter( System.err );
 
 	/**
-	 * 
+	 * The language manager exposed to executables or null.
 	 */
 	private LanguageManager languageManager;
 

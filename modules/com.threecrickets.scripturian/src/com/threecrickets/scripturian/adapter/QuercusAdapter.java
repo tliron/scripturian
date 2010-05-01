@@ -200,15 +200,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 			catch( UnsupportedEncodingException x )
 			{
 			}
-			// writeStream.setDisableClose( true );
-			// writeStream.setDisableCloseSource( true );
 			environment = new Env( quercusRuntime, null, writeStream, null, null );
-			// environment.addConstant( "STDOUT", environment.wrapJava( new
-			// PhpStdout() ), false );
-			// environment.addConstant( "STDERR", environment.wrapJava( new
-			// PhpStderr() ), false );
-			// environment.addConstant( "STDIN", environment.wrapJava( new
-			// PhpStdin( environment ) ), false );
 			executionContext.getAttributes().put( QUERCUS_ENVIRONMENT, environment );
 			executionContext.getAttributes().put( QUERCUS_WRITER_STREAM, writerStream );
 		}
