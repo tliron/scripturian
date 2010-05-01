@@ -14,9 +14,8 @@ package com.threecrickets.scripturian;
 import com.threecrickets.scripturian.exception.ExecutionException;
 
 /**
- * Used in order to add specialized initialization and finalization for
- * executables. For example, to expose variables or to perform cleanup of
- * resources.
+ * Used in order to add custom initialization and finalization for executables.
+ * For example, to expose variables or to perform cleanup of resources.
  * 
  * @author Tal Liron
  * @see Executable
@@ -41,5 +40,5 @@ public interface ExecutionController
 	 * @param executionContext
 	 *        The execution context
 	 */
-	public void finalize( ExecutionContext executionContext );
+	public void release( ExecutionContext executionContext );
 }

@@ -22,7 +22,10 @@ import java.util.Map;
 import com.caucho.quercus.Quercus;
 import com.caucho.quercus.QuercusException;
 import com.caucho.quercus.env.Env;
+import com.caucho.quercus.env.EnvVar;
+import com.caucho.quercus.env.EnvVarImpl;
 import com.caucho.quercus.env.Value;
+import com.caucho.quercus.env.Var;
 import com.caucho.quercus.parser.QuercusParseException;
 import com.caucho.vfs.WriteStream;
 import com.caucho.vfs.WriterStreamImpl;
@@ -209,7 +212,13 @@ public class QuercusAdapter extends LanguageAdapterBase
 
 		// Expose variables as script globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
-			environment.setScriptGlobal( entry.getKey(), entry.getValue() );
+		{
+			// This is the best way to make sure we override Quercus predefined
+			// globals
+			EnvVar var = new EnvVarImpl( new Var() );
+			var.set( environment.wrapJava( entry.getValue() ) );
+			environment.getGlobalEnv().put( entry.getKey(), var );
+		}
 
 		environment.start();
 

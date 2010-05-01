@@ -906,7 +906,7 @@ public class Executable
 		finally
 		{
 			if( !executionContext.isImmutable() && executionController != null )
-				executionController.finalize( executionContext );
+				executionController.release( executionContext );
 		}
 
 		lastExecutedTimestamp = System.currentTimeMillis();
