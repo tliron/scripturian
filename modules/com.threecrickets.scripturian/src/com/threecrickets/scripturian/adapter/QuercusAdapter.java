@@ -12,14 +12,18 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 
 import com.caucho.quercus.Quercus;
 import com.caucho.quercus.QuercusException;
 import com.caucho.quercus.env.Env;
 import com.caucho.quercus.env.Value;
+import com.caucho.quercus.parser.QuercusParseException;
 import com.caucho.vfs.WriteStream;
 import com.caucho.vfs.WriterStreamImpl;
 import com.threecrickets.scripturian.Executable;
@@ -30,6 +34,7 @@ import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
  * A {@link LanguageAdapter} that supports the PHP language as implemented by <a
@@ -64,6 +69,28 @@ public class QuercusAdapter extends LanguageAdapterBase
 	// Static operations
 	//
 
+	public static ParsingException createParsingException( String documentName, QuercusParseException x )
+	{
+		ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
+		Throwable cause = x.getCause();
+		String message = cause != null ? cause.getMessage() : x.getMessage();
+
+		if( cause instanceof ParsingException )
+			// Add the cause's stack to ours
+			stack.addAll( ( (ParsingException) cause ).getStack() );
+		else
+			message = extractExceptionStackFromMessage( message, stack );
+
+		if( !stack.isEmpty() )
+		{
+			ParsingException parsingException = new ParsingException( message, x );
+			parsingException.getStack().addAll( stack );
+			return parsingException;
+		}
+		else
+			return new ParsingException( documentName, message, x );
+	}
+
 	/**
 	 * Creates an execution exception with a full stack.
 	 * 
@@ -75,39 +102,55 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 */
 	public static ExecutionException createExecutionException( String documentName, Exception x )
 	{
-		if( x instanceof QuercusException )
+		ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
+		Throwable cause = x.getCause();
+		String message = cause != null && cause.getMessage() != null ? cause.getMessage() : x.getMessage();
+
+		if( cause instanceof ExecutionException )
+			// Add the cause's stack to ours
+			stack.addAll( ( (ExecutionException) cause ).getStack() );
+		else if( cause instanceof ParsingException )
+			// Add the cause's stack to ours
+			stack.addAll( ( (ParsingException) cause ).getStack() );
+		else if( x instanceof QuercusException )
+			message = extractExceptionStackFromMessage( message, stack );
+
+		if( !stack.isEmpty() )
 		{
-			// QuercusException quercusException = (QuercusException) x;
-			Throwable cause = x.getCause();
-			if( cause instanceof ExecutionException )
+			ExecutionException executionException = new ExecutionException( message, x );
+			executionException.getStack().addAll( stack );
+			return executionException;
+		}
+		else
+			return new ExecutionException( documentName, message, x );
+	}
+
+	public static String extractExceptionStackFromMessage( String message, Collection<StackFrame> stack )
+	{
+		if( message != null )
+		{
+			int firstColon = message.indexOf( ':' );
+			if( firstColon != -1 )
 			{
-				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
-				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				// executionException.getStack().add( new StackFrame(
-				// documentName,
-				// groovyRuntimeException.getNode().getLineNumber(),
-				// groovyRuntimeException.getNode().getColumnNumber() ) );
-				return executionException;
+				int secondColon = message.indexOf( ':', firstColon + 1 );
+				if( secondColon != -1 )
+				{
+					String documentName = message.substring( 0, firstColon );
+					try
+					{
+						int lineNumber = Integer.parseInt( message.substring( firstColon + 1, secondColon ) );
+						message = message.substring( secondColon + 2 );
+						stack.add( new StackFrame( documentName, lineNumber, -1 ) );
+						return message;
+					}
+					catch( NumberFormatException x )
+					{
+					}
+				}
 			}
-			else if( cause instanceof ParsingException )
-			{
-				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
-				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
-				// executionException.getStack().add( new StackFrame(
-				// documentName,
-				// groovyRuntimeException.getNode().getLineNumber(),
-				// groovyRuntimeException.getNode().getColumnNumber() ) );
-				return executionException;
-			}
-			// else
-			// return new ExecutionException( documentName,
-			// groovyRuntimeException.getNode().getLineNumber(),
-			// groovyRuntimeException.getNode().getColumnNumber(),
-			// groovyRuntimeException.getMessageWithoutLocationText(),
-			// x );
 		}
 
-		return new ExecutionException( x.getMessage(), x );
+		return message;
 	}
 
 	//
@@ -157,7 +200,15 @@ public class QuercusAdapter extends LanguageAdapterBase
 			catch( UnsupportedEncodingException x )
 			{
 			}
+			// writeStream.setDisableClose( true );
+			// writeStream.setDisableCloseSource( true );
 			environment = new Env( quercusRuntime, null, writeStream, null, null );
+			// environment.addConstant( "STDOUT", environment.wrapJava( new
+			// PhpStdout() ), false );
+			// environment.addConstant( "STDERR", environment.wrapJava( new
+			// PhpStderr() ), false );
+			// environment.addConstant( "STDIN", environment.wrapJava( new
+			// PhpStdin( environment ) ), false );
 			executionContext.getAttributes().put( QUERCUS_ENVIRONMENT, environment );
 			executionContext.getAttributes().put( QUERCUS_WRITER_STREAM, writerStream );
 		}
@@ -213,19 +264,30 @@ public class QuercusAdapter extends LanguageAdapterBase
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toPhpStyle( entryPointName );
-		Env env = getEnvironment( executionContext );
+		Env environment = getEnvironment( executionContext );
 		try
 		{
 			Value[] quercusArguments = new Value[arguments.length];
 			for( int i = 0; i < arguments.length; i++ )
-				quercusArguments[i] = env.wrapJava( arguments[i] );
-			Value r = env.call( entryPointName, quercusArguments );
+				quercusArguments[i] = environment.wrapJava( arguments[i] );
+
+			Value r = environment.call( entryPointName, quercusArguments );
 			return r.toJavaObject();
 		}
 		catch( Exception x )
 		{
-			x.printStackTrace();
-			return null;
+			throw createExecutionException( executable.getDocumentName(), x );
+		}
+		finally
+		{
+			try
+			{
+				environment.getOut().flush();
+				executionContext.getWriter().flush();
+			}
+			catch( IOException xx )
+			{
+			}
 		}
 	}
 

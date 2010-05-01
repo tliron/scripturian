@@ -155,13 +155,15 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 				rubyRuntime.runScript( script );
 			else
 				rubyRuntime.executeScript( sourceCode, executable.getDocumentName() );
-
-			rubyRuntime.getOut().flush();
-			rubyRuntime.getErr().flush();
 		}
 		catch( RaiseException x )
 		{
 			throw JRubyAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		finally
+		{
+			rubyRuntime.getOut().flush();
+			rubyRuntime.getErr().flush();
 		}
 	}
 
@@ -169,7 +171,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	// Private
 
 	/**
-	 * The compiled script.
+	 * The cached compiled script.
 	 */
 	private Script script;
 }

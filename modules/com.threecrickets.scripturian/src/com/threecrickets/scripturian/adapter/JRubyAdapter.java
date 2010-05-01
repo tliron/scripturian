@@ -283,6 +283,11 @@ public class JRubyAdapter extends LanguageAdapterBase
 		{
 			throw createExecutionException( executable.getDocumentName(), x );
 		}
+		finally
+		{
+			rubyRuntime.getOut().flush();
+			rubyRuntime.getErr().flush();
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

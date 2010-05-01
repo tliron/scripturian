@@ -11,10 +11,13 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import java.io.IOException;
+
 import com.caucho.quercus.QuercusExitException;
 import com.caucho.quercus.env.Env;
 import com.caucho.quercus.page.InterpretedPage;
 import com.caucho.quercus.page.QuercusPage;
+import com.caucho.quercus.parser.QuercusParseException;
 import com.caucho.quercus.parser.QuercusParser;
 import com.caucho.vfs.Path;
 import com.caucho.vfs.StringPath;
@@ -81,6 +84,10 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 				// if( page.getCompiledPage() != null )
 				// page = page.getCompiledPage();
 			}
+			catch( QuercusParseException x )
+			{
+				throw QuercusAdapter.createParsingException( executable.getDocumentName(), x );
+			}
 			catch( Exception x )
 			{
 				throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
@@ -92,21 +99,32 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 			page.init( environment );
 			page.importDefinitions( environment );
 			page.execute( environment );
-
-			environment.getOut().flushBuffer();
 		}
 		catch( QuercusExitException x )
 		{
-			throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
 		catch( Exception x )
 		{
 			throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		finally
+		{
+			try
+			{
+				environment.getOut().flush();
+				executionContext.getWriter().flush();
+			}
+			catch( IOException xx )
+			{
+			}
 		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The cached parsed page.
+	 */
 	private QuercusPage page;
 }

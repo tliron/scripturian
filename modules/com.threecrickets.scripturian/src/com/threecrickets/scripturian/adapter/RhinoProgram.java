@@ -121,5 +121,8 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The cached compiled script.
+	 */
 	private Script script;
 }

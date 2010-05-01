@@ -92,7 +92,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 					x );
 		}
 		else
-			return new ExecutionException( x.getMessage(), x );
+			return new ExecutionException( documentName, x.getMessage(), x );
 	}
 
 	//

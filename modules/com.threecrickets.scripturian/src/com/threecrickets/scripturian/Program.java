@@ -16,14 +16,17 @@ import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.PreparationException;
 
 /**
- * Operational units within executables. Programs are completely executable in
- * themselves. From the perspective of source code, it means that programs are
- * not fragments or snippets of code. For example, a for-loop in Java without an
+ * Operational units within executables. Programs are completely executable
+ * units: from the perspective of source code, it means that programs are not
+ * fragments or snippets of code. For example, a for-loop in Java without an
  * ending curly bracket is un-compilable as a whole and would thus not
  * constitute a valid program.
  * <p>
- * Program instances are used internally between executables and language
- * adapters, and you would rarely need to access them directly.
+ * More power, flexibility and abstraction can be obtained by working with
+ * higher-level {@link Executable} instances, which may internally incorporate
+ * one or more programs in various languages, rather than working with programs
+ * directly. Programs should be seen as an implementation-specific aspects of
+ * executables.
  * 
  * @author Tal Liron
  * @see Executable

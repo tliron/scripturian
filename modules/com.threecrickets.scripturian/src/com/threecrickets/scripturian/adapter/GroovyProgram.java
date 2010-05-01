@@ -170,5 +170,8 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	/**
+	 * The cached parsed or compiled script.
+	 */
 	private Script script;
 }

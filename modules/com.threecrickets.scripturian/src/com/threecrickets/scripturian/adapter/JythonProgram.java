@@ -132,13 +132,15 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 				// We're using a stream because PythonInterpreter does not
 				// expose a string-based method that also accepts a filename.
 				pythonInterpreter.execfile( new ByteArrayInputStream( sourceCode.getBytes() ), executable.getDocumentName() );
-
-			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
-			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
 		}
 		catch( Exception x )
 		{
 			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		finally
+		{
+			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
 		}
 	}
 
@@ -146,7 +148,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	// Private
 
 	/**
-	 * The compiled code.
+	 * The cached compiled code.
 	 */
 	private PyCode pyCode;
 }

@@ -21,6 +21,7 @@ import org.python.compiler.LegacyCompiler;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyException;
+import org.python.core.PyFileWriter;
 import org.python.core.PyObject;
 import org.python.core.PySystemState;
 import org.python.core.PythonCompiler;
@@ -109,7 +110,7 @@ public class JythonAdapter extends LanguageAdapterBase
 				return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1, Py.formatException( pyException.type, pyException.value ), pyException.getCause() );
 		}
 		else
-			return new ExecutionException( x.getMessage(), x );
+			return new ExecutionException( documentName, x.getMessage(), x );
 	}
 
 	//
@@ -229,10 +230,16 @@ public class JythonAdapter extends LanguageAdapterBase
 		try
 		{
 			PyObject r = method.__call__( pythonArguments );
+
+			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
+
 			return r.__tojava__( Object.class );
 		}
 		catch( Exception x )
 		{
+			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
 			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
 	}

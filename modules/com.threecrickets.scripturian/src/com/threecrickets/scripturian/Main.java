@@ -247,6 +247,28 @@ public class Main implements Runnable
 	}
 
 	//
+	// Operations
+	//
+
+	/**
+	 * Tries to flush writers.
+	 * 
+	 * @see #getWriter()
+	 * @see #getErrorWriter()
+	 */
+	public void flushWriters()
+	{
+		try
+		{
+			getWriter().flush();
+			getErrorWriter().flush();
+		}
+		catch( IOException x )
+		{
+		}
+	}
+
+	//
 	// Runnable
 	//
 
@@ -257,16 +279,17 @@ public class Main implements Runnable
 		{
 			ExposedContainerForMain container = new ExposedContainerForMain( this, executionContext );
 			container.include( initialDocumentName );
-			writer.flush();
-			errorWriter.flush();
+			flushWriters();
 		}
 		catch( IOException x )
 		{
+			flushWriters();
 			System.err.print( "Error reading file for \"" + initialDocumentName + "\": " );
 			System.err.println( x.getMessage() );
 		}
 		catch( ParsingException x )
 		{
+			flushWriters();
 			System.err.println( "Initialization error:" );
 			System.err.println( " " + x.getMessage() );
 			for( StackFrame stackFrame : x.getStack() )
@@ -280,6 +303,7 @@ public class Main implements Runnable
 		}
 		catch( ExecutionException x )
 		{
+			flushWriters();
 			System.err.println( "Execution error:" );
 			System.err.println( " " + x.getMessage() );
 			for( StackFrame stackFrame : x.getStack() )

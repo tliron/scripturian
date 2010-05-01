@@ -36,7 +36,6 @@ import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.PreparationException;
-import com.threecrickets.scripturian.exception.StackFrame;
 
 /**
  * @author Tal Liron
@@ -237,7 +236,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 			}
 			catch( CompilerException x )
 			{
-				throw createExecutionException( x );
+				throw ClojureAdapter.createExecutionException( startColumnNumber, x );
 			}
 			catch( Exception x )
 			{
@@ -254,92 +253,9 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 	// Private
 
 	/**
-	 * The parsed forms.
+	 * The cached parsed forms.
 	 */
 	private Collection<ClojureProgram.Form> forms;
-
-	/**
-	 * Annoyingly, Clojure's CompilerException accepts stack information
-	 * (Compiler.SOURCE, Compiler.LINE) in its constructor, but does not store
-	 * it directly. This information is indirectly available to us in the error
-	 * message. We'll just have to parse this error message to get our valuable
-	 * data!
-	 * 
-	 * @param message
-	 *        The exception message
-	 * @param stack
-	 *        The stack
-	 * @return New exception message
-	 */
-	private String extractStack( String message, Collection<StackFrame> stack )
-	{
-		int length = message.length();
-		if( length > 0 )
-		{
-			if( message.charAt( length - 1 ) == ')' )
-			{
-				int lastParens1 = message.lastIndexOf( '(' );
-				if( lastParens1 != -1 )
-				{
-					String stackFrame = message.substring( lastParens1 + 1, message.length() - 1 );
-					String[] split = stackFrame.split( ":" );
-					if( split.length == 2 )
-					{
-						String documentName = split[0];
-						try
-						{
-							int lineNumber = Integer.parseInt( split[1] );
-
-							// System.out.println( message );
-							stack.add( new StackFrame( documentName, lineNumber, -1 ) );
-
-							message = message.substring( 0, lastParens1 ).trim();
-							// return extractStack( message, stack );
-						}
-						catch( NumberFormatException x )
-						{
-						}
-					}
-				}
-			}
-		}
-
-		return message;
-	}
-
-	/**
-	 * Creates an execution exception with a full stack.
-	 * 
-	 * @param x
-	 *        The Clojure compiler exception
-	 * @return The execution exception
-	 */
-	private ExecutionException createExecutionException( CompilerException x )
-	{
-		String message = x.getMessage();
-		ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
-		Throwable cause = x.getCause();
-
-		if( cause instanceof ExecutionException )
-		{
-			if( message.startsWith( "com.threecrickets.scripturian.exception.ExecutionException: " ) )
-				message = message.substring( "com.threecrickets.scripturian.exception.ExecutionException: ".length() );
-
-			// Add the cause's stack to ours
-			stack.addAll( ( (ExecutionException) cause ).getStack() );
-		}
-
-		message = extractStack( message, stack );
-
-		if( !stack.isEmpty() )
-		{
-			ExecutionException executionException = new ExecutionException( message, x );
-			executionException.getStack().addAll( stack );
-			return executionException;
-		}
-		else
-			return new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
-	}
 
 	/**
 	 * A simple wrapper for parsed Clojure forms that adds line number
