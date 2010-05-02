@@ -92,7 +92,18 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 					stream.close();
 				}
 
-				scriptReference.compareAndSet( null, (Script) adapter.generatedClassLoader.defineClass( classname, classByteArray ).newInstance() );
+				Script script;
+				try
+				{
+					script = (Script) adapter.generatedClassLoader.defineClass( classname, classByteArray ).newInstance();
+				}
+				catch( LinkageError x )
+				{
+					// Class is already defined
+					script = (Script) ( (ClassLoader) adapter.generatedClassLoader ).loadClass( classname ).newInstance();
+				}
+
+				scriptReference.compareAndSet( null, script );
 			}
 			catch( Exception x )
 			{
