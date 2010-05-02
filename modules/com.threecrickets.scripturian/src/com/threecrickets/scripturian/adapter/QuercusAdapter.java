@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import com.caucho.quercus.Quercus;
+import com.caucho.quercus.QuercusErrorException;
 import com.caucho.quercus.QuercusException;
 import com.caucho.quercus.env.Env;
 import com.caucho.quercus.env.EnvVar;
@@ -285,6 +286,10 @@ public class QuercusAdapter extends LanguageAdapterBase
 			Value r = environment.call( entryPointName, quercusArguments );
 			return r.toJavaObject();
 		}
+		catch( QuercusErrorException x )
+		{
+			throw new NoSuchMethodException( entryPointName );
+		}
 		catch( Exception x )
 		{
 			throw createExecutionException( executable.getDocumentName(), x );
@@ -332,7 +337,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 	// Private
 
 	/**
-	 * A static Quercys runtime used for version information.
+	 * A static Quercus runtime used for version information.
 	 */
 	private static final Quercus staticQuercusRuntime = new Quercus();
 
