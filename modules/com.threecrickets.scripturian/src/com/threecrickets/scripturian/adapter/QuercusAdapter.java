@@ -207,6 +207,16 @@ public class QuercusAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( QUERCUS_ENVIRONMENT, environment );
 			executionContext.getAttributes().put( QUERCUS_WRITER_STREAM, writerStream );
 		}
+		else
+		{
+			try
+			{
+				environment.getOut().flush();
+			}
+			catch( IOException x )
+			{
+			}
+		}
 
 		writerStream.setWriter( executionContext.getWriterOrDefault() );
 

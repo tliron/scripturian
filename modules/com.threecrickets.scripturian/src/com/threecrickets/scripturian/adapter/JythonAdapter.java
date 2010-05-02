@@ -23,6 +23,7 @@ import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyFileWriter;
 import org.python.core.PyObject;
+import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.PythonCompiler;
 import org.python.util.PythonInterpreter;
@@ -168,8 +169,17 @@ public class JythonAdapter extends LanguageAdapterBase
 
 		if( pythonInterpreter == null )
 		{
-			pythonInterpreter = new PythonInterpreter();
+			// Note: If we don't explicitly create a new system state here,
+			// Jython will reuse system state found on this thread!
+
+			pythonInterpreter = new PythonInterpreter( new PyStringMap(), new PySystemState() );
 			executionContext.getAttributes().put( JYTHON_INTERPRETER, pythonInterpreter );
+			pythonInterpreter.exec( "import sys" ); // For output scriptlets
+		}
+		else
+		{
+			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
 		}
 
 		pythonInterpreter.setOut( executionContext.getWriterOrDefault() );
@@ -226,21 +236,20 @@ public class JythonAdapter extends LanguageAdapterBase
 		PyObject method = pythonInterpreter.get( entryPointName );
 		if( method == null )
 			throw new NoSuchMethodException( entryPointName );
-		PyObject[] pythonArguments = Py.javas2pys( arguments );
 		try
 		{
+			PyObject[] pythonArguments = Py.javas2pys( arguments );
 			PyObject r = method.__call__( pythonArguments );
-
-			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
-			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
-
 			return r.__tojava__( Object.class );
 		}
 		catch( Exception x )
 		{
+			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		finally
+		{
 			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
 			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
-			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
 	}
 

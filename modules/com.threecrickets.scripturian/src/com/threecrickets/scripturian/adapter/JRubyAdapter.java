@@ -215,6 +215,9 @@ public class JRubyAdapter extends LanguageAdapterBase
 		}
 		else
 		{
+			rubyRuntime.getOut().flush();
+			rubyRuntime.getErr().flush();
+
 			// Our switchable output stream lets us change the Ruby runtime's
 			// standard output/error after it's been created.
 
