@@ -942,8 +942,7 @@ public class Executable
 
 		execute( executionContext, container, executionController );
 
-		ExecutionContext existing = enterableExecutionContext.getAndSet( executionContext );
-		if( existing != null )
+		if( !enterableExecutionContext.compareAndSet( null, executionContext ) )
 			return false;
 
 		executionContext.enterable = true;
