@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicLong;
 
 import clojure.lang.Compiler;
 import clojure.lang.Namespace;
@@ -172,7 +173,7 @@ public class ClojureAdapter extends LanguageAdapterBase
 		{
 			// We need to create a fresh namespace for each execution context.
 
-			String name = NAMESPACE_PREFIX + executionContext.hashCode();
+			String name = NAMESPACE_PREFIX + namespaceCounter.getAndIncrement();
 			ns = Namespace.findOrCreate( Symbol.intern( name ) );
 			executionContext.getAttributes().put( CLOJURE_NAMESPACE, ns );
 		}
@@ -317,4 +318,12 @@ public class ClojureAdapter extends LanguageAdapterBase
 	 * (clojure.core/refer)
 	 */
 	protected static final Var REFER = RT.var( "clojure.core", "refer" );
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	/**
+	 * Counter for generating unique namespace names.
+	 */
+	private static final AtomicLong namespaceCounter = new AtomicLong();
 }
