@@ -21,6 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -74,6 +75,16 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 	// LanguageAdapter
 	//
 
+	public LanguageManager getManager()
+	{
+		return manager;
+	}
+
+	public void setManager( LanguageManager manager )
+	{
+		this.manager = manager;
+	}
+
 	public Map<String, Object> getAttributes()
 	{
 		return attributes;
@@ -110,4 +121,9 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 	 * The lock.
 	 */
 	private final ReentrantLock lock = new ReentrantLock();
+
+	/**
+	 * The language manager.
+	 */
+	private volatile LanguageManager manager;
 }

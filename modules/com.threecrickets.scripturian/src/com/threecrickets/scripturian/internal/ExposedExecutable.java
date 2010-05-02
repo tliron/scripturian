@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
+import com.threecrickets.scripturian.LanguageManager;
 
 /**
  * This is the <code>executable</code> variable exposed to the executable. The
@@ -35,12 +36,16 @@ public class ExposedExecutable
 	 * 
 	 * @param executionContext
 	 *        The execution context
+	 * @param manager
+	 *        The language manager used to parse, prepare and execute the
+	 *        executable
 	 * @param container
 	 *        The container or null
 	 */
-	public ExposedExecutable( ExecutionContext executionContext, Object container )
+	public ExposedExecutable( ExecutionContext executionContext, LanguageManager manager, Object container )
 	{
 		this.executionContext = executionContext;
+		this.manager = manager;
 		this.container = container;
 	}
 
@@ -58,6 +63,16 @@ public class ExposedExecutable
 	public ExecutionContext getContext()
 	{
 		return executionContext;
+	}
+
+	/**
+	 * The language manager used to parse, prepare and execute the executable.
+	 * 
+	 * @return The language manager
+	 */
+	public LanguageManager getManager()
+	{
+		return manager;
 	}
 
 	/**
@@ -138,6 +153,11 @@ public class ExposedExecutable
 	 * The execution context.
 	 */
 	private final ExecutionContext executionContext;
+
+	/**
+	 * The language manager used to parse, prepare and execute the executable.
+	 */
+	private final LanguageManager manager;
 
 	/**
 	 * The container.

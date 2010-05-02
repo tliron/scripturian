@@ -75,6 +75,10 @@ public interface LanguageAdapter
 	//
 	// Attributes
 	//
+	
+	public LanguageManager getManager();
+	
+	public void setManager(LanguageManager manager);
 
 	/**
 	 * Adapter attributes. Adapter must at least support the keys listed in this

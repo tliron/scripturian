@@ -63,72 +63,6 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	//
 
 	/**
-	 * Gets a JSR-223 script engine manager stored in the language manager
-	 * associated with the execution context, creating it if it doesn't exist.
-	 * Each language manager is guaranteed to have its own script context.
-	 * 
-	 * @param executionContext
-	 *        The execution context
-	 * @return The language manager
-	 */
-	public static ScriptEngineManager getScriptEngineManager( ExecutionContext executionContext )
-	{
-		ScriptEngineManager scriptEngineManager = (ScriptEngineManager) executionContext.getManager().getAttributes().get( JSR223_SCRIPT_ENGINE_MANAGER );
-		if( scriptEngineManager == null )
-		{
-			scriptEngineManager = new ScriptEngineManager();
-			ScriptEngineManager existing = (ScriptEngineManager) executionContext.getManager().getAttributes().putIfAbsent( JSR223_SCRIPT_ENGINE_MANAGER, scriptEngineManager );
-			if( existing != null )
-				scriptEngineManager = existing;
-		}
-		return scriptEngineManager;
-	}
-
-	/**
-	 * Gets a JSR-223 script engine stored in the execution context, creating it
-	 * if it doesn't exist. Each execution context is guaranteed to have at most
-	 * one script engine instance per script engine.
-	 * 
-	 * @param scriptEngineName
-	 *        The script engine name
-	 * @param executable
-	 *        The executable
-	 * @param executionContext
-	 *        The execution context
-	 * @return The script engine
-	 * @throws ParsingException
-	 */
-	@SuppressWarnings("unchecked")
-	public static ScriptEngine getScriptEngine( LanguageAdapter adapter, String scriptEngineName, Executable executable, ExecutionContext executionContext ) throws LanguageAdapterException
-	{
-		Map<String, ScriptEngine> scriptEngines = (Map<String, ScriptEngine>) executionContext.getAttributes().get( JSR223_SCRIPT_ENGINES );
-		if( scriptEngines == null )
-		{
-			scriptEngines = new HashMap<String, ScriptEngine>();
-			executionContext.getAttributes().put( JSR223_SCRIPT_ENGINES, scriptEngines );
-		}
-
-		ScriptEngine scriptEngine = scriptEngines.get( scriptEngineName );
-
-		if( scriptEngine == null )
-		{
-			ScriptEngineManager scriptEngineManager = getScriptEngineManager( executionContext );
-			scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
-			if( scriptEngine == null )
-				throw new LanguageAdapterException( adapter.getClass(), "Unsupported script engine: " + scriptEngineName );
-
-			// (Note that some script engines do not even
-			// provide a default context -- Jepp, for example -- so
-			// it's generally a good idea to explicitly set one)
-			scriptEngine.setContext( getScriptContext( executionContext ) );
-
-			scriptEngines.put( scriptEngineName, scriptEngine );
-		}
-
-		return scriptEngine;
-	}
-
-	/**
 	 * Gets a JSR-223 script context stored in the execution context, creating
 	 * it if it doesn't exist. Each execution context is guaranteed to have its
 	 * own script context.
@@ -149,8 +83,8 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 			scriptContext.setBindings( new SimpleBindings(), ScriptContext.GLOBAL_SCOPE );
 		}
 
-		scriptContext.setWriter( executionContext.getWriter() );
-		scriptContext.setErrorWriter( executionContext.getErrorWriter() );
+		scriptContext.setWriter( executionContext.getWriterOrDefault() );
+		scriptContext.setErrorWriter( executionContext.getErrorWriterOrDefault() );
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 			scriptContext.setAttribute( entry.getKey(), entry.getValue(), ScriptContext.ENGINE_SCOPE );
 
@@ -177,13 +111,11 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * 
 	 * @param documentName
 	 *        The document name
-	 * @param manager
-	 *        The language manager
 	 * @param throwable
 	 *        The throwable
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, LanguageManager manager, Throwable throwable )
+	public ExecutionException createExecutionException( String documentName, Throwable throwable )
 	{
 		Throwable wrapped = throwable;
 		while( wrapped != null )
@@ -193,6 +125,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 
 			// Try JSR-223 language adapters
 			Throwable causeOrExecutionException = null;
+
 			for( LanguageAdapter adapter : manager.getAdapters() )
 			{
 				if( adapter instanceof Jsr223LanguageAdapter )
@@ -266,6 +199,72 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	//
 	// Attributes
 	//
+
+	/**
+	 * Gets a JSR-223 script engine manager stored in the language manager
+	 * associated with the execution context, creating it if it doesn't exist.
+	 * Each language manager is guaranteed to have its own script context.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The language manager
+	 */
+	public ScriptEngineManager getScriptEngineManager( ExecutionContext executionContext )
+	{
+		ScriptEngineManager scriptEngineManager = (ScriptEngineManager) manager.getAttributes().get( JSR223_SCRIPT_ENGINE_MANAGER );
+		if( scriptEngineManager == null )
+		{
+			scriptEngineManager = new ScriptEngineManager();
+			ScriptEngineManager existing = (ScriptEngineManager) manager.getAttributes().putIfAbsent( JSR223_SCRIPT_ENGINE_MANAGER, scriptEngineManager );
+			if( existing != null )
+				scriptEngineManager = existing;
+		}
+		return scriptEngineManager;
+	}
+
+	/**
+	 * Gets a JSR-223 script engine stored in the execution context, creating it
+	 * if it doesn't exist. Each execution context is guaranteed to have at most
+	 * one script engine instance per script engine.
+	 * 
+	 * @param scriptEngineName
+	 *        The script engine name
+	 * @param executable
+	 *        The executable
+	 * @param executionContext
+	 *        The execution context
+	 * @return The script engine
+	 * @throws ParsingException
+	 */
+	@SuppressWarnings("unchecked")
+	public ScriptEngine getScriptEngine( LanguageAdapter adapter, String scriptEngineName, Executable executable, ExecutionContext executionContext ) throws LanguageAdapterException
+	{
+		Map<String, ScriptEngine> scriptEngines = (Map<String, ScriptEngine>) executionContext.getAttributes().get( JSR223_SCRIPT_ENGINES );
+		if( scriptEngines == null )
+		{
+			scriptEngines = new HashMap<String, ScriptEngine>();
+			executionContext.getAttributes().put( JSR223_SCRIPT_ENGINES, scriptEngines );
+		}
+
+		ScriptEngine scriptEngine = scriptEngines.get( scriptEngineName );
+
+		if( scriptEngine == null )
+		{
+			ScriptEngineManager scriptEngineManager = getScriptEngineManager( executionContext );
+			scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
+			if( scriptEngine == null )
+				throw new LanguageAdapterException( adapter.getClass(), "Unsupported script engine: " + scriptEngineName );
+
+			// (Note that some script engines do not even
+			// provide a default context -- Jepp, for example -- so
+			// it's generally a good idea to explicitly set one)
+			scriptEngine.setContext( getScriptContext( executionContext ) );
+
+			scriptEngines.put( scriptEngineName, scriptEngine );
+		}
+
+		return scriptEngine;
+	}
 
 	/**
 	 * Gets a JSR-223 script engine for this language stored in the execution
@@ -477,6 +476,16 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	// LanguageAdapter
 	//
 
+	public LanguageManager getManager()
+	{
+		return manager;
+	}
+
+	public void setManager( LanguageManager manager )
+	{
+		this.manager = manager;
+	}
+
 	public ConcurrentMap<String, Object> getAttributes()
 	{
 		return attributes;
@@ -539,7 +548,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				}
 				catch( ScriptException x )
 				{
-					throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
+					throw createExecutionException( executable.getDocumentName(), x );
 				}
 				catch( NoSuchMethodException x )
 				{
@@ -548,7 +557,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 				catch( Exception x )
 				{
 					// Some script engines throw their own special exceptions
-					throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
+					throw createExecutionException( executable.getDocumentName(), x );
 				}
 				finally
 				{
@@ -570,13 +579,13 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 			}
 			catch( ScriptException x )
 			{
-				throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
+				throw createExecutionException( executable.getDocumentName(), x );
 			}
 			catch( Exception x )
 			{
 				// Some script engines (notably Quercus) throw their
 				// own special exceptions
-				throw createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
+				throw createExecutionException( executable.getDocumentName(), x );
 			}
 			finally
 			{
@@ -606,4 +615,9 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * The shared script engine for compilation.
 	 */
 	private final ScriptEngine scriptEngine;
+
+	/**
+	 * The language manager.
+	 */
+	private volatile LanguageManager manager;
 }

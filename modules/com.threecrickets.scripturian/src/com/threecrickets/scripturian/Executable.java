@@ -232,8 +232,9 @@ public class Executable
 	 *        The document source
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param languageManager
-	 *        The language manager used to parse and prepare the executable
+	 * @param manager
+	 *        The language manager used to parse, prepare and execute the
+	 *        executable
 	 * @param defaultLanguageTag
 	 *        When {@code isTextWithScriptlets} is true, this is the language
 	 *        used for scriptlets if none is specified
@@ -247,11 +248,11 @@ public class Executable
 	 * @throws IOException
 	 *         In case of a document source error
 	 */
-	public static DocumentDescriptor<Executable> createOnce( String documentName, DocumentSource<Executable> documentSource, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag,
+	public static DocumentDescriptor<Executable> createOnce( String documentName, DocumentSource<Executable> documentSource, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
 		boolean prepare ) throws ParsingException, IOException
 	{
 		DocumentDescriptor<Executable> documentDescriptor = documentSource.getDocument( documentName );
-		createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
+		createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, manager, defaultLanguageTag, prepare );
 		return documentDescriptor;
 	}
 
@@ -267,8 +268,9 @@ public class Executable
 	 *        The executable partition
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param languageManager
-	 *        The language manager used to parse and prepare the executable
+	 * @param manager
+	 *        The language manager used to parse, prepare and execute the
+	 *        executable
 	 * @param defaultLanguageTag
 	 *        When {@code isTextWithScriptlets} is true, this is the language
 	 *        used for scriptlets if none is specified
@@ -280,13 +282,13 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare )
+	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare )
 		throws ParsingException
 	{
 		Executable executable = documentDescriptor.getDocument();
 		if( executable == null )
 		{
-			executable = new Executable( documentDescriptor, partition, isTextWithScriptlets, languageManager, defaultLanguageTag, prepare );
+			executable = new Executable( documentDescriptor, partition, isTextWithScriptlets, manager, defaultLanguageTag, prepare );
 			Executable existing = documentDescriptor.setDocumentIfAbsent( executable );
 			if( existing != null )
 				executable = existing;
@@ -309,8 +311,9 @@ public class Executable
 	 *        The executable partition
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param languageManager
-	 *        The language manager used to parse and prepare the executable
+	 * @param manager
+	 *        The language manager used to parse, prepare and execute the
+	 *        executable
 	 * @param defaultLanguageTag
 	 *        When {@code isTextWithScriptlets} is true, this is the language
 	 *        used for scriptlets if none is specified
@@ -321,11 +324,10 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag, boolean prepare )
-		throws ParsingException
+	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare ) throws ParsingException
 	{
-		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, languageManager, languageManager.getLanguageTagByExtension(
-			documentDescriptor.getDefaultName(), documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
+		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, manager, manager.getLanguageTagByExtension( documentDescriptor
+			.getDefaultName(), documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
 	}
 
 	/**
@@ -346,8 +348,9 @@ public class Executable
 	 *        embedded scriptlets
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param languageManager
-	 *        The language manager used to parse and prepare the executable
+	 * @param manager
+	 *        The language manager used to parse, prepare and execute the
+	 *        executable
 	 * @param defaultLanguageTag
 	 *        When {@code isTextWithScriptlets} is true, this is the language
 	 *        used for scriptlets if none is specified
@@ -361,10 +364,10 @@ public class Executable
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 */
-	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag,
+	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
 		DocumentSource<Executable> documentSource, boolean prepare ) throws ParsingException
 	{
-		this( documentName, partition, documentTimestamp, sourceCode, isTextWithScriptlets, languageManager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START,
+		this( documentName, partition, documentTimestamp, sourceCode, isTextWithScriptlets, manager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START,
 			DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
@@ -386,8 +389,9 @@ public class Executable
 	 *        embedded scriptlets
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param languageManager
-	 *        The language manager used to parse and compile the executable
+	 * @param manager
+	 *        The language manager used to parse, prepare and execute the
+	 *        executable
 	 * @param defaultLanguageTag
 	 *        When {@code isTextWithScriptlets} is true, this is the language
 	 *        used for scriptlets if none is specified
@@ -421,7 +425,7 @@ public class Executable
 	 *         In case of a parsing or compilation error
 	 * @see LanguageAdapter
 	 */
-	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager languageManager, String defaultLanguageTag,
+	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
 		DocumentSource<Executable> documentSource, boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression,
 		String delimiterInclude, String delimiterInFlow ) throws ParsingException
 	{
@@ -429,6 +433,7 @@ public class Executable
 		this.partition = partition;
 		this.documentTimestamp = documentTimestamp;
 		this.exposedExecutableName = exposedExecutableName;
+		this.manager = manager;
 
 		if( !isTextWithScriptlets )
 		{
@@ -437,7 +442,7 @@ public class Executable
 			{
 				segment
 			};
-			segment.createProgram( this, languageManager, prepare );
+			segment.createProgram( this, manager, prepare );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -555,7 +560,7 @@ public class Executable
 						// Add scriptlet segment
 						if( isExpression || isInclude )
 						{
-							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
+							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
@@ -566,7 +571,7 @@ public class Executable
 						}
 						else if( isInFlow && ( documentSource != null ) )
 						{
-							LanguageAdapter adapter = languageManager.getAdapterByTag( languageTag );
+							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
@@ -575,7 +580,7 @@ public class Executable
 
 							// Note that the in-flow executable is a single
 							// segment, so we can optimize parsing a bit
-							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, false, languageManager, null, null, prepare, exposedExecutableName,
+							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, false, manager, null, null, prepare, exposedExecutableName,
 								delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
@@ -661,7 +666,7 @@ public class Executable
 						previous.sourceCode += current.sourceCode;
 					else
 					{
-						LanguageAdapter adapter = languageManager.getAdapterByTag( current.languageTag );
+						LanguageAdapter adapter = manager.getAdapterByTag( current.languageTag );
 						if( adapter == null )
 							throw ParsingException.adapterNotFound( documentName, current.startLineNumber, current.startColumnNumber, current.languageTag );
 
@@ -681,7 +686,7 @@ public class Executable
 		{
 			segment.position = position++;
 			if( segment.isProgram )
-				segment.createProgram( this, languageManager, prepare );
+				segment.createProgram( this, manager, prepare );
 		}
 
 		// Flatten list into array
@@ -715,6 +720,16 @@ public class Executable
 	public String getPartition()
 	{
 		return partition;
+	}
+
+	/**
+	 * The language manager used to parse, prepare and execute the executable.
+	 * 
+	 * @return The language manager
+	 */
+	public LanguageManager getManager()
+	{
+		return manager;
 	}
 
 	/**
@@ -874,19 +889,19 @@ public class Executable
 					executionContext.getWriter().write( segment.sourceCode );
 				else
 				{
-					LanguageAdapter languageAdapter = executionContext.getManager().getAdapterByTag( segment.languageTag );
-					if( languageAdapter == null )
+					LanguageAdapter adapter = manager.getAdapterByTag( segment.languageTag );
+					if( adapter == null )
 						throw ParsingException.adapterNotFound( documentName, segment.startLineNumber, segment.startColumnNumber, segment.languageTag );
 
 					if( !executionContext.isImmutable() )
-						executionContext.setAdapter( languageAdapter );
+						executionContext.setAdapter( adapter );
 
-					if( !languageAdapter.isThreadSafe() )
-						languageAdapter.getLock().lock();
+					if( !adapter.isThreadSafe() )
+						adapter.getLock().lock();
 
 					Object oldExposedExecutable = null;
 					if( !executionContext.isImmutable() )
-						oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContext, container ) );
+						oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContext, manager, container ) );
 
 					try
 					{
@@ -897,8 +912,8 @@ public class Executable
 						if( !executionContext.isImmutable() && oldExposedExecutable != null )
 							executionContext.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
 
-						if( !languageAdapter.isThreadSafe() )
-							languageAdapter.getLock().unlock();
+						if( !adapter.isThreadSafe() )
+							adapter.getLock().unlock();
 					}
 				}
 			}
@@ -1030,6 +1045,11 @@ public class Executable
 	 * The executable's document timestamp.
 	 */
 	private final long documentTimestamp;
+
+	/**
+	 * The language manager used to parse, prepare and execute the executable
+	 */
+	private final LanguageManager manager;
 
 	/**
 	 * User-defined attributes.

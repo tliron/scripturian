@@ -80,17 +80,33 @@ public class ExecutionContext
 
 	/**
 	 * Construction.
+	 */
+	public ExecutionContext()
+	{
+		this( null );
+	}
+
+	/**
+	 * Construction.
 	 * 
-	 * @param languageManager
-	 *        The language manager exposed to executables or null
+	 * @param writer
+	 *        The standard output set for executables using this context
+	 */
+	public ExecutionContext( Writer writer )
+	{
+		this( writer, null );
+	}
+
+	/**
+	 * Construction.
+	 * 
 	 * @param writer
 	 *        The standard output set for executables using this context
 	 * @param errorWriter
 	 *        The standard error set for executables using this context
 	 */
-	public ExecutionContext( LanguageManager languageManager, Writer writer, Writer errorWriter )
+	public ExecutionContext( Writer writer, Writer errorWriter )
 	{
-		this.languageManager = languageManager;
 		this.writer = writer;
 		this.errorWriter = errorWriter;
 	}
@@ -256,20 +272,6 @@ public class ExecutionContext
 
 		this.languageAdapter = languageAdapter;
 		languageAdapters.add( languageAdapter );
-	}
-
-	/**
-	 * The language manager exposed to executables. This value is otherwise
-	 * unused and can be null.
-	 * 
-	 * @return The language manager or null
-	 */
-	public LanguageManager getManager()
-	{
-		if( released )
-			throw new IllegalStateException( "Cannot access released execution context" );
-
-		return languageManager;
 	}
 
 	/**
@@ -447,11 +449,6 @@ public class ExecutionContext
 	 * The default standard output set for executables using this context.
 	 */
 	private static Writer defaultErrorWriter = new OutputStreamWriter( System.err );
-
-	/**
-	 * The language manager exposed to executables or null.
-	 */
-	private LanguageManager languageManager;
 
 	/**
 	 * The last language adapter used by the context.

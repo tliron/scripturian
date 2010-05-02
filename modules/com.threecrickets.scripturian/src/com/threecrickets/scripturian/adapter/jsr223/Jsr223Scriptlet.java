@@ -112,13 +112,13 @@ public class Jsr223Scriptlet extends ProgramBase<Jsr223LanguageAdapter>
 		}
 		catch( ScriptException x )
 		{
-			throw Jsr223LanguageAdapter.createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
+			throw Jsr223LanguageAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
 		catch( Exception x )
 		{
 			// Some script engines (notably Quercus) throw their
 			// own special exceptions
-			throw Jsr223LanguageAdapter.createExecutionException( executable.getDocumentName(), executionContext.getManager(), x );
+			throw adapter.createExecutionException( executable.getDocumentName(), x );
 		}
 		finally
 		{

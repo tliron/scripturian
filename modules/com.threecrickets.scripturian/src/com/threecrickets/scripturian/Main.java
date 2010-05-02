@@ -274,7 +274,7 @@ public class Main implements Runnable
 
 	public void run()
 	{
-		ExecutionContext executionContext = new ExecutionContext( manager, getWriter(), getErrorWriter() );
+		ExecutionContext executionContext = new ExecutionContext( getWriter(), getErrorWriter() );
 		try
 		{
 			ExposedContainerForMain container = new ExposedContainerForMain( this, executionContext );

@@ -207,6 +207,9 @@ public class LanguageManager
 	@SuppressWarnings("unchecked")
 	public void addAdapter( LanguageAdapter adapter )
 	{
+		if( adapter.getManager() != null )
+			throw new RuntimeException( "Can't add language adapter instance to more than one language manager" );
+
 		languageAdapters.add( adapter );
 
 		Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
@@ -217,6 +220,7 @@ public class LanguageManager
 		for( String extension : extensions )
 			languageAdapterByExtension.put( extension, adapter );
 
+		adapter.setManager( this );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
