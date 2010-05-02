@@ -207,7 +207,7 @@ public abstract class ScripturianUtil
 			file = existing;
 		else
 		{
-			existing = programClassFiles.putIfAbsent( file.getPath().intern(), file );
+			existing = programClassFiles.putIfAbsent( file.getPath(), file );
 			if( existing != null )
 				file = existing;
 		}

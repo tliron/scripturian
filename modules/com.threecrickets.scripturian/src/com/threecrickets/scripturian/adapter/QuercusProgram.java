@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.caucho.quercus.QuercusExitException;
 import com.caucho.quercus.env.Env;
@@ -68,12 +69,11 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	{
 		Env environment = adapter.getEnvironment( executionContext );
 
+		QuercusPage page = pageReference.get();
 		if( page == null )
 		{
 			try
 			{
-				// Note that we're caching the resulting parsed page for the
-				// future. Might as well!
 
 				Path path = new StringPath( isScriptlet ? "<?php " + sourceCode + " ?>" : sourceCode );
 				QuercusParser parser = new QuercusParser( adapter.quercusRuntime, path, path.openRead() );
@@ -81,8 +81,9 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 				com.caucho.quercus.program.QuercusProgram program = parser.parse();
 				page = new InterpretedPage( program );
 
-				// if( page.getCompiledPage() != null )
-				// page = page.getCompiledPage();
+				// We're caching the resulting parsed page for the future. Might
+				// as well!
+				pageReference.compareAndSet( null, page );
 			}
 			catch( QuercusParseException x )
 			{
@@ -126,5 +127,5 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	/**
 	 * The cached parsed page.
 	 */
-	private QuercusPage page;
+	private final AtomicReference<QuercusPage> pageReference = new AtomicReference<QuercusPage>();
 }

@@ -17,6 +17,7 @@ import groovy.lang.Script;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.codehaus.groovy.control.CompilationUnit;
 import org.codehaus.groovy.control.Phases;
@@ -71,6 +72,9 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	@SuppressWarnings("unchecked")
 	public void prepare() throws PreparationException
 	{
+		if( scriptReference.get() != null )
+			return;
+
 		File mainClassFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
 		String classname = ScripturianUtil.getClassnameForProgram( executable, position );
 
@@ -82,7 +86,15 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 				if( mainClassFile.exists() )
 				{
 					byte[] classByteArray = ScripturianUtil.getBytes( mainClassFile );
-					scriptClass = adapter.groovyClassLoader.defineClass( classname, classByteArray );
+					try
+					{
+						scriptClass = adapter.groovyClassLoader.defineClass( classname, classByteArray );
+					}
+					catch( LinkageError x )
+					{
+						// Class is already defined
+						scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
+					}
 				}
 				else
 				{
@@ -125,7 +137,7 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 				// for the instance to work? Well, we've added our cache path to
 				// the GroovyClassLoader, so it will load those automatically.
 
-				script = scriptClass.newInstance();
+				scriptReference.compareAndSet( null, scriptClass.newInstance() );
 			}
 			catch( Exception x )
 			{
@@ -141,13 +153,15 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 
 		try
 		{
+			Script script = scriptReference.get();
 			if( script == null )
 			{
-				// Note that we're caching the resulting parsed script for the
-				// future. Might as well!
-
 				Class<Script> scriptClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
 				script = scriptClass.newInstance();
+
+				// We're caching the resulting parsed script for the future.
+				// Might as well!
+				scriptReference.compareAndSet( null, script );
 			}
 
 			script.setBinding( binding );
@@ -173,5 +187,5 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	/**
 	 * The cached parsed or compiled script.
 	 */
-	private Script script;
+	private final AtomicReference<Script> scriptReference = new AtomicReference<Script>();
 }

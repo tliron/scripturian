@@ -14,6 +14,7 @@ package com.threecrickets.scripturian.adapter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jruby.Ruby;
 import org.jruby.ast.Node;
@@ -72,6 +73,9 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	@Override
 	public void prepare() throws PreparationException
 	{
+		if( scriptReference.get() != null )
+			return;
+
 		// Note that we parse the node for a different runtime than the
 		// one we will run in. It's unclear what the repercussions of
 		// this would be, but we haven't detected any trouble yet.
@@ -90,7 +94,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 					JRubyClassLoader rubyClassLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 					rubyClassLoader.defineClass( classname, classByteArray );
 					Class<?> scriptClass = rubyClassLoader.loadClass( classname );
-					script = (Script) scriptClass.newInstance();
+					scriptReference.compareAndSet( null, (Script) scriptClass.newInstance() );
 				}
 				else
 				{
@@ -103,7 +107,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 
 					astInspector.inspect( node );
 					astCompiler.compileRoot( node, asmCompiler, astInspector, true, false );
-					script = (Script) asmCompiler.loadClass( classLoader ).newInstance();
+					scriptReference.compareAndSet( null, (Script) asmCompiler.loadClass( classLoader ).newInstance() );
 
 					// Cache it!
 					classFile.getParentFile().mkdirs();
@@ -116,14 +120,6 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 			}
 			catch( RaiseException x )
 			{
-				// JRuby does not fill in the stack trace correctly, though the
-				// error message is fine
-
-				// StackTraceElement[] stack = x.getStackTrace();
-				// if( ( stack != null ) && stack.length > 0 )
-				// throw new PreparationException( stack[0].getFileName(),
-				// stack[0].getLineNumber(), -1, x );
-
 				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
 			}
 			catch( InstantiationException x )
@@ -151,6 +147,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 
 		try
 		{
+			Script script = scriptReference.get();
 			if( script != null )
 				rubyRuntime.runScript( script );
 			else
@@ -173,5 +170,5 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	/**
 	 * The cached compiled script.
 	 */
-	private Script script;
+	private final AtomicReference<Script> scriptReference = new AtomicReference<Script>();
 }

@@ -16,13 +16,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.python.antlr.base.mod;
 import org.python.core.BytecodeLoader;
 import org.python.core.ParserFacade;
 import org.python.core.PyCode;
-import org.python.core.PythonCodeBundle;
 import org.python.core.PyFileWriter;
+import org.python.core.PythonCodeBundle;
 import org.python.util.PythonInterpreter;
 
 import com.threecrickets.scripturian.Executable;
@@ -73,6 +74,9 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	@Override
 	public void prepare() throws PreparationException
 	{
+		if( pythonCodeReference != null )
+			return;
+
 		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
 		String classname = ScripturianUtil.getClassnameForProgram( executable, position );
 
@@ -84,7 +88,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 				try
 				{
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-					pyCode = BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() );
+					pythonCodeReference.compareAndSet( null, BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() ) );
 				}
 				catch( IOException x )
 				{
@@ -101,7 +105,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 				try
 				{
 					PythonCodeBundle bundle = adapter.compiler.compile( node, classname, executable.getDocumentName(), true, false, adapter.compilerFlags );
-					pyCode = bundle.loadCode();
+					pythonCodeReference.compareAndSet( null, bundle.loadCode() );
 
 					// Cache it!
 					classFile.getParentFile().mkdirs();
@@ -126,8 +130,9 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 
 		try
 		{
-			if( pyCode != null )
-				pythonInterpreter.exec( pyCode );
+			PyCode pythonCode = pythonCodeReference.get();
+			if( pythonCode != null )
+				pythonInterpreter.exec( pythonCode );
 			else
 				// We're using a stream because PythonInterpreter does not
 				// expose a string-based method that also accepts a filename.
@@ -150,5 +155,5 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	/**
 	 * The cached compiled code.
 	 */
-	private PyCode pyCode;
+	private final AtomicReference<PyCode> pythonCodeReference = new AtomicReference<PyCode>();
 }
