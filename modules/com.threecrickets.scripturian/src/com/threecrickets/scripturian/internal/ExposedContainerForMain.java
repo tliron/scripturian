@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
+import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Main;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -64,9 +65,8 @@ public class ExposedContainerForMain
 	}
 
 	/**
-	 * For use with {@link #includeDocument(String)}, this is the default
-	 * language tag used for scriptlets in case none is specified. Defaults to
-	 * "js".
+	 * For use with {@link #include(String)}, this is the default language tag
+	 * used for scriptlets in case none is specified. Defaults to "js".
 	 * 
 	 * @return The default script language tag
 	 * @see #setDefaultLanguageTag(String)
@@ -91,9 +91,26 @@ public class ExposedContainerForMain
 	//
 
 	/**
-	 * Executes another executable, with the language determined according to
-	 * the document's extension. Note that the executed executable does not have
-	 * to be in same language as the executing executable.
+	 * Executes a source code document. The language of the source code will be
+	 * determined by the document tag, which is usually the filename extension.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @throws IOException
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @see LanguageManager#getAdapterByExtension(String, String)
+	 */
+	public void execute( String documentName ) throws IOException, ParsingException, ExecutionException
+	{
+		Executable executable = Executable.createOnce( documentName, main.getSource(), false, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
+		executable.execute( executionContext, this, main.getExecutionController() );
+	}
+
+	/**
+	 * Includes a text document into the current location. The document may be a
+	 * "text-with-scriptlets" executable, in which case its output could be
+	 * dynamically generated.
 	 * 
 	 * @param documentName
 	 *        The document name
@@ -102,22 +119,6 @@ public class ExposedContainerForMain
 	 * @throws ExecutionException
 	 */
 	public void include( String documentName ) throws IOException, ParsingException, ExecutionException
-	{
-		Executable executable = Executable.createOnce( documentName, main.getSource(), false, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
-		executable.execute( executionContext, this, main.getExecutionController() );
-	}
-
-	/**
-	 * As {@link #include(String)}, except that the included source code is
-	 * parsed as a "text-with-scriptlets" executable.
-	 * 
-	 * @param documentName
-	 *        The document name
-	 * @throws IOException
-	 * @throws ParsingException
-	 * @throws ExecutionException
-	 */
-	public void includeDocument( String documentName ) throws IOException, ParsingException, ExecutionException
 	{
 		Executable executable = Executable.createOnce( documentName, main.getSource(), true, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
 		executable.execute( executionContext, this, main.getExecutionController() );

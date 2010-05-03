@@ -75,10 +75,10 @@ public interface LanguageAdapter
 	//
 	// Attributes
 	//
-	
+
 	public LanguageManager getManager();
-	
-	public void setManager(LanguageManager manager);
+
+	public void setManager( LanguageManager manager );
 
 	/**
 	 * Adapter attributes. Adapter must at least support the keys listed in this
@@ -130,10 +130,21 @@ public interface LanguageAdapter
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException;
 
 	/**
+	 * Creates source code for including the output of a text-with-scriptlets
+	 * document.
+	 * <p>
+	 * For this to work, the executable must have been created with a container
+	 * that supports an inclusion command named according to the language
+	 * manager attribute
+	 * {@link LanguageManager#CONTAINER_INCLUDE_EXPRESSION_COMMAND}.
+	 * 
 	 * @param expression
+	 *        The source code expression
 	 * @param executable
-	 * @return Soure code
+	 *        The executable
+	 * @return Source code
 	 * @throws ParsingException
+	 * @see LanguageManager#getAttributes()
 	 */
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException;
 

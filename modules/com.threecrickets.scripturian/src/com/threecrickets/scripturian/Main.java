@@ -278,7 +278,7 @@ public class Main implements Runnable
 		try
 		{
 			ExposedContainerForMain container = new ExposedContainerForMain( this, executionContext );
-			container.include( initialDocumentName );
+			container.execute( initialDocumentName );
 			flushWriters();
 		}
 		catch( IOException x )

@@ -264,7 +264,8 @@ public class QuercusAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		return "$" + executable.getExposedExecutableName() + "->container->includeDocument(" + expression + ");";
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		return "$" + executable.getExposedExecutableName() + "->container->" + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

@@ -15,6 +15,7 @@ import javax.script.ScriptEngine;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
@@ -79,6 +80,7 @@ public class VelocityAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return "#if($" + executable.getExposedExecutableName() + ".container.includeDocument(" + content + "))#end ";
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		return "#if($" + executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + content + "))#end ";
 	}
 }

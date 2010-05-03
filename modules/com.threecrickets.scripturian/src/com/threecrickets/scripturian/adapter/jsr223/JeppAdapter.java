@@ -17,6 +17,7 @@ import javax.script.ScriptException;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
@@ -98,6 +99,7 @@ public class JeppAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return executable.getExposedExecutableName() + ".getContainer().includeDocument(" + content + ");";
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		return executable.getExposedExecutableName() + ".getContainer()." + containerIncludeExpressionCommand + "(" + content + ");";
 	}
 }

@@ -21,6 +21,7 @@ import javax.script.ScriptException;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
+import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 
 /**
@@ -121,7 +122,8 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	{
 		// return "require $" + executable.getDocumentVariableName() +
 		// ".container.source.basePath.toString + '/' + " + content + ";";
-		return "$" + executable.getExposedExecutableName() + ".container.include_executable(" + content + ");";
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		return "$" + executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + content + ");";
 	}
 
 	@Override
