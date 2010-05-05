@@ -41,7 +41,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 	 */
 	public VelocityAdapter() throws LanguageAdapterException
 	{
-		super( "Velocity", "", "Velocity", "", Arrays.asList( "vm" ), null, Arrays.asList( "velocity", "vm" ), null );
+		super( "Velocity", "", null, null, Arrays.asList( "vm" ), null, Arrays.asList( "velocity", "vm" ), null );
 
 		try
 		{

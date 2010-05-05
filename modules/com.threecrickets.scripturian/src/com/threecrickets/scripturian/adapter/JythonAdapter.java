@@ -129,7 +129,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	 */
 	public JythonAdapter() throws LanguageAdapterException
 	{
-		super( "Jython", Version.PY_VERSION, "Python", Version.PY_VERSION, Arrays.asList( "py" ), null, Arrays.asList( "python", "py", "jython" ), null );
+		super( "Jython", Version.getBuildInfo(), "Python", Version.PY_VERSION, Arrays.asList( "py" ), null, Arrays.asList( "python", "py", "jython" ), null );
 
 		String homePath = System.getProperty( PYTHON_HOME );
 		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );

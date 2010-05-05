@@ -63,8 +63,8 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 	{
 		attributes.put( NAME, "Scripturian/" + name );
 		attributes.put( VERSION, version );
-		attributes.put( LANGUAGE_NAME, languageName );
-		attributes.put( LANGUAGE_VERSION, languageVersion );
+		attributes.put( LANGUAGE_NAME, languageName != null ? languageName : name );
+		attributes.put( LANGUAGE_VERSION, languageVersion != null ? languageVersion : version );
 		attributes.put( EXTENSIONS, extensions );
 		attributes.put( DEFAULT_EXTENSION, defaultExtension != null ? defaultExtension : extensions.iterator().next() );
 		attributes.put( TAGS, tags );
