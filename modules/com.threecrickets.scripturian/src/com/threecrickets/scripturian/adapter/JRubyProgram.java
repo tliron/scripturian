@@ -145,13 +145,16 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	{
 		Ruby rubyRuntime = adapter.getRubyRuntime( executionContext );
 
+		Script script = scriptReference.get();
 		try
 		{
-			Script script = scriptReference.get();
 			if( script != null )
 				rubyRuntime.runScript( script );
 			else
+			{
+				rubyRuntime.getCurrentContext().setLine( startLineNumber );
 				rubyRuntime.executeScript( sourceCode, executable.getDocumentName() );
+			}
 		}
 		catch( RaiseException x )
 		{

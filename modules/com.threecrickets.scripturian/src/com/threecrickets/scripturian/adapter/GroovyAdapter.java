@@ -63,11 +63,14 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 * 
 	 * @param documentName
 	 *        The document name
+	 * @param startLineNumber
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param x
 	 *        The exception
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, Exception x )
+	public static ExecutionException createExecutionException( String documentName, int startLineNumber, Exception x )
 	{
 		if( x instanceof GroovyRuntimeException )
 		{
@@ -77,14 +80,14 @@ public class GroovyAdapter extends LanguageAdapterBase
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber(), groovyRuntimeException.getNode().getColumnNumber() ) );
+				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber() + startLineNumber, groovyRuntimeException.getNode().getColumnNumber() ) );
 				return executionException;
 			}
 			else if( cause instanceof ParsingException )
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber(), groovyRuntimeException.getNode().getColumnNumber() ) );
+				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber() + startLineNumber, groovyRuntimeException.getNode().getColumnNumber() ) );
 				return executionException;
 			}
 			else
@@ -198,7 +201,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 		}
 		catch( Exception x )
 		{
-			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), 0, x );
 		}
 	}
 

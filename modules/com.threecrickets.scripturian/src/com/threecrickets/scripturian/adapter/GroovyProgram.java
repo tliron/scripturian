@@ -169,15 +169,15 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 		}
 		catch( InstantiationException x )
 		{
-			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), startLineNumber, x );
 		}
 		catch( IllegalAccessException x )
 		{
-			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), startLineNumber, x );
 		}
 		catch( Exception x )
 		{
-			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), startLineNumber, x );
 		}
 	}
 

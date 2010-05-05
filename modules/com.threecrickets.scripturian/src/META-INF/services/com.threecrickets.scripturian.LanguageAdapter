@@ -1,10 +1,8 @@
 com.threecrickets.scripturian.adapter.ClojureAdapter
 com.threecrickets.scripturian.adapter.GroovyAdapter
-com.threecrickets.scripturian.adapter.jsr223.JavaAdapter
 com.threecrickets.scripturian.adapter.jsr223.JeppAdapter
 com.threecrickets.scripturian.adapter.JRubyAdapter
-com.threecrickets.scripturian.adapter.jsr223.JuelAdapter
 com.threecrickets.scripturian.adapter.JythonAdapter
 com.threecrickets.scripturian.adapter.QuercusAdapter
 com.threecrickets.scripturian.adapter.RhinoAdapter
-com.threecrickets.scripturian.adapter.jsr223.VelocityAdapter
+com.threecrickets.scripturian.adapter.VelocityAdapter

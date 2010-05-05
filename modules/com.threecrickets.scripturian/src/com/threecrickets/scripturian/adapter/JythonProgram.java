@@ -140,7 +140,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 		}
 		catch( Exception x )
 		{
-			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw JythonAdapter.createExecutionException( executable.getDocumentName(), startLineNumber, x );
 		}
 		finally
 		{

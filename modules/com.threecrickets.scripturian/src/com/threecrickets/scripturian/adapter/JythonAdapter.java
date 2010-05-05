@@ -81,11 +81,14 @@ public class JythonAdapter extends LanguageAdapterBase
 	 * 
 	 * @param documentName
 	 *        The document name
+	 * @param startLineNumber
+	 *        The line number in the document for where the program's source
+	 *        code begins
 	 * @param x
 	 *        The exception
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, Exception x )
+	public static ExecutionException createExecutionException( String documentName, int startLineNumber, Exception x )
 	{
 		if( x instanceof PyException )
 		{
@@ -97,18 +100,19 @@ public class JythonAdapter extends LanguageAdapterBase
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1 ) );
+				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno + startLineNumber : -1, -1 ) );
 				return executionException;
 			}
 			else if( cause instanceof ParsingException )
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1 ) );
+				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno + startLineNumber : -1, -1 ) );
 				return executionException;
 			}
 			else
-				return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno : -1, -1, Py.formatException( pyException.type, pyException.value ), pyException.getCause() );
+				return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno + startLineNumber : -1, -1, Py.formatException( pyException.type, pyException.value ),
+					pyException.getCause() );
 		}
 		else
 			return new ExecutionException( documentName, x.getMessage(), x );
@@ -245,7 +249,7 @@ public class JythonAdapter extends LanguageAdapterBase
 		}
 		catch( Exception x )
 		{
-			throw JythonAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw JythonAdapter.createExecutionException( executable.getDocumentName(), 0, x );
 		}
 		finally
 		{
