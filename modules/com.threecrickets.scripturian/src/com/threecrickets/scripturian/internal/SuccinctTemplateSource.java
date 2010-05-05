@@ -9,7 +9,7 @@
  * at http://threecrickets.com
  */
 
-package com.threecrickets.scripturian.adapter.jsr223;
+package com.threecrickets.scripturian.internal;
 
 import java.io.IOException;
 
@@ -21,13 +21,13 @@ import com.threecrickets.succinct.TemplateSourceException;
  * @author Tal Liron
  * @param <D>
  */
-public class ScripturianTemplateSource<D> implements TemplateSource
+public class SuccinctTemplateSource<D> implements TemplateSource
 {
 	//
 	// Construction
 	//
 
-	public ScripturianTemplateSource( DocumentSource<D> documentSource )
+	public SuccinctTemplateSource( DocumentSource<D> documentSource )
 	{
 		this.documentSource = documentSource;
 	}

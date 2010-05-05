@@ -11,10 +11,19 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.succinct.CastException;
+import com.threecrickets.succinct.Caster;
+import com.threecrickets.succinct.Filler;
+import com.threecrickets.succinct.ParseException;
+import com.threecrickets.succinct.RichTemplate;
+import com.threecrickets.succinct.Template;
+import com.threecrickets.succinct.TemplateSourceException;
 
 /**
  * @author Tal Liron
@@ -56,8 +65,52 @@ class SuccinctProgram extends ProgramBase<SuccinctAdapter>
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
+		Template template = templateReference.get();
+
+		if( template == null )
+		{
+			try
+			{
+				template = new RichTemplate( sourceCode, adapter.getTemplateSource( executionContext ) );
+
+				// We're caching the resulting template for the future. Might
+				// as well!
+				templateReference.compareAndSet( null, template );
+			}
+			catch( TemplateSourceException x )
+			{
+				throw new ParsingException( executable.getDocumentName(), x.getMessage(), x );
+			}
+			catch( ParseException x )
+			{
+				throw new ParsingException( executable.getDocumentName(), x.getMessage(), x );
+			}
+		}
+
+		template.setFormatter( adapter.getFormatter( executionContext ) );
+
+		try
+		{
+			Filler filler = adapter.getFiller( executable, executionContext );
+			if( filler != null )
+				template.cast( filler, executionContext.getWriter() );
+			else
+			{
+				Caster<Object> caster = adapter.getCaster( executionContext );
+				if( caster == null )
+					throw new ExecutionException( executable.getDocumentName(), "Execution context must contain either a \"" + SuccinctAdapter.FILLER + "\" or a \"" + SuccinctAdapter.CASTER + "\" attribute" );
+
+				caster.cast( template, null, executionContext.getWriter(), adapter.getCasterContext( executionContext ) );
+			}
+		}
+		catch( CastException x )
+		{
+			throw new ExecutionException( executable.getDocumentName(), x.getMessage(), x );
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private final AtomicReference<Template> templateReference = new AtomicReference<Template>();
 }

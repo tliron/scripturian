@@ -19,11 +19,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 
 import com.threecrickets.scripturian.Executable;
+import com.threecrickets.scripturian.ExecutionContext;
+import com.threecrickets.scripturian.LanguageManager;
 
 /**
  * Utility methods.
@@ -276,6 +280,48 @@ public abstract class ScripturianUtil
 		return new File( result.toString() );
 	}
 
+	public static void containerInclude( LanguageManager manager, Executable executable, ExecutionContext executionContext, String documentName )
+	{
+		Object container = executable.getExposedContainer( executionContext );
+		if( container != null )
+		{
+			Class<?> containerClass = container.getClass();
+			Method includeMethod = includeMethods.get( container.getClass() );
+			if( includeMethod == null )
+			{
+				String containerIncludeExpressionCommand = (String) manager.getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+				try
+				{
+					includeMethod = containerClass.getMethod( containerIncludeExpressionCommand, new Class[]
+					{
+						String.class
+					} );
+				}
+				catch( SecurityException x )
+				{
+				}
+				catch( NoSuchMethodException x )
+				{
+				}
+
+			}
+
+			try
+			{
+				includeMethod.invoke( container, documentName );
+			}
+			catch( IllegalArgumentException x )
+			{
+			}
+			catch( IllegalAccessException x )
+			{
+			}
+			catch( InvocationTargetException x )
+			{
+			}
+		}
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
@@ -284,6 +330,8 @@ public abstract class ScripturianUtil
 	 * guarantee uniqueness.
 	 */
 	private static final ConcurrentMap<String, File> programClassFiles = new ConcurrentHashMap<String, File>();
+
+	private static final ConcurrentMap<Class<?>, Method> includeMethods = new ConcurrentHashMap<Class<?>, Method>();
 
 	/**
 	 * Disallow inheritance.

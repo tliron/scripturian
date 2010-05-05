@@ -825,6 +825,23 @@ public class Executable
 		return enterableExecutionContext.get();
 	}
 
+	/**
+	 * The container stored in the context, if it was set.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The container or null
+	 * @see #execute(ExecutionContext, Object, ExecutionController)
+	 */
+	public Object getExposedContainer( ExecutionContext executionContext )
+	{
+		ExposedExecutable exposedExecutable = getExposedExecutable( executionContext );
+		if( exposedExecutable != null )
+			return exposedExecutable.getContainer();
+		else
+			return null;
+	}
+
 	//
 	// Operations
 	//
@@ -1089,4 +1106,17 @@ public class Executable
 	 * @see #makeEnterable(ExecutionContext, Object, ExecutionController)
 	 */
 	private final AtomicReference<ExecutionContext> enterableExecutionContext = new AtomicReference<ExecutionContext>();
+
+	/**
+	 * Get the exposed version of the executable.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The exposed executable
+	 * @see #getExposedExecutableName()
+	 */
+	private ExposedExecutable getExposedExecutable( ExecutionContext executionContext )
+	{
+		return (ExposedExecutable) executionContext.getExposedVariables().get( exposedExecutableName );
+	}
 }

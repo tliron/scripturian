@@ -59,6 +59,8 @@ public class VelocityAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
+		// Dark magicks to allow us to easily escape Velocity tokens
+		// (see VelocityProgram.execute)
 		literal = literal.replaceAll( "\\$", "\\${_d}" );
 		literal = literal.replaceAll( "\\#", "\\${_h}" );
 		return literal;

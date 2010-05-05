@@ -13,24 +13,23 @@ package com.threecrickets.scripturian.adapter;
 
 import java.util.Arrays;
 
-import org.mozilla.javascript.CompilerEnvirons;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.GeneratedClassLoader;
-import org.mozilla.javascript.optimizer.ClassCompiler;
-
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Program;
-import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.internal.ScripturianSuccinctFiller;
+import com.threecrickets.succinct.Caster;
+import com.threecrickets.succinct.Filler;
+import com.threecrickets.succinct.Formatter;
+import com.threecrickets.succinct.TemplateSource;
+import com.threecrickets.succinct.chunk.Tag;
+import com.threecrickets.succinct.chunk.tag.Cast;
 
 /**
  * A {@link LanguageAdapter} that supports the <a
- * href="http://threecrickets.com/succinct/">Succinct</a> templating language.
+ * href="http://velocity.apache.org/">Velocity</a> templating language.
  * 
  * @author Tal Liron
  */
@@ -40,23 +39,17 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	// Constants
 	//
 
-	//
-	// Static operations
-	//
+	public static final String SOURCE = "succinct.templateSource";
 
-	/**
-	 * Creates an execution exception with a full stack.
-	 * 
-	 * @param documentName
-	 *        The document name
-	 * @param x
-	 *        The exception
-	 * @return The execution exception
-	 */
-	public static ExecutionException createExecutionException( String documentName, Exception x )
-	{
-		return new ExecutionException( documentName, x.getMessage(), x );
-	}
+	public static final String FORMATTER = "succinct.formatter";
+
+	public static final String FILLER = "succinct.filler";
+
+	public static final String CASTER = "succinct.caster";
+
+	public static final String CASTER_CONTEXT = "succinct.casterContext";
+
+	public static final String INCLUSION_KEY = "scripturian.include ";
 
 	//
 	// Construction
@@ -69,18 +62,48 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	 */
 	public SuccinctAdapter() throws LanguageAdapterException
 	{
-		super( "Velocity", new ContextFactory().enterContext().getImplementationVersion(), "Velocity", new ContextFactory().enterContext().getImplementationVersion(), Arrays.asList( "vm" ), null, Arrays.asList(
-			"velocity", "vm" ), null );
-
-		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
-		classCompiler = new ClassCompiler( compilerEnvirons );
-		generatedClassLoader = Context.getCurrentContext().createClassLoader( ClassLoader.getSystemClassLoader() );
-		Context.exit();
+		super( "Succinct", "", null, null, Arrays.asList( "succint", "template" ), null, Arrays.asList( "succinct" ), null );
 	}
 
 	//
 	// Attributes
 	//
+
+	public TemplateSource getTemplateSource( ExecutionContext executionContext )
+	{
+		TemplateSource templateSource = (TemplateSource) executionContext.getAttributes().get( SuccinctAdapter.SOURCE );
+		return templateSource;
+	}
+
+	public Formatter getFormatter( ExecutionContext executionContext )
+	{
+		Formatter formatter = (Formatter) executionContext.getAttributes().get( SuccinctAdapter.FORMATTER );
+		return formatter;
+	}
+
+	public Filler getFiller( Executable executable, ExecutionContext executionContext )
+	{
+		Filler filler = (Filler) executionContext.getAttributes().get( SuccinctAdapter.FILLER );
+		if( filler == null )
+		{
+			filler = new ScripturianSuccinctFiller( getManager(), executable, executionContext );
+			executionContext.getAttributes().put( SuccinctAdapter.FILLER, filler );
+		}
+		return filler;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Caster<Object> getCaster( ExecutionContext executionContext )
+	{
+		Caster<Object> caster = (Caster<Object>) executionContext.getAttributes().get( SuccinctAdapter.CASTER );
+		return caster;
+	}
+
+	public Object getCasterContext( ExecutionContext executionContext )
+	{
+		Object casterContext = executionContext.getAttributes().get( SuccinctAdapter.CASTER_CONTEXT );
+		return casterContext;
+	}
 
 	//
 	// LanguageAdapter
@@ -88,46 +111,24 @@ public class SuccinctAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\'", "\\\\'" );
-		return "print('" + literal + "');";
+		return literal;
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
-		return "print(" + expression + ");";
+		return Tag.BEGIN + expression + Tag.END;
 	}
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
+		// We are handling inclusiong via a special Succinct cast.
+		// See: ScripturianSuccinctFiller
+
+		return Tag.BEGIN + Cast.MARK + INCLUSION_KEY + expression + Tag.END;
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
 		return new SuccinctProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
 	}
-
-	@Override
-	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
-	{
-		return null;
-	}
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Protected
-
-	/**
-	 * Rhino class compiler.
-	 */
-	protected final ClassCompiler classCompiler;
-
-	/**
-	 * Rhino class loader.
-	 */
-	protected final GeneratedClassLoader generatedClassLoader;
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Private
 }
