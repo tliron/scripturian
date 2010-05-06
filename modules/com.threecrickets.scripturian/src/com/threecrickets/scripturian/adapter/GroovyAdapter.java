@@ -15,12 +15,11 @@ import groovy.lang.Binding;
 import groovy.lang.Closure;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyRuntimeException;
+import groovy.lang.GroovySystem;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
-
-import org.python.Version;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -109,7 +108,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 */
 	public GroovyAdapter() throws LanguageAdapterException
 	{
-		super( "Groovy", Version.getVersion(), null, null, Arrays.asList( "gv" ), null, Arrays.asList( "groovy", "gv" ), null );
+		super( "Groovy", GroovySystem.getVersion(), null, null, Arrays.asList( "gv" ), null, Arrays.asList( "groovy", "gv" ), null );
 
 		// This will allow the class loader to load our auxiliary classes (see
 		// GroovyProgram.prepare)
