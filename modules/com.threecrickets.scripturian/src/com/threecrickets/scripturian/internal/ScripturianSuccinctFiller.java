@@ -11,24 +11,21 @@
 
 package com.threecrickets.scripturian.internal;
 
-import java.beans.IntrospectionException;
-
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.adapter.SuccinctAdapter;
 import com.threecrickets.succinct.CastException;
 import com.threecrickets.succinct.Filler;
-import com.threecrickets.succinct.filler.BeanFillerWrapper;
-import com.threecrickets.succinct.filler.BeanFillerWrappingIterable;
+import com.threecrickets.succinct.filler.BeanMapFillerWrapper;
 
 /**
- * A {@link Filler} that supports Sciprturian inclusion scriptlets and getting
+ * A {@link Filler} that supports Scripturian inclusion scriptlets and getting
  * values from exposed variables via the Java bean mechanism.
  * 
  * @author Tal Liron
  */
-public class ScripturianSuccinctFiller implements Filler
+public class ScripturianSuccinctFiller extends BeanMapFillerWrapper
 {
 	//
 	// Construction
@@ -46,6 +43,7 @@ public class ScripturianSuccinctFiller implements Filler
 	 */
 	public ScripturianSuccinctFiller( LanguageManager manager, Executable executable, ExecutionContext executionContext )
 	{
+		super( executionContext.getExposedVariables() );
 		this.manager = manager;
 		this.executable = executable;
 		this.executionContext = executionContext;
@@ -55,6 +53,7 @@ public class ScripturianSuccinctFiller implements Filler
 	// Filler
 	//
 
+	@Override
 	public Object getValue( String key ) throws CastException
 	{
 		if( key.startsWith( SuccinctAdapter.INCLUSION_KEY ) )
@@ -65,44 +64,11 @@ public class ScripturianSuccinctFiller implements Filler
 			// to our writer
 			ScripturianUtil.containerInclude( manager, executable, executionContext, documentName );
 
-			// We need to include something in order to be considered cast
+			// We need to return something in order to be considered cast
 			return "";
 		}
 		else
-		{
-			String[] split = key.split( "\\." );
-			if( split.length > 0 )
-			{
-				String ourKey = split[0];
-				Object value = executionContext.getExposedVariables().get( ourKey );
-				if( split.length == 1 )
-					// It's us!
-					return value;
-				else if( value != null )
-				{
-					// Delegate to property
-					try
-					{
-						return new BeanFillerWrapper( ourKey, value ).getValue( key );
-					}
-					catch( IntrospectionException x )
-					{
-						throw new CastException( x, key );
-					}
-				}
-			}
-		}
-
-		throw new CastException( key );
-	}
-
-	public Iterable<? extends Filler> getFillers( String iteratorKey ) throws CastException
-	{
-		Object value = executionContext.getExposedVariables().get( iteratorKey );
-		if( value instanceof Iterable<?> )
-			return new BeanFillerWrappingIterable( iteratorKey, (Iterable<?>) value );
-		else
-			throw new CastException( iteratorKey );
+			return super.getValue( key );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -119,7 +85,7 @@ public class ScripturianSuccinctFiller implements Filler
 	private final Executable executable;
 
 	/**
-	 * The exection context.
+	 * The execution context.
 	 */
 	private final ExecutionContext executionContext;
 }
