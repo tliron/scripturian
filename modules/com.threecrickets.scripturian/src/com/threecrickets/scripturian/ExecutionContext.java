@@ -11,12 +11,16 @@
 
 package com.threecrickets.scripturian;
 
+import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -116,8 +120,10 @@ public class ExecutionContext
 	//
 
 	/**
-	 * General-purpose attributes. Most useful for language adapters and other
-	 * users along the execution chain to store contextual state.
+	 * General-purpose attributes. Useful for configuring special language
+	 * features not supports by the context. Additionally, language adapters and
+	 * other components along the execution chain might use this to store
+	 * contextual state.
 	 * <p>
 	 * Immutable contexts will return an unmodifiable map.
 	 * 
@@ -133,6 +139,27 @@ public class ExecutionContext
 			return Collections.unmodifiableMap( attributes );
 		else
 			return attributes;
+	}
+
+	/**
+	 * Locations where language adapters might search for extra libraries. The
+	 * exact use varies per language adapter. "Location" URIs are often
+	 * filesystem directory paths, but some adapters might support paths to
+	 * specific library files and network URLs.
+	 * <p>
+	 * Immutable contexts will return an unmodifiable list.
+	 * 
+	 * @see File#toURI()
+	 */
+	public List<URI> getLibraryLocations()
+	{
+		if( released )
+			throw new IllegalStateException( "Cannot access released execution context" );
+
+		if( immutable )
+			return Collections.unmodifiableList( libraryLocations );
+		else
+			return libraryLocations;
 	}
 
 	/**
@@ -413,10 +440,20 @@ public class ExecutionContext
 	// Private
 
 	/**
-	 * General-purpose attributes. Most useful for language adapters and other
-	 * users along the execution chain to store contextual state.
+	 * General-purpose attributes. Useful for configuring special language
+	 * features not supports by the context. Additionally, language adapters and
+	 * other components along the execution chain might use this to store
+	 * contextual state.
 	 */
 	private final Map<String, Object> attributes = new HashMap<String, Object>();
+
+	/**
+	 * Locations where language adapters might search for extra libraries. The
+	 * exact use varies per language adapter. "Location" URIs are often
+	 * filesystem directory paths, but some adapters might support paths to
+	 * specific library files and network URLs.
+	 */
+	private final List<URI> libraryLocations = new ArrayList<URI>();
 
 	/**
 	 * Variables exposed to executables using this context.

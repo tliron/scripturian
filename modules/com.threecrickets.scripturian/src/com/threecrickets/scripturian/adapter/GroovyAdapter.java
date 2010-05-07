@@ -139,6 +139,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( GROOVY_BINDING, binding );
 		}
 
+		// Set out/err
 		binding.setVariable( "out", executionContext.getWriterOrDefault() );
 		binding.setVariable( "err", executionContext.getErrorWriterOrDefault() );
 

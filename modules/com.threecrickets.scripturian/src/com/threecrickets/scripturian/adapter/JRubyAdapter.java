@@ -13,6 +13,8 @@ package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -223,6 +225,23 @@ public class JRubyAdapter extends LanguageAdapterBase
 
 			switchableOut.use( new WriterOutputStream( executionContext.getWriterOrDefault() ) );
 			switchableErr.use( new WriterOutputStream( executionContext.getErrorWriterOrDefault() ) );
+		}
+
+		// Append library locations to the Ruby class loader
+		for( URI uri : executionContext.getLibraryLocations() )
+		{
+			try
+			{
+				File file = new File( uri );
+				rubyRuntime.getJRubyClassLoader().addURL( file.toURL() );
+			}
+			catch( IllegalArgumentException x )
+			{
+				// URI is not a file
+			}
+			catch( MalformedURLException x )
+			{
+			}
 		}
 
 		// Expose variables as Ruby globals

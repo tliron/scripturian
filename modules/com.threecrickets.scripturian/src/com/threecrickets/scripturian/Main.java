@@ -63,9 +63,6 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
  * 
  * @author Tal Liron
  */
-/**
- * @author emblemparade
- */
 public class Main implements Runnable
 {
 	//

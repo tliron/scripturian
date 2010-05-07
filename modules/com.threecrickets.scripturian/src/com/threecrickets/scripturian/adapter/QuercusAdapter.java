@@ -14,6 +14,7 @@ package com.threecrickets.scripturian.adapter;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -219,7 +220,27 @@ public class QuercusAdapter extends LanguageAdapterBase
 			}
 		}
 
+		// Set writer
 		writerStream.setWriter( executionContext.getWriterOrDefault() );
+
+		environment.start();
+
+		// Append library locations to include_path
+		for( URI uri : executionContext.getLibraryLocations() )
+		{
+			try
+			{
+				String path = new File( uri ).getPath();
+				environment.evalCode( "set_include_path(get_include_path().PATH_SEPARATOR.'" + path.replace( "'", "\\'" ) + "');" );
+			}
+			catch( IllegalArgumentException x )
+			{
+				// URI is not a file
+			}
+			catch( IOException x )
+			{
+			}
+		}
 
 		// Expose variables as script globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
@@ -230,8 +251,6 @@ public class QuercusAdapter extends LanguageAdapterBase
 			var.set( environment.wrapJava( entry.getValue() ) );
 			environment.getGlobalEnv().put( entry.getKey(), var );
 		}
-
-		environment.start();
 
 		return environment;
 	}

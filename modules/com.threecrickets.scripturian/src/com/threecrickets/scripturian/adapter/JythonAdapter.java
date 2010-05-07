@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
@@ -20,11 +21,13 @@ import org.python.Version;
 import org.python.compiler.LegacyCompiler;
 import org.python.core.CompilerFlags;
 import org.python.core.Py;
+import org.python.core.PyBaseException;
 import org.python.core.PyException;
 import org.python.core.PyFileWriter;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
+import org.python.core.PyTraceback;
 import org.python.core.PythonCompiler;
 import org.python.util.PythonInterpreter;
 
@@ -95,24 +98,30 @@ public class JythonAdapter extends LanguageAdapterBase
 			PyException pyException = (PyException) x;
 			pyException.normalize();
 
+			ExecutionException executionException;
 			Throwable cause = x.getCause();
 			if( cause instanceof ExecutionException )
 			{
-				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
+				executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno + startLineNumber : -1, -1 ) );
-				return executionException;
 			}
 			else if( cause instanceof ParsingException )
 			{
-				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
+				executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno + startLineNumber : -1, -1 ) );
-				return executionException;
 			}
 			else
-				return new ExecutionException( documentName, pyException.traceback != null ? pyException.traceback.tb_lineno + startLineNumber : -1, -1, Py.formatException( pyException.type, pyException.value ),
-					pyException.getCause() );
+			{
+				if( pyException.value instanceof PyBaseException )
+					executionException = new ExecutionException( ( (PyBaseException) pyException.value ).message.toString(), pyException );
+				else
+					executionException = new ExecutionException( pyException.getMessage(), pyException );
+			}
+
+			for( PyTraceback traceback = pyException.traceback; traceback instanceof PyTraceback; traceback = (PyTraceback) traceback.tb_next )
+				executionException.getStack().add( new StackFrame( traceback.tb_frame.f_code.co_filename, traceback.tb_lineno + startLineNumber, -1 ) );
+
+			return executionException;
 		}
 		else
 			return new ExecutionException( documentName, x.getMessage(), x );
@@ -186,8 +195,23 @@ public class JythonAdapter extends LanguageAdapterBase
 			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
 		}
 
+		// Set writers
 		pythonInterpreter.setOut( executionContext.getWriterOrDefault() );
 		pythonInterpreter.setErr( executionContext.getErrorWriterOrDefault() );
+
+		// Append library locations to sys.path
+		for( URI uri : executionContext.getLibraryLocations() )
+		{
+			try
+			{
+				String path = new File( uri ).getPath();
+				pythonInterpreter.exec( "sys.path.append('" + path.replace( "'", "\\'" ) + "')" );
+			}
+			catch( IllegalArgumentException x )
+			{
+				// URI is not a file
+			}
+		}
 
 		// Expose variables as Python globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
