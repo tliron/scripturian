@@ -44,16 +44,19 @@ public class Defroster
 	 *        The document source for executables
 	 * @param languageManager
 	 *        The language manager for executable initialization
+	 * @param defaultLanguageTag
+	 *        The language tag to used if none is specified
 	 * @param isTextWithScriptlets
 	 *        Whether the executables are "text-with-scriptlets"
 	 * @param prepare
 	 *        Whether to prepare executables
 	 */
-	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean isTextWithScriptlets, boolean prepare )
+	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets, boolean prepare )
 	{
 		super();
 		this.documentSource = documentSource;
 		this.languageManager = languageManager;
+		this.defaultLanguageTag = defaultLanguageTag;
 		this.isTextWithScriptlets = isTextWithScriptlets;
 		this.prepare = prepare;
 	}
@@ -180,6 +183,11 @@ public class Defroster
 	private final LanguageManager languageManager;
 
 	/**
+	 * The language tag to used if none is specified.
+	 */
+	private final String defaultLanguageTag;
+
+	/**
 	 * Whether the executables are "text-with-scriptlets".
 	 */
 	private final boolean isTextWithScriptlets;
@@ -218,7 +226,7 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, isTextWithScriptlets, prepare );
+			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, defaultLanguageTag, isTextWithScriptlets, prepare );
 			List<Future<Executable>> futures;
 			try
 			{

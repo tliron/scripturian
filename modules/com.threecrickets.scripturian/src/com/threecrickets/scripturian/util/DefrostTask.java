@@ -43,6 +43,8 @@ public class DefrostTask implements Callable<Executable>
 	 *        The document source for executables
 	 * @param languageManager
 	 *        The language manager for executable initialization
+	 * @param defaultLanguageTag
+	 *        The language tag to used if none is specified
 	 * @param isTextWithScriptlets
 	 *        Whether the executables are "text-with-scriptlets"
 	 * @param prepare
@@ -50,13 +52,13 @@ public class DefrostTask implements Callable<Executable>
 	 * @return An array of tasks
 	 * @see DocumentSource#getDocument(String)
 	 */
-	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean isTextWithScriptlets, boolean prepare )
+	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets, boolean prepare )
 	{
 		Collection<DocumentDescriptor<Executable>> documentDescriptors = documentSource.getDocuments();
 		DefrostTask[] defrostTasks = new DefrostTask[documentDescriptors.size()];
 		int i = 0;
 		for( DocumentDescriptor<Executable> documentDescriptor : documentDescriptors )
-			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, languageManager, isTextWithScriptlets, prepare );
+			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, languageManager, defaultLanguageTag, isTextWithScriptlets, prepare );
 
 		return defrostTasks;
 	}
@@ -75,16 +77,20 @@ public class DefrostTask implements Callable<Executable>
 	 *        in-flow tags during executable initialization
 	 * @param languageManager
 	 *        The language manager for executable initialization
+	 * @param defaultLanguageTag
+	 *        The language tag to used if none is specified
 	 * @param isTextWithScriptlets
 	 *        Whether the executable is "text-with-scriptlets"
 	 * @param prepare
 	 *        Whether to prepare executables
 	 */
-	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager languageManager, boolean isTextWithScriptlets, boolean prepare )
+	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets,
+		boolean prepare )
 	{
 		this.documentDescriptor = documentDescriptor;
 		this.documentSource = documentSource;
 		this.languageManager = languageManager;
+		this.defaultLanguageTag = defaultLanguageTag;
 		this.isTextWithScriptlets = isTextWithScriptlets;
 		this.prepare = prepare;
 	}
@@ -101,7 +107,7 @@ public class DefrostTask implements Callable<Executable>
 		{
 			LanguageAdapter adapter = languageManager.getAdapterByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag() );
 			executable = Executable.createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, languageManager, adapter != null ? (String) adapter.getAttributes().get(
-				LanguageAdapter.DEFAULT_TAG ) : null, prepare );
+				LanguageAdapter.DEFAULT_TAG ) : defaultLanguageTag, prepare );
 		}
 
 		return executable;
@@ -135,6 +141,11 @@ public class DefrostTask implements Callable<Executable>
 	 * The language manager for executable initialization.
 	 */
 	private final LanguageManager languageManager;
+
+	/**
+	 * The language tag to used if none is specified.
+	 */
+	private final String defaultLanguageTag;
 
 	/**
 	 * Whether the executable is "text-with-scriptlets".
