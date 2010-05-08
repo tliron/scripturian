@@ -12,9 +12,11 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import clojure.lang.Compiler;
+import clojure.lang.DynamicClassLoader;
 import clojure.lang.LineNumberingPushbackReader;
 import clojure.lang.LispReader;
 import clojure.lang.Namespace;
@@ -167,22 +170,43 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 	{
 		Namespace ns = ClojureAdapter.getClojureNamespace( executionContext );
 
+		// Append library locations to dynamic class loader
+		DynamicClassLoader loader = (DynamicClassLoader) RT.makeClassLoader();
+		for( URI uri : executionContext.getLibraryLocations() )
+		{
+			try
+			{
+				loader.addURL( uri.toURL() );
+			}
+			catch( IllegalArgumentException x )
+			{
+				// URI is not a file
+			}
+			catch( IOException x )
+			{
+			}
+		}
+
 		HashMap<Var, Object> threadBindings = new HashMap<Var, Object>();
 
-		// We must push *ns* in order to use (in-ns) below
 		// bindings.put( RT.CURRENT_NS, RT.CURRENT_NS.deref() );
+		// threadBindings.put( ClojureAdapter.ALLOW_UNRESOLVED_VARS, RT.T );
+
+		// We must push *ns* in order to use in-ns below
 		threadBindings.put( RT.CURRENT_NS, ns );
 
-		// threadBindings.put( ClojureAdapter.ALLOW_UNRESOLVED_VARS, RT.T );
-		threadBindings.put( Compiler.LOADER, RT.makeClassLoader() );
+		threadBindings.put( Compiler.LOADER, loader );
+
+		// Set out/err
+		threadBindings.put( RT.OUT, new PrintWriter( executionContext.getWriterOrDefault() ) );
+		threadBindings.put( RT.ERR, new PrintWriter( executionContext.getErrorWriterOrDefault() ) );
+
+		// For debug information
 		threadBindings.put( Compiler.SOURCE_PATH, executable.getDocumentName() );
 		threadBindings.put( Compiler.SOURCE, executable.getDocumentName() );
 		threadBindings.put( Compiler.LINE_BEFORE, startLineNumber );
 		threadBindings.put( Compiler.LINE_AFTER, startLineNumber );
 		threadBindings.put( Compiler.LINE, startLineNumber );
-
-		threadBindings.put( RT.OUT, new PrintWriter( executionContext.getWriterOrDefault() ) );
-		threadBindings.put( RT.ERR, new PrintWriter( executionContext.getErrorWriterOrDefault() ) );
 
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 			threadBindings.put( Var.intern( ns, Symbol.intern( entry.getKey() ) ), entry.getValue() );
@@ -193,9 +217,13 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 
 			try
 			{
+				// Enter our namspace
 				ClojureAdapter.IN_NS.invoke( ns.getName() );
+
+				// Refer to clojure.core
 				ClojureAdapter.REFER.invoke( ClojureAdapter.CLOJURE_CORE );
 
+				// Expose context variables as vars in namespace
 				for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 					Var.intern( ns, Symbol.intern( entry.getKey() ), entry.getValue() );
 

@@ -178,11 +178,6 @@ public class ClojureAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( CLOJURE_NAMESPACE, ns );
 		}
 
-		// Expose our variables by interning them in the namespace
-		// for( Map.Entry<String, Object> entry :
-		// executionContext.getExposedVariables().entrySet() )
-		// Var.intern( ns, Symbol.intern( entry.getKey() ), entry.getValue() );
-
 		return ns;
 	}
 
@@ -263,9 +258,10 @@ public class ClojureAdapter extends LanguageAdapterBase
 		Namespace ns = getClojureNamespace( executionContext );
 		try
 		{
-			// We must push *ns* in order to use (in-ns) below
+			// We must push *ns* in order to use in-ns below
 			Var.pushThreadBindings( RT.map( RT.CURRENT_NS, ns, RT.OUT, new PrintWriter( executionContext.getWriterOrDefault() ), RT.ERR, new PrintWriter( executionContext.getErrorWriterOrDefault() ) ) );
 
+			// Enter our nsamespace
 			IN_NS.invoke( ns.getName() );
 
 			Var function = ns.findInternedVar( Symbol.intern( entryPointName ) );
