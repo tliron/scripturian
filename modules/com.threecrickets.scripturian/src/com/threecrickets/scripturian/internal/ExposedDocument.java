@@ -21,12 +21,12 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
- * This is the <code>executable.container</code> exposed by {@link Main}.
+ * This is the <code>document</code> exposed by {@link Main}.
  * 
  * @author Tal Liron
  * @see Main
  */
-public class ExposedContainerForMain
+public class ExposedDocument
 {
 	//
 	// Construction
@@ -40,7 +40,7 @@ public class ExposedContainerForMain
 	 * @param executionContext
 	 *        The execution context
 	 */
-	public ExposedContainerForMain( Main main, ExecutionContext executionContext )
+	public ExposedDocument( Main main, ExecutionContext executionContext )
 	{
 		this.main = main;
 		this.executionContext = executionContext;
@@ -49,20 +49,6 @@ public class ExposedContainerForMain
 	//
 	// Attributes
 	//
-
-	//
-	// Attributes
-	//
-
-	/**
-	 * An array of the string arguments sent to {@link Main#main(String[])}.
-	 * 
-	 * @return The arguments
-	 */
-	public String[] getArguments()
-	{
-		return main.getArguments();
-	}
 
 	/**
 	 * For use with {@link #include(String)}, this is the default language tag
@@ -137,5 +123,8 @@ public class ExposedContainerForMain
 	 */
 	private final ExecutionContext executionContext;
 
+	/**
+	 * The default language tag.
+	 */
 	private String defaultLanguageTag = "js";
 }

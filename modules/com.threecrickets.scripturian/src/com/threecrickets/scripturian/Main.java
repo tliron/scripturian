@@ -21,7 +21,8 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
 import com.threecrickets.scripturian.file.DocumentFileSource;
-import com.threecrickets.scripturian.internal.ExposedContainerForMain;
+import com.threecrickets.scripturian.internal.ExposedApplication;
+import com.threecrickets.scripturian.internal.ExposedDocument;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
@@ -99,6 +100,8 @@ public class Main implements Runnable
 		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "false" ).equals( "true" );
 		initialDocumentName = ScripturianUtil.getNonSwitchArgument( 0, arguments, "default" );
 		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
+		exposedDocumentName = ScripturianUtil.getSwitchArgument( "exposed-document-name", arguments, "document" );
+		exposedApplicationName = ScripturianUtil.getSwitchArgument( "exposed-application-name", arguments, "application" );
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
 		documentSource = new DocumentFileSource<Executable>( new File( ScripturianUtil.getSwitchArgument( "base-path", arguments, "." ) ), defaultDocumentName, -1 );
@@ -243,6 +246,26 @@ public class Main implements Runnable
 		this.documentSource = documentSource;
 	}
 
+	/**
+	 * The name of the document exposed to the executable.
+	 * 
+	 * @return The exposed name
+	 */
+	public String getExposedDocumentName()
+	{
+		return exposedDocumentName;
+	}
+
+	/**
+	 * The name of the application exposed to the executable.
+	 * 
+	 * @return The exposed name
+	 */
+	public String getExposedApplicationName()
+	{
+		return exposedApplicationName;
+	}
+
 	//
 	// Operations
 	//
@@ -274,8 +297,10 @@ public class Main implements Runnable
 		ExecutionContext executionContext = new ExecutionContext( getWriter(), getErrorWriter() );
 		try
 		{
-			ExposedContainerForMain container = new ExposedContainerForMain( this, executionContext );
-			container.execute( initialDocumentName );
+			ExposedDocument exposedDocument = new ExposedDocument( this, executionContext );
+			executionContext.getExposedVariables().put( getExposedDocumentName(), exposedDocument );
+			executionContext.getExposedVariables().put( getExposedApplicationName(), new ExposedApplication( this ) );
+			exposedDocument.execute( initialDocumentName );
 			flushWriters();
 		}
 		catch( IOException x )
@@ -367,4 +392,14 @@ public class Main implements Runnable
 	 * Used to load the executables.
 	 */
 	private volatile DocumentSource<Executable> documentSource;
+
+	/**
+	 * The name of the document exposed to the executable.
+	 */
+	private volatile String exposedDocumentName;
+
+	/**
+	 * The name of the application exposed to the executable.
+	 */
+	private volatile String exposedApplicationName;
 }
