@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.internal;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -19,6 +20,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
+import com.threecrickets.scripturian.exception.DocumentException;
+import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 
 /**
  * Document descriptor for {@link DocumentFileSource}.
@@ -63,15 +66,26 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 *        The document source
 	 * @param file
 	 *        The file
-	 * @throws IOException
+	 * @throws DocumentException
 	 */
-	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file ) throws IOException
+	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file ) throws DocumentException
 	{
 		this.documentSource = documentSource;
 		this.defaultName = documentSource.getRelativeFilePath( file );
 		this.file = file;
 		timestamp = file.lastModified();
-		sourceCode = ScripturianUtil.getString( file );
+		try
+		{
+			sourceCode = ScripturianUtil.getString( file );
+		}
+		catch( FileNotFoundException x )
+		{
+			throw new DocumentNotFoundException( "Could not find file " + file, x );
+		}
+		catch( IOException x )
+		{
+			throw new DocumentException( "Could not read file " + file, x );
+		}
 		tag = ScripturianUtil.getExtension( file );
 	}
 

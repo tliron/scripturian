@@ -11,9 +11,8 @@
 
 package com.threecrickets.scripturian.internal;
 
-import java.io.IOException;
-
 import com.threecrickets.scripturian.document.DocumentSource;
+import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.succinct.TemplateSource;
 import com.threecrickets.succinct.TemplateSourceException;
 
@@ -42,7 +41,7 @@ public class SuccinctTemplateSource<D> implements TemplateSource
 		{
 			return documentSource.getDocument( name ).getSourceCode();
 		}
-		catch( IOException x )
+		catch( DocumentException x )
 		{
 			throw new TemplateSourceException( x );
 		}

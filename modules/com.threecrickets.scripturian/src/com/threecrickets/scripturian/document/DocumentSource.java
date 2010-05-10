@@ -11,8 +11,9 @@
 
 package com.threecrickets.scripturian.document;
 
-import java.io.IOException;
 import java.util.Collection;
+
+import com.threecrickets.scripturian.exception.DocumentException;
 
 /**
  * Manages retrieval of text-based documents and caching of arbitrary document
@@ -34,9 +35,9 @@ public interface DocumentSource<D>
 	 * @param documentName
 	 *        The document's name
 	 * @return The document's descriptor
-	 * @throws IOException
+	 * @throws DocumentException
 	 */
-	public DocumentDescriptor<D> getDocument( String documentName ) throws IOException;
+	public DocumentDescriptor<D> getDocument( String documentName ) throws DocumentException;
 
 	/**
 	 * Allows adding or changing documents.
@@ -50,8 +51,9 @@ public interface DocumentSource<D>
 	 * @param document
 	 *        The document
 	 * @return The existing document descriptor before we changed it
+	 * @throws DocumentException
 	 */
-	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document );
+	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document ) throws DocumentException;
 
 	/**
 	 * Allows for atomically adding or changing documents.
@@ -65,8 +67,9 @@ public interface DocumentSource<D>
 	 * @param document
 	 *        The document instance
 	 * @return The existing document descriptor before we changed it
+	 * @throws DocumentException
 	 */
-	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document );
+	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document ) throws DocumentException;
 
 	/**
 	 * Access to all available documents.
@@ -78,5 +81,10 @@ public interface DocumentSource<D>
 	 */
 	public Collection<DocumentDescriptor<D>> getDocuments();
 
+	/**
+	 * The identifier for this document source.
+	 * 
+	 * @return The identifier
+	 */
 	public String getIdentifier();
 }

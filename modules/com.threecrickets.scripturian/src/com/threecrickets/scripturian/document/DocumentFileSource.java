@@ -13,13 +13,13 @@ package com.threecrickets.scripturian.document;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.internal.FiledDocumentDescriptor;
 
 /**
@@ -152,7 +152,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * 
 	 * @see DocumentSource#getDocument(String)
 	 */
-	public DocumentDescriptor<D> getDocument( String documentName ) throws IOException
+	public DocumentDescriptor<D> getDocument( String documentName ) throws DocumentException
 	{
 		// See if we already have a descriptor for this name
 		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptors.get( documentName );
@@ -187,7 +187,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * @see DocumentSource#setDocument(String, String, String, Object)
 	 */
-	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document )
+	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document ) throws DocumentException
 	{
 		return filedDocumentDescriptors.put( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
 	}
@@ -195,7 +195,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * @see DocumentSource#setDocumentIfAbsent(String, String, String, Object)
 	 */
-	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document )
+	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document ) throws DocumentException
 	{
 		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
 	}
@@ -284,8 +284,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 							if( existing != null )
 								filedDocumentDescriptor = existing;
 						}
-						catch( IOException x )
+						catch( DocumentException x )
 						{
+							// Silently skip problem files
 						}
 					}
 					list.add( filedDocumentDescriptor );

@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentSource;
+import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.internal.ExecutableSegment;
@@ -245,11 +246,11 @@ public class Executable
 	 * @return A document descriptor with a valid executable as its document
 	 * @throws ParsingException
 	 *         In case of a parsing error
-	 * @throws IOException
+	 * @throws DocumentException
 	 *         In case of a document source error
 	 */
 	public static DocumentDescriptor<Executable> createOnce( String documentName, DocumentSource<Executable> documentSource, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
-		boolean prepare ) throws ParsingException, IOException
+		boolean prepare ) throws ParsingException, DocumentException
 	{
 		DocumentDescriptor<Executable> documentDescriptor = documentSource.getDocument( documentName );
 		createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, manager, defaultLanguageTag, prepare );
@@ -281,9 +282,11 @@ public class Executable
 	 * @return A new executable or the existing one
 	 * @throws ParsingException
 	 *         In case of a parsing error
+	 * @throws DocumentException
+	 *         In case of a problem accessing the document source
 	 */
 	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare )
-		throws ParsingException
+		throws ParsingException, DocumentException
 	{
 		Executable executable = documentDescriptor.getDocument();
 		if( executable == null )
@@ -323,8 +326,11 @@ public class Executable
 	 *        languages support preparation as a separate operation
 	 * @throws ParsingException
 	 *         In case of a parsing error
+	 * @throws DocumentException
+	 *         In case of a problem accessing the document source
 	 */
-	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare ) throws ParsingException
+	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare ) throws ParsingException,
+		DocumentException
 	{
 		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, manager, manager.getLanguageTagByExtension( documentDescriptor
 			.getDefaultName(), documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
@@ -363,9 +369,11 @@ public class Executable
 	 *        languages support preparation as a separate operation
 	 * @throws ParsingException
 	 *         In case of a parsing error
+	 * @throws DocumentException
+	 *         In case of a problem accessing the document source
 	 */
 	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
-		DocumentSource<Executable> documentSource, boolean prepare ) throws ParsingException
+		DocumentSource<Executable> documentSource, boolean prepare ) throws ParsingException, DocumentException
 	{
 		this( documentName, partition, documentTimestamp, sourceCode, isTextWithScriptlets, manager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START,
 			DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
@@ -423,11 +431,13 @@ public class Executable
 	 *        scriptlet
 	 * @throws ParsingException
 	 *         In case of a parsing or compilation error
+	 * @throws DocumentException
+	 *         In case of a problem accessing the document source
 	 * @see LanguageAdapter
 	 */
 	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
 		DocumentSource<Executable> documentSource, boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression,
-		String delimiterInclude, String delimiterInFlow ) throws ParsingException
+		String delimiterInclude, String delimiterInFlow ) throws ParsingException, DocumentException
 	{
 		this.documentName = documentName;
 		this.partition = partition;

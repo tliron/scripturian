@@ -17,6 +17,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 
@@ -82,12 +83,13 @@ public class ExposedDocument
 	 * 
 	 * @param documentName
 	 *        The document name
-	 * @throws IOException
 	 * @throws ParsingException
 	 * @throws ExecutionException
+	 * @throws DocumentException
+	 * @throws IOException
 	 * @see LanguageManager#getAdapterByExtension(String, String)
 	 */
-	public void execute( String documentName ) throws IOException, ParsingException, ExecutionException
+	public void execute( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
 		Executable executable = Executable.createOnce( documentName, main.getSource(), false, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
 		executable.execute( executionContext, this, main.getExecutionController() );
@@ -100,11 +102,12 @@ public class ExposedDocument
 	 * 
 	 * @param documentName
 	 *        The document name
-	 * @throws IOException
 	 * @throws ParsingException
 	 * @throws ExecutionException
+	 * @throws DocumentException
+	 * @throws IOException
 	 */
-	public void include( String documentName ) throws IOException, ParsingException, ExecutionException
+	public void include( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
 		Executable executable = Executable.createOnce( documentName, main.getSource(), true, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
 		executable.execute( executionContext, this, main.getExecutionController() );

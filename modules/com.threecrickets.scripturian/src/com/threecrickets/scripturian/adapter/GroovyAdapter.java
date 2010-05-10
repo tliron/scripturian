@@ -18,8 +18,13 @@ import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovySystem;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
+import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
+import org.codehaus.groovy.syntax.SyntaxException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -71,7 +76,28 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 */
 	public static ExecutionException createExecutionException( String documentName, int startLineNumber, Exception x )
 	{
-		if( x instanceof GroovyRuntimeException )
+		if( x instanceof ExecutionException )
+			return (ExecutionException) x;
+		else if( x instanceof MultipleCompilationErrorsException )
+		{
+			MultipleCompilationErrorsException multiple = (MultipleCompilationErrorsException) x;
+			String message = multiple.getMessage();
+			ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
+			for( Object error : multiple.getErrorCollector().getErrors() )
+			{
+				if( error instanceof SyntaxErrorMessage )
+				{
+					SyntaxErrorMessage syntaxError = (SyntaxErrorMessage) error;
+					message = syntaxError.getCause().getOriginalMessage();
+					SyntaxException syntaxException = syntaxError.getCause();
+					stack.add( new StackFrame( syntaxException.getSourceLocator(), syntaxException.getLine(), syntaxException.getStartColumn() ) );
+				}
+			}
+			ExecutionException executionException = new ExecutionException( message, multiple );
+			executionException.getStack().addAll( stack );
+			return executionException;
+		}
+		else if( x instanceof GroovyRuntimeException )
 		{
 			GroovyRuntimeException groovyRuntimeException = (GroovyRuntimeException) x;
 			Throwable cause = x.getCause();
@@ -79,19 +105,23 @@ public class GroovyAdapter extends LanguageAdapterBase
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber() + startLineNumber, groovyRuntimeException.getNode().getColumnNumber() ) );
+				executionException.getStack().add(
+					new StackFrame( documentName, groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
+						groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1 ) );
 				return executionException;
 			}
 			else if( cause instanceof ParsingException )
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
-				executionException.getStack().add( new StackFrame( documentName, groovyRuntimeException.getNode().getLineNumber() + startLineNumber, groovyRuntimeException.getNode().getColumnNumber() ) );
+				executionException.getStack().add(
+					new StackFrame( documentName, groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
+						groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1 ) );
 				return executionException;
 			}
 			else
-				return new ExecutionException( documentName, groovyRuntimeException.getNode().getLineNumber(), groovyRuntimeException.getNode().getColumnNumber(), groovyRuntimeException.getMessageWithoutLocationText(),
-					x );
+				return new ExecutionException( documentName, groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
+					groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1, groovyRuntimeException.getMessageWithoutLocationText(), x );
 		}
 		else
 			return new ExecutionException( documentName, x.getMessage(), x );

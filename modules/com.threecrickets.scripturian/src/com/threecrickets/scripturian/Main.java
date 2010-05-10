@@ -18,6 +18,7 @@ import java.io.Writer;
 
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
+import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
@@ -303,7 +304,7 @@ public class Main implements Runnable
 			exposedDocument.execute( initialDocumentName );
 			flushWriters();
 		}
-		catch( IOException x )
+		catch( DocumentException x )
 		{
 			flushWriters();
 			System.err.print( "Error reading file for \"" + initialDocumentName + "\": " );
@@ -336,6 +337,12 @@ public class Main implements Runnable
 				if( stackFrame.getColumnNumber() >= 0 )
 					System.err.println( "   Column: " + stackFrame.getColumnNumber() );
 			}
+		}
+		catch( IOException x )
+		{
+			flushWriters();
+			System.err.print( "I/O error in \"" + initialDocumentName + "\": " );
+			System.err.println( x.getMessage() );
 		}
 		finally
 		{
