@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.file;
+package com.threecrickets.scripturian.internal;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,16 +17,64 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.threecrickets.scripturian.document.DocumentDescriptor;
+import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
-import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * Document descriptor for {@link DocumentFileSource}.
  * 
  * @author Tal Liron
  */
-class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
+public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 {
+	//
+	// Construction
+	//
+
+	/**
+	 * Construction.
+	 * 
+	 * @param documentSource
+	 *        The document source
+	 * @param defaultName
+	 *        The default name to use for directories
+	 * @param sourceCode
+	 *        The source code
+	 * @param tag
+	 *        The descriptor tag
+	 * @param document
+	 *        The document
+	 */
+	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, String defaultName, String sourceCode, String tag, D document )
+	{
+		this.documentSource = documentSource;
+		this.defaultName = defaultName;
+		file = null;
+		timestamp = System.currentTimeMillis();
+		this.sourceCode = sourceCode;
+		this.tag = tag;
+		this.document = document;
+	}
+
+	/**
+	 * Construction.
+	 * 
+	 * @param documentSource
+	 *        The document source
+	 * @param file
+	 *        The file
+	 * @throws IOException
+	 */
+	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file ) throws IOException
+	{
+		this.documentSource = documentSource;
+		this.defaultName = documentSource.getRelativeFilePath( file );
+		this.file = file;
+		timestamp = file.lastModified();
+		sourceCode = ScripturianUtil.getString( file );
+		tag = ScripturianUtil.getExtension( file );
+	}
+
 	//
 	// Attributes
 	//
@@ -49,7 +97,7 @@ class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 			// Always valid if in-memory document
 			return true;
 
-		long minimumTimeBetweenValidityChecks = documentSource.minimumTimeBetweenValidityChecks.get();
+		long minimumTimeBetweenValidityChecks = documentSource.getMinimumTimeBetweenValidityChecks();
 		if( minimumTimeBetweenValidityChecks == -1 )
 			// -1 means never check for validity
 			return true;
@@ -154,30 +202,6 @@ class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	public DocumentSource<D> getSource()
 	{
 		return documentSource;
-	}
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Protected
-
-	protected FiledDocumentDescriptor( DocumentFileSource<D> documentSource, String defaultName, String sourceCode, String tag, D document )
-	{
-		this.documentSource = documentSource;
-		this.defaultName = defaultName;
-		file = null;
-		timestamp = System.currentTimeMillis();
-		this.sourceCode = sourceCode;
-		this.tag = tag;
-		this.document = document;
-	}
-
-	protected FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file ) throws IOException
-	{
-		this.documentSource = documentSource;
-		this.defaultName = documentSource.getRelativeFilePath( file );
-		this.file = file;
-		timestamp = file.lastModified();
-		sourceCode = ScripturianUtil.getString( file );
-		tag = ScripturianUtil.getExtension( file );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

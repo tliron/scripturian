@@ -16,11 +16,11 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
-import com.threecrickets.scripturian.file.DocumentFileSource;
 import com.threecrickets.scripturian.internal.ExposedApplication;
 import com.threecrickets.scripturian.internal.ExposedDocument;
 import com.threecrickets.scripturian.internal.ScripturianUtil;

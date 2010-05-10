@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.file;
+package com.threecrickets.scripturian.document;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -20,8 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.threecrickets.scripturian.document.DocumentDescriptor;
-import com.threecrickets.scripturian.document.DocumentSource;
+import com.threecrickets.scripturian.internal.FiledDocumentDescriptor;
 
 /**
  * Reads document stored in files under a base directory. The file contents are
@@ -126,6 +125,18 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public void setMinimumTimeBetweenValidityChecks( long minimumTimeBetweenValidityChecks )
 	{
 		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
+	}
+
+	/**
+	 * Gets the file's path relative to the base path.
+	 * 
+	 * @param file
+	 *        The file
+	 * @return The path
+	 */
+	public String getRelativeFilePath( File file )
+	{
+		return file.getPath().substring( basePathLength );
 	}
 
 	//
@@ -239,7 +250,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
-	final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
+	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
 
 	/**
 	 * Recursively collects document descriptors for all files under a base
@@ -342,18 +353,6 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		}
 
 		return file;
-	}
-
-	/**
-	 * Gets the file's path relative to the base path.
-	 * 
-	 * @param file
-	 *        The file
-	 * @return The path
-	 */
-	String getRelativeFilePath( File file )
-	{
-		return file.getPath().substring( basePathLength );
 	}
 
 	/**
