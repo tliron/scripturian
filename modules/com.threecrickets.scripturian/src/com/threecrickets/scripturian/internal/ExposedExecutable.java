@@ -119,12 +119,12 @@ public class ExposedExecutable
 	 */
 	public Object getGlobal( String name, Object defaultValue )
 	{
-		ConcurrentMap<String, Object> attributes = GlobalScope.getInstance().getAttributes();
-		Object value = attributes.get( name );
+		ConcurrentMap<String, Object> globals = getGlobals();
+		Object value = globals.get( name );
 		if( ( value == null ) && ( defaultValue != null ) )
 		{
 			value = defaultValue;
-			Object existing = attributes.putIfAbsent( name, value );
+			Object existing = globals.putIfAbsent( name, value );
 			if( existing != null )
 				value = existing;
 		}
@@ -142,8 +142,8 @@ public class ExposedExecutable
 	 */
 	public Object setGlobal( String name, Object value )
 	{
-		ConcurrentMap<String, Object> attributes = GlobalScope.getInstance().getAttributes();
-		return attributes.put( name, value );
+		ConcurrentMap<String, Object> globals = getGlobals();
+		return globals.put( name, value );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

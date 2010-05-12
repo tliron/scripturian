@@ -11,6 +11,9 @@
 
 package com.threecrickets.scripturian.internal;
 
+import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
+
 import com.threecrickets.scripturian.Main;
 
 /**
@@ -40,10 +43,6 @@ public class ExposedApplication
 	// Attributes
 	//
 
-	//
-	// Attributes
-	//
-
 	/**
 	 * An array of the string arguments sent to {@link Main#main(String[])}.
 	 * 
@@ -52,6 +51,88 @@ public class ExposedApplication
 	public String[] getArguments()
 	{
 		return main.getArguments();
+	}
+
+	/**
+	 * A map of all values global to the current VM.
+	 * 
+	 * @return The globals
+	 */
+	public ConcurrentMap<String, Object> getGlobals()
+	{
+		return GlobalScope.getInstance().getAttributes();
+	}
+
+	/**
+	 * Gets a value global to the current VM.
+	 * 
+	 * @param name
+	 *        The name of the global
+	 * @return The global's current value
+	 */
+	public Object getGlobal( String name )
+	{
+		return getGlobal( name, null );
+	}
+
+	/**
+	 * Gets a value global to the current VM, atomically setting it to a default
+	 * value if it doesn't exist.
+	 * 
+	 * @param name
+	 *        The name of the global
+	 * @param defaultValue
+	 *        The default value
+	 * @return The global's current value
+	 */
+	public Object getGlobal( String name, Object defaultValue )
+	{
+		ConcurrentMap<String, Object> globals = getGlobals();
+		Object value = globals.get( name );
+		if( ( value == null ) && ( defaultValue != null ) )
+		{
+			value = defaultValue;
+			Object existing = globals.putIfAbsent( name, value );
+			if( existing != null )
+				value = existing;
+		}
+		return value;
+	}
+
+	/**
+	 * Sets the value global to the current VM.
+	 * 
+	 * @param name
+	 *        The name of the global
+	 * @param value
+	 *        The global's new value
+	 * @return The global's previous value
+	 */
+	public Object setGlobal( String name, Object value )
+	{
+		ConcurrentMap<String, Object> globals = getGlobals();
+		return globals.put( name, value );
+	}
+
+	/**
+	 * The logger.
+	 * 
+	 * @return The logger
+	 * @see #setLogger(Logger)
+	 */
+	public Logger getLogger()
+	{
+		return main.getLogger();
+	}
+
+	/**
+	 * @param logger
+	 *        The logger
+	 * @see #getLogger()
+	 */
+	public void setLogger( Logger logger )
+	{
+		main.setLogger( logger );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

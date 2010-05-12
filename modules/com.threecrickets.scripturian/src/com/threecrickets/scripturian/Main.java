@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.logging.Logger;
 
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
@@ -267,6 +268,27 @@ public class Main implements Runnable
 		return exposedApplicationName;
 	}
 
+	/**
+	 * The logger.
+	 * 
+	 * @return The logger
+	 * @see #setLogger(Logger)
+	 */
+	public Logger getLogger()
+	{
+		return logger;
+	}
+
+	/**
+	 * @param logger
+	 *        The logger
+	 * @see #getLogger()
+	 */
+	public void setLogger( Logger logger )
+	{
+		this.logger = logger;
+	}
+
 	//
 	// Operations
 	//
@@ -409,4 +431,9 @@ public class Main implements Runnable
 	 * The name of the application exposed to the executable.
 	 */
 	private volatile String exposedApplicationName;
+
+	/**
+	 * The logger.
+	 */
+	private volatile Logger logger;
 }
