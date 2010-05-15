@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.ExtendedParseException;
+import org.apache.velocity.runtime.RuntimeInstance;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
 
@@ -64,6 +65,7 @@ class VelocityProgram extends ProgramBase<VelocityAdapter>
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
+		RuntimeInstance runtimeInstance = adapter.getRuntimeInstance();
 		VelocityContext velocityContext = new VelocityContext( executionContext.getExposedVariables() );
 
 		SimpleNode nodeTree = nodeTreeReference.get();
@@ -75,7 +77,7 @@ class VelocityProgram extends ProgramBase<VelocityAdapter>
 				// (see VelocityAdapter.getSourceCodeForLiteralOutput)
 				String sourceCode = "#set($_d='$')#set($_h='#')" + this.sourceCode;
 
-				nodeTree = adapter.runtimeInstance.parse( sourceCode, executable.getDocumentName() );
+				nodeTree = runtimeInstance.parse( sourceCode, executable.getDocumentName() );
 
 				// We're caching the resulting node tree for the future. Might
 				// as well!
@@ -90,7 +92,7 @@ class VelocityProgram extends ProgramBase<VelocityAdapter>
 
 		try
 		{
-			adapter.runtimeInstance.render( velocityContext, executionContext.getWriter(), executable.getDocumentName(), nodeTree );
+			runtimeInstance.render( velocityContext, executionContext.getWriter(), executable.getDocumentName(), nodeTree );
 		}
 		catch( Exception x )
 		{

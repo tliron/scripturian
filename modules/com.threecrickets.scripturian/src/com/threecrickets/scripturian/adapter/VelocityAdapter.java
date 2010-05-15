@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.velocity.runtime.RuntimeInstance;
 
@@ -25,6 +26,9 @@ import com.threecrickets.scripturian.exception.ParsingException;
 /**
  * A {@link LanguageAdapter} that supports the <a
  * href="http://velocity.apache.org/">Velocity</a> templating language.
+ * <p>
+ * Language manager attributes prefixed with "velocity." will be used to
+ * initialize Velocity's runtime instance.
  * 
  * @author Tal Liron
  */
@@ -42,15 +46,42 @@ public class VelocityAdapter extends LanguageAdapterBase
 	public VelocityAdapter() throws LanguageAdapterException
 	{
 		super( "Velocity", "", null, null, Arrays.asList( "vm" ), null, Arrays.asList( "velocity", "vm" ), null );
+	}
 
-		try
+	//
+	// Attributes
+	//
+
+	/**
+	 * The Velocity runtime instance for this adapter, creating and initializing
+	 * it if it doesn't exist.
+	 * 
+	 * @return The runtime instance
+	 */
+	public RuntimeInstance getRuntimeInstance()
+	{
+		RuntimeInstance runtimeInstance = runtimeInstanceReference.get();
+		if( runtimeInstance == null )
 		{
-			runtimeInstance.init();
+			runtimeInstance = new RuntimeInstance();
+
+			try
+			{
+				LanguageManager manager = getManager();
+				if( manager == null )
+					runtimeInstance.init();
+				else
+					runtimeInstance.init( manager.getAttributesAsProperties( "velocity." ) );
+			}
+			catch( Exception x )
+			{
+				x.printStackTrace();
+			}
+
+			if( !runtimeInstanceReference.compareAndSet( null, runtimeInstance ) )
+				runtimeInstance = runtimeInstanceReference.get();
 		}
-		catch( Exception x )
-		{
-			x.printStackTrace();
-		}
+		return runtimeInstance;
 	}
 
 	//
@@ -83,7 +114,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
-	// Protected
+	// Private
 
-	protected final RuntimeInstance runtimeInstance = new RuntimeInstance();
+	private final AtomicReference<RuntimeInstance> runtimeInstanceReference = new AtomicReference<RuntimeInstance>();
 }

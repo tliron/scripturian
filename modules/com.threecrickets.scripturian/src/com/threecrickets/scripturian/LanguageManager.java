@@ -13,6 +13,8 @@ package com.threecrickets.scripturian;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -126,6 +128,23 @@ public class LanguageManager
 	public ConcurrentMap<String, Object> getAttributes()
 	{
 		return attributes;
+	}
+
+	/**
+	 * Find only those attributes with this prefix.
+	 * 
+	 * @return The attributes with the prefix
+	 */
+	public Properties getAttributesAsProperties( String prefix )
+	{
+		Properties prefixed = new Properties();
+
+		int prefixLength = prefix.length();
+		for( Map.Entry<String, Object> entry : attributes.entrySet() )
+			if( entry.getKey().startsWith( prefix ) )
+				prefixed.put( entry.getKey().substring( prefixLength ), entry.getValue() );
+
+		return prefixed;
 	}
 
 	/**
