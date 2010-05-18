@@ -54,11 +54,14 @@ public class JeppAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getScriptletHeader( Executable executable, ScriptEngine scriptEngine )
 	{
+		// We're changing the __builtins__.__import__ to re-enable import, which
+		// was disabled in Jepp 2.4.
+
 		// Apparently the Java Scripting support for Jepp does not correctly
 		// set global variables, not redirect stdout and stderr. Luckily, the
 		// Python interface is compatible with Java's Writer interface, so we
 		// can redirect them explicitly.
-		return "import sys;sys.stdout=context.getWriter();sys.stderr=context.getErrorWriter();";
+		return "from jep import *;__builtins__.__import__=jep.jimport;import sys;sys.stdout=context.getWriter();sys.stderr=context.getErrorWriter();";
 	}
 
 	@Override

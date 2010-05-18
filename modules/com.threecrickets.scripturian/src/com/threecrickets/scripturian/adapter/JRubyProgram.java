@@ -112,8 +112,14 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 					// Cache it!
 					classFile.getParentFile().mkdirs();
 					FileOutputStream stream = new FileOutputStream( classFile );
-					stream.write( asmCompiler.getClassByteArray() );
-					stream.close();
+					try
+					{
+						stream.write( asmCompiler.getClassByteArray() );
+					}
+					finally
+					{
+						stream.close();
+					}
 
 					// script = compilerRuntime.tryCompile( node );
 				}

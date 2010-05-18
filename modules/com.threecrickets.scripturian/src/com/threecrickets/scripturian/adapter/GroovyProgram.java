@@ -121,8 +121,14 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 						// Cache it!
 						classFile.getParentFile().mkdirs();
 						FileOutputStream stream = new FileOutputStream( classFile );
-						stream.write( groovyClass.getBytes() );
-						stream.close();
+						try
+						{
+							stream.write( groovyClass.getBytes() );
+						}
+						finally
+						{
+							stream.close();
+						}
 					}
 
 					// We have to re-add the cache to the classpath so that it

@@ -245,11 +245,11 @@ public class LanguageManager
 
 		Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
 		for( String tag : tags )
-			languageAdapterByTag.put( tag, adapter );
+			languageAdapterByTag.putIfAbsent( tag, adapter );
 
 		Iterable<String> extensions = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.EXTENSIONS );
 		for( String extension : extensions )
-			languageAdapterByExtension.put( extension, adapter );
+			languageAdapterByExtension.putIfAbsent( extension, adapter );
 
 		adapter.setManager( this );
 	}

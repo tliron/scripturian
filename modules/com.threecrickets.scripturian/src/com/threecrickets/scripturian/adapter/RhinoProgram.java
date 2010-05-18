@@ -88,8 +88,14 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 					// Cache it!
 					classFile.getParentFile().mkdirs();
 					FileOutputStream stream = new FileOutputStream( classFile );
-					stream.write( (byte[]) classByteArray );
-					stream.close();
+					try
+					{
+						stream.write( (byte[]) classByteArray );
+					}
+					finally
+					{
+						stream.close();
+					}
 				}
 
 				Script script;

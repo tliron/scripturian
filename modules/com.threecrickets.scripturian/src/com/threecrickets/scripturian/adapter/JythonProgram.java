@@ -74,7 +74,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	@Override
 	public void prepare() throws PreparationException
 	{
-		if( pythonCodeReference != null )
+		if( pythonCodeReference.get() != null )
 			return;
 
 		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
@@ -110,8 +110,14 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 					// Cache it!
 					classFile.getParentFile().mkdirs();
 					FileOutputStream stream = new FileOutputStream( classFile );
-					bundle.writeTo( stream );
-					stream.close();
+					try
+					{
+						bundle.writeTo( stream );
+					}
+					finally
+					{
+						stream.close();
+					}
 				}
 				catch( Exception x )
 				{
