@@ -141,6 +141,9 @@ public class JythonAdapter extends LanguageAdapterBase
 		super( "Jython", Version.getBuildInfo(), "Python", Version.PY_VERSION, Arrays.asList( "py" ), null, Arrays.asList( "python", "py", "jython" ), null );
 
 		String homePath = System.getProperty( PYTHON_HOME );
+		if( homePath == null )
+			throw new LanguageAdapterException( this.getClass(), "Must define " + PYTHON_HOME + " to use Jython adapter" );
+
 		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );
 
 		// Initialize Jython registry (can only happen once per VM)
