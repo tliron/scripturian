@@ -280,6 +280,20 @@ public abstract class ScripturianUtil
 		return new File( result.toString() );
 	}
 
+	/**
+	 * Calls include on the executable container.
+	 * <p>
+	 * Internally uses reflection with caching of looked-up methods.
+	 * 
+	 * @param manager
+	 *        The language manager
+	 * @param executable
+	 *        The executable
+	 * @param executionContext
+	 *        The execution context
+	 * @param documentName
+	 *        The document name
+	 */
 	public static void containerInclude( LanguageManager manager, Executable executable, ExecutionContext executionContext, String documentName )
 	{
 		Object container = executable.getExposedContainer( executionContext );
@@ -303,7 +317,6 @@ public abstract class ScripturianUtil
 				catch( NoSuchMethodException x )
 				{
 				}
-
 			}
 
 			try
@@ -331,6 +344,12 @@ public abstract class ScripturianUtil
 	 */
 	private static final ConcurrentMap<String, File> programClassFiles = new ConcurrentHashMap<String, File>();
 
+	/**
+	 * Cache of container include methods.
+	 * 
+	 * @see #containerInclude(LanguageManager, Executable, ExecutionContext,
+	 *      String)
+	 */
 	private static final ConcurrentMap<Class<?>, Method> includeMethods = new ConcurrentHashMap<Class<?>, Method>();
 
 	/**

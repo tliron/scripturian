@@ -250,6 +250,9 @@ public class Defroster
 			catch( InterruptedException x )
 			{
 				wasInterrupted = true;
+
+				// Restore interrupt status
+				Thread.currentThread().interrupt();
 			}
 		}
 
