@@ -116,7 +116,7 @@ public class JeppAdapter extends LanguageAdapterBase
 	 */
 	public JeppAdapter() throws LanguageAdapterException
 	{
-		super( "Jepp", "", "Python", null, Arrays.asList( "py" ), null, Arrays.asList( "jepp", "jep", "py" ), null );
+		super( "Jepp", "", "Python", null, Arrays.asList( "py", "jepp" ), null, Arrays.asList( "jepp", "jep", "py" ), null );
 	}
 
 	//
