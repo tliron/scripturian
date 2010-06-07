@@ -101,7 +101,7 @@ public class ExposedDocument
 	{
 		DocumentSource<Executable> source = main.getSource();
 		if( source instanceof DocumentFileSource<?> )
-			( (DocumentFileSource<Executable>) source ).setPreferredExtension( defaultLanguageTag );
+			( (DocumentFileSource<Executable>) source ).setPreferredExtension( preferredExtension );
 	}
 
 	//
