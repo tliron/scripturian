@@ -1,5 +1,5 @@
 /**********************
- *  Soft Cricket 1.2  *
+ *  Soft Cricket 1.3  *
  *                    *
  *    By Tal Liron    *
  **********************/
@@ -13,19 +13,15 @@ body {
 
 h1 {
 	font-family: Georgia, Palatino, 'Times New Roman', serif;
-	font-size: 20px;
+	font-size: 18px;
 }
 h2 {
 	font-family: Georgia, Palatino, 'Times New Roman', serif;
-	font-size: 18px;
-}
-h3 {
-	font-family: Georgia, Palatino, 'Times New Roman', serif;
-		font-size: 14px;
-	sfont-style: italic;
+	font-size: 14px;
+	font-style: italic;
 	line-height: 180%;
 }
-h4 {
+h3 {
 	font-family: Georgia, Palatino, 'Times New Roman', serif;
 	font-size: 14px;
 	font-style: italic;
@@ -33,9 +29,12 @@ h4 {
 	line-height: 180%;
 }
 
-p {
+p, li, div.Indented, div.Unindented, blockquote.Quote {
 	font-size: 12px;
 	line-height: 180%;
+}
+div.Indented + div.Indented, div.Unindented + div.Indented, div.Indented + div.Unindented, div.Unindented + div.Unindented {
+	margin-top: 14px;
 }
 
 ul {
@@ -59,15 +58,22 @@ pre {
 	border: 1px dashed black;
 	padding: 10px 10px 10px 10px;
 }
+div.listing {
+	border: 1px dashed black;
+	padding: 0px 15px 0px 15px;
+	white-space: pre;
+	line-height: 130%;
+}
 
 .note {
 	border: 1px dotted black;
 	padding: 3px 10px 3px 10px;
 }
 
-.tutorial {
+.tutorial, blockquote.Quote {
 	border: 1px solid black;
 	padding: 3px 10px 3px 10px;
+	margin: 14px 0px 14px 0px;
 }
 
 
@@ -128,6 +134,7 @@ div.navigation a, div.navigation .heading {
 	border-left: 1px solid #AF868E;
 	border-top: 1px solid #AF868E;
 	font-size: 12px;
+	line-height: 120%;
 }
 
 div.navigation .heading {
@@ -162,4 +169,5 @@ div.navigation li li a {
 	border-left: 1px solid #AF868E;
 	text-decoration: none;
 	font-size: 12px;
+	line-height: 120%;
 }

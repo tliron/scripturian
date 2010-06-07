@@ -121,7 +121,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 			}
 			else
 				return new ExecutionException( documentName, groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
-					groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1, groovyRuntimeException.getMessageWithoutLocationText(), x );
+					groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1, groovyRuntimeException.getMessage(), x );
 		}
 		else
 			return new ExecutionException( documentName, x.getMessage(), x );

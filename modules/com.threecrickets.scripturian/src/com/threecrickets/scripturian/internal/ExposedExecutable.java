@@ -96,18 +96,6 @@ public class ExposedExecutable
 	}
 
 	/**
-	 * Gets a value global to the current VM.
-	 * 
-	 * @param name
-	 *        The name of the global
-	 * @return The global's current value
-	 */
-	public Object getGlobal( String name )
-	{
-		return getGlobal( name, null );
-	}
-
-	/**
 	 * Gets a value global to the current VM, atomically setting it to a default
 	 * value if it doesn't exist.
 	 * 
@@ -129,21 +117,6 @@ public class ExposedExecutable
 				value = existing;
 		}
 		return value;
-	}
-
-	/**
-	 * Sets the value global to the current VM.
-	 * 
-	 * @param name
-	 *        The name of the global
-	 * @param value
-	 *        The global's new value
-	 * @return The global's previous value
-	 */
-	public Object setGlobal( String name, Object value )
-	{
-		ConcurrentMap<String, Object> globals = getGlobals();
-		return globals.put( name, value );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

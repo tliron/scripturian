@@ -127,7 +127,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 		}
 		else
 		{
-			ExecutionException executionException = new ExecutionException( rubyException.message.toString(), x );
+			ExecutionException executionException = new ExecutionException( rubyException.message.asJavaString(), x );
 			for( StackTraceElement stackTraceElement : x.getStackTrace() )
 				if( stackTraceElement.getFileName().length() > 0 )
 					executionException.getStack().add( new StackFrame( stackTraceElement ) );
