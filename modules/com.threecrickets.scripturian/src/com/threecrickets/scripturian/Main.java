@@ -104,9 +104,11 @@ public class Main implements Runnable
 		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
 		exposedDocumentName = ScripturianUtil.getSwitchArgument( "exposed-document-name", arguments, "document" );
 		exposedApplicationName = ScripturianUtil.getSwitchArgument( "exposed-application-name", arguments, "application" );
+		String basePath = ScripturianUtil.getSwitchArgument( "base-path", arguments, "." );
+		String preferredExtension = ScripturianUtil.getSwitchArgument( "preferred-extension", arguments, "js" );
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Executable>( new File( ScripturianUtil.getSwitchArgument( "base-path", arguments, "." ) ), defaultDocumentName, -1 );
+		documentSource = new DocumentFileSource<Executable>( new File( basePath ), defaultDocumentName, preferredExtension, -1 );
 	}
 
 	/**
@@ -121,12 +123,15 @@ public class Main implements Runnable
 	 * @param defaultDocumentName
 	 *        The name to use for document names that point to a directory
 	 *        rather than a file.
+	 * @param preferredExtension
+	 *        An extension to prefer if more than one file with the same name is
+	 *        in a directory
 	 * @param basePath
 	 *        The base path for finding executable documents
 	 * @param arguments
 	 *        Supplied arguments (usually from a command line)
 	 */
-	public Main( LanguageManager manager, boolean prepare, String initialDocumentName, String defaultDocumentName, String basePath, String[] arguments )
+	public Main( LanguageManager manager, boolean prepare, String initialDocumentName, String defaultDocumentName, String preferredExtension, String basePath, String[] arguments )
 	{
 		this.arguments = arguments;
 		this.manager = manager;
@@ -135,7 +140,7 @@ public class Main implements Runnable
 		this.defaultDocumentName = defaultDocumentName;
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Executable>( new File( basePath ), defaultDocumentName, -1 );
+		documentSource = new DocumentFileSource<Executable>( new File( basePath ), defaultDocumentName, preferredExtension, -1 );
 	}
 
 	//
@@ -329,7 +334,7 @@ public class Main implements Runnable
 		catch( DocumentException x )
 		{
 			flushWriters();
-			System.err.print( "Error reading file for \"" + initialDocumentName + "\": " );
+			System.err.print( "Error reading document for \"" + initialDocumentName + "\": " );
 			System.err.println( x.getMessage() );
 		}
 		catch( ParsingException x )

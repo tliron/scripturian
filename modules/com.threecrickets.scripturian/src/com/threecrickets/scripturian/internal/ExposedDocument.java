@@ -17,6 +17,8 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.document.DocumentFileSource;
+import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
@@ -52,8 +54,9 @@ public class ExposedDocument
 	//
 
 	/**
-	 * For use with {@link #include(String)}, this is the default language tag
-	 * used for scriptlets in case none is specified. Defaults to "js".
+	 * For use with {@link #include(String)} and {@link #execute(String)}, this
+	 * is the default language tag used for scriptlets in case none is
+	 * specified. Defaults to "js".
 	 * 
 	 * @return The default script language tag
 	 * @see #setDefaultLanguageTag(String)
@@ -71,6 +74,34 @@ public class ExposedDocument
 	public void setDefaultLanguageTag( String defaultLanguageTag )
 	{
 		this.defaultLanguageTag = defaultLanguageTag;
+	}
+
+	/**
+	 * An extension to prefer if more than one file with the same name is in a
+	 * directory. Only valid is the source is a {@link DocumentFileSource}.
+	 * 
+	 * @return The preferred extension
+	 * @see #setPreferredExtension(String)
+	 */
+	public String getPreferredExtension()
+	{
+		DocumentSource<Executable> source = main.getSource();
+		if( source instanceof DocumentFileSource<?> )
+			return ( (DocumentFileSource<Executable>) source ).getPreferredExtension();
+		else
+			return null;
+	}
+
+	/**
+	 * @param preferredExtension
+	 *        The preferred extension
+	 * @see #getPreferredExtension()
+	 */
+	public void setPreferredExtension( String preferredExtension )
+	{
+		DocumentSource<Executable> source = main.getSource();
+		if( source instanceof DocumentFileSource<?> )
+			( (DocumentFileSource<Executable>) source ).setPreferredExtension( defaultLanguageTag );
 	}
 
 	//

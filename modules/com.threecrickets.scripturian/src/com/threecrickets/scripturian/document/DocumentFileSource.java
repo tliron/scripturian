@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.internal.FiledDocumentDescriptor;
@@ -48,15 +47,19 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        instead; note that if an extension is not specified, then the
 	 *        first file in the directory with this name, with any extension,
 	 *        will be used
+	 * @param preferredExtension
+	 *        An extension to prefer if more than one file with the same name is
+	 *        in a directory
 	 * @param minimumTimeBetweenValidityChecks
 	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
-	public DocumentFileSource( File basePath, String defaultName, long minimumTimeBetweenValidityChecks )
+	public DocumentFileSource( File basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
 	{
 		this.basePath = basePath;
 		this.basePathLength = basePath.getPath().length();
 		this.defaultName = defaultName;
-		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
+		this.preferredExtension = preferredExtension;
+		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
 		defaultNameFilter = new StartsWithFilter( defaultName );
 	}
 
@@ -71,12 +74,15 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        instead; note that if an extension is not specified, then the
 	 *        first file in the directory with this name, with any extension,
 	 *        will be used
+	 * @param preferredExtension
+	 *        An extension to prefer if more than one file with the same name is
+	 *        in a directory
 	 * @param minimumTimeBetweenValidityChecks
 	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
-	public DocumentFileSource( String basePath, String defaultName, long minimumTimeBetweenValidityChecks )
+	public DocumentFileSource( String basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
 	{
-		this( new File( basePath ), defaultName, minimumTimeBetweenValidityChecks );
+		this( new File( basePath ), defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
 	}
 
 	//
@@ -95,13 +101,50 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	/**
 	 * If the name used in {@link #getDocument(String)} points to a directory,
-	 * then this file name in that directory will be used instead.
+	 * then this file name in that directory will be used instead. If an
+	 * extension is not specified, then the preferred extension will be used.
 	 * 
 	 * @return The default name
+	 * @see #setDefaultName(String)
 	 */
 	public String getDefaultName()
 	{
 		return defaultName;
+	}
+
+	/**
+	 * @param defaultName
+	 *        The default name
+	 * @see #getDefaultName()
+	 */
+	public void setDefaultName( String defaultName )
+	{
+		this.defaultName = defaultName;
+	}
+
+	/**
+	 * An extension to prefer if more than one file with the same name is in a
+	 * directory.
+	 * 
+	 * @return The preferred extension
+	 * @see #setPreferredExtension(String)
+	 */
+	public String getPreferredExtension()
+	{
+		return preferredExtension != null ? preferredExtension.substring( 1 ) : null;
+	}
+
+	/**
+	 * @param preferredExtension
+	 *        The preferred extension
+	 * @see #getPreferredExtension()
+	 */
+	public void setPreferredExtension( String preferredExtension )
+	{
+		if( preferredExtension != null )
+			this.preferredExtension = "." + preferredExtension;
+		else
+			this.preferredExtension = null;
 	}
 
 	/**
@@ -115,7 +158,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public long getMinimumTimeBetweenValidityChecks()
 	{
-		return minimumTimeBetweenValidityChecks.get();
+		return minimumTimeBetweenValidityChecks;
 	}
 
 	/**
@@ -124,7 +167,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public void setMinimumTimeBetweenValidityChecks( long minimumTimeBetweenValidityChecks )
 	{
-		this.minimumTimeBetweenValidityChecks.set( minimumTimeBetweenValidityChecks );
+		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
 	}
 
 	/**
@@ -209,7 +252,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * @see com.threecrickets.scripturian.document.DocumentSource#getIdentifier()
+	 * @see DocumentSource#getIdentifier()
 	 */
 	public String getIdentifier()
 	{
@@ -235,22 +278,29 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	private final File basePath;
 
 	/**
-	 * Length of the base path cached for performance.
+	 * Cached length of the base path.
 	 */
 	private final int basePathLength;
 
 	/**
 	 * If the name used in {@link #getDocument(String)} points to a directory,
-	 * then this file name in that directory will be used instead; note that if
-	 * an extension is not specified, then the first file in the directory with
-	 * this name, with any extension, will be used.
+	 * then this file name in that directory will be used instead. If an
+	 * extension is not specified, then the preferred extension will be used.
+	 * 
+	 * @see #preferredExtension
 	 */
-	private final String defaultName;
+	private volatile String defaultName;
+
+	/**
+	 * An extension to prefer if more than one file with the same name is in a
+	 * directory.
+	 */
+	private volatile String preferredExtension;
 
 	/**
 	 * See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
-	private final AtomicLong minimumTimeBetweenValidityChecks = new AtomicLong();
+	private volatile long minimumTimeBetweenValidityChecks;
 
 	/**
 	 * Recursively collects document descriptors for all files under a base
@@ -337,20 +387,42 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		if( ( defaultName != null ) && file.isDirectory() )
 		{
-			File[] files = file.listFiles( defaultNameFilter );
-			if( ( files != null ) && ( files.length > 0 ) )
-				// Return the first file that starts with the default name
-				return files[0];
+			// Return a file with the default name
+
+			File[] filesWithDefaultName = file.listFiles( defaultNameFilter );
+			if( ( filesWithDefaultName != null ) && ( filesWithDefaultName.length > 0 ) )
+			{
+				// Look for preffered extension
+				String preferredExtension = this.preferredExtension;
+				if( preferredExtension != null )
+					for( File fileWithDefaultName : filesWithDefaultName )
+						if( fileWithDefaultName.getName().endsWith( preferredExtension ) )
+							return fileWithDefaultName;
+
+				// Default to first found
+				return filesWithDefaultName[0];
+			}
 			else
 				return new File( file, defaultName );
 		}
 		else if( !file.exists() )
 		{
+			// Return a file with our name
+
 			File directory = file.getParentFile();
-			File[] files = directory.listFiles( new StartsWithFilter( file.getName() ) );
-			if( ( files != null ) && ( files.length > 0 ) )
-				// Return the first file that starts with the default name
-				return files[0];
+			File[] filesWithName = directory.listFiles( new StartsWithFilter( file.getName() ) );
+			if( ( filesWithName != null ) && ( filesWithName.length > 0 ) )
+			{
+				// Look for preffered extension
+				String preferredExtension = this.preferredExtension;
+				if( preferredExtension != null )
+					for( File fileWithName : filesWithName )
+						if( fileWithName.getName().endsWith( preferredExtension ) )
+							return fileWithName;
+
+				// Default to first found
+				return filesWithName[0];
+			}
 		}
 
 		return file;
