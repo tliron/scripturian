@@ -70,8 +70,8 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	// Program
 	//
 
-	// @Override
-	public void prepare2() throws PreparationException
+	@Override
+	public void prepare() throws PreparationException
 	{
 		if( pythonCodeReference.get() != null )
 			return;
