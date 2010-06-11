@@ -23,9 +23,7 @@ import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyBaseException;
 import org.python.core.PyException;
-import org.python.core.PyFileWriter;
 import org.python.core.PyObject;
-import org.python.core.PyStringMap;
 import org.python.core.PySystemState;
 import org.python.core.PyTraceback;
 import org.python.core.PythonCompiler;
@@ -150,7 +148,7 @@ public class JythonAdapter extends LanguageAdapterBase
 		if( PySystemState.registry == null )
 		{
 			// The packages cache dir is calculated as relative to the home dir,
-			// so we'll have to relatavize it back. Note that Jython will add a
+			// so we'll have to relativize it back. Note that Jython will add a
 			// "packages" subdirectory underneath.
 			String packagesCacheDirPath = ScripturianUtil.getRelativeFile( packagesCacheDir, new File( homePath ) ).getPath();
 
@@ -163,6 +161,8 @@ public class JythonAdapter extends LanguageAdapterBase
 
 		compiler = new LegacyCompiler();
 		compilerFlags = CompilerFlags.getCompilerFlags();
+
+		sharedSystemState = new PySystemState();
 	}
 
 	//
@@ -177,9 +177,11 @@ public class JythonAdapter extends LanguageAdapterBase
 	 * 
 	 * @param executionContext
 	 *        The execution context
+	 * @param executable
+	 *        The executable
 	 * @return The Python interpreter
 	 */
-	public PythonInterpreter getPythonInterpreter( ExecutionContext executionContext )
+	public PythonInterpreter getPythonInterpreter( ExecutionContext executionContext, Executable executable )
 	{
 		PythonInterpreter pythonInterpreter = (PythonInterpreter) executionContext.getAttributes().get( JYTHON_INTERPRETER );
 
@@ -188,19 +190,20 @@ public class JythonAdapter extends LanguageAdapterBase
 			// Note: If we don't explicitly create a new system state here,
 			// Jython will reuse system state found on this thread!
 
-			pythonInterpreter = new PythonInterpreter( new PyStringMap(), new PySystemState() );
+			PySystemState systemState = new PySystemState();
+			systemState.modules = sharedSystemState.modules;
+			systemState.path = sharedSystemState.path;
+
+			pythonInterpreter = new PythonInterpreter( null, systemState );
+			pythonInterpreter.exec( "import sys" );
+			// pythonInterpreter.exec(
+			// "import sys;from org.python.core import PyFileWriter" );
 			executionContext.getAttributes().put( JYTHON_INTERPRETER, pythonInterpreter );
-			pythonInterpreter.exec( "import sys" ); // For output scriptlets
 		}
 		else
 		{
-			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
-			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
+			flush( pythonInterpreter );
 		}
-
-		// Set writers
-		pythonInterpreter.setOut( executionContext.getWriterOrDefault() );
-		pythonInterpreter.setErr( executionContext.getErrorWriterOrDefault() );
 
 		// Append library locations to sys.path
 		for( URI uri : executionContext.getLibraryLocations() )
@@ -219,6 +222,20 @@ public class JythonAdapter extends LanguageAdapterBase
 		// Expose variables as Python globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 			pythonInterpreter.set( entry.getKey(), entry.getValue() );
+
+		// Note: Settings writers using pythonInterpreter.setOut() did not work
+		// properly for us.
+
+		// pythonInterpreter.setOut( executionContext.getWriterOrDefault() );
+		// pythonInterpreter.setErr( executionContext.getErrorWriterOrDefault()
+		// );
+
+		// Set writers
+		// pythonInterpreter.exec( "sys.stdout=PyFileWriter(" +
+		// executable.getExposedExecutableName() +
+		// ".context.writerOrDefault);sys.stderr=PyFileWriter(" +
+		// executable.getExposedExecutableName()
+		// + ".context.errorWriterOrDefault)" );
 
 		return pythonInterpreter;
 	}
@@ -241,12 +258,14 @@ public class JythonAdapter extends LanguageAdapterBase
 	{
 		literal = literal.replaceAll( "\\n", "\\\\n" );
 		literal = literal.replaceAll( "\\\"", "\\\\\"" );
-		return "sys.stdout.write(\"" + literal + "\");";
+		return executable.getExposedExecutableName() + ".context.writer.write(\"" + literal + "\");";
+		// return "sys.stdout.write(\"" + literal + "\");";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
-		return "sys.stdout.write(" + expression + ");";
+		return executable.getExposedExecutableName() + ".context.writer.write(" + expression + ");";
+		// return "sys.stdout.write(" + expression + ");";
 	}
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
@@ -264,7 +283,8 @@ public class JythonAdapter extends LanguageAdapterBase
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toPythonStyle( entryPointName );
-		PythonInterpreter pythonInterpreter = getPythonInterpreter( executionContext );
+		PythonInterpreter pythonInterpreter = (PythonInterpreter) executionContext.getAttributes().get( JYTHON_INTERPRETER );
+		Py.setSystemState( pythonInterpreter.getSystemState() );
 		PyObject method = pythonInterpreter.get( entryPointName );
 		if( method == null )
 			throw new NoSuchMethodException( entryPointName );
@@ -280,8 +300,7 @@ public class JythonAdapter extends LanguageAdapterBase
 		}
 		finally
 		{
-			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
-			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
+			flush( pythonInterpreter );
 		}
 	}
 
@@ -298,8 +317,26 @@ public class JythonAdapter extends LanguageAdapterBase
 	 */
 	protected final CompilerFlags compilerFlags;
 
+	/**
+	 * Flush stdout and stderr.
+	 * 
+	 * @param pythonInterpreter
+	 *        The Python interpreter
+	 */
+	protected static void flush( PythonInterpreter pythonInterpreter )
+	{
+		// pythonInterpreter.exec( "sys.stdout.flush();sys.stderr.flush()" );
+		// ( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+		// ( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	/**
+	 * Shared system state. We need this ensure that code is only loaded once.
+	 */
+	private final PySystemState sharedSystemState;
 
 	/**
 	 * From somethingLikeThis to something_like_this.

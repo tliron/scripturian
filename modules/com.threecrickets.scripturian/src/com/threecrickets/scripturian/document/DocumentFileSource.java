@@ -392,7 +392,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			File[] filesWithDefaultName = file.listFiles( defaultNameFilter );
 			if( ( filesWithDefaultName != null ) && ( filesWithDefaultName.length > 0 ) )
 			{
-				// Look for preffered extension
+				// Look for preferred extension
 				String preferredExtension = this.preferredExtension;
 				if( preferredExtension != null )
 					for( File fileWithDefaultName : filesWithDefaultName )
@@ -413,7 +413,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			File[] filesWithName = directory.listFiles( new StartsWithFilter( file.getName() ) );
 			if( ( filesWithName != null ) && ( filesWithName.length > 0 ) )
 			{
-				// Look for preffered extension
+				// Look for preferred extension
 				String preferredExtension = this.preferredExtension;
 				if( preferredExtension != null )
 					for( File fileWithName : filesWithName )

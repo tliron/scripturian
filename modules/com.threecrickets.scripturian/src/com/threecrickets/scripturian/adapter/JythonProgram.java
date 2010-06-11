@@ -22,7 +22,6 @@ import org.python.antlr.base.mod;
 import org.python.core.BytecodeLoader;
 import org.python.core.ParserFacade;
 import org.python.core.PyCode;
-import org.python.core.PyFileWriter;
 import org.python.core.PythonCodeBundle;
 import org.python.util.PythonInterpreter;
 
@@ -71,8 +70,8 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	// Program
 	//
 
-	@Override
-	public void prepare() throws PreparationException
+	// @Override
+	public void prepare2() throws PreparationException
 	{
 		if( pythonCodeReference.get() != null )
 			return;
@@ -132,7 +131,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		PythonInterpreter pythonInterpreter = adapter.getPythonInterpreter( executionContext );
+		PythonInterpreter pythonInterpreter = adapter.getPythonInterpreter( executionContext, executable );
 
 		try
 		{
@@ -150,8 +149,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 		}
 		finally
 		{
-			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
-			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
+			JythonAdapter.flush( pythonInterpreter );
 		}
 	}
 
