@@ -23,6 +23,7 @@ import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyBaseException;
 import org.python.core.PyException;
+import org.python.core.PyFileWriter;
 import org.python.core.PyObject;
 import org.python.core.PySystemState;
 import org.python.core.PyTraceback;
@@ -38,6 +39,8 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
+import com.threecrickets.scripturian.internal.ExecutionContextPyFileErrorWriter;
+import com.threecrickets.scripturian.internal.ExecutionContextPyFileWriter;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
@@ -195,9 +198,13 @@ public class JythonAdapter extends LanguageAdapterBase
 			systemState.path = sharedSystemState.path;
 
 			pythonInterpreter = new PythonInterpreter( null, systemState );
+
+			// Writers
+			pythonInterpreter.setOut( new ExecutionContextPyFileWriter() );
+			pythonInterpreter.setErr( new ExecutionContextPyFileErrorWriter() );
+
 			pythonInterpreter.exec( "import sys" );
-			// pythonInterpreter.exec(
-			// "import sys;from org.python.core import PyFileWriter" );
+
 			executionContext.getAttributes().put( JYTHON_INTERPRETER, pythonInterpreter );
 		}
 		else
@@ -223,20 +230,6 @@ public class JythonAdapter extends LanguageAdapterBase
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 			pythonInterpreter.set( entry.getKey(), entry.getValue() );
 
-		// Note: Settings writers using pythonInterpreter.setOut() did not work
-		// properly for us.
-
-		// pythonInterpreter.setOut( executionContext.getWriterOrDefault() );
-		// pythonInterpreter.setErr( executionContext.getErrorWriterOrDefault()
-		// );
-
-		// Set writers
-		// pythonInterpreter.exec( "sys.stdout=PyFileWriter(" +
-		// executable.getExposedExecutableName() +
-		// ".context.writerOrDefault);sys.stderr=PyFileWriter(" +
-		// executable.getExposedExecutableName()
-		// + ".context.errorWriterOrDefault)" );
-
 		return pythonInterpreter;
 	}
 
@@ -258,14 +251,16 @@ public class JythonAdapter extends LanguageAdapterBase
 	{
 		literal = literal.replaceAll( "\\n", "\\\\n" );
 		literal = literal.replaceAll( "\\\"", "\\\\\"" );
-		return executable.getExposedExecutableName() + ".context.writer.write(\"" + literal + "\");";
-		// return "sys.stdout.write(\"" + literal + "\");";
+		// return executable.getExposedExecutableName() +
+		// ".context.writer.write(\"" + literal + "\");";
+		return "sys.stdout.write(\"" + literal + "\");";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
-		return executable.getExposedExecutableName() + ".context.writer.write(" + expression + ");";
-		// return "sys.stdout.write(" + expression + ");";
+		// return executable.getExposedExecutableName() +
+		// ".context.writer.write(" + expression + ");";
+		return "sys.stdout.write(" + expression + ");";
 	}
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
@@ -326,8 +321,8 @@ public class JythonAdapter extends LanguageAdapterBase
 	protected static void flush( PythonInterpreter pythonInterpreter )
 	{
 		// pythonInterpreter.exec( "sys.stdout.flush();sys.stderr.flush()" );
-		// ( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
-		// ( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
+		( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+		( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
