@@ -65,6 +65,7 @@ public class ExecutionContext
 	 * 
 	 * @return An execution context or null
 	 * @see #makeCurrent()
+	 * @see #disconnect()
 	 */
 	public static ExecutionContext getCurrent()
 	{
@@ -76,6 +77,21 @@ public class ExecutionContext
 		}
 		else
 			return executionContext;
+	}
+
+	//
+	// Static operations
+	//
+
+	/**
+	 * Makes sure there is no execution context associated with this thread.
+	 * 
+	 * @see #makeCurrent()
+	 * @see #getCurrent()
+	 */
+	public static void disconnect()
+	{
+		ThreadLocalExecutionContext.current.set( null );
 	}
 
 	//
@@ -399,6 +415,7 @@ public class ExecutionContext
 	 * 
 	 * @return The previous current execution context or null
 	 * @see #getCurrent()
+	 * @see #disconnect()
 	 */
 	public ExecutionContext makeCurrent()
 	{
