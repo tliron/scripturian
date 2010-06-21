@@ -31,6 +31,10 @@ public class ExecutionContextPyFileErrorWriter extends ExecutionContextPyFileWri
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
+	//
+	// ExecutionContextPyFileWriter
+	//
+
 	@Override
 	protected PyFileWriter getWriter()
 	{

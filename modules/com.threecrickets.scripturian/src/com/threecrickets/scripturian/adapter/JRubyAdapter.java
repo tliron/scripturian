@@ -247,7 +247,11 @@ public class JRubyAdapter extends LanguageAdapterBase
 		// Expose variables as Ruby globals
 		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
 		{
-			IRubyObject value = JavaUtil.convertJavaToUsableRubyObject( rubyRuntime, entry.getValue() );
+			// Note that we're using the shared compilerRuntime to do the
+			// conversions, so that we can cache Java proxies. It's very, very
+			// slow if we have to generate them on the fly every time!
+
+			IRubyObject value = JavaUtil.convertJavaToRuby( compilerRuntime, entry.getValue() );
 			rubyRuntime.defineReadonlyVariable( "$" + entry.getKey(), value );
 		}
 
@@ -297,7 +301,12 @@ public class JRubyAdapter extends LanguageAdapterBase
 	{
 		entryPointName = toRubyStyle( entryPointName );
 		Ruby rubyRuntime = getRubyRuntime( executionContext );
-		IRubyObject[] rubyArguments = JavaUtil.convertJavaArrayToRuby( rubyRuntime, arguments );
+
+		// Note that we're using the shared compilerRuntime to do the
+		// conversions, so that we can cache Java proxies. It's very, very
+		// slow if we have to generate them on the fly every time!
+
+		IRubyObject[] rubyArguments = JavaUtil.convertJavaArrayToRuby( compilerRuntime, arguments );
 		try
 		{
 			IRubyObject value = rubyRuntime.getTopSelf().callMethod( rubyRuntime.getCurrentContext(), entryPointName, rubyArguments );
