@@ -12,7 +12,6 @@
 package com.threecrickets.scripturian;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,7 +26,7 @@ import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.internal.ExecutableSegment;
-import com.threecrickets.scripturian.internal.ExposedExecutable;
+import com.threecrickets.scripturian.service.ExecutableService;
 
 /**
  * Executables are general-purpose operational units that are manifestations of
@@ -149,24 +148,8 @@ import com.threecrickets.scripturian.internal.ExposedExecutable;
  * </li>
  * </ul>
  * <p>
- * <h3>The exposed "executable" service</h3>
- * <p>
- * The "executable" variable is exposed to your executable with some useful
- * services (this name can be changed via the
- * {@link #Executable(String, String, long, String, boolean, LanguageManager, String, DocumentSource, boolean, String, String, String, String, String, String, String, String)}
- * constructor).
- * <p>
- * Read-only attributes:
- * <ul>
- * <li><code>executable.container</code>: This is an arbitrary object set by the
- * executable's container environment for access to container-specific services.
- * It might be null if none was provided.</li>
- * <li><code>executable.context</code>: This is the {@link ExecutionContext}
- * used by the executable. Your code may use it to get access to the
- * {@link Writer} objects used for standard output and standard error.</li>
- * <li><code>executable.meta</code>: This {@link ConcurrentMap} provides a
- * convenient location for global state shared by all executables.</li>
- * </ul>
+ * An <code>executable</code> service is exposed to executables for access to
+ * this container environment. See {@link ExecutableService}.
  * 
  * @author Tal Liron
  */
@@ -442,7 +425,7 @@ public class Executable
 		this.documentName = documentName;
 		this.partition = partition;
 		this.documentTimestamp = documentTimestamp;
-		this.exposedExecutableName = exposedExecutableName;
+		this.executableServiceName = exposedExecutableName;
 		this.manager = manager;
 
 		if( !isTextWithScriptlets )
@@ -775,11 +758,11 @@ public class Executable
 	}
 
 	/**
-	 * The default name for the {@link ExposedExecutable} instance.
+	 * The default name for the {@link ExecutableService} instance.
 	 */
-	public String getExposedExecutableName()
+	public String getExecutableServiceName()
 	{
-		return exposedExecutableName;
+		return executableServiceName;
 	}
 
 	/**
@@ -836,18 +819,18 @@ public class Executable
 	}
 
 	/**
-	 * The container stored in the context, if it was set.
+	 * The container service stored in the context, if it was set.
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @return The container or null
+	 * @return The container service or null
 	 * @see #execute(ExecutionContext, Object, ExecutionController)
 	 */
-	public Object getExposedContainer( ExecutionContext executionContext )
+	public Object getContainerService( ExecutionContext executionContext )
 	{
-		ExposedExecutable exposedExecutable = getExposedExecutable( executionContext );
-		if( exposedExecutable != null )
-			return exposedExecutable.getContainer();
+		ExecutableService executableService = getExecutableService( executionContext );
+		if( executableService != null )
+			return executableService.getContainer();
 		else
 			return null;
 	}
@@ -888,8 +871,8 @@ public class Executable
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @param container
-	 *        The optional container
+	 * @param containerService
+	 *        The optional container service
 	 * @param executionController
 	 *        The optional {@link ExecutionController} to be applied to the
 	 *        execution context
@@ -897,7 +880,7 @@ public class Executable
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public void execute( ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
+	public void execute( ExecutionContext executionContext, Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
 		if( executionContext == null )
 			throw new ExecutionException( documentName, "Execute does not have an execution context" );
@@ -928,7 +911,7 @@ public class Executable
 
 					Object oldExposedExecutable = null;
 					if( !executionContext.isImmutable() )
-						oldExposedExecutable = executionContext.getExposedVariables().put( exposedExecutableName, new ExposedExecutable( executionContext, manager, container ) );
+						oldExposedExecutable = executionContext.getServices().put( executableServiceName, new ExecutableService( executionContext, manager, containerService ) );
 
 					try
 					{
@@ -937,7 +920,7 @@ public class Executable
 					finally
 					{
 						if( !executionContext.isImmutable() && oldExposedExecutable != null )
-							executionContext.getExposedVariables().put( exposedExecutableName, oldExposedExecutable );
+							executionContext.getServices().put( executableServiceName, oldExposedExecutable );
 
 						if( !adapter.isThreadSafe() )
 							adapter.getLock().unlock();
@@ -965,8 +948,8 @@ public class Executable
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @param container
-	 *        The optional container
+	 * @param containerService
+	 *        The optional container service
 	 * @param executionController
 	 *        The optional {@link ExecutionController} to be applied to the
 	 *        execution context
@@ -977,12 +960,12 @@ public class Executable
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean makeEnterable( ExecutionContext executionContext, Object container, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
+	public boolean makeEnterable( ExecutionContext executionContext, Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
 		if( enterableExecutionContext.get() != null )
 			return false;
 
-		execute( executionContext, container, executionController );
+		execute( executionContext, containerService, executionController );
 
 		if( !enterableExecutionContext.compareAndSet( null, executionContext ) )
 			return false;
@@ -1099,9 +1082,9 @@ public class Executable
 	private final String delimiterEnd;
 
 	/**
-	 * The default name for the {@link ExposedExecutable} instance.
+	 * The default name for the {@link ExecutableService} instance.
 	 */
-	private final String exposedExecutableName;
+	private final String executableServiceName;
 
 	/**
 	 * Timestamp of when the executable last finished executing successfully, or
@@ -1118,15 +1101,15 @@ public class Executable
 	private final AtomicReference<ExecutionContext> enterableExecutionContext = new AtomicReference<ExecutionContext>();
 
 	/**
-	 * Get the exposed version of the executable.
+	 * Get the exposed service for the executable.
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @return The exposed executable
-	 * @see #getExposedExecutableName()
+	 * @return The executable service
+	 * @see #getExecutableServiceName()
 	 */
-	private ExposedExecutable getExposedExecutable( ExecutionContext executionContext )
+	private ExecutableService getExecutableService( ExecutionContext executionContext )
 	{
-		return (ExposedExecutable) executionContext.getExposedVariables().get( exposedExecutableName );
+		return (ExecutableService) executionContext.getServices().get( executableServiceName );
 	}
 }

@@ -66,7 +66,7 @@ class VelocityProgram extends ProgramBase<VelocityAdapter>
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		RuntimeInstance runtimeInstance = adapter.getRuntimeInstance();
-		VelocityContext velocityContext = new VelocityContext( executionContext.getExposedVariables() );
+		VelocityContext velocityContext = new VelocityContext( executionContext.getServices() );
 
 		SimpleNode nodeTree = nodeTreeReference.get();
 		if( nodeTree == null )

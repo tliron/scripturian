@@ -17,7 +17,7 @@ import com.threecrickets.scripturian.formatter.PygmentsDocumentFormatter;
  * @author Tal Liron
  * @see PygmentsDocumentFormatter
  */
-public class ExposedContainerForPygmentsDocumentFormatter
+public class PygmentsDocumentFormatterContainerService
 {
 	//
 	// Construction
@@ -34,7 +34,7 @@ public class ExposedContainerForPygmentsDocumentFormatter
 	 * @param background
 	 * @param highlight
 	 */
-	public ExposedContainerForPygmentsDocumentFormatter( String text, int lineNumber, String language, String title, String style, String background, String highlight )
+	public PygmentsDocumentFormatterContainerService( String text, int lineNumber, String language, String title, String style, String background, String highlight )
 	{
 		this.text = text;
 		this.lineNumber = lineNumber;

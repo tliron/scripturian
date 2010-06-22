@@ -86,6 +86,6 @@ public class ClojureAdapter extends Jsr223LanguageAdapter
 	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return "(.. " + executable.getExposedExecutableName() + " getContainer (" + containerIncludeExpressionCommand + " " + content + "))";
+		return "(.. " + executable.getExecutableServiceName() + " getContainer (" + containerIncludeExpressionCommand + " " + content + "))";
 	}
 }

@@ -243,7 +243,7 @@ public class ClojureAdapter extends LanguageAdapterBase
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return "(.. " + executable.getExposedExecutableName() + " getContainer (" + containerIncludeExpressionCommand + " " + expression + "))";
+		return "(.. " + executable.getExecutableServiceName() + " getContainer (" + containerIncludeExpressionCommand + " " + expression + "))";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

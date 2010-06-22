@@ -23,46 +23,26 @@ import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
-import com.threecrickets.scripturian.internal.ExposedApplication;
-import com.threecrickets.scripturian.internal.ExposedDocument;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
+import com.threecrickets.scripturian.service.ApplicationService;
+import com.threecrickets.scripturian.service.DocumentService;
+import com.threecrickets.scripturian.service.ExecutableService;
 
 /**
  * Delegates the main() call to an {@link Executable}, in effect using it as the
- * entry point of a Java platform application. The path to the document file can
- * be supplied as the first argument. If it's not supplied,
+ * entry point of a JVM application. The path to the document file can be
+ * supplied as the first argument. If it's not supplied,
  * {@link #defaultDocumentName} is used instead.
  * <p>
  * The executable's standard output is directed to the system standard output.
  * Note that this output is not captured or buffered, and sent directly as the
  * executable runs.
  * <p>
- * A special container environment is exposed to the executable, with some
- * useful services. It is available to code as a global variable named
- * <code>executable.container</code>.
+ * <code>executable</code>, <code>document</code>, and <code>application</code>
+ * are available as global services to executables. See
+ * {@link ExecutableService}, {@link DocumentService} and
+ * {@link ApplicationService}.
  * <p>
- * Operations:
- * <ul>
- * <li><code>executable.container.include(documentName)</code>: Executes another
- * executable, with the language determined according to the document's
- * extension. Note that the executed executable does not have to be in same
- * language as the executing executable.</li>
- * <li><code>executable.container.includeDocument(documentName)</code>: As
- * above, except that the included source code is parsed as a
- * "text-with-scriptlets" executable.</li>
- * </ul>
- * Read-only attributes:
- * <ul>
- * <li><code>executable.container.arguments</code>: An array of the string
- * arguments sent to {@link #main(String[])}</li>
- * </ul>
- * Modifiable attributes:
- * <ul>
- * <li><code>executable.container.defaultLanguageTag</code>: For use with
- * <code>executable.container.includeDocument(documentName)</code>, this is the
- * default language tag used for scriptlets in case none is specified. Defaults
- * to "js".</li>
- * </ul>
  * 
  * @author Tal Liron
  */
@@ -102,8 +82,8 @@ public class Main implements Runnable
 		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "false" ).equals( "true" );
 		initialDocumentName = ScripturianUtil.getNonSwitchArgument( 0, arguments, "default" );
 		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
-		exposedDocumentName = ScripturianUtil.getSwitchArgument( "exposed-document-name", arguments, "document" );
-		exposedApplicationName = ScripturianUtil.getSwitchArgument( "exposed-application-name", arguments, "application" );
+		documentServiceName = ScripturianUtil.getSwitchArgument( "document-service-name", arguments, "document" );
+		applicationServiceName = ScripturianUtil.getSwitchArgument( "application-service-name", arguments, "application" );
 		String basePath = ScripturianUtil.getSwitchArgument( "base-path", arguments, "." );
 		String preferredExtension = ScripturianUtil.getSwitchArgument( "preferred-extension", arguments, "js" );
 		writer = new OutputStreamWriter( System.out );
@@ -254,23 +234,23 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * The name of the document exposed to the executable.
+	 * The name of the document service exposed to the executable.
 	 * 
-	 * @return The exposed name
+	 * @return The exposed service name
 	 */
-	public String getExposedDocumentName()
+	public String getDocumentServiceName()
 	{
-		return exposedDocumentName;
+		return documentServiceName;
 	}
 
 	/**
-	 * The name of the application exposed to the executable.
+	 * The name of the application service exposed to the executable.
 	 * 
-	 * @return The exposed name
+	 * @return The exposed service name
 	 */
-	public String getExposedApplicationName()
+	public String getApplicationServiceName()
 	{
-		return exposedApplicationName;
+		return applicationServiceName;
 	}
 
 	/**
@@ -325,10 +305,10 @@ public class Main implements Runnable
 		ExecutionContext executionContext = new ExecutionContext( getWriter(), getErrorWriter() );
 		try
 		{
-			ExposedDocument exposedDocument = new ExposedDocument( this, executionContext );
-			executionContext.getExposedVariables().put( getExposedDocumentName(), exposedDocument );
-			executionContext.getExposedVariables().put( getExposedApplicationName(), new ExposedApplication( this ) );
-			exposedDocument.execute( initialDocumentName );
+			DocumentService documentService = new DocumentService( this, executionContext );
+			executionContext.getServices().put( getDocumentServiceName(), documentService );
+			executionContext.getServices().put( getApplicationServiceName(), new ApplicationService( this ) );
+			documentService.execute( initialDocumentName );
 			flushWriters();
 		}
 		catch( DocumentException x )
@@ -428,14 +408,14 @@ public class Main implements Runnable
 	private volatile DocumentSource<Executable> documentSource;
 
 	/**
-	 * The name of the document exposed to the executable.
+	 * The name of the document service exposed to the executable.
 	 */
-	private volatile String exposedDocumentName;
+	private volatile String documentServiceName;
 
 	/**
-	 * The name of the application exposed to the executable.
+	 * The name of the application service exposed to the executable.
 	 */
-	private volatile String exposedApplicationName;
+	private volatile String applicationServiceName;
 
 	/**
 	 * The logger.

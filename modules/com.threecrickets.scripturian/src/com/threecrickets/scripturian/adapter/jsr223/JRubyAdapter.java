@@ -85,7 +85,7 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 
 		// Move global vars to instance vars
 		StringBuilder r = new StringBuilder();
-		for( String var : executionContext.getExposedVariables().keySet() )
+		for( String var : executionContext.getServices().keySet() )
 		{
 			r.append( '@' );
 			r.append( var );
@@ -123,7 +123,7 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 		// return "require $" + executable.getDocumentVariableName() +
 		// ".container.source.basePath.toString + '/' + " + content + ";";
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return "$" + executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + content + ");";
+		return "$" + executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + content + ");";
 	}
 
 	@Override

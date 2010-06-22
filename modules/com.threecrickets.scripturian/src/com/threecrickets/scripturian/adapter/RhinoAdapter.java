@@ -155,7 +155,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 * Gets the Rhino scope associated with the Rhino context of the execution
 	 * context, creating it if it doesn't exist. Each execution context is
 	 * guaranteed to have its own Rhino scope. The scope is updated to match the
-	 * writers and exposed variables in the execution context.
+	 * writers and services in the execution context.
 	 * 
 	 * @param executable
 	 *        The executable
@@ -180,12 +180,12 @@ public class RhinoAdapter extends LanguageAdapterBase
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 		}
 
-		String printSource = "function print(s){" + executable.getExposedExecutableName() + ".context.writerOrDefault.write(String(s));" + executable.getExposedExecutableName() + ".context.writerOrDefault.flush();};";
+		String printSource = "function print(s){" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName() + ".context.writerOrDefault.flush();};";
 		Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
 		scope.defineProperty( "print", printFunction, 0 );
 
-		// Define exposed variables as properties in scope
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		// Define services as properties in scope
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 			scope.defineProperty( entry.getKey(), entry.getValue(), ScriptableObject.PERMANENT | ScriptableObject.READONLY );
 
 		return scope;
@@ -220,7 +220,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
+		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

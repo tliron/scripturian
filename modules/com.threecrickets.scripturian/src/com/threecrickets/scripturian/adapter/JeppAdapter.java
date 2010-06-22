@@ -57,8 +57,8 @@ public class JeppAdapter extends LanguageAdapterBase
 	/**
 	 * Gets a Jepp runtime stored in the execution context, creating it if it
 	 * doesn't exist. Each execution context is guaranteed to have its own Jepp
-	 * runtime. The runtime is updated to match the writers and exposed
-	 * variables in the execution context.
+	 * runtime. The runtime is updated to match the writers and services in the
+	 * execution context.
 	 * 
 	 * @param executable
 	 *        The executable
@@ -95,12 +95,12 @@ public class JeppAdapter extends LanguageAdapterBase
 			}
 		}
 
-		// Expose variables in runtime
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		// Expose services in runtime
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 			jeppRuntime.set( entry.getKey(), entry.getValue() );
 
 		// Connect writers to sys
-		jeppRuntime.eval( "sys.stdout=" + executable.getExposedExecutableName() + ".getContext().getWriter();sys.stderr=" + executable.getExposedExecutableName() + ".getContext().getErrorWriter()" );
+		jeppRuntime.eval( "sys.stdout=" + executable.getExecutableServiceName() + ".getContext().getWriter();sys.stderr=" + executable.getExecutableServiceName() + ".getContext().getErrorWriter()" );
 
 		return jeppRuntime;
 	}
@@ -152,7 +152,7 @@ public class JeppAdapter extends LanguageAdapterBase
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return executable.getExposedExecutableName() + ".getContainer()." + containerIncludeExpressionCommand + "(" + expression + ");";
+		return executable.getExecutableServiceName() + ".getContainer()." + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

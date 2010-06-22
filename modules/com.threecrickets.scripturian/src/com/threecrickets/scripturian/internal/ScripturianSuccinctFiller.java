@@ -21,7 +21,7 @@ import com.threecrickets.succinct.filler.BeanMapFillerWrapper;
 
 /**
  * A {@link Filler} that supports Scripturian inclusion scriptlets and getting
- * values from exposed variables via the Java bean mechanism.
+ * values from services via the Java bean mechanism.
  * 
  * @author Tal Liron
  */
@@ -43,7 +43,7 @@ public class ScripturianSuccinctFiller extends BeanMapFillerWrapper
 	 */
 	public ScripturianSuccinctFiller( LanguageManager manager, Executable executable, ExecutionContext executionContext )
 	{
-		super( executionContext.getExposedVariables() );
+		super( executionContext.getServices() );
 		this.manager = manager;
 		this.executable = executable;
 		this.executionContext = executionContext;

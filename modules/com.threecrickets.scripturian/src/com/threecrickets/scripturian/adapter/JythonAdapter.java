@@ -176,7 +176,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	 * Gets a Python interpreter instance stored in the execution context,
 	 * creating it if it doesn't exist. Each execution context is guaranteed to
 	 * have its own Python interpreter. The interpreter is updated to match the
-	 * writers and exposed variables in the execution context.
+	 * writers and services in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context
@@ -226,8 +226,8 @@ public class JythonAdapter extends LanguageAdapterBase
 			}
 		}
 
-		// Expose variables as Python globals
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		// Expose services as Python globals
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 			pythonInterpreter.set( entry.getKey(), entry.getValue() );
 
 		return pythonInterpreter;
@@ -266,7 +266,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
+		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

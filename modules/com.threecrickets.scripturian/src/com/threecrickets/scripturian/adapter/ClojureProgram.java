@@ -208,7 +208,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 		threadBindings.put( Compiler.LINE_AFTER, startLineNumber );
 		threadBindings.put( Compiler.LINE, startLineNumber );
 
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 			threadBindings.put( Var.intern( ns, Symbol.intern( entry.getKey() ) ), entry.getValue() );
 
 		try
@@ -224,7 +224,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 				ClojureAdapter.REFER.invoke( ClojureAdapter.CLOJURE_CORE );
 
 				// Expose context variables as vars in namespace
-				for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+				for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 					Var.intern( ns, Symbol.intern( entry.getKey() ), entry.getValue() );
 
 				Collection<ClojureProgram.Form> forms = formsReference.get();

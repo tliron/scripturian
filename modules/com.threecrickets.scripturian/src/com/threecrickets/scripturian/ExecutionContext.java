@@ -179,22 +179,22 @@ public class ExecutionContext
 	}
 
 	/**
-	 * Variables exposed to executables using this context.
+	 * Services exposed to executables using this context.
 	 * <p>
 	 * Immutable contexts will return an unmodifiable map.
 	 * 
-	 * @return The exposed variables
+	 * @return The exposed services
 	 * @see #isImmutable()
 	 */
-	public Map<String, Object> getExposedVariables()
+	public Map<String, Object> getServices()
 	{
 		if( released )
 			throw new IllegalStateException( "Cannot access released execution context" );
 
 		if( immutable )
-			return Collections.unmodifiableMap( exposedVariables );
+			return Collections.unmodifiableMap( services );
 		else
-			return exposedVariables;
+			return services;
 	}
 
 	/**
@@ -473,9 +473,9 @@ public class ExecutionContext
 	private final List<URI> libraryLocations = new ArrayList<URI>();
 
 	/**
-	 * Variables exposed to executables using this context.
+	 * Services exposed to executables using this context.
 	 */
-	private final Map<String, Object> exposedVariables = new HashMap<String, Object>();
+	private final Map<String, Object> services = new HashMap<String, Object>();
 
 	/**
 	 * Language adapters that have used this context.
@@ -492,7 +492,7 @@ public class ExecutionContext
 	/**
 	 * The default standard output set for executables using this context.
 	 */
-	private static Writer defaultWriter = new OutputStreamWriter( System.out );
+	private static volatile Writer defaultWriter = new OutputStreamWriter( System.out );
 
 	/**
 	 * The standard error set for executables using this context.
@@ -502,7 +502,7 @@ public class ExecutionContext
 	/**
 	 * The default standard output set for executables using this context.
 	 */
-	private static Writer defaultErrorWriter = new OutputStreamWriter( System.err );
+	private static volatile Writer defaultErrorWriter = new OutputStreamWriter( System.err );
 
 	/**
 	 * The last language adapter used by the context.

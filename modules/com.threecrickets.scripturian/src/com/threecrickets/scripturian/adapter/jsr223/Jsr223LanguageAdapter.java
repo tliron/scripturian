@@ -85,7 +85,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 
 		scriptContext.setWriter( executionContext.getWriterOrDefault() );
 		scriptContext.setErrorWriter( executionContext.getErrorWriterOrDefault() );
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 			scriptContext.setAttribute( entry.getKey(), entry.getValue(), ScriptContext.ENGINE_SCOPE );
 
 		return scriptContext;
@@ -430,7 +430,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The content
 	 * @return A command or series of commands to include the script named for
 	 *         the expression
-	 * @see Executable#getExposedExecutableName()
+	 * @see Executable#getExecutableServiceName()
 	 */
 	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String text )
 	{

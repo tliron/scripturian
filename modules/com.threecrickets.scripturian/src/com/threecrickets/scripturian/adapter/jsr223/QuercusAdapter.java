@@ -83,7 +83,7 @@ public class QuercusAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		return "include $" + executable.getExposedExecutableName() + "->container->source->basePath . '/' . " + content + ";";
+		return "include $" + executable.getExecutableServiceName() + "->container->source->basePath . '/' . " + content + ";";
 	}
 
 	@Override

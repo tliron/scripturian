@@ -9,20 +9,21 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.internal;
+package com.threecrickets.scripturian.service;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.internal.GlobalScope;
 
 /**
- * This is the <code>application</code> exposed by {@link Main}.
+ * This is the <code>application</code> service exposed by {@link Main}.
  * 
  * @author Tal Liron
  * @see Main
  */
-public class ExposedApplication
+public class ApplicationService
 {
 	//
 	// Construction
@@ -34,7 +35,7 @@ public class ExposedApplication
 	 * @param main
 	 *        The main instance
 	 */
-	public ExposedApplication( Main main )
+	public ApplicationService( Main main )
 	{
 		this.main = main;
 	}

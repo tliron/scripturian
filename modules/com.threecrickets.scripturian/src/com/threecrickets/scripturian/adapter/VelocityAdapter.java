@@ -105,7 +105,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return "#if($" + executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + expression + "))#end ";
+		return "#if($" + executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + "))#end ";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

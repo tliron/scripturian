@@ -152,8 +152,8 @@ public class GroovyAdapter extends LanguageAdapterBase
 	/**
 	 * Gets a Groovy binding stored in the execution context, creating it if it
 	 * doesn't exist. Each execution context is guaranteed to have its own
-	 * Groovy binding. The binding is updated to match the writers and exposed
-	 * variables in the execution context.
+	 * Groovy binding. The binding is updated to match the writers and services
+	 * in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context
@@ -173,8 +173,8 @@ public class GroovyAdapter extends LanguageAdapterBase
 		binding.setVariable( "out", executionContext.getWriterOrDefault() );
 		binding.setVariable( "err", executionContext.getErrorWriterOrDefault() );
 
-		// Expose variables in binding
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		// Expose services in binding
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 			binding.setVariable( entry.getKey(), entry.getValue() );
 
 		return binding;
@@ -209,7 +209,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
+		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

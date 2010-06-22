@@ -183,7 +183,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 * Gets a Quercus environment stored in the execution context, creating it
 	 * if it doesn't exist. Each execution context is guaranteed to have its own
 	 * Quercus environment. The environment is updated to match the writers and
-	 * exposed variables in the execution context.
+	 * services in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context
@@ -242,8 +242,8 @@ public class QuercusAdapter extends LanguageAdapterBase
 			}
 		}
 
-		// Expose variables as script globals
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		// Expose services as script globals
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 		{
 			// This is the best way to make sure we override Quercus predefined
 			// globals
@@ -284,7 +284,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
-		return "$" + executable.getExposedExecutableName() + "->container->" + containerIncludeExpressionCommand + "(" + expression + ");";
+		return "$" + executable.getExecutableServiceName() + "->container->" + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

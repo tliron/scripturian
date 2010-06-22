@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.internal;
+package com.threecrickets.scripturian.service;
 
 import java.io.IOException;
 
@@ -24,12 +24,12 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
- * This is the <code>document</code> exposed by {@link Main}.
+ * This is the <code>document</code> service exposed by {@link Main}.
  * 
  * @author Tal Liron
  * @see Main
  */
-public class ExposedDocument
+public class DocumentService
 {
 	//
 	// Construction
@@ -43,7 +43,7 @@ public class ExposedDocument
 	 * @param executionContext
 	 *        The execution context
 	 */
-	public ExposedDocument( Main main, ExecutionContext executionContext )
+	public DocumentService( Main main, ExecutionContext executionContext )
 	{
 		this.main = main;
 		this.executionContext = executionContext;

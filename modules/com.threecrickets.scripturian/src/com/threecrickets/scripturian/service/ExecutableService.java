@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.internal;
+package com.threecrickets.scripturian.service;
 
 import java.io.Writer;
 import java.util.concurrent.ConcurrentMap;
@@ -17,15 +17,16 @@ import java.util.concurrent.ConcurrentMap;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageManager;
+import com.threecrickets.scripturian.internal.GlobalScope;
 
 /**
- * This is the <code>executable</code> variable exposed to the executable. The
- * name is set according to {@link Executable#getExposedExecutableName()}.
+ * This is the <code>executable</code> service exposed to the executable. The
+ * name is set according to {@link Executable#getExecutableServiceName()}.
  * 
  * @author Tal Liron
  * @see Executable
  */
-public class ExposedExecutable
+public class ExecutableService
 {
 	//
 	// Construction
@@ -42,7 +43,7 @@ public class ExposedExecutable
 	 * @param container
 	 *        The container or null
 	 */
-	public ExposedExecutable( ExecutionContext executionContext, LanguageManager manager, Object container )
+	public ExecutableService( ExecutionContext executionContext, LanguageManager manager, Object container )
 	{
 		this.executionContext = executionContext;
 		this.manager = manager;

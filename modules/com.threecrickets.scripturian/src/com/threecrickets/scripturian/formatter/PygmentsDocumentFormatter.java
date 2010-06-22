@@ -22,7 +22,7 @@ import javax.script.ScriptException;
 
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentFormatter;
-import com.threecrickets.scripturian.internal.ExposedContainerForPygmentsDocumentFormatter;
+import com.threecrickets.scripturian.internal.PygmentsDocumentFormatterContainerService;
 
 /**
  * Use <a href="http://pygments.org/">Pygments</a> over Jython to format source
@@ -87,7 +87,7 @@ public class PygmentsDocumentFormatter<D> implements DocumentFormatter<D>
 		if( language == null )
 			return documentDescriptor.getSourceCode();
 
-		ExposedContainerForPygmentsDocumentFormatter container = new ExposedContainerForPygmentsDocumentFormatter( documentDescriptor.getSourceCode(), highlightLineNumber, language, title, theme, "#dddddd", "#dddd00" );
+		PygmentsDocumentFormatterContainerService container = new PygmentsDocumentFormatterContainerService( documentDescriptor.getSourceCode(), highlightLineNumber, language, title, theme, "#dddddd", "#dddd00" );
 		ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 		ScriptEngine scriptEngine = scriptEngineManager.getEngineByName( "python" );
 		ScriptContext scriptContext = scriptEngine.getContext();

@@ -181,7 +181,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 	 * Gets a Ruby runtime instance stored in the execution context, creating it
 	 * if it doesn't exist. Each execution context is guaranteed to have its own
 	 * Ruby runtime. The runtime instance is updated to match the writers and
-	 * exposed variables in the execution context.
+	 * services in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context
@@ -244,8 +244,8 @@ public class JRubyAdapter extends LanguageAdapterBase
 			}
 		}
 
-		// Expose variables as Ruby globals
-		for( Map.Entry<String, Object> entry : executionContext.getExposedVariables().entrySet() )
+		// Expose services as Ruby globals
+		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 		{
 			// Note that we're using the shared compilerRuntime to do the
 			// conversions, so that we can cache Java proxies. It's very, very
@@ -288,7 +288,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
 		containerIncludeExpressionCommand = toRubyStyle( containerIncludeExpressionCommand );
-		return "$" + executable.getExposedExecutableName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
+		return "$" + executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

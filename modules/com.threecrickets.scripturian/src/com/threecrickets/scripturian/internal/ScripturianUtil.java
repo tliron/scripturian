@@ -296,7 +296,7 @@ public abstract class ScripturianUtil
 	 */
 	public static void containerInclude( LanguageManager manager, Executable executable, ExecutionContext executionContext, String documentName )
 	{
-		Object container = executable.getExposedContainer( executionContext );
+		Object container = executable.getContainerService( executionContext );
 		if( container != null )
 		{
 			Class<?> containerClass = container.getClass();
