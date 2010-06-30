@@ -319,6 +319,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		{
 			for( File file : files )
 			{
+				if( file.isHidden() )
+					continue;
+
 				if( file.isDirectory() )
 					// Recurse
 					list.addAll( getDocumentDescriptors( file ) );
