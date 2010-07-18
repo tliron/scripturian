@@ -60,7 +60,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		this.defaultName = defaultName;
 		this.preferredExtension = preferredExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
-		defaultNameFilter = new StartsWithFilter( defaultName );
+		defaultNameFilter = new ExtensionInsensitiveFilter( defaultName );
 	}
 
 	/**
@@ -351,29 +351,38 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * Filters all filenames that start with a prefix.
+	 * Filters all filenames while ignoring their extension.
 	 * 
 	 * @author Tal Liron
 	 */
-	private static class StartsWithFilter implements FilenameFilter
+	private static class ExtensionInsensitiveFilter implements FilenameFilter
 	{
-		private final String prefix;
+		private final String nameWithoutExtension;
 
-		private StartsWithFilter( String prefix )
+		private final int nameWithoutExtensionLength;
+
+		private ExtensionInsensitiveFilter( String nameWithoutExtension )
 		{
-			this.prefix = prefix + ".";
+			this.nameWithoutExtension = nameWithoutExtension;
+			nameWithoutExtensionLength = nameWithoutExtension.length();
 		}
 
 		public boolean accept( File dir, String name )
 		{
-			return name.startsWith( prefix );
+			if( name.startsWith( nameWithoutExtension ) )
+			{
+				int lastPeriod = name.lastIndexOf( '.' );
+				if( ( lastPeriod == -1 ) || ( lastPeriod == nameWithoutExtensionLength ) )
+					return true;
+			}
+			return false;
 		}
 	}
 
 	/**
-	 * Filters all filenames that start with a prefix.
+	 * Filters all filenames while ignoring their extension.
 	 */
-	private final StartsWithFilter defaultNameFilter;
+	private final ExtensionInsensitiveFilter defaultNameFilter;
 
 	/**
 	 * Returns a non-directory file, treating the document name as if it were a
@@ -413,7 +422,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			// Return a file with our name
 
 			File directory = file.getParentFile();
-			File[] filesWithName = directory.listFiles( new StartsWithFilter( file.getName() ) );
+			File[] filesWithName = directory.listFiles( new ExtensionInsensitiveFilter( file.getName() ) );
 			if( ( filesWithName != null ) && ( filesWithName.length > 0 ) )
 			{
 				// Look for preferred extension
