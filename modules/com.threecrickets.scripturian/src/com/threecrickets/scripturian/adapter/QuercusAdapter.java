@@ -173,6 +173,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 
 		quercusRuntime = new Quercus();
 		quercusRuntime.init();
+		quercusRuntime.start();
 	}
 
 	//
@@ -249,7 +250,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 			// globals
 			EnvVar var = new EnvVarImpl( new Var() );
 			var.set( environment.wrapJava( entry.getValue() ) );
-			environment.getGlobalEnv().put( entry.getKey(), var );
+			environment.getGlobalEnv().put( environment.createString( entry.getKey() ), var );
 		}
 
 		return environment;
