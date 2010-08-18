@@ -441,6 +441,38 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
+	 * Removes the file descriptor.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param filedDocumentDescriptor
+	 *        The document descriptor
+	 * @return The document descriptor or null if it was removed
+	 */
+	private FiledDocumentDescriptor<D> remove( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
+	{
+		if( filedDocumentDescriptors.remove( documentName, filedDocumentDescriptor ) )
+		{
+			if( filedDocumentDescriptor.file != null )
+				// This is atomically safe, because we'll only get here once
+				filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file );
+
+			// Remove dependents (recursive)
+			for( String dependentDocumentName : filedDocumentDescriptor.getDependents() )
+			{
+				File file = getFileForDocumentName( dependentDocumentName );
+				FiledDocumentDescriptor<D> dependentFiledDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
+				if( dependentFiledDocumentDescriptor != null )
+					remove( dependentDocumentName, dependentFiledDocumentDescriptor );
+			}
+
+			filedDocumentDescriptor = null;
+		}
+
+		return filedDocumentDescriptor;
+	}
+
+	/**
 	 * Removes a file descriptor if it is no longer valid.
 	 * 
 	 * @param documentName
@@ -451,18 +483,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	private FiledDocumentDescriptor<D> removeIfInvalid( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
 	{
-		// Make sure the existing descriptor is valid
 		if( !filedDocumentDescriptor.isValid() )
-		{
-			// Remove invalid descriptor if it's still there
-			if( filedDocumentDescriptors.remove( documentName, filedDocumentDescriptor ) )
-			{
-				if( filedDocumentDescriptor.file != null )
-					// This is atomically safe, because we'll only get here once
-					filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file );
-			}
-			filedDocumentDescriptor = null;
-		}
+			filedDocumentDescriptor = remove( documentName, filedDocumentDescriptor );
 
 		return filedDocumentDescriptor;
 	}

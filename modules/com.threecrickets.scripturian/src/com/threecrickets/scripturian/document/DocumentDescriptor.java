@@ -11,6 +11,8 @@
 
 package com.threecrickets.scripturian.document;
 
+import java.util.Set;
+
 /**
  * Document descriptors are provided by a {@link DocumentSource} as a way to
  * describe and access documents.
@@ -52,7 +54,7 @@ public interface DocumentDescriptor<D>
 
 	/**
 	 * The document instance. Should be null by default, as it is intended to be
-	 * set by the user of the {@link DocumentSource},
+	 * set by the user of the {@link DocumentSource}.
 	 * 
 	 * @return The document instance
 	 */
@@ -77,9 +79,19 @@ public interface DocumentDescriptor<D>
 	public D setDocumentIfAbsent( D document );
 
 	/**
-	 * The document source from whence this document came
+	 * The document source from whence this document came.
 	 * 
 	 * @return The document source
 	 */
 	public DocumentSource<D> getSource();
+
+	/**
+	 * Dependent documents might be affected in some way (for example, reloaded,
+	 * recompiled, etc.) if this document is affected. The exact effect depends
+	 * on the implementation of the document, the document source, or other
+	 * mechanisms.
+	 * 
+	 * @return The names of dependent documents
+	 */
+	public Set<String> getDependents();
 }

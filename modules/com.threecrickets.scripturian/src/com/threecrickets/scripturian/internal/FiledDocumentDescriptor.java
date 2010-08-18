@@ -14,6 +14,8 @@ package com.threecrickets.scripturian.internal;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -218,6 +220,11 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		return documentSource;
 	}
 
+	public Set<String> getDependents()
+	{
+		return dependents;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
@@ -230,6 +237,11 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 * Lock for access to {@link #document}.
 	 */
 	private final ReadWriteLock documentLock = new ReentrantReadWriteLock();
+
+	/**
+	 * Dependent documents.
+	 */
+	private final Set<String> dependents = new CopyOnWriteArraySet<String>();
 
 	/**
 	 * The document.
