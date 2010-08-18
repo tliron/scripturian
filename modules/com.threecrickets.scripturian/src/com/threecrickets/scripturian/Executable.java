@@ -133,7 +133,8 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * <p>
  * Examples:
  * <ul>
- * <li><b>JSP/ASP-style delimiters</b>: <code>&lt;% print('Hello World'); %&gt;</code></li>
+ * <li><b>JSP/ASP-style delimiters</b>:
+ * <code>&lt;% print('Hello World'); %&gt;</code></li>
  * <li><b>PHP-style delimiters</b>: <code>&lt;? document.cacheDuration.set 5000
  * ?&gt;</code></li>
  * <li><b>Specifying a language tag</b>:
@@ -142,7 +143,9 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * <li><b>Output expression</b>: <code>&lt;?= 15 * 6 ?&gt;</code></li>
  * <li><b>Output expression with specifying a language tag</b>:
  * <code>&lt;?=js sqrt(myVariable) ?&gt;</code></li>
- * <li><b>Include</b>: <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' ?&gt;</code></li>
+ * <li><b>Include</b>:
+ * <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' ?&gt;</code>
+ * </li>
  * <li><b>In-flow</b>:
  * <code>&lt;%js if(isDebug) { %&gt; &lt;%:python dumpStack(); %&gt; &lt;% } %&gt;</code>
  * </li>
@@ -315,8 +318,8 @@ public class Executable
 	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare ) throws ParsingException,
 		DocumentException
 	{
-		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, manager, manager.getLanguageTagByExtension( documentDescriptor
-			.getDefaultName(), documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
+		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, manager, manager.getLanguageTagByExtension(
+			documentDescriptor.getDefaultName(), documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
 	}
 
 	/**
@@ -909,9 +912,9 @@ public class Executable
 					if( !adapter.isThreadSafe() )
 						adapter.getLock().lock();
 
-					Object oldExposedExecutable = null;
+					Object oldExecutableService = null;
 					if( !executionContext.isImmutable() )
-						oldExposedExecutable = executionContext.getServices().put( executableServiceName, new ExecutableService( executionContext, manager, containerService ) );
+						oldExecutableService = executionContext.getServices().put( executableServiceName, new ExecutableService( executionContext, manager, containerService ) );
 
 					try
 					{
@@ -919,8 +922,8 @@ public class Executable
 					}
 					finally
 					{
-						if( !executionContext.isImmutable() && oldExposedExecutable != null )
-							executionContext.getServices().put( executableServiceName, oldExposedExecutable );
+						if( !executionContext.isImmutable() && oldExecutableService != null )
+							executionContext.getServices().put( executableServiceName, oldExecutableService );
 
 						if( !adapter.isThreadSafe() )
 							adapter.getLock().unlock();
