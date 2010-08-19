@@ -24,6 +24,8 @@ import com.threecrickets.scripturian.internal.FiledDocumentDescriptor;
 /**
  * Reads document stored in files under a base directory. The file contents are
  * cached, and checked for validity according to their modification timestamps.
+ * The validity check is cascaded according to the dependency tree (see
+ * {@link DocumentDescriptor#getDependencies()}.
  * <p>
  * Documents added to the file source exist only in memory, and are not actually
  * saved to a file.

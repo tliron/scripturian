@@ -103,9 +103,12 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	/**
 	 * Whether the document is valid. Calling this method will sometimes cause a
 	 * validity check.
+	 * <p>
+	 * Note that the validity check will cascade to document we depend on.
 	 * 
 	 * @return Whether the document is valid
 	 * @see DocumentFileSource#getMinimumTimeBetweenValidityChecks()
+	 * @see DocumentDescriptor#getDependencies()
 	 */
 	public boolean isValid()
 	{
