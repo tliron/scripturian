@@ -109,14 +109,37 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 */
 	public boolean isValid()
 	{
+		// Check cached validity
+		Boolean validity = this.validity;
+		if( validity != null )
+			return validity;
+
+		// If any of our dependencies is invalid, then so are we
+		for( String documentName : dependencies )
+		{
+			FiledDocumentDescriptor<D> filedDocumentDescriptor = documentSource.getCachedDocumentDescriptor( documentName );
+			if( ( filedDocumentDescriptor != null ) && !filedDocumentDescriptor.isValid() )
+			{
+				this.validity = false;
+				return false;
+			}
+		}
+
+		// Always valid if in-memory document
 		if( file == null )
-			// Always valid if in-memory document
+		{
+			this.validity = true;
 			return true;
+		}
 
 		long minimumTimeBetweenValidityChecks = documentSource.getMinimumTimeBetweenValidityChecks();
+
+		// -1 means don't check for validity
 		if( minimumTimeBetweenValidityChecks == -1 )
-			// -1 means never check for validity
+		{
+			// Valid, for now (might not be later)
 			return true;
+		}
 
 		long now = System.currentTimeMillis();
 
@@ -125,10 +148,24 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		{
 			// Check for validity
 			lastValidityCheckTimestamp = now;
-			return file.lastModified() <= timestamp;
+			boolean isValid = file.lastModified() <= timestamp;
+			if( isValid )
+			{
+				// Valid, for now (might not be later)
+				return true;
+			}
+			else
+			{
+				// Invalid
+				this.validity = false;
+				return false;
+			}
 		}
 		else
+		{
+			// Valid, for now (might not be later)
 			return true;
+		}
 	}
 
 	//
@@ -220,9 +257,9 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		return documentSource;
 	}
 
-	public Set<String> getDependents()
+	public Set<String> getDependencies()
 	{
-		return dependents;
+		return dependencies;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -239,9 +276,9 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	private final ReadWriteLock documentLock = new ReentrantReadWriteLock();
 
 	/**
-	 * Dependent documents.
+	 * Dependencies.
 	 */
-	private final Set<String> dependents = new CopyOnWriteArraySet<String>();
+	private final Set<String> dependencies = new CopyOnWriteArraySet<String>();
 
 	/**
 	 * The document.
@@ -274,4 +311,9 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 * The timestamp of the last validity check.
 	 */
 	private volatile long lastValidityCheckTimestamp;
+
+	/**
+	 * Cached validity.
+	 */
+	private volatile Boolean validity;
 }

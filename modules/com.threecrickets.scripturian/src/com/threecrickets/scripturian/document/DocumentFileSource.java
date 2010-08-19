@@ -182,6 +182,28 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return file.getPath().substring( basePathLength );
 	}
 
+	/**
+	 * Gets a document descriptor for the document if it's in the cache.
+	 * Otherwise, returns null.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @return The document descriptor or null
+	 */
+	public FiledDocumentDescriptor<D> getCachedDocumentDescriptor( String documentName )
+	{
+		// See if we have a descriptor for this name
+		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptors.get( documentName );
+		if( filedDocumentDescriptor != null )
+			return filedDocumentDescriptor;
+
+		File file = getFileForDocumentName( documentName );
+
+		// See if we have a descriptor for this file
+		filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
+		return filedDocumentDescriptor;
+	}
+
 	//
 	// DocumentSource
 	//
@@ -441,38 +463,6 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * Removes the file descriptor.
-	 * 
-	 * @param documentName
-	 *        The document name
-	 * @param filedDocumentDescriptor
-	 *        The document descriptor
-	 * @return The document descriptor or null if it was removed
-	 */
-	private FiledDocumentDescriptor<D> remove( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
-	{
-		if( filedDocumentDescriptors.remove( documentName, filedDocumentDescriptor ) )
-		{
-			if( filedDocumentDescriptor.file != null )
-				// This is atomically safe, because we'll only get here once
-				filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file );
-
-			// Remove dependents (recursive)
-			for( String dependentDocumentName : filedDocumentDescriptor.getDependents() )
-			{
-				File file = getFileForDocumentName( dependentDocumentName );
-				FiledDocumentDescriptor<D> dependentFiledDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
-				if( dependentFiledDocumentDescriptor != null )
-					remove( dependentDocumentName, dependentFiledDocumentDescriptor );
-			}
-
-			filedDocumentDescriptor = null;
-		}
-
-		return filedDocumentDescriptor;
-	}
-
-	/**
 	 * Removes a file descriptor if it is no longer valid.
 	 * 
 	 * @param documentName
@@ -484,7 +474,17 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	private FiledDocumentDescriptor<D> removeIfInvalid( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
 	{
 		if( !filedDocumentDescriptor.isValid() )
-			filedDocumentDescriptor = remove( documentName, filedDocumentDescriptor );
+		{
+			if( filedDocumentDescriptors.remove( documentName, filedDocumentDescriptor ) )
+			{
+				if( filedDocumentDescriptor.file != null )
+					// This is atomically safe, because we'll only get here
+					// once, due to the "remove" above
+					filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file );
+
+				filedDocumentDescriptor = null;
+			}
+		}
 
 		return filedDocumentDescriptor;
 	}
