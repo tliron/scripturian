@@ -483,9 +483,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 					// This is atomically safe, because we'll only get here
 					// once, due to the "remove" above
 					filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file );
-
-				filedDocumentDescriptor = null;
 			}
+
+			filedDocumentDescriptor = null;
 		}
 
 		return filedDocumentDescriptor;
