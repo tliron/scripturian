@@ -112,28 +112,27 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 */
 	public boolean isValid()
 	{
+		// Once invalid, always invalid
+		if( invalid )
+			return false;
+
 		// If any of our dependencies is invalid, then so are we
-		for( String documentName : dependencies )
+		for( DocumentDescriptor<D> documentDescriptor : dependencies )
 		{
-			FiledDocumentDescriptor<D> filedDocumentDescriptor = documentSource.getCachedDocumentDescriptor( documentName );
-			if( ( filedDocumentDescriptor != null ) && !filedDocumentDescriptor.isValid() )
+			if( documentDescriptor instanceof FiledDocumentDescriptor<?> )
 			{
-				this.validity = false;
-				return false;
+				FiledDocumentDescriptor<D> filedDocumentDescriptor = (FiledDocumentDescriptor<D>) documentDescriptor;
+				if( !filedDocumentDescriptor.isValid() )
+				{
+					invalid = true;
+					return false;
+				}
 			}
 		}
 
-		// Check cached validity
-		Boolean validity = this.validity;
-		if( validity != null )
-			return validity;
-
-		// Always valid if in-memory document
+		// No validity checks for in-memory documents
 		if( file == null )
-		{
-			this.validity = true;
 			return true;
-		}
 
 		long minimumTimeBetweenValidityChecks = documentSource.getMinimumTimeBetweenValidityChecks();
 
@@ -151,8 +150,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		{
 			// Check for validity
 			lastValidityCheckTimestamp = now;
-			boolean isValid = file.lastModified() <= timestamp;
-			if( isValid )
+			if( file.lastModified() <= timestamp )
 			{
 				// Valid, for now (might not be later)
 				return true;
@@ -160,7 +158,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 			else
 			{
 				// Invalid
-				this.validity = false;
+				invalid = true;
 				return false;
 			}
 		}
@@ -169,6 +167,14 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 			// Valid, for now (might not be later)
 			return true;
 		}
+	}
+
+	/**
+	 * Invalidate.
+	 */
+	public void invalidate()
+	{
+		invalid = true;
 	}
 
 	//
@@ -260,7 +266,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		return documentSource;
 	}
 
-	public Set<String> getDependencies()
+	public Set<DocumentDescriptor<D>> getDependencies()
 	{
 		return dependencies;
 	}
@@ -279,9 +285,9 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	private final ReadWriteLock documentLock = new ReentrantReadWriteLock();
 
 	/**
-	 * Dependencies.
+	 * The dependencies.
 	 */
-	private final Set<String> dependencies = new CopyOnWriteArraySet<String>();
+	private final Set<DocumentDescriptor<D>> dependencies = new CopyOnWriteArraySet<DocumentDescriptor<D>>();
 
 	/**
 	 * The document.
@@ -318,5 +324,5 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	/**
 	 * Cached validity.
 	 */
-	private volatile Boolean validity;
+	private volatile boolean invalid;
 }

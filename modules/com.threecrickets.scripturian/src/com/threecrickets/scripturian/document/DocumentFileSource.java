@@ -195,7 +195,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public FiledDocumentDescriptor<D> getCachedDocumentDescriptor( String documentName )
 	{
 		// See if we have a descriptor for this name
-		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptors.get( documentName );
+		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptorsByAlias.get( documentName );
 		if( filedDocumentDescriptor != null )
 			return filedDocumentDescriptor;
 
@@ -222,9 +222,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public DocumentDescriptor<D> getDocument( String documentName ) throws DocumentException
 	{
 		// See if we already have a descriptor for this name
-		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptors.get( documentName );
+		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptorsByAlias.get( documentName );
 		if( filedDocumentDescriptor != null )
-			filedDocumentDescriptor = removeIfInvalid( documentName, filedDocumentDescriptor );
+			filedDocumentDescriptor = validateDocumentDescriptor( documentName, filedDocumentDescriptor );
 
 		if( filedDocumentDescriptor == null )
 		{
@@ -233,18 +233,19 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			// See if we already have a descriptor for this file
 			filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
 			if( filedDocumentDescriptor != null )
-				filedDocumentDescriptor = removeIfInvalid( documentName, filedDocumentDescriptor );
+				filedDocumentDescriptor = validateDocumentDescriptor( null, filedDocumentDescriptor );
 
 			if( filedDocumentDescriptor == null )
 			{
 				// Create a new descriptor
 				filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file );
-				FiledDocumentDescriptor<D> existing = filedDocumentDescriptors.putIfAbsent( documentName, filedDocumentDescriptor );
+				FiledDocumentDescriptor<D> existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
 				if( existing != null )
 					filedDocumentDescriptor = existing;
 				else
 					// This is atomically safe, because we'll only get here once
-					filedDocumentDescriptorsByFile.put( file, filedDocumentDescriptor );
+					// (due to the putIfAbsent above)
+					filedDocumentDescriptorsByAlias.put( documentName, filedDocumentDescriptor );
 			}
 		}
 
@@ -256,7 +257,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document ) throws DocumentException
 	{
-		return filedDocumentDescriptors.put( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
+		return filedDocumentDescriptorsByAlias.put( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
 	}
 
 	/**
@@ -264,7 +265,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document ) throws DocumentException
 	{
-		return filedDocumentDescriptors.putIfAbsent( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
+		return filedDocumentDescriptorsByAlias.putIfAbsent( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
 	}
 
 	/**
@@ -272,7 +273,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public Collection<DocumentDescriptor<D>> getDocuments()
 	{
-		return getDocumentDescriptors( basePath );
+		return collectDocumentDescriptors( basePath );
 	}
 
 	/**
@@ -289,7 +290,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * The document descriptors.
 	 */
-	private final ConcurrentMap<String, FiledDocumentDescriptor<D>> filedDocumentDescriptors = new ConcurrentHashMap<String, FiledDocumentDescriptor<D>>();
+	private final ConcurrentMap<String, FiledDocumentDescriptor<D>> filedDocumentDescriptorsByAlias = new ConcurrentHashMap<String, FiledDocumentDescriptor<D>>();
 
 	/**
 	 * The document descriptors.
@@ -334,7 +335,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        The base path
 	 * @return The document descriptors
 	 */
-	private Collection<DocumentDescriptor<D>> getDocumentDescriptors( File basePath )
+	private Collection<DocumentDescriptor<D>> collectDocumentDescriptors( File basePath )
 	{
 		ArrayList<DocumentDescriptor<D>> list = new ArrayList<DocumentDescriptor<D>>();
 
@@ -348,7 +349,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 				if( file.isDirectory() )
 					// Recurse
-					list.addAll( getDocumentDescriptors( file ) );
+					list.addAll( collectDocumentDescriptors( file ) );
 				else
 				{
 					FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
@@ -465,7 +466,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * Removes a file descriptor if it is no longer valid.
+	 * Removes a document descriptor if it is invalid. Not absolutely necessary,
+	 * but can save some memory.
 	 * 
 	 * @param documentName
 	 *        The document name
@@ -473,17 +475,17 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        The document descriptor
 	 * @return The document descriptor or null if it was removed
 	 */
-	private FiledDocumentDescriptor<D> removeIfInvalid( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
+	private FiledDocumentDescriptor<D> validateDocumentDescriptor( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
 	{
 		if( !filedDocumentDescriptor.isValid() )
 		{
-			if( filedDocumentDescriptors.remove( documentName, filedDocumentDescriptor ) )
-			{
-				if( filedDocumentDescriptor.file != null )
-					// This is atomically safe, because we'll only get here
-					// once, due to the "remove" above
-					filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file );
-			}
+			// Remove by alias
+			if( documentName != null )
+				filedDocumentDescriptorsByAlias.remove( documentName, filedDocumentDescriptor );
+
+			// Remove by file
+			if( filedDocumentDescriptor.file != null )
+				filedDocumentDescriptorsByFile.remove( filedDocumentDescriptor.file, filedDocumentDescriptor );
 
 			filedDocumentDescriptor = null;
 		}

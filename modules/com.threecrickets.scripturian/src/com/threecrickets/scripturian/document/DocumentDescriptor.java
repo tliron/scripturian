@@ -91,7 +91,7 @@ public interface DocumentDescriptor<D>
 	 * effect depends on the implementation of the document, the document
 	 * source, or other mechanisms.
 	 * 
-	 * @return The names of dependent documents
+	 * @return The dependent document descriptors
 	 */
-	public Set<String> getDependencies();
+	public Set<DocumentDescriptor<D>> getDependencies();
 }
