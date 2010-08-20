@@ -112,11 +112,6 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 */
 	public boolean isValid()
 	{
-		// Check cached validity
-		Boolean validity = this.validity;
-		if( validity != null )
-			return validity;
-
 		// If any of our dependencies is invalid, then so are we
 		for( String documentName : dependencies )
 		{
@@ -127,6 +122,11 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 				return false;
 			}
 		}
+
+		// Check cached validity
+		Boolean validity = this.validity;
+		if( validity != null )
+			return validity;
 
 		// Always valid if in-memory document
 		if( file == null )
