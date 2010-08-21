@@ -68,26 +68,35 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 *        The document source
 	 * @param file
 	 *        The file
+	 * @param read
+	 *        Whether to read the source code from the file
 	 * @throws DocumentException
 	 */
-	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file ) throws DocumentException
+	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file, boolean read ) throws DocumentException
 	{
 		this.documentSource = documentSource;
 		this.defaultName = documentSource.getRelativeFilePath( file );
 		this.file = file;
 		timestamp = file.lastModified();
-		try
+
+		if( read )
 		{
-			sourceCode = ScripturianUtil.getString( file );
+			try
+			{
+				sourceCode = ScripturianUtil.getString( file );
+			}
+			catch( FileNotFoundException x )
+			{
+				throw new DocumentNotFoundException( "Could not find file " + file, x );
+			}
+			catch( IOException x )
+			{
+				throw new DocumentException( "Could not read file " + file, x );
+			}
 		}
-		catch( FileNotFoundException x )
-		{
-			throw new DocumentNotFoundException( "Could not find file " + file, x );
-		}
-		catch( IOException x )
-		{
-			throw new DocumentException( "Could not read file " + file, x );
-		}
+		else
+			sourceCode = null;
+
 		tag = ScripturianUtil.getExtension( file );
 	}
 
@@ -167,14 +176,6 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 			// Valid, for now (might not be later)
 			return true;
 		}
-	}
-
-	/**
-	 * Invalidate.
-	 */
-	public void invalidate()
-	{
-		invalid = true;
 	}
 
 	//
@@ -269,6 +270,11 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	public Set<DocumentDescriptor<D>> getDependencies()
 	{
 		return dependencies;
+	}
+
+	public void invalidate()
+	{
+		invalid = true;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

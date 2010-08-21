@@ -94,4 +94,12 @@ public interface DocumentDescriptor<D>
 	 * @return The dependent document descriptors
 	 */
 	public Set<DocumentDescriptor<D>> getDependencies();
+
+	/**
+	 * Invalidates the descriptor. This might affect documents that depend on
+	 * it.
+	 * 
+	 * @see #getDependencies()
+	 */
+	public void invalidate();
 }

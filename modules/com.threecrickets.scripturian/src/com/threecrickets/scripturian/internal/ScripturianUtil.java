@@ -14,9 +14,8 @@ package com.threecrickets.scripturian.internal;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -69,7 +68,7 @@ public abstract class ScripturianUtil
 	 */
 	public static String getString( Reader reader ) throws IOException
 	{
-		StringWriter writer = new StringWriter();
+		StringWriter writer = new StringWriter( BUFFER_SIZE );
 		int c;
 		while( true )
 		{
@@ -84,7 +83,7 @@ public abstract class ScripturianUtil
 	}
 
 	/**
-	 * Reads a file into a string. Uses a buffer (see {@link #BUFFER_SIZE}).
+	 * Reads a file into a string. Buffer size is {@link #BUFFER_SIZE}.
 	 * 
 	 * @param file
 	 *        The file
@@ -93,12 +92,27 @@ public abstract class ScripturianUtil
 	 */
 	public static String getString( File file ) throws IOException
 	{
-		BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream( file ) ), BUFFER_SIZE );
-		return getString( reader );
+		FileReader fileReader = new FileReader( file );
+		try
+		{
+			BufferedReader reader = new BufferedReader( fileReader, BUFFER_SIZE );
+			try
+			{
+				return getString( reader );
+			}
+			finally
+			{
+				reader.close();
+			}
+		}
+		finally
+		{
+			fileReader.close();
+		}
 	}
 
 	/**
-	 * Reads a file into a bute array.
+	 * Reads a file into a byte array.
 	 * 
 	 * @param file
 	 *        The file
@@ -107,36 +121,28 @@ public abstract class ScripturianUtil
 	 */
 	public static byte[] getBytes( File file ) throws IOException
 	{
-		InputStream is = new FileInputStream( file );
+		FileInputStream stream = new FileInputStream( file );
 
-		// Get the size of the file
-		long length = file.length();
-
-		if( length > Integer.MAX_VALUE )
+		try
 		{
-			// File is too large
+			long length = file.length();
+
+			if( length > Integer.MAX_VALUE )
+				throw new IOException( "File too big: " + file.getName() );
+
+			int ilength = (int) length;
+			byte[] bytes = new byte[ilength];
+			int alength = stream.read( bytes );
+
+			if( alength != ilength )
+				throw new IOException( "Only " + alength + " of " + ilength + " bytes read: " + file.getName() );
+
+			return bytes;
 		}
-
-		// Create the byte array to hold the data
-		byte[] bytes = new byte[(int) length];
-
-		// Read in the bytes
-		int offset = 0;
-		int numRead = 0;
-		while( offset < bytes.length && ( numRead = is.read( bytes, offset, bytes.length - offset ) ) >= 0 )
+		finally
 		{
-			offset += numRead;
+			stream.close();
 		}
-
-		// Ensure all the bytes have been read in
-		if( offset < bytes.length )
-		{
-			throw new IOException( "Could not completely read file " + file.getName() );
-		}
-
-		// Close the input stream and return bytes
-		is.close();
-		return bytes;
 	}
 
 	/**
@@ -300,7 +306,7 @@ public abstract class ScripturianUtil
 		if( container != null )
 		{
 			Class<?> containerClass = container.getClass();
-			Method includeMethod = includeMethods.get( container.getClass() );
+			Method includeMethod = includeMethods.get( containerClass );
 			if( includeMethod == null )
 			{
 				String containerIncludeExpressionCommand = (String) manager.getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

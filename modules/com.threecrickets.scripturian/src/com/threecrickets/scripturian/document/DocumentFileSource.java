@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.threecrickets.scripturian.exception.DocumentException;
+import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 import com.threecrickets.scripturian.internal.FiledDocumentDescriptor;
 
 /**
@@ -199,27 +200,33 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		if( filedDocumentDescriptor != null )
 			return filedDocumentDescriptor;
 
-		File file = getFileForDocumentName( documentName );
+		try
+		{
+			File file = getFileForDocumentName( documentName );
 
-		// See if we have a descriptor for this file
-		filedDocumentDescriptor = filedDocumentDescriptorsByFile.get( file );
-		return filedDocumentDescriptor;
+			// See if we have a descriptor for this file
+			return filedDocumentDescriptorsByFile.get( file );
+		}
+		catch( DocumentNotFoundException x )
+		{
+			return null;
+		}
 	}
 
-	//
-	// DocumentSource
-	//
-
 	/**
-	 * This implementation caches the document descriptor, including the
-	 * document instance stored in it. The cached descriptor will be reset if
-	 * the document file is updated since the last call. In order to avoid
-	 * checking this every time this method is called, use
-	 * {@link #setMinimumTimeBetweenValidityChecks(long)}.
+	 * Gets the document descriptor, with support for caching descriptors. The
+	 * cached descriptor will be reset if the document file is updated since the
+	 * last call. In order to avoid checking this every time this method is
+	 * called, use {@link #setMinimumTimeBetweenValidityChecks(long)}.
 	 * 
-	 * @see DocumentSource#getDocument(String)
+	 * @param documentName
+	 *        The document name
+	 * @param read
+	 *        Whether to read the source code from the file
+	 * @return
+	 * @throws DocumentException
 	 */
-	public DocumentDescriptor<D> getDocument( String documentName ) throws DocumentException
+	public DocumentDescriptor<D> getDocument( String documentName, boolean read ) throws DocumentException
 	{
 		// See if we already have a descriptor for this name
 		FiledDocumentDescriptor<D> filedDocumentDescriptor = filedDocumentDescriptorsByAlias.get( documentName );
@@ -238,7 +245,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			if( filedDocumentDescriptor == null )
 			{
 				// Create a new descriptor
-				filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file );
+				filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file, read );
 				FiledDocumentDescriptor<D> existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
 				if( existing != null )
 					filedDocumentDescriptor = existing;
@@ -250,6 +257,18 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		}
 
 		return filedDocumentDescriptor;
+	}
+
+	//
+	// DocumentSource
+	//
+
+	/**
+	 * @see DocumentSource#getDocument(String)
+	 */
+	public DocumentDescriptor<D> getDocument( String documentName ) throws DocumentException
+	{
+		return getDocument( documentName, true );
 	}
 
 	/**
@@ -357,7 +376,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 					{
 						try
 						{
-							filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file );
+							filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file, true );
 							FiledDocumentDescriptor<D> existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
 							if( existing != null )
 								filedDocumentDescriptor = existing;
@@ -417,8 +436,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * @param documentName
 	 *        The document name
 	 * @return The file
+	 * @throws DocumentNotFoundException
 	 */
-	private File getFileForDocumentName( String documentName )
+	private File getFileForDocumentName( String documentName ) throws DocumentNotFoundException
 	{
 		File file = new File( basePath, documentName );
 
@@ -460,6 +480,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 				// Default to first found
 				return filesWithName[0];
 			}
+
+			// No file
+			throw new DocumentNotFoundException( "File does not exist: " + file.getPath() );
 		}
 
 		return file;
