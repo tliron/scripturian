@@ -203,6 +203,11 @@ public class Executable
 	 */
 	public static final String DEFAULT_EXECUTABLE_VARIABLE_NAME = "executable";
 
+	/**
+	 * Prefix prepended to in-flow scriptlets stores in the document source.
+	 */
+	public static final String IN_FLOW_PREFIX = "_IN_FLOW_";
+
 	//
 	// Static operations
 	//
@@ -445,6 +450,7 @@ public class Executable
 		}
 
 		String lastLanguageTag = defaultLanguageTag;
+		LanguageAdapter lastAdapter = manager.getAdapterByTag( defaultLanguageTag );
 
 		int delimiterStartLength = 0;
 		int delimiterEndLength = 0;
@@ -510,6 +516,7 @@ public class Executable
 				if( start + 1 != end )
 				{
 					String languageTag = lastLanguageTag;
+					LanguageAdapter adapter = lastAdapter;
 
 					boolean isExpression = false;
 					boolean isInclude = false;
@@ -556,7 +563,7 @@ public class Executable
 						// Add scriptlet segment
 						if( isExpression || isInclude )
 						{
-							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
+							adapter = manager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
@@ -567,7 +574,7 @@ public class Executable
 						}
 						else if( isInFlow && ( documentSource != null ) )
 						{
-							LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
+							adapter = manager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
@@ -576,22 +583,25 @@ public class Executable
 
 							// Note that the in-flow executable is a single
 							// segment, so we can optimize parsing a bit
-							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, false, manager, null, null, prepare, exposedExecutableName,
-								delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
+							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, true, manager, languageTag, documentSource, prepare,
+								exposedExecutableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
 							// TODO: would it ever be possible to remove the
 							// dependent in-flow instances?
 
 							// Our include scriptlet is in the last language
-							segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( "'" + inFlowName + "'", this ), startLineNumber, startColumnNumber, true, true, lastLanguageTag ) );
+							segments.add( new ExecutableSegment( lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", this ), startLineNumber, startColumnNumber, true, true, lastLanguageTag ) );
 						}
 						else
 							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), startLineNumber, startColumnNumber, true, true, languageTag ) );
 					}
 
 					if( !isInFlow )
+					{
 						lastLanguageTag = languageTag;
+						lastAdapter = adapter;
+					}
 				}
 
 				last = end + delimiterEndLength;
@@ -1033,11 +1043,6 @@ public class Executable
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	/**
-	 * Prefix prepended to in-flow scriptlets stores in the document source.
-	 */
-	private static final String IN_FLOW_PREFIX = "_IN_FLOW_";
 
 	/**
 	 * Used to ensure unique names for in-flow scriptlets.
