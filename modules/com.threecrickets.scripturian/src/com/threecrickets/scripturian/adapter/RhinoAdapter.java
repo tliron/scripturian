@@ -178,11 +178,12 @@ public class RhinoAdapter extends LanguageAdapterBase
 			context.initStandardObjects( scope );
 			classChache.associate( scope );
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
-		}
 
-		String printSource = "function print(s){" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName() + ".context.writerOrDefault.flush();};";
-		Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
-		scope.defineProperty( "print", printFunction, 0 );
+			String printSource = "function print(s){" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName()
+				+ ".context.writerOrDefault.flush();};";
+			Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
+			scope.defineProperty( "print", printFunction, 0 );
+		}
 
 		// Define services as properties in scope
 		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
@@ -231,7 +232,9 @@ public class RhinoAdapter extends LanguageAdapterBase
 	@Override
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		Context context = enterContext( executionContext );
+		// We need a fresh context here, because Rhino does not allow us to
+		// share contexts between threads
+		Context context = contextFactory.enterContext();
 		try
 		{
 			ScriptableObject scope = getScope( executable, executionContext, context, -1 );
