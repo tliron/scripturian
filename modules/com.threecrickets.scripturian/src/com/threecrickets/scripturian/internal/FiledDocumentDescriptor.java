@@ -246,9 +246,8 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 				if( this.document != null )
 					return this.document;
 
-				D last = this.document;
 				this.document = document;
-				return last;
+				return null;
 			}
 			finally
 			{

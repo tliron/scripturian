@@ -247,6 +247,10 @@ public class RhinoAdapter extends LanguageAdapterBase
 				r = ( (Wrapper) r ).unwrap();
 			return r;
 		}
+		catch( NoSuchMethodException x )
+		{
+			throw x;
+		}
 		catch( Exception x )
 		{
 			throw RhinoAdapter.createExecutionException( executable.getDocumentName(), x );

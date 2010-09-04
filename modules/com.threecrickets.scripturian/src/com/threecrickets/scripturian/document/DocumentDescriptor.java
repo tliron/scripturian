@@ -73,7 +73,7 @@ public interface DocumentDescriptor<D>
 	 * 
 	 * @param document
 	 *        The document instance
-	 * @return The existing document instance before we changed it
+	 * @return The existing document instance if it wasn't null
 	 * @see #getDocument()
 	 */
 	public D setDocumentIfAbsent( D document );
