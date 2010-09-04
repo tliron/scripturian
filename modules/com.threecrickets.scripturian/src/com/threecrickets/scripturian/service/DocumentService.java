@@ -52,6 +52,11 @@ public class DocumentService
 	//
 	// Attributes
 	//
+	
+	public DocumentSource<Executable> getSource()
+	{
+		return main.getSource();
+	}
 
 	/**
 	 * For use with {@link #include(String)} and {@link #execute(String)}, this
