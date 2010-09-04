@@ -16,8 +16,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
+import com.threecrickets.scripturian.GlobalScope;
 import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.internal.GlobalScope;
 
 /**
  * This is the <code>executable</code> service exposed to the executable. The
