@@ -52,7 +52,12 @@ public class DocumentService
 	//
 	// Attributes
 	//
-	
+
+	/**
+	 * The document source.
+	 * 
+	 * @return The document source
+	 */
 	public DocumentSource<Executable> getSource()
 	{
 		return main.getSource();
