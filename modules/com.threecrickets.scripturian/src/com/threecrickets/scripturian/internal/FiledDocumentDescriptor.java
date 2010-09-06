@@ -14,6 +14,7 @@ package com.threecrickets.scripturian.internal;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -75,8 +76,8 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file, boolean read ) throws DocumentException
 	{
 		this.documentSource = documentSource;
-		this.defaultName = documentSource.getRelativeFilePath( file );
 		this.file = file;
+		defaultName = documentSource.getRelativeFilePath( file );
 		timestamp = file.lastModified();
 
 		if( read )
@@ -110,6 +111,17 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	public final File file;
 
 	/**
+	 * Test whether are dependencies are valid, while avoiding circular
+	 * dependency loops.
+	 * 
+	 * @return Whether are dependencies are valid
+	 */
+	public boolean areAllDependenciesValid()
+	{
+		return areAllDependenciesValid( new HashSet<String>() );
+	}
+
+	/**
 	 * Whether the document is valid. Calling this method will sometimes cause a
 	 * validity check.
 	 * <p>
@@ -126,17 +138,10 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 			return false;
 
 		// If any of our dependencies is invalid, then so are we
-		for( DocumentDescriptor<D> documentDescriptor : dependencies )
+		if( !areAllDependenciesValid() )
 		{
-			if( documentDescriptor instanceof FiledDocumentDescriptor<?> )
-			{
-				FiledDocumentDescriptor<D> filedDocumentDescriptor = (FiledDocumentDescriptor<D>) documentDescriptor;
-				if( !filedDocumentDescriptor.isValid() )
-				{
-					invalid = true;
-					return false;
-				}
-			}
+			invalid = true;
+			return false;
 		}
 
 		// No validity checks for in-memory documents
@@ -330,4 +335,47 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 * Cached validity.
 	 */
 	private volatile boolean invalid;
+
+	/**
+	 * Test whether are dependencies are valid, while avoiding circular
+	 * dependency loops.
+	 * 
+	 * @param testedDependencies
+	 *        A collection to keep track of tested dependencies
+	 * @return Whether are dependencies are valid
+	 */
+	private boolean areAllDependenciesValid( Set<String> testedDependencies )
+	{
+		// Do not follow circular dependencies
+		if( testedDependencies.contains( getDefaultName() ) )
+			assert false;
+
+		testedDependencies.add( getDefaultName() );
+
+		try
+		{
+			for( DocumentDescriptor<D> documentDescriptor : dependencies )
+			{
+				if( documentDescriptor instanceof FiledDocumentDescriptor<?> )
+				{
+					FiledDocumentDescriptor<D> filedDocumentDescriptor = (FiledDocumentDescriptor<D>) documentDescriptor;
+					if( !filedDocumentDescriptor.areAllDependenciesValid( testedDependencies ) )
+						return false;
+				}
+			}
+		}
+		catch( StackOverflowError x )
+		{
+			StringBuilder message = new StringBuilder();
+			message.append( "DEPENDENCY LOOP:" );
+			for( DocumentDescriptor<D> documentDescriptor : dependencies )
+			{
+				message.append( ' ' );
+				message.append( documentDescriptor.getDefaultName() );
+			}
+			System.out.println( message );
+		}
+
+		return true;
+	}
 }

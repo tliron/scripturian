@@ -72,7 +72,7 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	@SuppressWarnings("unchecked")
 	public void prepare() throws PreparationException
 	{
-		if( scriptReference.get() != null )
+		if( scriptClassReference.get() != null )
 			return;
 
 		File mainClassFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
@@ -139,11 +139,11 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 					scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
 				}
 
-				// What about the auxiliary classes mentioned above, requires
+				// What about the auxiliary classes mentioned above, required
 				// for the instance to work? Well, we've added our cache path to
 				// the GroovyClassLoader, so it will load those automatically.
 
-				scriptReference.compareAndSet( null, scriptClass.newInstance() );
+				scriptClassReference.compareAndSet( null, scriptClass );
 			}
 			catch( Exception x )
 			{
@@ -159,17 +159,14 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 
 		try
 		{
-			Script script = scriptReference.get();
-			if( script == null )
+			Class<Script> scriptClass = scriptClassReference.get();
+			if( scriptClass == null )
 			{
-				Class<Script> scriptClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
-				script = scriptClass.newInstance();
-
-				// We're caching the resulting parsed script for the future.
-				// Might as well!
-				scriptReference.compareAndSet( null, script );
+				scriptClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
+				scriptClassReference.compareAndSet( null, scriptClass );
 			}
 
+			Script script = scriptClass.newInstance();
 			script.setBinding( binding );
 			script.run();
 		}
@@ -193,5 +190,5 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	/**
 	 * The cached parsed or compiled script.
 	 */
-	private final AtomicReference<Script> scriptReference = new AtomicReference<Script>();
+	private final AtomicReference<Class<Script>> scriptClassReference = new AtomicReference<Class<Script>>();
 }

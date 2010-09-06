@@ -239,7 +239,4 @@ public class GroovyAdapter extends LanguageAdapterBase
 	// Protected
 
 	protected final GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Private
 }

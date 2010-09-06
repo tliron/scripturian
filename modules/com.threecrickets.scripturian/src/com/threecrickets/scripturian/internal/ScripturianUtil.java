@@ -237,7 +237,7 @@ public abstract class ScripturianUtil
 	public static String getClassnameForProgram( Executable executable, int position )
 	{
 		String classname = executable.getPartition() + executable.getDocumentName();
-		classname = classname.replace( "-", "_" ).replace( ".", "$" ).replace( "/", "." );
+		classname = classname.replace( "-", "_" ).replace( ".", "$" ).replace( "//", "/" ).replace( "/", "." );
 		classname += "$" + position + "$" + executable.getDocumentTimestamp();
 		return classname;
 	}

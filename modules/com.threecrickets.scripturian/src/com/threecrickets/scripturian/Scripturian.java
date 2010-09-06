@@ -24,7 +24,7 @@ public abstract class Scripturian
 
 	public static void main( String[] arguments )
 	{
-		// Delegate to MainDocument
+		// Delegate to Main
 		Main.main( arguments );
 	}
 }

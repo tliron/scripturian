@@ -40,7 +40,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	//
 
 	/**
-	 * Constructs a document file source.
+	 * Constructs a document file source. The identifier will be the base path.
 	 * 
 	 * @param basePath
 	 *        The base path
@@ -58,16 +58,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentFileSource( File basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
 	{
-		this.basePath = basePath;
-		this.basePathLength = basePath.getPath().length();
-		this.defaultName = defaultName;
-		this.preferredExtension = preferredExtension;
-		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
-		defaultNameFilter = new ExtensionInsensitiveFilter( defaultName );
+		this( basePath.getPath(), basePath, defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
 	}
 
 	/**
-	 * Constructs a document file source.
+	 * Constructs a document file source. The identifier will be the base path.
 	 * 
 	 * @param basePath
 	 *        The base path
@@ -85,7 +80,61 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentFileSource( String basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
 	{
-		this( new File( basePath ), defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
+		this( basePath, basePath, defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
+	}
+
+	/**
+	 * Constructs a document file source.
+	 * 
+	 * @param identifier
+	 *        The identifier
+	 * @param basePath
+	 *        The base path
+	 * @param defaultName
+	 *        If the name used in {@link #getDocument(String)} points to a
+	 *        directory, then this file name in that directory will be used
+	 *        instead; note that if an extension is not specified, then the
+	 *        first file in the directory with this name, with any extension,
+	 *        will be used
+	 * @param preferredExtension
+	 *        An extension to prefer if more than one file with the same name is
+	 *        in a directory
+	 * @param minimumTimeBetweenValidityChecks
+	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
+	 */
+	public DocumentFileSource( String identifier, String basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
+	{
+		this( identifier, new File( basePath ), defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
+	}
+
+	/**
+	 * Constructs a document file source.
+	 * 
+	 * @param identifier
+	 *        The identifier
+	 * @param basePath
+	 *        The base path
+	 * @param defaultName
+	 *        If the name used in {@link #getDocument(String)} points to a
+	 *        directory, then this file name in that directory will be used
+	 *        instead; note that if an extension is not specified, then the
+	 *        first file in the directory with this name, with any extension,
+	 *        will be used
+	 * @param preferredExtension
+	 *        An extension to prefer if more than one file with the same name is
+	 *        in a directory
+	 * @param minimumTimeBetweenValidityChecks
+	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
+	 */
+	public DocumentFileSource( String identifier, File basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
+	{
+		this.identifier = identifier;
+		this.basePath = basePath;
+		this.defaultName = defaultName;
+		this.preferredExtension = preferredExtension;
+		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
+		basePathLength = basePath.getPath().length();
+		defaultNameFilter = new ExtensionInsensitiveFilter( defaultName );
 	}
 
 	//
@@ -300,7 +349,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public String getIdentifier()
 	{
-		return basePath.toString();
+		return identifier;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -325,6 +374,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * Cached length of the base path.
 	 */
 	private final int basePathLength;
+
+	/**
+	 * The source identifier.
+	 */
+	private final String identifier;
 
 	/**
 	 * If the name used in {@link #getDocument(String)} points to a directory,
