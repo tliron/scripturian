@@ -221,6 +221,11 @@ public class QuercusAdapter extends LanguageAdapterBase
 			}
 		}
 
+		// Env childEnvironment = new Env( quercusRuntime, null, writeStream,
+		// null, null );
+		// childEnvironment.restoreState( environment.saveState() );
+		// environment = childEnvironment;
+
 		// Set writer
 		writerStream.setWriter( executionContext.getWriterOrDefault() );
 
@@ -297,7 +302,8 @@ public class QuercusAdapter extends LanguageAdapterBase
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		entryPointName = toPhpStyle( entryPointName );
-		Env environment = getEnvironment( executionContext );
+		Env environment = getClonedEnvironment( executionContext );
+
 		try
 		{
 			Value[] quercusArguments = new Value[arguments.length];
@@ -321,6 +327,16 @@ public class QuercusAdapter extends LanguageAdapterBase
 			{
 				environment.getOut().flush();
 				executionContext.getWriter().flush();
+
+				try
+				{
+					environment.close();
+				}
+				catch( NullPointerException x )
+				{
+					// close() fails in the middle because we don't have a page
+					// set for the environment
+				}
 			}
 			catch( IOException xx )
 			{
@@ -340,8 +356,8 @@ public class QuercusAdapter extends LanguageAdapterBase
 			}
 			catch( NullPointerException x )
 			{
-				// This fails in the middle because we don't have a page set for
-				// the environment
+				// close() fails in the middle because we don't have a page set
+				// for the environment
 			}
 		}
 	}
@@ -361,6 +377,15 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 * A static Quercus runtime used for version information.
 	 */
 	private static final Quercus staticQuercusRuntime = new Quercus();
+
+	private Env getClonedEnvironment( ExecutionContext executionContext )
+	{
+		Env environment = (Env) executionContext.getAttributes().get( QUERCUS_ENVIRONMENT );
+		Env clonedEnvironment = new Env( quercusRuntime, null, environment.getOut(), null, null );
+		clonedEnvironment.restoreState( environment.saveState() );
+		clonedEnvironment.start();
+		return clonedEnvironment;
+	}
 
 	/**
 	 * From somethingLikeThis to something_like_this.

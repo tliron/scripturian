@@ -69,21 +69,17 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	{
 		Env environment = adapter.getEnvironment( executionContext );
 
-		QuercusPage page = pageReference.get();
-		if( page == null )
+		com.caucho.quercus.program.QuercusProgram program = programReference.get();
+		if( program == null )
 		{
 			try
 			{
-
 				Path path = new StringPath( isScriptlet ? "<?php " + sourceCode + " ?>" : sourceCode );
 				QuercusParser parser = new QuercusParser( adapter.quercusRuntime, path, path.openRead() );
 				parser.setLocation( executable.getDocumentName(), startLineNumber );
-				com.caucho.quercus.program.QuercusProgram program = parser.parse();
-				page = new InterpretedPage( program );
+				program = parser.parse();
 
-				// We're caching the resulting parsed page for the future. Might
-				// as well!
-				pageReference.compareAndSet( null, page );
+				programReference.compareAndSet( null, program );
 			}
 			catch( QuercusParseException x )
 			{
@@ -97,6 +93,7 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 
 		try
 		{
+			QuercusPage page = new InterpretedPage( program );
 			page.init( environment );
 			page.importDefinitions( environment );
 			page.execute( environment );
@@ -125,7 +122,7 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	// Private
 
 	/**
-	 * The cached parsed page.
+	 * The cached parsed program.
 	 */
-	private final AtomicReference<QuercusPage> pageReference = new AtomicReference<QuercusPage>();
+	private final AtomicReference<com.caucho.quercus.program.QuercusProgram> programReference = new AtomicReference<com.caucho.quercus.program.QuercusProgram>();
 }
