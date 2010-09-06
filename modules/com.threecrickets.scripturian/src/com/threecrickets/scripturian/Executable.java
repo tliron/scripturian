@@ -938,6 +938,9 @@ public class Executable
 						if( !adapter.isThreadSafe() )
 							adapter.getLock().unlock();
 					}
+
+					if( !executionContext.isImmutable() )
+						executionContext.setAdapter( adapter );
 				}
 			}
 		}
