@@ -141,19 +141,21 @@ public class JythonAdapter extends LanguageAdapterBase
 	{
 		super( "Jython", Version.getBuildInfo(), "Python", Version.PY_VERSION, Arrays.asList( "py" ), null, Arrays.asList( "python", "py", "jython" ), null );
 
-		String homePath = System.getProperty( PYTHON_HOME );
-		if( homePath == null )
-			throw new LanguageAdapterException( this.getClass(), "Must define " + PYTHON_HOME + " to use Jython adapter" );
-
 		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );
 
 		// Initialize Jython registry (can only happen once per VM)
 		if( PySystemState.registry == null )
 		{
+			String homePath = System.getProperty( PYTHON_HOME );
+			if( homePath == null )
+				throw new LanguageAdapterException( this.getClass(), "Must define " + PYTHON_HOME + " to use Jython adapter" );
+
+			homePath = new File( homePath ).getAbsolutePath();
+
 			// The packages cache dir is calculated as relative to the home dir,
 			// so we'll have to relativize it back. Note that Jython will add a
 			// "packages" subdirectory underneath.
-			String packagesCacheDirPath = ScripturianUtil.getRelativeFile( packagesCacheDir, new File( homePath ) ).getPath();
+			String packagesCacheDirPath = ScripturianUtil.getRelativePath( packagesCacheDir.getAbsolutePath(), homePath );
 
 			Properties overridingProperties = new Properties();
 			overridingProperties.put( PYTHON_HOME, homePath );
@@ -218,6 +220,8 @@ public class JythonAdapter extends LanguageAdapterBase
 			try
 			{
 				String path = new File( uri ).getPath();
+				if( File.separatorChar != '/' )
+					path = path.replace( File.separatorChar, '/' );
 				pythonInterpreter.exec( "sys.path.append('" + path.replace( "'", "\\'" ) + "')" );
 			}
 			catch( IllegalArgumentException x )

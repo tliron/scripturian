@@ -253,44 +253,63 @@ public abstract class ScripturianUtil
 	 * Returns the path of one file relative to another.
 	 * 
 	 * @param target
-	 *        the target directory
+	 *        The target file
 	 * @param base
-	 *        the base directory
-	 * @return target's path relative to the base directory
+	 *        The base file
+	 * @return The target's file relative to the base file
 	 * @throws IOException
-	 *         if an error occurs while resolving the files' canonical names
 	 */
 	public static File getRelativeFile( File target, File base )
+	{
+		return new File( getRelativePath( target.getAbsolutePath(), base.getAbsolutePath() ) );
+	}
+
+	/**
+	 * Returns the path of one file relative to another.
+	 * 
+	 * @param target
+	 *        The target path
+	 * @param base
+	 *        The base path
+	 * @return The target's path relative to the base path
+	 */
+	public static String getRelativePath( String target, String base )
 	{
 		// See:
 		// http://stackoverflow.com/questions/204784/how-to-construct-a-relative-path-in-java-from-two-absolute-paths-or-urls
 
-		String[] baseComponents = base.getAbsolutePath().split( Pattern.quote( File.separator ) );
-		String[] targetComponents = target.getAbsolutePath().split( Pattern.quote( File.separator ) );
+		String split = Pattern.quote( File.separator );
+		String[] baseSegments = base.split( split );
+		String[] targetSegments = target.split( split );
+		StringBuilder result = new StringBuilder();
 
-		// skip common components
+		// Skip common segments
 		int index = 0;
-		for( ; index < targetComponents.length && index < baseComponents.length; ++index )
+		for( ; index < targetSegments.length && index < baseSegments.length; ++index )
 		{
-			if( !targetComponents[index].equals( baseComponents[index] ) )
+			if( !targetSegments[index].equals( baseSegments[index] ) )
 				break;
 		}
 
-		StringBuilder result = new StringBuilder();
-		if( index != baseComponents.length )
+		// Backtrack to base directory
+		if( index != baseSegments.length )
 		{
-			// backtrack to base directory
-			for( int i = index; i < baseComponents.length; ++i )
-				result.append( ".." + File.separator );
+			for( int i = index; i < baseSegments.length; ++i )
+			{
+				// "." segments have no effect
+				if( !baseSegments[i].equals( "." ) )
+					result.append( ".." + File.separator );
+			}
 		}
-		for( ; index < targetComponents.length; ++index )
-			result.append( targetComponents[index] + File.separator );
-		if( !target.getPath().endsWith( "/" ) && !target.getPath().endsWith( "\\" ) )
-		{
-			// remove final path separator
-			result.delete( result.length() - "/".length(), result.length() );
-		}
-		return new File( result.toString() );
+
+		for( ; index < targetSegments.length; ++index )
+			result.append( targetSegments[index] + File.separator );
+
+		// Remove final path separator
+		if( !target.endsWith( File.separator ) )
+			result.delete( result.length() - 1, result.length() );
+
+		return result.toString();
 	}
 
 	/**
