@@ -272,7 +272,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        The document name
 	 * @param read
 	 *        Whether to read the source code from the file
-	 * @return
+	 * @return The document descriptor
 	 * @throws DocumentException
 	 */
 	public DocumentDescriptor<D> getDocument( String documentName, boolean read ) throws DocumentException

@@ -39,9 +39,26 @@
 		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
 			<link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
 			<link href="http://java.sun.com/javase/6/docs/api/" />
+			<link href="http://groovy.codehaus.org/api/" />
+			<link href="http://jepp.sourceforge.net/javadoc/" />
+			<link href="http://jruby-embed.kenai.com/docs/" />
+			<link href="http://www.jython.org/javadoc/" />
+			<link href="http://www.caucho.com/resin-javadoc/" />
 			<link href="http://www.mozilla.org/rhino/apidocs/" />
+			<link href="http://threecrickets.com/succinct/api/" />
+			<link href="http://velocity.apache.org/engine/releases/velocity-1.4/api/" />
 			<classpath>
+				<fileset dir="${lib}/clojure/lib" />
+				<fileset dir="${lib}/groovy/lib" />
+				<fileset dir="${lib}/jepp/lib" />
+				<fileset dir="${lib}/jruby/lib" />
 				<fileset dir="${lib}/jsr223/lib" />
+				<fileset dir="${lib}/jygments/lib" />
+				<fileset dir="${lib}/jython/lib" />
+				<fileset dir="${lib}/quercus/lib" />
+				<fileset dir="${lib}/rhino/lib" />
+				<fileset dir="${lib}/succinct/lib" />
+				<fileset dir="${lib}/velocity/lib" />
 			</classpath>
 			<bottom>
 				<![CDATA[<i>Copyright &#169; 2009-2010 <a target="_top" href="http://threecrickets.com/">Three Crickets LLC</a>.</i>]]>

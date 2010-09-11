@@ -45,7 +45,7 @@ import com.threecrickets.scripturian.internal.ThreadLocalExecutionContext;
  * <p>
  * The second occurs when
  * {@link Executable#makeEnterable(ExecutionContext, Object, ExecutionController)}
- * is called, and then {@link Executable#invoke(String, Object...)} is callable
+ * is called, and then {@link Executable#enter(String, Object...)} is callable
  * by concurrent threads. In this case, <i>all invoking threads share the same
  * execution context</i>. Because the context is immutable (internally
  * {@link #makeImmutable()} is called), it is "thread-safe" to the extent that
