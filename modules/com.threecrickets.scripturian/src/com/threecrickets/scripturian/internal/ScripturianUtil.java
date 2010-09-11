@@ -208,9 +208,13 @@ public abstract class ScripturianUtil
 	 */
 	public static File getFileForProgramClass( File subdirectory, Executable executable, int position )
 	{
-		String filename = executable.getPartition() + executable.getDocumentName();
-		filename = filename.replace( "-", "_" ).replace( ".", "$" );
-		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
+		String partition = executable.getPartition();
+		if( File.separatorChar != '/' )
+			partition = partition.replace( '/', File.separatorChar );
+
+		String filename = partition + executable.getDocumentName();
+		filename = filename.replace( '-', '_' ).replace( '.', '$' );
+		filename += '$' + position + '$' + executable.getDocumentTimestamp() + ".class";
 		File file = new File( subdirectory, filename );
 		File existing = programClassFiles.get( file.getPath() );
 		if( existing != null )
@@ -237,7 +241,10 @@ public abstract class ScripturianUtil
 	public static String getClassnameForProgram( Executable executable, int position )
 	{
 		String classname = executable.getPartition() + executable.getDocumentName();
-		classname = classname.replace( "-", "_" ).replace( ".", "$" ).replace( "//", "/" ).replace( "/", "." );
+		classname = classname.replace( '-', '_' ).replace( '.', '$' );
+		if( File.separatorChar != '/' )
+			classname = classname.replace( File.separator + File.separator, "." ).replace( File.separatorChar, '.' );
+		classname = classname.replace( "//", "." ).replace( '/', '.' ).replace( "..", "." );
 		classname += "$" + position + "$" + executable.getDocumentTimestamp();
 		return classname;
 	}
