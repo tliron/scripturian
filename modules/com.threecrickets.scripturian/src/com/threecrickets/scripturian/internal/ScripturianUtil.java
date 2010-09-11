@@ -214,7 +214,7 @@ public abstract class ScripturianUtil
 
 		String filename = partition + executable.getDocumentName();
 		filename = filename.replace( '-', '_' ).replace( '.', '$' );
-		filename += '$' + position + '$' + executable.getDocumentTimestamp() + ".class";
+		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
 		File file = new File( subdirectory, filename );
 		File existing = programClassFiles.get( file.getPath() );
 		if( existing != null )
