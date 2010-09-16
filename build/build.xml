@@ -13,6 +13,7 @@
 		<javac srcdir="${src}" destdir="${tmp}" target="1.5" includeAntRuntime="false">
 			<classpath>
 				<fileset dir="${lib}/clojure/lib" />
+				<fileset dir="${lib}/commons-daemon/lib" />
 				<fileset dir="${lib}/groovy/lib" />
 				<fileset dir="${lib}/jepp/lib" />
 				<fileset dir="${lib}/jruby/lib" />
@@ -47,8 +48,10 @@
 			<link href="http://www.mozilla.org/rhino/apidocs/" />
 			<link href="http://threecrickets.com/succinct/api/" />
 			<link href="http://velocity.apache.org/engine/releases/velocity-1.4/api/" />
+			<link href="http://commons.apache.org/daemon/apidocs/" />
 			<classpath>
 				<fileset dir="${lib}/clojure/lib" />
+				<fileset dir="${lib}/commons-daemon/lib" />
 				<fileset dir="${lib}/groovy/lib" />
 				<fileset dir="${lib}/jepp/lib" />
 				<fileset dir="${lib}/jruby/lib" />
