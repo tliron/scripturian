@@ -20,7 +20,7 @@ import org.apache.commons.daemon.DaemonContext;
  * 
  * @author Tal Liron
  */
-public class ScripturianDaemon implements Daemon
+public class ScripturianDaemon extends Scripturian implements Daemon
 {
 	//
 	// Daemon
@@ -34,7 +34,7 @@ public class ScripturianDaemon implements Daemon
 	public void start() throws Exception
 	{
 		// Delegate to Main
-		Main.main( arguments );
+		main( arguments );
 	}
 
 	public void stop() throws Exception
