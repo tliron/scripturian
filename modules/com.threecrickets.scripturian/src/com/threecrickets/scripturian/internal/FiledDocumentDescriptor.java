@@ -111,17 +111,6 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	public final File file;
 
 	/**
-	 * Test whether are dependencies are valid, while avoiding circular
-	 * dependency loops.
-	 * 
-	 * @return Whether are dependencies are valid
-	 */
-	public boolean areAllDependenciesValid()
-	{
-		return areAllDependenciesValid( new HashSet<String>() );
-	}
-
-	/**
 	 * Whether the document is valid. Calling this method will sometimes cause a
 	 * validity check.
 	 * <p>
@@ -133,54 +122,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 */
 	public boolean isValid()
 	{
-		// Once invalid, always invalid
-		if( invalid )
-			return false;
-
-		// If any of our dependencies is invalid, then so are we
-		if( !areAllDependenciesValid() )
-		{
-			invalid = true;
-			return false;
-		}
-
-		// No validity checks for in-memory documents
-		if( file == null )
-			return true;
-
-		long minimumTimeBetweenValidityChecks = documentSource.getMinimumTimeBetweenValidityChecks();
-
-		// -1 means don't check for validity
-		if( minimumTimeBetweenValidityChecks == -1 )
-		{
-			// Valid, for now (might not be later)
-			return true;
-		}
-
-		long now = System.currentTimeMillis();
-
-		// Are we in the threshold for checking for validity?
-		if( ( now - lastValidityCheckTimestamp ) > minimumTimeBetweenValidityChecks )
-		{
-			// Check for validity
-			lastValidityCheckTimestamp = now;
-			if( file.lastModified() <= timestamp )
-			{
-				// Valid, for now (might not be later)
-				return true;
-			}
-			else
-			{
-				// Invalid
-				invalid = true;
-				return false;
-			}
-		}
-		else
-		{
-			// Valid, for now (might not be later)
-			return true;
-		}
+		return isValid( new HashSet<String>() );
 	}
 
 	//
@@ -337,6 +279,70 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	private volatile boolean invalid;
 
 	/**
+	 * Whether the document is valid. Calling this method will sometimes cause a
+	 * validity check.
+	 * <p>
+	 * Note that the validity check will cascade to document we depend on.
+	 * 
+	 * @param testedDependencies
+	 *        A collection to keep track of tested dependencies
+	 * @return Whether the document is valid
+	 * @see DocumentFileSource#getMinimumTimeBetweenValidityChecks()
+	 * @see DocumentDescriptor#getDependencies()
+	 */
+	private boolean isValid( Set<String> testedDependencies )
+	{
+		// Once invalid, always invalid
+		if( invalid )
+			return false;
+
+		// If any of our dependencies is invalid, then so are we
+		if( !areAllDependenciesValid( testedDependencies ) )
+		{
+			invalid = true;
+			return false;
+		}
+
+		// No validity checks for in-memory documents
+		if( file == null )
+			return true;
+
+		long minimumTimeBetweenValidityChecks = documentSource.getMinimumTimeBetweenValidityChecks();
+
+		// -1 means don't check for validity
+		if( minimumTimeBetweenValidityChecks == -1 )
+		{
+			// Valid, for now (might not be later)
+			return true;
+		}
+
+		long now = System.currentTimeMillis();
+
+		// Are we in the threshold for checking for validity?
+		if( ( now - lastValidityCheckTimestamp ) > minimumTimeBetweenValidityChecks )
+		{
+			// Check for validity
+			lastValidityCheckTimestamp = now;
+			if( file.lastModified() <= timestamp )
+			{
+				// Valid, for now (might not be later)
+				return true;
+			}
+			else
+			{
+				// Invalid
+				invalid = true;
+				return false;
+			}
+		}
+		else
+		{
+			// Valid, for now (might not be later)
+			return true;
+		}
+	}
+
+	/**
 	 * Test whether are dependencies are valid, while avoiding circular
 	 * dependency loops.
 	 * 
@@ -359,7 +365,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 				if( documentDescriptor instanceof FiledDocumentDescriptor<?> )
 				{
 					FiledDocumentDescriptor<D> filedDocumentDescriptor = (FiledDocumentDescriptor<D>) documentDescriptor;
-					if( !filedDocumentDescriptor.areAllDependenciesValid( testedDependencies ) )
+					if( !filedDocumentDescriptor.isValid( testedDependencies ) )
 						return false;
 				}
 			}
