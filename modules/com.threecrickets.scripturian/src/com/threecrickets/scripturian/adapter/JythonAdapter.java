@@ -263,7 +263,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	{
 		// return executable.getExposedExecutableName() +
 		// ".context.writer.write(" + expression + ");";
-		return "sys.stdout.write(" + expression + ");";
+		return "sys.stdout.write(str(" + expression + "));";
 	}
 
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
