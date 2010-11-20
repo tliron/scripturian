@@ -27,6 +27,7 @@ import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the Python language as implemented by
@@ -139,9 +140,8 @@ public class JeppAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\\"", "\\\\\"" );
-		return "sys.stdout.write(\"" + literal + "\"),;";
+		literal = ScripturianUtil.doubleQuotedLiteral( literal );
+		return "sys.stdout.write(" + literal + "),;";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
@@ -201,7 +201,7 @@ public class JeppAdapter extends LanguageAdapterBase
 			r.append( Character.toLowerCase( c ) );
 		else
 			r.append( c );
-		for( int i = 1; i < camelCase.length(); i++ )
+		for( int i = 1, length = camelCase.length(); i < length; i++ )
 		{
 			c = camelCase.charAt( i );
 			if( Character.isUpperCase( c ) )

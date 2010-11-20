@@ -253,11 +253,10 @@ public class JythonAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\\"", "\\\\\"" );
+		literal = ScripturianUtil.doubleQuotedLiteral( literal );
 		// return executable.getExposedExecutableName() +
-		// ".context.writer.write(\"" + literal + "\");";
-		return "sys.stdout.write(\"" + literal + "\");";
+		// ".context.writer.write(" + literal + ");";
+		return "sys.stdout.write(" + literal + ");";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
@@ -352,7 +351,7 @@ public class JythonAdapter extends LanguageAdapterBase
 			r.append( Character.toLowerCase( c ) );
 		else
 			r.append( c );
-		for( int i = 1; i < camelCase.length(); i++ )
+		for( int i = 1, length = camelCase.length(); i < length; i++ )
 		{
 			c = camelCase.charAt( i );
 			if( Character.isUpperCase( c ) )

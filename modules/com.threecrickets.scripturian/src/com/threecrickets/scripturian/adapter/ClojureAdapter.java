@@ -18,12 +18,12 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 import clojure.lang.Compiler;
+import clojure.lang.Compiler.CompilerException;
 import clojure.lang.Namespace;
 import clojure.lang.PersistentVector;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
-import clojure.lang.Compiler.CompilerException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -34,6 +34,7 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the <a
@@ -196,7 +197,7 @@ public class ClojureAdapter extends LanguageAdapterBase
 			r.append( Character.toLowerCase( c ) );
 		else
 			r.append( c );
-		for( int i = 1; i < camelCase.length(); i++ )
+		for( int i = 1, length = camelCase.length(); i < length; i++ )
 		{
 			c = camelCase.charAt( i );
 			if( Character.isUpperCase( c ) )
@@ -230,9 +231,8 @@ public class ClojureAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\\"", "\\\\\"" );
-		return "(print \"" + literal + "\")";
+		literal = ScripturianUtil.doubleQuotedLiteral( literal );
+		return "(print " + literal + ")";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException

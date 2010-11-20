@@ -35,6 +35,7 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the <a
@@ -196,9 +197,8 @@ public class GroovyAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\'", "\\\\'" );
-		return "print('" + literal + "');";
+		literal = ScripturianUtil.doubleQuotedLiteral( literal );
+		return "print(" + literal + ");";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException

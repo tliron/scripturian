@@ -41,6 +41,7 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 import com.threecrickets.scripturian.internal.SwitchableOutputStream;
 
 /**
@@ -274,9 +275,8 @@ public class JRubyAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\\"", "\\\\\"" );
-		return "print(\"" + literal + "\");";
+		literal = ScripturianUtil.doubleQuotedLiteral( literal );
+		return "print(" + literal + ");";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
@@ -349,7 +349,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 			r.append( Character.toLowerCase( c ) );
 		else
 			r.append( c );
-		for( int i = 1; i < camelCase.length(); i++ )
+		for( int i = 1, length = camelCase.length(); i < length; i++ )
 		{
 			c = camelCase.charAt( i );
 			if( Character.isUpperCase( c ) )

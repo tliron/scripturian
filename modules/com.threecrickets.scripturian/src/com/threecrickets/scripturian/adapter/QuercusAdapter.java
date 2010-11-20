@@ -40,6 +40,7 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
 import com.threecrickets.scripturian.exception.StackFrame;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the PHP language as implemented by <a
@@ -277,9 +278,8 @@ public class QuercusAdapter extends LanguageAdapterBase
 
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		literal = literal.replaceAll( "\\n", "\\\\n" );
-		literal = literal.replaceAll( "\\\"", "\\\\\"" );
-		return "print(\"" + literal + "\");";
+		literal = ScripturianUtil.doubleQuotedLiteral( literal );
+		return "print(" + literal + ");";
 	}
 
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
@@ -307,7 +307,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 		try
 		{
 			Value[] quercusArguments = new Value[arguments.length];
-			for( int i = 0; i < arguments.length; i++ )
+			for( int i = arguments.length - 1; i >= 0; i-- )
 				quercusArguments[i] = environment.wrapJava( arguments[i] );
 
 			Value r = environment.call( entryPointName, quercusArguments );
@@ -402,7 +402,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 			r.append( Character.toLowerCase( c ) );
 		else
 			r.append( c );
-		for( int i = 1; i < camelCase.length(); i++ )
+		for( int i = 1, length = camelCase.length(); i < length; i++ )
 		{
 			c = camelCase.charAt( i );
 			if( Character.isUpperCase( c ) )

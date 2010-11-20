@@ -13,6 +13,7 @@ package com.threecrickets.scripturian.adapter;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 import org.apache.velocity.runtime.RuntimeInstance;
 
@@ -22,6 +23,7 @@ import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the <a
@@ -92,8 +94,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 	{
 		// Dark magicks to allow us to easily escape Velocity tokens
 		// (see VelocityProgram.execute)
-		literal = literal.replaceAll( "\\$", "\\${_d}" );
-		literal = literal.replaceAll( "\\#", "\\${_h}" );
+		literal = ScripturianUtil.replace( literal, LITERAL_ESCAPE_PATTERNS, LITERAL_ESCAPE_REPLACEMENTS );
 		return literal;
 	}
 
@@ -117,4 +118,14 @@ public class VelocityAdapter extends LanguageAdapterBase
 	// Private
 
 	private final AtomicReference<RuntimeInstance> runtimeInstanceReference = new AtomicReference<RuntimeInstance>();
+
+	private static Pattern[] LITERAL_ESCAPE_PATTERNS = new Pattern[]
+	{
+		Pattern.compile( "\\$" ), Pattern.compile( "\\#" )
+	};
+
+	private static String[] LITERAL_ESCAPE_REPLACEMENTS = new String[]
+	{
+		"\\${_d}", "\\${_h}"
+	};
 }

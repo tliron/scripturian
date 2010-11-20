@@ -292,9 +292,10 @@ public abstract class ScripturianUtil
 		}
 
 		// Backtrack to base directory
-		if( index != baseSegments.length )
+		int length = baseSegments.length;
+		if( index != length )
 		{
-			for( int i = index; i < baseSegments.length; ++i )
+			for( int i = index; i < length; ++i )
 			{
 				// "." segments have no effect
 				if( !baseSegments[i].equals( "." ) )
@@ -367,8 +368,50 @@ public abstract class ScripturianUtil
 		}
 	}
 
+	/**
+	 * Wraps literal strings in double quotes, escaping special characters with
+	 * backslashes.
+	 * 
+	 * @param string
+	 *        The string
+	 * @return The resulting string
+	 */
+	public static String doubleQuotedLiteral( String string )
+	{
+		return "\"" + replace( string, PRINT_ESCAPE_PATTERNS, PRINT_ESCAPE_REPLACEMENTS ) + "\"";
+	}
+
+	/**
+	 * Replaces all occurrences of several regular expressions in order.
+	 * 
+	 * @param string
+	 *        The string
+	 * @param patterns
+	 *        An array of regular expressions
+	 * @param replacements
+	 *        An array of replacement strings (must be the same length and order
+	 *        as patterns)
+	 * @return The resulting string
+	 */
+	public static String replace( String string, Pattern[] patterns, String[] replacements )
+	{
+		for( int i = 0, length = patterns.length; i < length; i++ )
+			string = patterns[i].matcher( string ).replaceAll( replacements[i] );
+		return string;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private static Pattern[] PRINT_ESCAPE_PATTERNS = new Pattern[]
+	{
+		Pattern.compile( "\\\\" ), Pattern.compile( "\\n" ), Pattern.compile( "\\r" ), Pattern.compile( "\\t" ), Pattern.compile( "\\f" ), Pattern.compile( "\\\"" )
+	};
+
+	private static String[] PRINT_ESCAPE_REPLACEMENTS = new String[]
+	{
+		"\\\\\\", "\\\\n", "\\\\r", "\\\\t", "\\\\f", "\\\\\""
+	};
 
 	/**
 	 * Used by {@link #getFileForProgramClass(File, Executable, int)} to
