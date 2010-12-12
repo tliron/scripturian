@@ -411,8 +411,7 @@ public abstract class ScripturianUtil
 
 	private static String[] PRINT_ESCAPE_REPLACEMENTS = new String[]
 	{
-		Matcher.quoteReplacement( "\\\\" ), Matcher.quoteReplacement( "\\\n" ), Matcher.quoteReplacement( "\\\r" ), Matcher.quoteReplacement( "\\\t" ), Matcher.quoteReplacement( "\\\f" ),
-		Matcher.quoteReplacement( "\\\"" )
+		Matcher.quoteReplacement( "\\\\" ), Matcher.quoteReplacement( "\\n" ), Matcher.quoteReplacement( "\\r" ), Matcher.quoteReplacement( "\\t" ), Matcher.quoteReplacement( "\\f" ), Matcher.quoteReplacement( "\\\"" )
 	};
 
 	/**
