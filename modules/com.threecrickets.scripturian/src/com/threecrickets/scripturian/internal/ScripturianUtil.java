@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.threecrickets.scripturian.Executable;
@@ -410,7 +411,8 @@ public abstract class ScripturianUtil
 
 	private static String[] PRINT_ESCAPE_REPLACEMENTS = new String[]
 	{
-		"\\\\\\", "\\\\n", "\\\\r", "\\\\t", "\\\\f", "\\\\\""
+		Matcher.quoteReplacement( "\\\\" ), Matcher.quoteReplacement( "\\\n" ), Matcher.quoteReplacement( "\\\r" ), Matcher.quoteReplacement( "\\\t" ), Matcher.quoteReplacement( "\\\f" ),
+		Matcher.quoteReplacement( "\\\"" )
 	};
 
 	/**
