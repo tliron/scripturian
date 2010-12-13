@@ -47,7 +47,7 @@
 			<link href="http://www.caucho.com/resin-javadoc/" />
 			<link href="http://www.mozilla.org/rhino/apidocs/" />
 			<link href="http://threecrickets.com/succinct/api/" />
-			<link href="http://velocity.apache.org/engine/releases/velocity-1.4/api/" />
+			<link href="http://velocity.apache.org/engine/releases/velocity-1.7/api/" />
 			<link href="http://commons.apache.org/daemon/apidocs/" />
 			<classpath>
 				<fileset dir="${lib}/clojure/lib" />
