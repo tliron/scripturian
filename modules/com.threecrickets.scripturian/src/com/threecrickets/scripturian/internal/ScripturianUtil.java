@@ -251,6 +251,19 @@ public abstract class ScripturianUtil
 	}
 
 	/**
+	 * Returns the file with its path normalized (all relative ".." and "."
+	 * segments resolved).
+	 * 
+	 * @param file
+	 *        The file
+	 * @return The normalized file
+	 */
+	public static File getNormalizedFile( File file )
+	{
+		return new File( file.toURI().normalize() );
+	}
+
+	/**
 	 * Returns the path of one file relative to another.
 	 * 
 	 * @param target
@@ -258,7 +271,6 @@ public abstract class ScripturianUtil
 	 * @param base
 	 *        The base file
 	 * @return The target's file relative to the base file
-	 * @throws IOException
 	 */
 	public static File getRelativeFile( File target, File base )
 	{

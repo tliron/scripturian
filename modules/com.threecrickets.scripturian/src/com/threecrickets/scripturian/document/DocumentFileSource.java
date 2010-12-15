@@ -13,6 +13,7 @@ package com.threecrickets.scripturian.document;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 import com.threecrickets.scripturian.internal.FiledDocumentDescriptor;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * Reads document stored in files under a base directory. The file contents are
@@ -520,7 +522,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		{
 			// Return a file with our name
 
-			File directory = file.getParentFile();
+			File directory = ScripturianUtil.getNormalizedFile( file.getParentFile() );
 			File[] filesWithName = directory.listFiles( new ExtensionInsensitiveFilter( file.getName() ) );
 			if( ( filesWithName != null ) && ( filesWithName.length > 0 ) )
 			{
