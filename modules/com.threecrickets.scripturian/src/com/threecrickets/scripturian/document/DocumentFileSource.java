@@ -130,11 +130,10 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public DocumentFileSource( String identifier, File basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
 	{
 		this.identifier = identifier;
-		this.basePath = basePath;
+		this.basePath = ScripturianUtil.getNormalizedFile( basePath );
 		this.defaultName = defaultName;
 		this.preferredExtension = preferredExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
-		basePathLength = basePath.getPath().length();
 		defaultNameFilter = new ExtensionInsensitiveFilter( defaultName );
 	}
 
@@ -232,7 +231,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public String getRelativeFilePath( File file )
 	{
-		return file.getPath().substring( basePathLength );
+		return ScripturianUtil.getRelativeFile( file, basePath ).getPath();
 	}
 
 	/**
@@ -370,11 +369,6 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * The base path.
 	 */
 	private final File basePath;
-
-	/**
-	 * Cached length of the base path.
-	 */
-	private final int basePathLength;
 
 	/**
 	 * The source identifier.
