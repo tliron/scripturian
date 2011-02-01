@@ -231,7 +231,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public String getRelativeFilePath( File file )
 	{
-		return ScripturianUtil.getRelativeFile( file, basePath ).getPath();
+		return ScripturianUtil.getRelativeFile( ScripturianUtil.getNormalizedFile( file ), basePath ).getPath();
 	}
 
 	/**
