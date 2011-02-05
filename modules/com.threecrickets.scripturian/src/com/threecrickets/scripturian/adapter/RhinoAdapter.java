@@ -119,6 +119,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", "", Arrays.asList( "js", "javascript" ), null, Arrays.asList( "javascript", "js", "rhino" ), null );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
+		compilerEnvirons.setOptimizationLevel( 9 ); // -1 = interpreted mode
 		classCompiler = new ClassCompiler( compilerEnvirons );
 		generatedClassLoader = Context.getCurrentContext().createClassLoader( ClassLoader.getSystemClassLoader() );
 		Context.exit();
