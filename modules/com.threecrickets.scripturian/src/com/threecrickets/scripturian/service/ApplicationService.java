@@ -109,6 +109,20 @@ public class ApplicationService
 		main.setLogger( logger );
 	}
 
+	/**
+	 * A logger with a name appended with a "." to the application's logger
+	 * name. This allows inheritance of configuration.
+	 * 
+	 * @param name
+	 *        The sub-logger name
+	 * @return The logger
+	 * @see #getLogger()
+	 */
+	public Logger getSubLogger( String name )
+	{
+		return Logger.getLogger( main.getLogger().getName() + "." + name );
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

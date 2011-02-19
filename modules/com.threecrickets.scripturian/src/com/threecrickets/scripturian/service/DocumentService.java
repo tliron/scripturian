@@ -12,14 +12,18 @@
 package com.threecrickets.scripturian.service;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.exception.DocumentException;
+import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 
@@ -61,6 +65,16 @@ public class DocumentService
 	public DocumentSource<Executable> getSource()
 	{
 		return main.getSource();
+	}
+
+	/**
+	 * The additional document sources to use.
+	 * 
+	 * @return The library document sources
+	 */
+	public CopyOnWriteArrayList<DocumentSource<Executable>> getLibrarySources()
+	{
+		return main.getLibrarySources();
 	}
 
 	/**
@@ -132,7 +146,7 @@ public class DocumentService
 	 */
 	public void execute( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
-		Executable executable = Executable.createOnce( documentName, main.getSource(), false, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
+		Executable executable = getDocumentDescriptor( documentName, false ).getDocument();
 		executable.execute( executionContext, this, main.getExecutionController() );
 	}
 
@@ -150,7 +164,7 @@ public class DocumentService
 	 */
 	public void include( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
-		Executable executable = Executable.createOnce( documentName, main.getSource(), true, main.getManager(), defaultLanguageTag, main.isPrepare() ).getDocument();
+		Executable executable = getDocumentDescriptor( documentName, true ).getDocument();
 		executable.execute( executionContext, this, main.getExecutionController() );
 	}
 
@@ -171,4 +185,52 @@ public class DocumentService
 	 * The default language tag.
 	 */
 	private String defaultLanguageTag = "js";
+
+	/**
+	 * Fetches a document descriptor from the main source or one of the library
+	 * sources.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param isTextWithScriplets
+	 *        Whether the document is text-with-scriptlets
+	 * @return The document descriptor
+	 * @throws ParsingException
+	 * @throws DocumentException
+	 */
+	private DocumentDescriptor<Executable> getDocumentDescriptor( String documentName, boolean isTextWithScriplets ) throws ParsingException, DocumentException
+	{
+		DocumentNotFoundException x = null;
+		Iterator<DocumentSource<Executable>> iterator = null;
+
+		DocumentSource<Executable> source = getSource();
+		while( source != null )
+		{
+			try
+			{
+				return Executable.createOnce( documentName, source, isTextWithScriplets, main.getManager(), defaultLanguageTag, main.isPrepare() );
+			}
+			catch( DocumentNotFoundException xx )
+			{
+				x = xx;
+
+				source = null;
+
+				if( iterator == null )
+				{
+					Iterable<DocumentSource<Executable>> sources = main.getLibrarySources();
+					if( sources != null )
+						iterator = sources.iterator();
+				}
+
+				if( ( iterator != null ) && iterator.hasNext() )
+					source = iterator.next();
+			}
+		}
+
+		if( x != null )
+			throw x;
+		else
+			throw new DocumentNotFoundException( documentName );
+	}
 }

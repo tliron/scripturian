@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 
 import com.threecrickets.scripturian.document.DocumentFileSource;
@@ -234,6 +235,16 @@ public class Main implements Runnable
 	}
 
 	/**
+	 * The additional document sources to use.
+	 * 
+	 * @return The library document sources
+	 */
+	public CopyOnWriteArrayList<DocumentSource<Executable>> getLibrarySources()
+	{
+		return librarySources;
+	}
+
+	/**
 	 * The name of the document service exposed to the executable.
 	 * 
 	 * @return The exposed service name
@@ -408,6 +419,11 @@ public class Main implements Runnable
 	private volatile DocumentSource<Executable> documentSource;
 
 	/**
+	 * The additional document sources to use.
+	 */
+	private final CopyOnWriteArrayList<DocumentSource<Executable>> librarySources = new CopyOnWriteArrayList<DocumentSource<Executable>>();
+
+	/**
 	 * The name of the document service exposed to the executable.
 	 */
 	private volatile String documentServiceName;
@@ -420,5 +436,5 @@ public class Main implements Runnable
 	/**
 	 * The logger.
 	 */
-	private volatile Logger logger;
+	private volatile Logger logger = Logger.getAnonymousLogger();
 }
