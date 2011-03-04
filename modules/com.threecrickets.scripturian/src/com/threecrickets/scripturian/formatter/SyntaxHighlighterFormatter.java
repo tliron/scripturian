@@ -27,7 +27,7 @@ public class SyntaxHighlighterFormatter<D> implements DocumentFormatter<D>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 */
 	public SyntaxHighlighterFormatter()
 	{
@@ -35,7 +35,7 @@ public class SyntaxHighlighterFormatter<D> implements DocumentFormatter<D>
 	}
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param baseUrl
 	 *        Base URL for syntaxhighlighter (can be relative)

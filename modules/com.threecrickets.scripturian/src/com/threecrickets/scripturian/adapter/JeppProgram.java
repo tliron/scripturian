@@ -35,7 +35,7 @@ class JeppProgram extends ProgramBase<JeppAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

@@ -38,7 +38,7 @@ public class JeppAdapter extends Jsr223LanguageAdapter
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

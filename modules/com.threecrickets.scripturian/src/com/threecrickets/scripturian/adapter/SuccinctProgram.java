@@ -35,7 +35,7 @@ class SuccinctProgram extends ProgramBase<SuccinctAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

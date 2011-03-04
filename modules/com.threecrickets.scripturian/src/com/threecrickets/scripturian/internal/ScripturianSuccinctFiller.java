@@ -32,7 +32,7 @@ public class ScripturianSuccinctFiller extends BeanMapFillerWrapper
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param manager
 	 *        The language manager

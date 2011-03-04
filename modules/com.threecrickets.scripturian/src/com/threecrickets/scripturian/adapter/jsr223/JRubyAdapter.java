@@ -42,7 +42,7 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

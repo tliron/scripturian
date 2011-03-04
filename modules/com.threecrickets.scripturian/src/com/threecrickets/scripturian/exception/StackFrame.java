@@ -25,7 +25,7 @@ public class StackFrame
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param documentName
 	 * @param lineNumber

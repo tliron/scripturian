@@ -35,7 +35,7 @@ public class JuelAdapter extends Jsr223LanguageAdapter
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

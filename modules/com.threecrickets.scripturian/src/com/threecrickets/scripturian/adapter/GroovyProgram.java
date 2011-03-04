@@ -40,7 +40,7 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

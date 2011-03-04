@@ -29,7 +29,7 @@ public class SwitchableOutputStream extends OutputStream
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param outputStream
 	 *        The initial underlying output stream

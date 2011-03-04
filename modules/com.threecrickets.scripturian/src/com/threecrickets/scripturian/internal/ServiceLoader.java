@@ -82,7 +82,7 @@ public class ServiceLoader<S> implements Iterable<S>
 	private ArrayList<S> services = new ArrayList<S>();
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param service
 	 *        The service class

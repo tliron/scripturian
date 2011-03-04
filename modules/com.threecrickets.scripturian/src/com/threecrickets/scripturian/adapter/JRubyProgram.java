@@ -42,7 +42,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

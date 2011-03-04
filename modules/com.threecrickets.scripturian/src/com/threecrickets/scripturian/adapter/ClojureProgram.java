@@ -51,7 +51,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

@@ -70,7 +70,7 @@ public class Main implements Runnable
 	//
 
 	/**
-	 * Construction. Interprets initial values from the arguments or falls back
+	 * Constructor. Interprets initial values from the arguments or falls back
 	 * to defaults.
 	 * 
 	 * @param arguments
@@ -93,7 +93,7 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param manager
 	 *        The language manager

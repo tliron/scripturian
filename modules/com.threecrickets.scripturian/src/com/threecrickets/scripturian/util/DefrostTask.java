@@ -68,7 +68,7 @@ public class DefrostTask implements Callable<Executable>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param documentDescriptor
 	 *        The document descriptor for the executable

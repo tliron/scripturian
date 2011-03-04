@@ -56,7 +56,7 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

@@ -26,7 +26,7 @@ import com.threecrickets.scripturian.exception.PreparationException;
 public abstract class ProgramBase<A extends LanguageAdapter> implements Program
 {
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

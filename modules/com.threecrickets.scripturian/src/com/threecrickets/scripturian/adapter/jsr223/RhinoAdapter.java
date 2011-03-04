@@ -42,7 +42,7 @@ public class RhinoAdapter extends Jsr223LanguageAdapter
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

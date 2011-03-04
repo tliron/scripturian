@@ -110,7 +110,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

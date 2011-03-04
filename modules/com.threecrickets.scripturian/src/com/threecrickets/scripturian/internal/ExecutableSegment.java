@@ -32,7 +32,7 @@ public class ExecutableSegment
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

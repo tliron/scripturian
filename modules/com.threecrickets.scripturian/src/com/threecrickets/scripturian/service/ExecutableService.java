@@ -33,7 +33,7 @@ public class ExecutableService
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param executionContext
 	 *        The execution context

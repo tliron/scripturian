@@ -38,7 +38,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param documentSource
 	 *        The document source
@@ -63,7 +63,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	}
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param documentSource
 	 *        The document source

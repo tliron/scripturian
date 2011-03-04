@@ -35,7 +35,7 @@ class VelocityProgram extends ProgramBase<VelocityAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

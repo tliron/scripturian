@@ -38,7 +38,7 @@ public class Defroster
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param documentSource
 	 *        The document source for executables

@@ -24,7 +24,7 @@ public class PygmentsDocumentFormatterContainerService
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param text
 	 * @param lineNumber

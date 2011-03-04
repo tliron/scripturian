@@ -38,7 +38,7 @@ public class Jsr223Scriptlet extends ProgramBase<Jsr223LanguageAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

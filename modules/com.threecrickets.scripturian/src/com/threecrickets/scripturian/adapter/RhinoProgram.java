@@ -36,7 +36,7 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

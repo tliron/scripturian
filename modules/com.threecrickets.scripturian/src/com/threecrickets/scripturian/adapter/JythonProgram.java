@@ -42,7 +42,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

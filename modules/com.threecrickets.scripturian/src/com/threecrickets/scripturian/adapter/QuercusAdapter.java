@@ -164,7 +164,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

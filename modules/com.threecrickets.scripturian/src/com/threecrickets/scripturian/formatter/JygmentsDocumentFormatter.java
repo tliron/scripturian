@@ -34,7 +34,7 @@ public class JygmentsDocumentFormatter<D> implements DocumentFormatter<D>
 	//
 
 	/**
-	 * Construction. The theme used is "vs".
+	 * Constructor. The theme used is "vs".
 	 */
 	public JygmentsDocumentFormatter()
 	{
@@ -42,7 +42,7 @@ public class JygmentsDocumentFormatter<D> implements DocumentFormatter<D>
 	}
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param theme
 	 *        The theme to use

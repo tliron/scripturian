@@ -111,7 +111,7 @@ public class JeppAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

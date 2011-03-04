@@ -133,7 +133,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
 	 */

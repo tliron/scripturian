@@ -40,7 +40,7 @@ public class DocumentService
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param main
 	 *        The main instance

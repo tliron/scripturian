@@ -164,7 +164,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	//
 
 	/**
-	 * Construction. Uses the JSR-223 script engine factory to gather the
+	 * Constructor. Uses the JSR-223 script engine factory to gather the
 	 * language adapter attributes. Sub-classes must be annotated with
 	 * {@link ScriptEngines}.
 	 * 

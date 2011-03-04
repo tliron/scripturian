@@ -38,7 +38,7 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param name
 	 *        The name of the language adapter implementation

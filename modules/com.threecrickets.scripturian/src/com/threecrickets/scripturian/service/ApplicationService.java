@@ -30,7 +30,7 @@ public class ApplicationService
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param main
 	 *        The main instance

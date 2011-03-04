@@ -37,7 +37,7 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param sourceCode
 	 *        The source code

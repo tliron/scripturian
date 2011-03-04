@@ -99,7 +99,7 @@ public class ExecutionContext
 	//
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 */
 	public ExecutionContext()
 	{
@@ -107,7 +107,7 @@ public class ExecutionContext
 	}
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param writer
 	 *        The standard output set for executables using this context
@@ -118,7 +118,7 @@ public class ExecutionContext
 	}
 
 	/**
-	 * Construction.
+	 * Constructor.
 	 * 
 	 * @param writer
 	 *        The standard output set for executables using this context
