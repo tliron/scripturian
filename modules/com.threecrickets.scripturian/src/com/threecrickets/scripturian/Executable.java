@@ -120,7 +120,7 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * In addition to regular scriptlets, Scripturian supports a few shorthand
  * scriptlets for common tasks:
  * <p>
- * The "comment scriptlet" (with a hash sign) is ignored.
+ * The "comment scriptlet" (with a pound sign) is ignored.
  * <p>
  * The "expression scriptlet" (with an equals sign) causes the expression to be
  * sent to standard output. It allows for more readable templates.
@@ -148,6 +148,7 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * <li><b>Include</b>:
  * <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' ?&gt;</code>
  * </li>
+ * <li><b>Comment</b>: <code>&lt;%# This is ignored. ?&gt;</code></li>
  * <li><b>In-flow</b>:
  * <code>&lt;%js if(isDebug) { %&gt; &lt;%:python dumpStack(); %&gt; &lt;% } %&gt;</code>
  * </li>
