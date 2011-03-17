@@ -120,7 +120,9 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * In addition to regular scriptlets, Scripturian supports a few shorthand
  * scriptlets for common tasks:
  * <p>
- * The "expression scriptlet (with an equals sign) causes the expression to be
+ * The "comment scriptlet" (with a hash sign) is ignored.
+ * <p>
+ * The "expression scriptlet" (with an equals sign) causes the expression to be
  * sent to standard output. It allows for more readable templates.
  * <p>
  * The "include scriptlet" (with an ampersand) invokes the
@@ -181,6 +183,11 @@ public class Executable
 	 * The default end delimiter (second option): ?&gt;
 	 */
 	public static final String DEFAULT_DELIMITER2_END = "?>";
+
+	/**
+	 * The default addition to the start delimiter to specify a comment tag: #
+	 */
+	public static final String DEFAULT_DELIMITER_COMMENT = "#";
 
 	/**
 	 * The default addition to the start delimiter to specify an expression tag:
@@ -367,7 +374,7 @@ public class Executable
 		DocumentSource<Executable> documentSource, boolean prepare ) throws ParsingException, DocumentException
 	{
 		this( documentName, partition, documentTimestamp, sourceCode, isTextWithScriptlets, manager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START,
-			DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
+			DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_COMMENT, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
 	}
 
 	/**
@@ -411,6 +418,9 @@ public class Executable
 	 *        The start delimiter (second option)
 	 * @param delimiter2End
 	 *        The end delimiter (second option)
+	 * @param delimiterComment
+	 *        The default addition to the start delimiter to specify a comment
+	 *        tag
 	 * @param delimiterExpression
 	 *        The default addition to the start delimiter to specify an
 	 *        expression tag
@@ -427,8 +437,8 @@ public class Executable
 	 * @see LanguageAdapter
 	 */
 	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
-		DocumentSource<Executable> documentSource, boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterExpression,
-		String delimiterInclude, String delimiterInFlow ) throws ParsingException, DocumentException
+		DocumentSource<Executable> documentSource, boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterComment,
+		String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ParsingException, DocumentException
 	{
 		this.documentName = documentName;
 		this.partition = partition;
@@ -454,6 +464,7 @@ public class Executable
 
 		int delimiterStartLength = 0;
 		int delimiterEndLength = 0;
+		int commentLength = delimiterComment.length();
 		int expressionLength = delimiterExpression.length();
 		int includeLength = delimiterInclude.length();
 		int inFlowLength = delimiterInFlow.length();
@@ -518,12 +529,19 @@ public class Executable
 					String languageTag = lastLanguageTag;
 					LanguageAdapter adapter = lastAdapter;
 
+					boolean isComment = false;
 					boolean isExpression = false;
 					boolean isInclude = false;
 					boolean isInFlow = false;
 
+					// Check if this is a comment
+					if( sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
+					{
+						start += commentLength;
+						isComment = true;
+					}
 					// Check if this is an expression
-					if( sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
+					else if( sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
 					{
 						start += expressionLength;
 						isExpression = true;
@@ -584,7 +602,7 @@ public class Executable
 							// Note that the in-flow executable is a single
 							// segment, so we can optimize parsing a bit
 							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, true, manager, languageTag, documentSource, prepare,
-								exposedExecutableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterExpression, delimiterInclude, delimiterInFlow );
+								exposedExecutableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterComment, delimiterExpression, delimiterInclude, delimiterInFlow );
 							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
 
 							// TODO: would it ever be possible to remove the
@@ -593,7 +611,7 @@ public class Executable
 							// Our include scriptlet is in the last language
 							segments.add( new ExecutableSegment( lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", this ), startLineNumber, startColumnNumber, true, true, lastLanguageTag ) );
 						}
-						else
+						else if( !isComment )
 							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), startLineNumber, startColumnNumber, true, true, languageTag ) );
 					}
 
