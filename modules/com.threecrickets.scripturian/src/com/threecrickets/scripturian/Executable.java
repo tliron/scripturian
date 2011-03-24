@@ -148,7 +148,7 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * <li><b>Include</b>:
  * <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' ?&gt;</code>
  * </li>
- * <li><b>Comment</b>: <code>&lt;%# This is ignored. ?&gt;</code></li>
+ * <li><b>Comment</b>: <code>&lt;%# This is ignored. %&gt;</code></li>
  * <li><b>In-flow</b>:
  * <code>&lt;%js if(isDebug) { %&gt; &lt;%:python dumpStack(); %&gt; &lt;% } %&gt;</code>
  * </li>
