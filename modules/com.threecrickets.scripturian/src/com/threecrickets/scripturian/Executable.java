@@ -415,6 +415,8 @@ public class Executable
 								break;
 							if( sourceCode.substring( endLanguageTag, endLanguageTag + delimiterEndLength ).equals( delimiterEnd ) )
 								break;
+							
+							endLanguageTag++;
 						}
 
 						languageTag = sourceCode.substring( start, endLanguageTag );
