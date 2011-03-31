@@ -295,7 +295,6 @@ public class Executable
 		String delimiterExpression = parsingContext.getDelimiterExpression();
 		String delimiterInclude = parsingContext.getDelimiterInclude();
 		String delimiterInFlow = parsingContext.getDelimiterInFlow();
-		String delimiterPlugin = parsingContext.getDelimiterPlugin();
 
 		int delimiterStartLength = 0;
 		int delimiterEndLength = 0;
@@ -303,7 +302,6 @@ public class Executable
 		int expressionLength = delimiterExpression.length();
 		int includeLength = delimiterInclude.length();
 		int inFlowLength = delimiterInFlow.length();
-		int pluginLength = delimiterPlugin.length();
 		int length = sourceCode.length();
 
 		DocumentSource<Executable> documentSource = parsingContext.getDocumentSource();
@@ -372,53 +370,62 @@ public class Executable
 					boolean isExpression = false;
 					boolean isInclude = false;
 					boolean isInFlow = false;
-					boolean isPlugin = false;
+					String pluginCode = null;
+					ScriptletPlugin plugin = null;
 
-					// Check if this is a comment
-					if( sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
-					{
-						start += commentLength;
-						isComment = true;
-					}
-					// Check if this is an expression
-					else if( sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
-					{
-						start += expressionLength;
-						isExpression = true;
-					}
-					// Check if this is an include
-					else if( sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
-					{
-						start += includeLength;
-						isInclude = true;
-					}
-					// Check if this is an in-flow
-					else if( sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
-					{
-						start += inFlowLength;
-						isInFlow = true;
-					}
 					// Check if this is a plugin
-					else if( sourceCode.substring( start, start + pluginLength ).equals( delimiterPlugin ) )
+					for( Map.Entry<String, ScriptletPlugin> scriptletPlugin : parsingContext.getScriptletPlugins().entrySet() )
 					{
-						start += pluginLength;
-						isPlugin = true;
+						pluginCode = scriptletPlugin.getKey();
+						int codeLength = pluginCode.length();
+						if( sourceCode.substring( start, start + codeLength ).equals( pluginCode ) )
+						{
+							plugin = scriptletPlugin.getValue();
+							start += codeLength;
+							break;
+						}
 					}
 
-					// Get language tag (or plugin code) if available
-					if( !Character.isWhitespace( sourceCode.charAt( start ) ) )
+					if( plugin == null )
 					{
-						int endLanguageTag = start + 1;
-						while( endLanguageTag < length - 1 )
+						// Check if this is a comment
+						if( sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
 						{
-							if( Character.isWhitespace( sourceCode.charAt( endLanguageTag ) ) )
-								break;
-							if( sourceCode.substring( endLanguageTag, endLanguageTag + delimiterEndLength ).equals( delimiterEnd ) )
-								break;
-							
-							endLanguageTag++;
+							start += commentLength;
+							isComment = true;
 						}
+						// Check if this is an expression
+						else if( sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
+						{
+							start += expressionLength;
+							isExpression = true;
+						}
+						// Check if this is an include
+						else if( sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
+						{
+							start += includeLength;
+							isInclude = true;
+						}
+						// Check if this is an in-flow
+						else if( sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
+						{
+							start += inFlowLength;
+							isInFlow = true;
+						}
+					}
 
+					// Get language tag if available (ends in whitespace or end
+					// delimiter)
+					int endLanguageTag = start;
+					while( endLanguageTag < end )
+					{
+						if( Character.isWhitespace( sourceCode.charAt( endLanguageTag ) ) )
+							break;
+
+						endLanguageTag++;
+					}
+					if( endLanguageTag > start + 1 )
+					{
 						languageTag = sourceCode.substring( start, endLanguageTag );
 
 						// Optimization: in-flow is unnecessary if we are in the
@@ -431,23 +438,11 @@ public class Executable
 
 					if( !isComment )
 					{
-						String segment = end > start ? sourceCode.substring( start, end ) : "";
+						String segment = end > start + 1 ? sourceCode.substring( start, end ) : "";
 
-						if( isPlugin )
+						if( plugin != null )
 						{
-							boolean found = false;
-							for( Map.Entry<String, ScriptletPlugin> scriptletPlugin : parsingContext.getScriptletPlugins().entrySet() )
-							{
-								if( languageTag.equals( scriptletPlugin.getKey() ) )
-								{
-									found = true;
-									segment = scriptletPlugin.getValue().getScriptlet( languageTag, segment );
-									break;
-								}
-							}
-
-							if( !found )
-								throw ParsingException.pluginNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
+							segment = plugin.getScriptlet( pluginCode, segment );
 
 							// Our plugin scriptlet is in the last language
 							languageTag = lastLanguageTag;

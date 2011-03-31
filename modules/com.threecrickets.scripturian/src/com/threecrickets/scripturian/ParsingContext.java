@@ -120,7 +120,6 @@ public class ParsingContext
 		delimiterExpression = parsingContext.getDelimiterExpression();
 		delimiterInclude = parsingContext.getDelimiterInclude();
 		delimiterInFlow = parsingContext.getDelimiterInFlow();
-		delimiterPlugin = parsingContext.getDelimiterPlugin();
 		documentSource = parsingContext.getDocumentSource();
 		exposedExecutableName = parsingContext.getExposedExecutableName();
 		scriptletPlugins.clear();
@@ -375,26 +374,6 @@ public class ParsingContext
 	}
 
 	/**
-	 * The addition to the start delimiter to specify an plugin scriptlet.
-	 * 
-	 * @return The plugin delimiter
-	 */
-	public String getDelimiterPlugin()
-	{
-		return delimiterPlugin;
-	}
-
-	/**
-	 * @param delimiterPlugin
-	 *        The plugin delimiter
-	 * @see #getDelimiterPlugin()
-	 */
-	public void setDelimiterPlugin( String delimiterPlugin )
-	{
-		this.delimiterPlugin = delimiterPlugin;
-	}
-
-	/**
 	 * A document source used to store in-flow scriptlets; can be null if
 	 * in-flow scriptlets are not used.
 	 * 
@@ -510,11 +489,6 @@ public class ParsingContext
 	 * The addition to the start delimiter to specify an in-flow scriptlet.
 	 */
 	private String delimiterInFlow = DEFAULT_DELIMITER_IN_FLOW;
-
-	/**
-	 * The addition to the start delimiter to specify a plugin scriptlet.
-	 */
-	private String delimiterPlugin = DEFAULT_DELIMITER_PLUGIN;
 
 	/**
 	 * A document source used to store in-flow scriptlets; can be null if
