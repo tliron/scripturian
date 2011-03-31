@@ -204,7 +204,7 @@ public class DocumentService
 		Iterator<DocumentSource<Executable>> iterator = null;
 
 		ParsingContext parsingContext = new ParsingContext();
-		parsingContext.setLanguageManager( main.getManager() );
+		parsingContext.setLanguageManager( main.getLanguageManager() );
 		parsingContext.setDefaultLanguageTag( defaultLanguageTag );
 		parsingContext.setPrepare( main.isPrepare() );
 		parsingContext.setDocumentSource( getSource() );

@@ -144,7 +144,7 @@ public class Main implements Runnable
 	 * 
 	 * @return The language manager
 	 */
-	public LanguageManager getManager()
+	public LanguageManager getLanguageManager()
 	{
 		return languageManager;
 	}
