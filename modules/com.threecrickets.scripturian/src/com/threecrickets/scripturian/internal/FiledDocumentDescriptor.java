@@ -373,13 +373,13 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		catch( StackOverflowError x )
 		{
 			StringBuilder message = new StringBuilder();
-			message.append( "DEPENDENCY LOOP:" );
+			message.append( "FiledDocumentDescriptor dependency loop for " + getDefaultName() + ":" );
 			for( DocumentDescriptor<D> documentDescriptor : dependencies )
 			{
 				message.append( ' ' );
 				message.append( documentDescriptor.getDefaultName() );
 			}
-			System.out.println( message );
+			System.err.println( message);
 		}
 
 		return true;

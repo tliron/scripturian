@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -162,61 +163,6 @@ import com.threecrickets.scripturian.service.ExecutableService;
 public class Executable
 {
 	//
-	// Constants
-	//
-
-	/**
-	 * The default start delimiter (first option): &lt;%
-	 */
-	public static final String DEFAULT_DELIMITER1_START = "<%";
-
-	/**
-	 * The default end delimiter (first option): %&gt;
-	 */
-	public static final String DEFAULT_DELIMITER1_END = "%>";
-
-	/**
-	 * The default start delimiter (second option): &lt;?
-	 */
-	public static final String DEFAULT_DELIMITER2_START = "<?";
-
-	/**
-	 * The default end delimiter (second option): ?&gt;
-	 */
-	public static final String DEFAULT_DELIMITER2_END = "?>";
-
-	/**
-	 * The default addition to the start delimiter to specify a comment tag: #
-	 */
-	public static final String DEFAULT_DELIMITER_COMMENT = "#";
-
-	/**
-	 * The default addition to the start delimiter to specify an expression tag:
-	 * =
-	 */
-	public static final String DEFAULT_DELIMITER_EXPRESSION = "=";
-
-	/**
-	 * The default addition to the start delimiter to specify an include tag: &
-	 */
-	public static final String DEFAULT_DELIMITER_INCLUDE = "&";
-
-	/**
-	 * The default addition to the start delimiter to specify an in-flow tag: :
-	 */
-	public static final String DEFAULT_DELIMITER_IN_FLOW = ":";
-
-	/**
-	 * The default executable variable name: "executable"
-	 */
-	public static final String DEFAULT_EXECUTABLE_VARIABLE_NAME = "executable";
-
-	/**
-	 * Prefix prepended to in-flow scriptlets stores in the document source.
-	 */
-	public static final String IN_FLOW_PREFIX = "_IN_FLOW_";
-
-	//
 	// Static operations
 	//
 
@@ -228,31 +174,20 @@ public class Executable
 	 * 
 	 * @param documentName
 	 *        The document name
-	 * @param documentSource
-	 *        The document source
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param manager
-	 *        The language manager used to parse, prepare and execute the
-	 *        executable
-	 * @param defaultLanguageTag
-	 *        When {@code isTextWithScriptlets} is true, this is the language
-	 *        used for scriptlets if none is specified
-	 * @param prepare
-	 *        Whether to prepare the source code: preparation increases
-	 *        initialization time and reduces execution time; note that not all
-	 *        languages support preparation as a separate operation
+	 * @param parsingContext
+	 *        The parsing context
 	 * @return A document descriptor with a valid executable as its document
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 * @throws DocumentException
 	 *         In case of a document source error
 	 */
-	public static DocumentDescriptor<Executable> createOnce( String documentName, DocumentSource<Executable> documentSource, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
-		boolean prepare ) throws ParsingException, DocumentException
+	public static DocumentDescriptor<Executable> createOnce( String documentName, boolean isTextWithScriptlets, ParsingContext parsingContext ) throws ParsingException, DocumentException
 	{
-		DocumentDescriptor<Executable> documentDescriptor = documentSource.getDocument( documentName );
-		createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, manager, defaultLanguageTag, prepare );
+		DocumentDescriptor<Executable> documentDescriptor = parsingContext.getDocumentSource().getDocument( documentName );
+		createOnce( documentDescriptor, isTextWithScriptlets, parsingContext );
 		return documentDescriptor;
 	}
 
@@ -264,33 +199,29 @@ public class Executable
 	 * 
 	 * @param documentDescriptor
 	 *        The document descriptor
-	 * @param partition
-	 *        The executable partition
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param manager
-	 *        The language manager used to parse, prepare and execute the
-	 *        executable
-	 * @param defaultLanguageTag
-	 *        When {@code isTextWithScriptlets} is true, this is the language
-	 *        used for scriptlets if none is specified
-	 * @param prepare
-	 *        Whether to prepare the source code: preparation increases
-	 *        initialization time and reduces execution time; note that not all
-	 *        languages support preparation as a separate operation
+	 * @param parsingContext
+	 *        The parsing context
 	 * @return A new executable or the existing one
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 * @throws DocumentException
 	 *         In case of a problem accessing the document source
 	 */
-	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare )
-		throws ParsingException, DocumentException
+	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, ParsingContext parsingContext ) throws ParsingException, DocumentException
 	{
 		Executable executable = documentDescriptor.getDocument();
 		if( executable == null )
 		{
-			executable = new Executable( documentDescriptor, partition, isTextWithScriptlets, manager, defaultLanguageTag, prepare );
+			String defaultLanguageTag = parsingContext.getLanguageManager().getLanguageTagByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag(), parsingContext.getDefaultLanguageTag() );
+			if( !defaultLanguageTag.equals( parsingContext.getDefaultLanguageTag() ) )
+			{
+				parsingContext = new ParsingContext( parsingContext );
+				parsingContext.setDefaultLanguageTag( defaultLanguageTag );
+			}
+
+			executable = new Executable( documentDescriptor.getDefaultName(), documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, parsingContext );
 			Executable existing = documentDescriptor.setDocumentIfAbsent( executable );
 			if( existing != null )
 				executable = existing;
@@ -307,43 +238,8 @@ public class Executable
 	 * requires the appropriate {@link LanguageAdapter} implementations to be
 	 * available in the language manager.
 	 * 
-	 * @param documentDescriptor
-	 *        The document descriptor
-	 * @param partition
-	 *        The executable partition
-	 * @param isTextWithScriptlets
-	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param manager
-	 *        The language manager used to parse, prepare and execute the
-	 *        executable
-	 * @param defaultLanguageTag
-	 *        When {@code isTextWithScriptlets} is true, this is the language
-	 *        used for scriptlets if none is specified
-	 * @param prepare
-	 *        Whether to prepare the source code: preparation increases
-	 *        initialization time and reduces execution time; note that not all
-	 *        languages support preparation as a separate operation
-	 * @throws ParsingException
-	 *         In case of a parsing error
-	 * @throws DocumentException
-	 *         In case of a problem accessing the document source
-	 */
-	public Executable( DocumentDescriptor<Executable> documentDescriptor, String partition, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag, boolean prepare ) throws ParsingException,
-		DocumentException
-	{
-		this( documentDescriptor.getDefaultName(), partition, documentDescriptor.getTimestamp(), documentDescriptor.getSourceCode(), isTextWithScriptlets, manager, manager.getLanguageTagByExtension(
-			documentDescriptor.getDefaultName(), documentDescriptor.getTag(), defaultLanguageTag ), documentDescriptor.getSource(), prepare );
-	}
-
-	/**
-	 * Parses source code into a compact, optimized, executable. Parsing
-	 * requires the appropriate {@link LanguageAdapter} implementations to be
-	 * available in the language manager.
-	 * 
 	 * @param documentName
 	 *        The document name
-	 * @param partition
-	 *        The executable partition
 	 * @param documentTimestamp
 	 *        The executable's document timestamp
 	 * @param sourceCode
@@ -353,115 +249,53 @@ public class Executable
 	 *        embedded scriptlets
 	 * @param isTextWithScriptlets
 	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param manager
-	 *        The language manager used to parse, prepare and execute the
-	 *        executable
-	 * @param defaultLanguageTag
-	 *        When {@code isTextWithScriptlets} is true, this is the language
-	 *        used for scriptlets if none is specified
-	 * @param documentSource
-	 *        A document source used to store in-flow scriptlets; can be null if
-	 *        in-flow scriptlets are not used
-	 * @param prepare
-	 *        Whether to prepare the source code: preparation increases
-	 *        initialization time and reduces execution time; note that not all
-	 *        languages support preparation as a separate operation
-	 * @throws ParsingException
-	 *         In case of a parsing error
-	 * @throws DocumentException
-	 *         In case of a problem accessing the document source
-	 */
-	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
-		DocumentSource<Executable> documentSource, boolean prepare ) throws ParsingException, DocumentException
-	{
-		this( documentName, partition, documentTimestamp, sourceCode, isTextWithScriptlets, manager, defaultLanguageTag, documentSource, prepare, DEFAULT_EXECUTABLE_VARIABLE_NAME, DEFAULT_DELIMITER1_START,
-			DEFAULT_DELIMITER1_END, DEFAULT_DELIMITER2_START, DEFAULT_DELIMITER2_END, DEFAULT_DELIMITER_COMMENT, DEFAULT_DELIMITER_EXPRESSION, DEFAULT_DELIMITER_INCLUDE, DEFAULT_DELIMITER_IN_FLOW );
-	}
-
-	/**
-	 * Parses source code into a compact, optimized, executable. Parsing
-	 * requires the appropriate {@link LanguageAdapter} implementations to be
-	 * available in the language manager.
-	 * 
-	 * @param documentName
-	 *        The document name
-	 * @param partition
-	 *        The executable partition
-	 * @param documentTimestamp
-	 *        The executable's document timestamp
-	 * @param sourceCode
-	 *        The source code -- when {@code isTextWithScriptlets} is false,
-	 *        it's considered as pure source code in the language defined by
-	 *        {@code defaultLanguageTag}, otherwise it's considered as text with
-	 *        embedded scriptlets
-	 * @param isTextWithScriptlets
-	 *        See {@code sourceCode} and {@code defaultLanguageTag}
-	 * @param manager
-	 *        The language manager used to parse, prepare and execute the
-	 *        executable
-	 * @param defaultLanguageTag
-	 *        When {@code isTextWithScriptlets} is true, this is the language
-	 *        used for scriptlets if none is specified
-	 * @param documentSource
-	 *        A document source used to store in-flow scriptlets; can be null if
-	 *        in-flow scriptlets are not used
-	 * @param prepare
-	 *        Whether to prepare the source code: preparation increases
-	 *        initialization time and reduces execution time; note that not all
-	 *        languages support preparation as a separate operation
-	 * @param exposedExecutableName
-	 *        The document variable name
-	 * @param delimiter1Start
-	 *        The start delimiter (first option)
-	 * @param delimiter1End
-	 *        The end delimiter (first option)
-	 * @param delimiter2Start
-	 *        The start delimiter (second option)
-	 * @param delimiter2End
-	 *        The end delimiter (second option)
-	 * @param delimiterComment
-	 *        The default addition to the start delimiter to specify a comment
-	 *        tag
-	 * @param delimiterExpression
-	 *        The default addition to the start delimiter to specify an
-	 *        expression tag
-	 * @param delimiterInclude
-	 *        The default addition to the start delimiter to specify an include
-	 *        scriptlet
-	 * @param delimiterInFlow
-	 *        The default addition to the start delimiter to specify an in-flow
-	 *        scriptlet
+	 * @param parsingContext
+	 *        The parsing context
 	 * @throws ParsingException
 	 *         In case of a parsing or compilation error
 	 * @throws DocumentException
 	 *         In case of a problem accessing the document source
 	 * @see LanguageAdapter
 	 */
-	public Executable( String documentName, String partition, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, LanguageManager manager, String defaultLanguageTag,
-		DocumentSource<Executable> documentSource, boolean prepare, String exposedExecutableName, String delimiter1Start, String delimiter1End, String delimiter2Start, String delimiter2End, String delimiterComment,
-		String delimiterExpression, String delimiterInclude, String delimiterInFlow ) throws ParsingException, DocumentException
+	public Executable( String documentName, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, ParsingContext parsingContext ) throws ParsingException, DocumentException
 	{
+		String partition = parsingContext.getPartition();
+		if( ( partition == null ) && ( parsingContext.getDocumentSource() != null ) )
+			partition = parsingContext.getDocumentSource().getIdentifier();
+
 		this.documentName = documentName;
 		this.partition = partition;
 		this.documentTimestamp = documentTimestamp;
-		this.executableServiceName = exposedExecutableName;
-		this.manager = manager;
+		this.executableServiceName = parsingContext.getExposedExecutableName();
+		this.languageManager = parsingContext.getLanguageManager();
+
+		boolean prepare = parsingContext.isPrepare();
+		String lastLanguageTag = parsingContext.getDefaultLanguageTag();
 
 		if( !isTextWithScriptlets )
 		{
-			ExecutableSegment segment = new ExecutableSegment( sourceCode, 1, 1, true, false, defaultLanguageTag );
+			ExecutableSegment segment = new ExecutableSegment( sourceCode, 1, 1, true, false, lastLanguageTag );
 			segments = new ExecutableSegment[]
 			{
 				segment
 			};
-			segment.createProgram( this, manager, prepare );
+			segment.createProgram( this, languageManager, prepare );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
 		}
 
-		String lastLanguageTag = defaultLanguageTag;
-		LanguageAdapter lastAdapter = manager.getAdapterByTag( defaultLanguageTag );
+		LanguageAdapter lastAdapter = languageManager.getAdapterByTag( lastLanguageTag );
+
+		String delimiter1Start = parsingContext.getDelimiter1Start();
+		String delimiter1End = parsingContext.getDelimiter1End();
+		String delimiter2Start = parsingContext.getDelimiter2Start();
+		String delimiter2End = parsingContext.getDelimiter2End();
+		String delimiterComment = parsingContext.getDelimiterComment();
+		String delimiterExpression = parsingContext.getDelimiterExpression();
+		String delimiterInclude = parsingContext.getDelimiterInclude();
+		String delimiterInFlow = parsingContext.getDelimiterInFlow();
+		String delimiterPlugin = parsingContext.getDelimiterPlugin();
 
 		int delimiterStartLength = 0;
 		int delimiterEndLength = 0;
@@ -469,6 +303,10 @@ public class Executable
 		int expressionLength = delimiterExpression.length();
 		int includeLength = delimiterInclude.length();
 		int inFlowLength = delimiterInFlow.length();
+		int pluginLength = delimiterPlugin.length();
+		int length = sourceCode.length();
+
+		DocumentSource<Executable> documentSource = parsingContext.getDocumentSource();
 
 		// Detect type of delimiter
 		int start = sourceCode.indexOf( delimiter1Start );
@@ -534,6 +372,7 @@ public class Executable
 					boolean isExpression = false;
 					boolean isInclude = false;
 					boolean isInFlow = false;
+					boolean isPlugin = false;
 
 					// Check if this is a comment
 					if( sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
@@ -559,61 +398,88 @@ public class Executable
 						start += inFlowLength;
 						isInFlow = true;
 					}
+					// Check if this is a plugin
+					else if( sourceCode.substring( start, start + pluginLength ).equals( delimiterPlugin ) )
+					{
+						start += pluginLength;
+						isPlugin = true;
+					}
 
-					// Get language tag if available
+					// Get language tag (or plugin code) if available
 					if( !Character.isWhitespace( sourceCode.charAt( start ) ) )
 					{
-						int endEngineName = start + 1;
-						while( !Character.isWhitespace( sourceCode.charAt( endEngineName ) ) )
-							endEngineName++;
+						int endLanguageTag = start + 1;
+						while( endLanguageTag < length - 1 )
+						{
+							if( Character.isWhitespace( sourceCode.charAt( endLanguageTag ) ) )
+								break;
+							if( sourceCode.substring( endLanguageTag, endLanguageTag + delimiterEndLength ).equals( delimiterEnd ) )
+								break;
+						}
 
-						languageTag = sourceCode.substring( start, endEngineName );
+						languageTag = sourceCode.substring( start, endLanguageTag );
 
 						// Optimization: in-flow is unnecessary if we are in the
 						// same language
 						if( isInFlow && lastLanguageTag.equals( languageTag ) )
 							isInFlow = false;
 
-						start = endEngineName + 1;
+						start = endLanguageTag + 1;
 					}
 
-					if( start + 1 != end )
+					if( !isComment )
 					{
-						// Add scriptlet segment
-						if( isExpression || isInclude )
+						String segment = end > start ? sourceCode.substring( start, end ) : "";
+
+						if( isPlugin )
 						{
-							adapter = manager.getAdapterByTag( languageTag );
+							boolean found = false;
+							for( Map.Entry<String, ScriptletPlugin> scriptletPlugin : parsingContext.getScriptletPlugins().entrySet() )
+							{
+								if( languageTag.equals( scriptletPlugin.getKey() ) )
+								{
+									found = true;
+									segment = scriptletPlugin.getValue().getScriptlet( languageTag, segment );
+									break;
+								}
+							}
+
+							if( !found )
+								throw ParsingException.pluginNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
+
+							// Our plugin scriptlet is in the last language
+							languageTag = lastLanguageTag;
+						}
+						else
+						{
+							adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
 							if( isExpression )
-								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionOutput( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, true, languageTag ) );
+								segment = adapter.getSourceCodeForExpressionOutput( segment, this );
 							else if( isInclude )
-								segments.add( new ExecutableSegment( adapter.getSourceCodeForExpressionInclude( sourceCode.substring( start, end ), this ), startLineNumber, startColumnNumber, true, true, languageTag ) );
+								segment = adapter.getSourceCodeForExpressionInclude( segment, this );
+							else if( isInFlow && ( documentSource != null ) )
+							{
+								String inFlowCode = delimiterStart + languageTag + " " + segment + delimiterEnd;
+								String inFlowName = ParsingContext.IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
+
+								// Note that the in-flow executable is a single
+								// segment, so we can optimize parsing a bit
+								Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, documentTimestamp, inFlowCode, true, parsingContext );
+								documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
+
+								// TODO: would it ever be possible to remove the
+								// dependent in-flow instances?
+
+								// Our include scriptlet is in the last language
+								languageTag = lastLanguageTag;
+								segment = lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", this );
+							}
 						}
-						else if( isInFlow && ( documentSource != null ) )
-						{
-							adapter = manager.getAdapterByTag( languageTag );
-							if( adapter == null )
-								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
 
-							String inFlowCode = delimiterStart + languageTag + " " + sourceCode.substring( start, end ) + delimiterEnd;
-							String inFlowName = IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
-
-							// Note that the in-flow executable is a single
-							// segment, so we can optimize parsing a bit
-							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, partition, documentTimestamp, inFlowCode, true, manager, languageTag, documentSource, prepare,
-								exposedExecutableName, delimiterStart, delimiterEnd, delimiterStart, delimiterEnd, delimiterComment, delimiterExpression, delimiterInclude, delimiterInFlow );
-							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
-
-							// TODO: would it ever be possible to remove the
-							// dependent in-flow instances?
-
-							// Our include scriptlet is in the last language
-							segments.add( new ExecutableSegment( lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", this ), startLineNumber, startColumnNumber, true, true, lastLanguageTag ) );
-						}
-						else if( !isComment )
-							segments.add( new ExecutableSegment( sourceCode.substring( start, end ), startLineNumber, startColumnNumber, true, true, languageTag ) );
+						segments.add( new ExecutableSegment( segment, startLineNumber, startColumnNumber, true, true, languageTag ) );
 					}
 
 					if( !isInFlow )
@@ -633,7 +499,7 @@ public class Executable
 			}
 
 			// Add remaining literal segment
-			if( last < sourceCode.length() )
+			if( last < length )
 				segments.add( new ExecutableSegment( sourceCode.substring( last ), lastLineNumber, lastColumnNumber, false, false, lastLanguageTag ) );
 		}
 		else
@@ -691,7 +557,7 @@ public class Executable
 						previous.sourceCode += current.sourceCode;
 					else
 					{
-						LanguageAdapter adapter = manager.getAdapterByTag( current.languageTag );
+						LanguageAdapter adapter = languageManager.getAdapterByTag( current.languageTag );
 						if( adapter == null )
 							throw ParsingException.adapterNotFound( documentName, current.startLineNumber, current.startColumnNumber, current.languageTag );
 
@@ -711,7 +577,7 @@ public class Executable
 		{
 			segment.position = position++;
 			if( segment.isProgram )
-				segment.createProgram( this, manager, prepare );
+				segment.createProgram( this, languageManager, prepare );
 		}
 
 		// Flatten list into array
@@ -754,7 +620,7 @@ public class Executable
 	 */
 	public LanguageManager getManager()
 	{
-		return manager;
+		return languageManager;
 	}
 
 	/**
@@ -931,7 +797,7 @@ public class Executable
 					executionContext.getWriter().write( segment.sourceCode );
 				else
 				{
-					LanguageAdapter adapter = manager.getAdapterByTag( segment.languageTag );
+					LanguageAdapter adapter = languageManager.getAdapterByTag( segment.languageTag );
 					if( adapter == null )
 						throw ParsingException.adapterNotFound( documentName, segment.startLineNumber, segment.startColumnNumber, segment.languageTag );
 
@@ -943,7 +809,7 @@ public class Executable
 
 					Object oldExecutableService = null;
 					if( !executionContext.isImmutable() )
-						oldExecutableService = executionContext.getServices().put( executableServiceName, new ExecutableService( executionContext, manager, containerService ) );
+						oldExecutableService = executionContext.getServices().put( executableServiceName, new ExecutableService( executionContext, languageManager, containerService ) );
 
 					try
 					{
@@ -1089,7 +955,7 @@ public class Executable
 	/**
 	 * The language manager used to parse, prepare and execute the executable
 	 */
-	private final LanguageManager manager;
+	private final LanguageManager languageManager;
 
 	/**
 	 * User-defined attributes.

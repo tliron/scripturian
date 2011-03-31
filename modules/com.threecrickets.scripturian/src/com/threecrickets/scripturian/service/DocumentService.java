@@ -19,6 +19,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.ParsingContext;
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
@@ -200,21 +201,23 @@ public class DocumentService
 	 */
 	private DocumentDescriptor<Executable> getDocumentDescriptor( String documentName, boolean isTextWithScriplets ) throws ParsingException, DocumentException
 	{
-		DocumentNotFoundException x = null;
 		Iterator<DocumentSource<Executable>> iterator = null;
 
-		DocumentSource<Executable> source = getSource();
-		while( source != null )
+		ParsingContext parsingContext = new ParsingContext();
+		parsingContext.setLanguageManager( main.getManager() );
+		parsingContext.setDefaultLanguageTag( defaultLanguageTag );
+		parsingContext.setPrepare( main.isPrepare() );
+		parsingContext.setDocumentSource( getSource() );
+
+		while( true )
 		{
 			try
 			{
-				return Executable.createOnce( documentName, source, isTextWithScriplets, main.getManager(), defaultLanguageTag, main.isPrepare() );
+				return Executable.createOnce( documentName, isTextWithScriplets, parsingContext );
 			}
-			catch( DocumentNotFoundException xx )
+			catch( DocumentNotFoundException x )
 			{
-				x = xx;
-
-				source = null;
+				DocumentSource<Executable> source = null;
 
 				if( iterator == null )
 				{
@@ -225,12 +228,12 @@ public class DocumentService
 
 				if( ( iterator != null ) && iterator.hasNext() )
 					source = iterator.next();
+
+				if( source == null )
+					throw x;
+
+				parsingContext.setDocumentSource( source );
 			}
 		}
-
-		if( x != null )
-			throw x;
-		else
-			throw new DocumentNotFoundException( documentName );
 	}
 }

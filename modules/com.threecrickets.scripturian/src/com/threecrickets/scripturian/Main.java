@@ -79,7 +79,7 @@ public class Main implements Runnable
 	public Main( String[] arguments )
 	{
 		this.arguments = arguments;
-		manager = new LanguageManager();
+		languageManager = new LanguageManager();
 		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "false" ).equals( "true" );
 		initialDocumentName = ScripturianUtil.getNonSwitchArgument( 0, arguments, "default" );
 		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
@@ -115,7 +115,7 @@ public class Main implements Runnable
 	public Main( LanguageManager manager, boolean prepare, String initialDocumentName, String defaultDocumentName, String preferredExtension, String basePath, String[] arguments )
 	{
 		this.arguments = arguments;
-		this.manager = manager;
+		this.languageManager = manager;
 		this.prepare = prepare;
 		this.initialDocumentName = initialDocumentName;
 		this.defaultDocumentName = defaultDocumentName;
@@ -146,7 +146,7 @@ public class Main implements Runnable
 	 */
 	public LanguageManager getManager()
 	{
-		return manager;
+		return languageManager;
 	}
 
 	/**
@@ -380,7 +380,7 @@ public class Main implements Runnable
 	 * The {@link LanguageManager} used to get language adapters for
 	 * executables.
 	 */
-	private final LanguageManager manager;
+	private final LanguageManager languageManager;
 
 	/**
 	 * Whether to prepare executables.

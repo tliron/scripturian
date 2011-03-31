@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
+import com.threecrickets.scripturian.ParsingContext;
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentSource;
 
@@ -106,8 +107,12 @@ public class DefrostTask implements Callable<Executable>
 		if( executable == null )
 		{
 			LanguageAdapter adapter = languageManager.getAdapterByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag() );
-			executable = Executable.createOnce( documentDescriptor, documentSource.getIdentifier(), isTextWithScriptlets, languageManager, adapter != null ? (String) adapter.getAttributes().get(
-				LanguageAdapter.DEFAULT_TAG ) : defaultLanguageTag, prepare );
+			ParsingContext parsingContext = new ParsingContext();
+			parsingContext.setLanguageManager( languageManager );
+			parsingContext.setDefaultLanguageTag( adapter != null ? (String) adapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG ) : defaultLanguageTag );
+			parsingContext.setPrepare( prepare );
+			parsingContext.setDocumentSource( documentSource );
+			executable = Executable.createOnce( documentDescriptor, isTextWithScriptlets, parsingContext );
 		}
 
 		return executable;

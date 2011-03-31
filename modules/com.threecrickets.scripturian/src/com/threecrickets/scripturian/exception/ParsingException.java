@@ -34,6 +34,11 @@ public class ParsingException extends Exception
 		return new ParsingException( documentName, lineNumber, columnNumber, "Adapter not available for language: " + languageTag );
 	}
 
+	public static ParsingException pluginNotFound( String documentName, int lineNumber, int columnNumber, String languageTag )
+	{
+		return new ParsingException( documentName, lineNumber, columnNumber, "Plugin not available for code: " + languageTag );
+	}
+
 	//
 	// Construction
 	//
