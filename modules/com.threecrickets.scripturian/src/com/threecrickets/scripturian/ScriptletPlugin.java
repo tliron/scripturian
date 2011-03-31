@@ -12,9 +12,22 @@
 package com.threecrickets.scripturian;
 
 /**
+ * Allows the creation of custom scriptlets for text-with-scriptlets
+ * {@link Executable} construction.
+ * 
  * @author Tal Liron
+ * @see ParsingContext#getScriptletPlugins()
  */
 public interface ScriptletPlugin
 {
+	/**
+	 * Generates an exectuable segment for a custom scriptlet.
+	 * 
+	 * @param code
+	 *        The scriptlet code
+	 * @param content
+	 *        The scriptlet content
+	 * @return The segment
+	 */
 	public String getScriptlet( String code, String content );
 }
