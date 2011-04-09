@@ -378,7 +378,7 @@ public class Executable
 					{
 						pluginCode = scriptletPlugin.getKey();
 						int codeLength = pluginCode.length();
-						if( sourceCode.substring( start, start + codeLength ).equals( pluginCode ) )
+						if( ( start + codeLength <= end ) && sourceCode.substring( start, start + codeLength ).equals( pluginCode ) )
 						{
 							plugin = scriptletPlugin.getValue();
 							start += codeLength;
@@ -389,25 +389,25 @@ public class Executable
 					if( plugin == null )
 					{
 						// Check if this is a comment
-						if( sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
+						if( ( start + commentLength <= end ) && sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
 						{
 							start += commentLength;
 							isComment = true;
 						}
 						// Check if this is an expression
-						else if( sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
+						else if( ( start + expressionLength <= end ) && sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
 						{
 							start += expressionLength;
 							isExpression = true;
 						}
 						// Check if this is an include
-						else if( sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
+						else if( ( start + includeLength <= end ) && sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
 						{
 							start += includeLength;
 							isInclude = true;
 						}
 						// Check if this is an in-flow
-						else if( sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
+						else if( ( start + inFlowLength <= end ) && sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
 						{
 							start += inFlowLength;
 							isInFlow = true;
