@@ -221,6 +221,16 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		invalid = true;
 	}
 
+	//
+	// Object
+	//
+
+	@Override
+	public String toString()
+	{
+		return "FiledDocumentDescriptor: " + defaultName + ", " + tag + ", " + timestamp;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

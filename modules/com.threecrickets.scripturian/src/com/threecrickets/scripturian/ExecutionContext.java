@@ -445,6 +445,16 @@ public class ExecutionContext
 		released = true;
 	}
 
+	//
+	// Object
+	//
+
+	@Override
+	public String toString()
+	{
+		return "ExecutionContext: " + ( enterable ? "enterable, " : "non-enterable, " ) + ( immutable ? "immutable, " : "mutable, " ) + ( released ? "released" : "unreleased" );
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 

@@ -90,8 +90,8 @@ public class LanguageManager
 	//
 
 	/**
-	 * Adds all language adapters found in the {@code
-	 * META-INF/services/com.threecrickets.scripturian.LanguageAdapter}
+	 * Adds all language adapters found in the
+	 * {@code META-INF/services/com.threecrickets.scripturian.LanguageAdapter}
 	 * resource.
 	 * 
 	 * @see ServiceLoader
@@ -252,6 +252,16 @@ public class LanguageManager
 			languageAdapterByExtension.putIfAbsent( extension, adapter );
 
 		adapter.setManager( this );
+	}
+
+	//
+	// Object
+	//
+
+	@Override
+	public String toString()
+	{
+		return "LanguageManager: " + cachePath.get();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

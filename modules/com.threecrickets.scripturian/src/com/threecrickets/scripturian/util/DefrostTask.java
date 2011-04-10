@@ -125,7 +125,7 @@ public class DefrostTask implements Callable<Executable>
 	@Override
 	public String toString()
 	{
-		return documentDescriptor.getDefaultName();
+		return "DefrosterTask: " + documentDescriptor;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

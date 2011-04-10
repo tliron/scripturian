@@ -133,4 +133,14 @@ public class ExecutableSegment
 		if( prepare )
 			program.prepare();
 	}
+
+	//
+	// Object
+	//
+
+	@Override
+	public String toString()
+	{
+		return "ExecutableSegment: " + languageTag + ( isProgram ? ", program, " : ", non-program, " ) + ( isScriptlet ? "scriptlet" : "non-scriptlet" );
+	}
 }

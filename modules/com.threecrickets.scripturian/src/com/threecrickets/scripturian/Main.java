@@ -80,7 +80,7 @@ public class Main implements Runnable
 	{
 		this.arguments = arguments;
 		languageManager = new LanguageManager();
-		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "false" ).equals( "true" );
+		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "true" ).equals( "true" );
 		initialDocumentName = ScripturianUtil.getNonSwitchArgument( 0, arguments, "default" );
 		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
 		documentServiceName = ScripturianUtil.getSwitchArgument( "document-service-name", arguments, "document" );

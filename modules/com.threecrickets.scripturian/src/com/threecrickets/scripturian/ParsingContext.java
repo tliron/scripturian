@@ -418,6 +418,16 @@ public class ParsingContext
 		return scriptletPlugins;
 	}
 
+	//
+	// Object
+	//
+
+	@Override
+	public String toString()
+	{
+		return "ParsingContext: " + partition + ", " + defaultLanguageTag + ", " + prepare + ", " + documentSource;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

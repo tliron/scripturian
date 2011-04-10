@@ -913,6 +913,16 @@ public class Executable
 			enterableExecutionContext.release();
 	}
 
+	//
+	// Object
+	//
+
+	@Override
+	public String toString()
+	{
+		return "Executable: " + documentName + ", " + partition + ", " + documentTimestamp;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 

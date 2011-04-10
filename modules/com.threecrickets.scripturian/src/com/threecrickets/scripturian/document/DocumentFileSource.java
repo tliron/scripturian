@@ -355,6 +355,16 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		return identifier;
 	}
 
+	//
+	// Object
+	//
+
+	@Override
+	public String toString()
+	{
+		return "DocumentFileSource: " + identifier + ", " + basePath + ", " + defaultName + ", " + preferredExtension + ", " + minimumTimeBetweenValidityChecks;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
