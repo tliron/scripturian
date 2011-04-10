@@ -74,12 +74,6 @@ public class ParsingContext
 	public static final String DEFAULT_DELIMITER_IN_FLOW = ":";
 
 	/**
-	 * The default addition to the start delimiter to specify a plugin
-	 * scriptlet: +
-	 */
-	public static final String DEFAULT_DELIMITER_PLUGIN = "+";
-
-	/**
 	 * The default executable service name: "executable"
 	 */
 	public static final String DEFAULT_EXECUTABLE_SERVICE_NAME = "executable";
