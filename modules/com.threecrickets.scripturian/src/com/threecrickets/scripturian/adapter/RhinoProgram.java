@@ -90,7 +90,7 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 					FileOutputStream stream = new FileOutputStream( classFile );
 					try
 					{
-						stream.write( (byte[]) classByteArray );
+						stream.write( classByteArray );
 					}
 					finally
 					{

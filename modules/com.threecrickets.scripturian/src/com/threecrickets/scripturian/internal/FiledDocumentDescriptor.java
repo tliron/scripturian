@@ -24,7 +24,6 @@ import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
 import com.threecrickets.scripturian.exception.DocumentException;
-import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 
 /**
  * Document descriptor for {@link DocumentFileSource}.
@@ -80,7 +79,8 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		defaultName = documentSource.getRelativeFilePath( file );
 		timestamp = file.lastModified();
 
-		if( read )
+		String sourceCode = null;
+		if( read && file.exists() )
 		{
 			try
 			{
@@ -88,16 +88,14 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 			}
 			catch( FileNotFoundException x )
 			{
-				throw new DocumentNotFoundException( "Could not find file " + file, x );
 			}
 			catch( IOException x )
 			{
 				throw new DocumentException( "Could not read file " + file, x );
 			}
 		}
-		else
-			sourceCode = null;
 
+		this.sourceCode = sourceCode;
 		tag = ScripturianUtil.getExtension( file );
 	}
 
@@ -379,7 +377,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 				message.append( ' ' );
 				message.append( documentDescriptor.getDefaultName() );
 			}
-			System.err.println( message);
+			System.err.println( message );
 		}
 
 		return true;

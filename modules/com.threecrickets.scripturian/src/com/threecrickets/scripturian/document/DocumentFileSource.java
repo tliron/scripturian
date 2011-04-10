@@ -305,6 +305,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			}
 		}
 
+		if( !filedDocumentDescriptor.file.exists() )
+			throw new DocumentNotFoundException( "Could not find file for " + documentName );
+
 		return filedDocumentDescriptor;
 	}
 
