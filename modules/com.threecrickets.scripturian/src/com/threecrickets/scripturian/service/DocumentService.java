@@ -217,22 +217,16 @@ public class DocumentService
 			}
 			catch( DocumentNotFoundException x )
 			{
-				DocumentSource<Executable> source = null;
-
 				if( iterator == null )
 				{
 					Iterable<DocumentSource<Executable>> sources = main.getLibrarySources();
-					if( sources != null )
-						iterator = sources.iterator();
+					iterator = sources != null ? sources.iterator() : null;
 				}
 
-				if( ( iterator != null ) && iterator.hasNext() )
-					source = iterator.next();
-
-				if( source == null )
+				if( ( iterator == null ) || !iterator.hasNext() )
 					throw x;
 
-				parsingContext.setDocumentSource( source );
+				parsingContext.setDocumentSource( iterator.next() );
 			}
 		}
 	}
