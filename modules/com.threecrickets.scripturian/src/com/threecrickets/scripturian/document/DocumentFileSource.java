@@ -304,7 +304,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 					filedDocumentDescriptorsByAlias.put( documentName, filedDocumentDescriptor );
 			}
 		}
-		else if( ( filedDocumentDescriptor.file == null ) || !filedDocumentDescriptor.file.exists() )
+
+		if( ( filedDocumentDescriptor.file == null ) || !filedDocumentDescriptor.file.exists() )
 			throw new DocumentNotFoundException( "Document descriptor's file does not exist: " + documentName );
 
 		return filedDocumentDescriptor;
