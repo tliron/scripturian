@@ -28,7 +28,7 @@ import org.jruby.embed.io.WriterOutputStream;
 import org.jruby.exceptions.RaiseException;
 import org.jruby.javasupport.JavaUtil;
 import org.jruby.runtime.Constants;
-import org.jruby.runtime.ThreadContext.RubyStackTraceElement;
+import org.jruby.runtime.backtrace.RubyStackTraceElement;
 import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.util.ClassCache;
 
@@ -106,7 +106,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
-				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceElements() )
 					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
 				return executionException;
 			}
@@ -114,14 +114,14 @@ public class JRubyAdapter extends LanguageAdapterBase
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
-				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceElements() )
 					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
 				return executionException;
 			}
 			else
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
-				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceFrames() )
+				for( RubyStackTraceElement stackTraceElement : rubyException.getBacktraceElements() )
 					executionException.getStack().add( new StackFrame( stackTraceElement.getFileName(), stackTraceElement.getLineNumber(), -1 ) );
 				return executionException;
 			}
