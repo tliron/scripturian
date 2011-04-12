@@ -23,6 +23,7 @@ import org.jruby.compiler.ASTCompiler;
 import org.jruby.compiler.ASTInspector;
 import org.jruby.compiler.impl.StandardASMCompiler;
 import org.jruby.exceptions.RaiseException;
+import org.jruby.util.ClassCache.OneShotClassLoader;
 import org.jruby.util.JRubyClassLoader;
 
 import com.threecrickets.scripturian.Executable;
@@ -91,22 +92,26 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 				{
 					// Use cached compiled code
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-					JRubyClassLoader rubyClassLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
-					rubyClassLoader.defineClass( classname, classByteArray );
-					Class<?> scriptClass = rubyClassLoader.loadClass( classname );
+					OneShotClassLoader classLoader = new OneShotClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+					Class<?> scriptClass = classLoader.defineClass( classname, classByteArray );
 					scriptReference.compareAndSet( null, (Script) scriptClass.newInstance() );
 				}
 				else
 				{
-					Node node = adapter.compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), adapter.compilerRuntime.getCurrentContext().getCurrentScope(), startLineNumber - 1 );
+					Node node = adapter.compilerRuntime.parseEval( sourceCode, executable.getDocumentName(), null, startLineNumber - 1 );
 
-					ASTInspector astInspector = new ASTInspector();
+					// Compilers
 					ASTCompiler astCompiler = adapter.compilerRuntime.getInstanceConfig().newCompiler();
 					StandardASMCompiler asmCompiler = new StandardASMCompiler( classname.replace( '.', '/' ), executable.getDocumentName() );
-					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 
-					astInspector.inspect( node );
+					// Inspector
+					ASTInspector astInspector = new ASTInspector();
+
+					// Compile!
 					astCompiler.compileRoot( node, asmCompiler, astInspector, true, false );
+
+					// Load
+					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 					scriptReference.compareAndSet( null, (Script) asmCompiler.loadClass( classLoader ).newInstance() );
 
 					// Cache it!
@@ -121,7 +126,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 						stream.close();
 					}
 
-					// script = compilerRuntime.tryCompile( node );
+					// A variation of: compilerRuntime.tryCompile( node );
 				}
 			}
 			catch( RaiseException x )
