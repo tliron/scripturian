@@ -71,10 +71,11 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	// Program
 	//
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void prepare() throws PreparationException
 	{
-		if( scriptReference.get() != null )
+		if( scriptClassReference.get() != null )
 			return;
 
 		// Note that we parse the node for a different runtime than the
@@ -93,8 +94,8 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 					// Use cached compiled code
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
 					OneShotClassLoader classLoader = new OneShotClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
-					Class<?> scriptClass = classLoader.defineClass( classname, classByteArray );
-					scriptReference.compareAndSet( null, (Script) scriptClass.newInstance() );
+					Class<Script> scriptClass = (Class<Script>) classLoader.defineClass( classname, classByteArray );
+					scriptClassReference.compareAndSet( null, scriptClass );
 				}
 				else
 				{
@@ -112,7 +113,8 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 
 					// Load
 					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
-					scriptReference.compareAndSet( null, (Script) asmCompiler.loadClass( classLoader ).newInstance() );
+					Class<Script> scriptClass = (Class<Script>) asmCompiler.loadClass( classLoader );
+					scriptClassReference.compareAndSet( null, scriptClass );
 
 					// Cache it!
 					classFile.getParentFile().mkdirs();
@@ -133,14 +135,6 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 			{
 				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
 			}
-			catch( InstantiationException x )
-			{
-				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
-			}
-			catch( IllegalAccessException x )
-			{
-				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
-			}
 			catch( ClassNotFoundException x )
 			{
 				throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
@@ -156,11 +150,14 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	{
 		Ruby rubyRuntime = adapter.getRubyRuntime( executionContext );
 
-		Script script = scriptReference.get();
+		Class<Script> scriptClass = scriptClassReference.get();
 		try
 		{
-			if( script != null )
+			if( scriptClass != null )
+			{
+				Script script = scriptClass.newInstance();
 				rubyRuntime.runScript( script );
+			}
 			else
 			{
 				rubyRuntime.getCurrentContext().setLine( startLineNumber );
@@ -170,6 +167,14 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 		catch( RaiseException x )
 		{
 			throw JRubyAdapter.createExecutionException( executable.getDocumentName(), x );
+		}
+		catch( InstantiationException x )
+		{
+			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+		}
+		catch( IllegalAccessException x )
+		{
+			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
 		}
 		finally
 		{
@@ -184,5 +189,5 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	/**
 	 * The cached compiled script.
 	 */
-	private final AtomicReference<Script> scriptReference = new AtomicReference<Script>();
+	private final AtomicReference<Class<Script>> scriptClassReference = new AtomicReference<Class<Script>>();
 }
