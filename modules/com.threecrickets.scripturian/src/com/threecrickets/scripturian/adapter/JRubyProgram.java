@@ -23,7 +23,6 @@ import org.jruby.compiler.ASTCompiler;
 import org.jruby.compiler.ASTInspector;
 import org.jruby.compiler.impl.StandardASMCompiler;
 import org.jruby.exceptions.RaiseException;
-import org.jruby.util.ClassCache.OneShotClassLoader;
 import org.jruby.util.JRubyClassLoader;
 
 import com.threecrickets.scripturian.Executable;
@@ -93,7 +92,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 				{
 					// Use cached compiled code
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-					OneShotClassLoader classLoader = new OneShotClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 					Class<Script> scriptClass = (Class<Script>) classLoader.defineClass( classname, classByteArray );
 					scriptClassReference.compareAndSet( null, scriptClass );
 				}
@@ -170,11 +169,11 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 		}
 		catch( InstantiationException x )
 		{
-			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+			throw new ExecutionException( executable.getDocumentName(), x );
 		}
 		catch( IllegalAccessException x )
 		{
-			throw new PreparationException( executable.getDocumentName(), startLineNumber, startColumnNumber, x );
+			throw new ExecutionException( executable.getDocumentName(), x );
 		}
 		finally
 		{

@@ -18,7 +18,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.jruby.CompatVersion;
 import org.jruby.NativeException;
 import org.jruby.Ruby;
 import org.jruby.RubyException;
@@ -151,7 +150,6 @@ public class JRubyAdapter extends LanguageAdapterBase
 		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), null, Arrays.asList( "ruby", "rb", "jruby" ), null );
 
 		RubyInstanceConfig config = new RubyInstanceConfig();
-		config.setCompatVersion( CompatVersion.RUBY1_9 );
 		config.setClassCache( getRubyClassCache() );
 		config.setCompileMode( CompileMode.OFF );
 		compilerRuntime = Ruby.newInstance( config );
@@ -209,7 +207,6 @@ public class JRubyAdapter extends LanguageAdapterBase
 			// System.setProperty( "jruby.jit.codeCache", "ttt" );
 
 			RubyInstanceConfig config = new RubyInstanceConfig();
-			config.setCompatVersion( CompatVersion.RUBY1_9 );
 			config.setClassCache( getRubyClassCache() );
 			config.setCompileMode( CompileMode.OFF );
 			config.setOutput( new PrintStream( switchableOut ) );
