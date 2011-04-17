@@ -12,7 +12,10 @@
 package com.threecrickets.scripturian.service;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.threecrickets.scripturian.Executable;
@@ -152,6 +155,46 @@ public class DocumentService
 	}
 
 	/**
+	 * As {@link #execute(String)}, but will only execute once per this thread.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws DocumentException
+	 * @throws IOException
+	 * @see #markExecuted(String)
+	 */
+	public void executeOnce( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
+	{
+		if( markExecuted( documentName ) )
+			execute( documentName );
+	}
+
+	/**
+	 * Marks a document as executed for this thread's {@link ExecutionContext}.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @return True if the document was marked as executed by this call, false
+	 *         if it was already marked as executed
+	 * @see #executeOnce(String)
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean markExecuted( String documentName )
+	{
+		Map<String, Object> attributes = executionContext.getAttributes();
+		Set<String> executed = (Set<String>) attributes.get( EXECUTED_ATTRIBUTE );
+		if( executed == null )
+		{
+			executed = new HashSet<String>();
+			attributes.put( EXECUTED_ATTRIBUTE, executed );
+		}
+
+		return executed.add( documentName );
+	}
+
+	/**
 	 * Includes a text document into the current location. The document may be a
 	 * "text-with-scriptlets" executable, in which case its output could be
 	 * dynamically generated.
@@ -171,6 +214,11 @@ public class DocumentService
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	/**
+	 * Executed attribute for an {@link ExecutionContext}.
+	 */
+	private static final String EXECUTED_ATTRIBUTE = "com.threecrickets.scripturian.service.DocumentService.executed";
 
 	/**
 	 * The main instance.
