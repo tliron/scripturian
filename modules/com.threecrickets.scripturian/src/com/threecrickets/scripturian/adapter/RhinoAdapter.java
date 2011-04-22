@@ -65,6 +65,11 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 */
 	public static final String JAVASCRIPT_CACHE_DIR = "javascript";
 
+	/**
+	 * The Rhino optimization level.
+	 */
+	public static int OPTIMIZATION_LEVEL = 9; // -1 = interpreted mode;
+
 	//
 	// Static operations
 	//
@@ -119,7 +124,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", "", Arrays.asList( "js", "javascript" ), null, Arrays.asList( "javascript", "js", "rhino" ), null );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
-		compilerEnvirons.setOptimizationLevel( 9 ); // -1 = interpreted mode
+		compilerEnvirons.setOptimizationLevel( OPTIMIZATION_LEVEL );
 		classCompiler = new ClassCompiler( compilerEnvirons );
 		generatedClassLoader = Context.getCurrentContext().createClassLoader( ClassLoader.getSystemClassLoader() );
 		Context.exit();
@@ -144,7 +149,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 
 		if( context == null )
 		{
-			context = contextFactory.enterContext();
+			context = enterContext();
 			executionContext.getAttributes().put( RHINO_CONTEXT, context );
 		}
 		else
@@ -235,7 +240,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	{
 		// We need a fresh context here, because Rhino does not allow us to
 		// share contexts between threads
-		Context context = contextFactory.enterContext();
+		Context context = enterContext();
 		try
 		{
 			ScriptableObject scope = getScope( executable, executionContext, context, -1 );
@@ -287,4 +292,17 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 * Class cache shared by all Rhino contexts.
 	 */
 	private final ClassCache classChache = new ClassCache();
+
+	/**
+	 * Creates and enters a context.
+	 * 
+	 * @return A context
+	 */
+	private Context enterContext()
+	{
+		Context context = contextFactory.enterContext();
+		context.setLanguageVersion( Context.VERSION_1_7 );
+		context.setOptimizationLevel( OPTIMIZATION_LEVEL );
+		return context;
+	}
 }
