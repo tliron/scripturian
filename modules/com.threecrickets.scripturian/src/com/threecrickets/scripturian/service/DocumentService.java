@@ -272,7 +272,7 @@ public class DocumentService
 				}
 
 				if( ( iterator == null ) || !iterator.hasNext() )
-					throw x;
+					throw new DocumentNotFoundException( documentName );
 
 				parsingContext.setDocumentSource( iterator.next() );
 			}
