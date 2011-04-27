@@ -44,10 +44,10 @@ import com.threecrickets.scripturian.internal.ThreadLocalExecutionContext;
  * threads, they would need to coordinate access to the context if they need it.
  * <p>
  * The second occurs when
- * {@link Executable#makeEnterable(ExecutionContext, Object, ExecutionController)}
- * is called, and then {@link Executable#enter(String, Object...)} is callable
- * by concurrent threads. In this case, <i>all invoking threads share the same
- * execution context</i>. Because the context is immutable (internally
+ * {@link Executable#makeEnterable(Object, ExecutionContext, Object, ExecutionController)}
+ * is called, and then {@link Executable#enter(Object, String, Object...)} is
+ * callable by concurrent threads. In this case, <i>all invoking threads share
+ * the same execution context</i>. Because the context is immutable (internally
  * {@link #makeImmutable()} is called), it is "thread-safe" to the extent that
  * you better not try to modify it. Otherwise, an {@link IllegalStateException}
  * is thrown.
@@ -322,7 +322,7 @@ public class ExecutionContext
 	 * 
 	 * @return True if enterable
 	 * @see #enter(Executable, String, Object...)
-	 * @see Executable#makeEnterable(ExecutionContext, Object,
+	 * @see Executable#makeEnterable(Object, ExecutionContext, Object,
 	 *      ExecutionController)
 	 */
 	public boolean isEnterable()
@@ -357,7 +357,7 @@ public class ExecutionContext
 	 * point can be a function, method, lambda, closure, etc.
 	 * <p>
 	 * The context must have been previously made enterable by a call to
-	 * {@link Executable#makeEnterable(ExecutionContext, Object, ExecutionController)}
+	 * {@link Executable#makeEnterable(Object, ExecutionContext, Object, ExecutionController)}
 	 * .
 	 * 
 	 * @param executable

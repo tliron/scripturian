@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentSource;
@@ -85,10 +84,10 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * Depending on the language implementation, entry can mean calling a function,
  * method, lambda, closure or macro, or even sending a network request. This
  * phase follows a special execution phase via a call to
- * {@link #makeEnterable(ExecutionContext, Object, ExecutionController)}, after
- * which all entries use the same {@link ExecutionContext}. Passing state is
- * handled differently in entry vs. execution: in entry, support is for sending
- * a list of "argument" states and returning a single state value.
+ * {@link #makeEnterable(Object, ExecutionContext, Object, ExecutionController)}
+ * , after which all entries use the same {@link ExecutionContext}. Passing
+ * state is handled differently in entry vs. execution: in entry, support is for
+ * sending a list of "argument" states and returning a single state value.
  * <p>
  * Depending on the language implementation, entry can involve better
  * performance than execution due to the use of a single execution context.
@@ -702,15 +701,18 @@ public class Executable
 	}
 
 	/**
-	 * The enterable execution context.
+	 * The enterable execution context for an entering key.
 	 * 
+	 * @param enteringKey
+	 *        The entering key
 	 * @return The execution context
-	 * @see #makeEnterable(ExecutionContext, Object, ExecutionController)
+	 * @see #makeEnterable(Object, ExecutionContext, Object,
+	 *      ExecutionController)
 	 * @see ExecutionContext#enter(Executable, String, Object...)
 	 */
-	public ExecutionContext getEnterableExecutionContext()
+	public ExecutionContext getEnterableExecutionContext( Object enteringKey )
 	{
-		return enterableExecutionContext.get();
+		return enterableExecutionContexts.get( enteringKey );
 	}
 
 	/**
@@ -839,11 +841,13 @@ public class Executable
 	 * Makes an execution context enterable, in preparation for calling
 	 * {@link ExecutionContext#enter(Executable, String, Object...)}.
 	 * <p>
-	 * Note that this can only be done once per executable. If it succeeds and
-	 * returns true, the execution context should be considered "consumed" by
-	 * this executable. At this point it is immutable, and can only be released
-	 * by calling {@link #release()} on the executable.
+	 * Note that this can only be done once per entering key for an executable.
+	 * If it succeeds and returns true, the execution context should be
+	 * considered "consumed" by this executable. At this point it is immutable,
+	 * and can only be released by calling {@link #release()} on the executable.
 	 * 
+	 * @param enteringKey
+	 *        The entering key
 	 * @param executionContext
 	 *        The execution context
 	 * @param containerService
@@ -851,21 +855,18 @@ public class Executable
 	 * @param executionController
 	 *        The optional {@link ExecutionController} to be applied to the
 	 *        execution context
-	 * @return False if we're already prepared and the execution context was not
-	 *         consumed, true if preparation succeeded and execution context was
-	 *         consumed
+	 * @return False if we're already enterable and the execution context was
+	 *         not consumed, true if the operation succeeded and execution
+	 *         context was consumed
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 * @throws IOException
 	 */
-	public boolean makeEnterable( ExecutionContext executionContext, Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
+	public boolean makeEnterable( Object enteringKey, ExecutionContext executionContext, Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
-		if( enterableExecutionContext.get() != null )
-			return false;
-
 		execute( executionContext, containerService, executionController );
 
-		if( !enterableExecutionContext.compareAndSet( null, executionContext ) )
+		if( enterableExecutionContexts.putIfAbsent( enteringKey, executionContext ) != null )
 			return false;
 
 		executionContext.enterable = true;
@@ -878,9 +879,13 @@ public class Executable
 	 * adapter that used the enterable context. According to the language, the
 	 * entry point can be a function, method, lambda, closure, etc.
 	 * <p>
-	 * The context must have been previously made enterable by a call to
-	 * {@link #makeEnterable(ExecutionContext, Object, ExecutionController)} .
+	 * The execution context must have been previously made enterable by a call
+	 * to
+	 * {@link #makeEnterable(Object, ExecutionContext, Object, ExecutionController)}
+	 * .
 	 * 
+	 * @param enteringKey
+	 *        The entering key
 	 * @param entryPointName
 	 *        The name of the entry point
 	 * @param arguments
@@ -891,11 +896,11 @@ public class Executable
 	 * @throws NoSuchMethodException
 	 * @see ExecutionContext#enter(Executable, String, Object...)
 	 */
-	public Object enter( String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
+	public Object enter( Object enteringKey, String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
 	{
-		ExecutionContext enterableExecutionContext = this.enterableExecutionContext.get();
+		ExecutionContext enterableExecutionContext = enterableExecutionContexts.get( enteringKey );
 		if( enterableExecutionContext == null )
-			throw new IllegalStateException( "Executable does not have an enterable execution context" );
+			throw new IllegalStateException( "Executable does not have an enterable execution context for key: " + enteringKey );
 
 		return enterableExecutionContext.enter( this, entryPointName, arguments );
 	}
@@ -903,13 +908,13 @@ public class Executable
 	/**
 	 * Releases consumed execution contexts.
 	 * 
-	 * @see #makeEnterable(ExecutionContext, Object, ExecutionController)
+	 * @see #makeEnterable(Object, ExecutionContext, Object,
+	 *      ExecutionController)
 	 * @see #finalize()
 	 */
 	public void release()
 	{
-		ExecutionContext enterableExecutionContext = this.enterableExecutionContext.getAndSet( null );
-		if( enterableExecutionContext != null )
+		for( ExecutionContext enterableExecutionContext : enterableExecutionContexts.values() )
 			enterableExecutionContext.release();
 	}
 
@@ -996,12 +1001,13 @@ public class Executable
 	private volatile long lastExecutedTimestamp = 0;
 
 	/**
-	 * The execution context to be used for calls to
-	 * {@link #invoke(String, Object...)}.
+	 * The execution contexts to be used for calls to
+	 * {@link #enter(Object, String, Object...)}.
 	 * 
-	 * @see #makeEnterable(ExecutionContext, Object, ExecutionController)
+	 * @see #makeEnterable(Object, ExecutionContext, Object,
+	 *      ExecutionController)
 	 */
-	private final AtomicReference<ExecutionContext> enterableExecutionContext = new AtomicReference<ExecutionContext>();
+	private final ConcurrentMap<Object, ExecutionContext> enterableExecutionContexts = new ConcurrentHashMap<Object, ExecutionContext>();
 
 	/**
 	 * Get the exposed service for the executable.
