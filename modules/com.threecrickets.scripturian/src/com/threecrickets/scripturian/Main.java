@@ -85,7 +85,7 @@ public class Main implements Runnable
 		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
 		documentServiceName = ScripturianUtil.getSwitchArgument( "document-service-name", arguments, "document" );
 		applicationServiceName = ScripturianUtil.getSwitchArgument( "application-service-name", arguments, "application" );
-		String basePath = ScripturianUtil.getSwitchArgument( "base-path", arguments, "." );
+		String basePath = ScripturianUtil.getSwitchArgument( "base-path", arguments, "" );
 		String preferredExtension = ScripturianUtil.getSwitchArgument( "preferred-extension", arguments, "js" );
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
