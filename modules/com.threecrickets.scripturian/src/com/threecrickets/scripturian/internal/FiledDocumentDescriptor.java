@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import com.threecrickets.scripturian.document.DocumentDescriptor;
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
+import com.threecrickets.scripturian.exception.DocumentDependencyLoopException;
 import com.threecrickets.scripturian.exception.DocumentException;
 
 /**
@@ -117,8 +118,9 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 * @return Whether the document is valid
 	 * @see DocumentFileSource#getMinimumTimeBetweenValidityChecks()
 	 * @see DocumentDescriptor#getDependencies()
+	 * @throws DocumentDependencyLoopException
 	 */
-	public boolean isValid()
+	public boolean isValid() throws DocumentDependencyLoopException
 	{
 		return isValid( new HashSet<String>() );
 	}
@@ -295,10 +297,11 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 * @param testedDependencies
 	 *        A collection to keep track of tested dependencies
 	 * @return Whether the document is valid
+	 * @throws DocumentDependencyLoopException
 	 * @see DocumentFileSource#getMinimumTimeBetweenValidityChecks()
 	 * @see DocumentDescriptor#getDependencies()
 	 */
-	private boolean isValid( Set<String> testedDependencies )
+	private boolean isValid( Set<String> testedDependencies ) throws DocumentDependencyLoopException
 	{
 		// Once invalid, always invalid
 		if( invalid )
@@ -357,8 +360,9 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 * @param testedDependencies
 	 *        A collection to keep track of tested dependencies
 	 * @return Whether are dependencies are valid
+	 * @throws DocumentDependencyLoopException
 	 */
-	private boolean areAllDependenciesValid( Set<String> testedDependencies )
+	private boolean areAllDependenciesValid( Set<String> testedDependencies ) throws DocumentDependencyLoopException
 	{
 		// Do not follow circular dependencies
 		if( testedDependencies.contains( getDefaultName() ) )
@@ -387,7 +391,8 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 				message.append( ' ' );
 				message.append( documentDescriptor.getDefaultName() );
 			}
-			System.err.println( message );
+
+			throw new DocumentDependencyLoopException( message.toString() );
 		}
 
 		return true;

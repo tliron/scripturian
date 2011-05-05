@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.threecrickets.scripturian.exception.DocumentDependencyLoopException;
 import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 import com.threecrickets.scripturian.internal.FiledDocumentDescriptor;
@@ -559,8 +560,9 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * @param filedDocumentDescriptor
 	 *        The document descriptor
 	 * @return The document descriptor or null if it was removed
+	 * @throws DocumentDependencyLoopException
 	 */
-	private FiledDocumentDescriptor<D> validateDocumentDescriptor( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor )
+	private FiledDocumentDescriptor<D> validateDocumentDescriptor( String documentName, FiledDocumentDescriptor<D> filedDocumentDescriptor ) throws DocumentDependencyLoopException
 	{
 		if( !filedDocumentDescriptor.isValid() )
 		{
