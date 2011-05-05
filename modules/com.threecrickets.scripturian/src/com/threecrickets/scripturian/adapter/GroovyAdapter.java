@@ -226,7 +226,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 			throw new NoSuchMethodException( entryPointName );
 		try
 		{
-			Closure closure = (Closure) o;
+			Closure<?> closure = (Closure<?>) o;
 			return closure.call( arguments );
 		}
 		catch( Exception x )
