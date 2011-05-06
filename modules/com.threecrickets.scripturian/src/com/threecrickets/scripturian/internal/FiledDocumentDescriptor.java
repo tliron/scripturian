@@ -366,7 +366,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	{
 		// Do not follow circular dependencies
 		if( testedDependencies.contains( getDefaultName() ) )
-			throwDocumentDependencyLoopException();
+			return true;
 
 		testedDependencies.add( getDefaultName() );
 
