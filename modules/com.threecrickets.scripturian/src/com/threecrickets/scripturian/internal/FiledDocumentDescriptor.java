@@ -366,7 +366,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	{
 		// Do not follow circular dependencies
 		if( testedDependencies.contains( getDefaultName() ) )
-			assert false;
+			throwDocumentDependencyLoopException();
 
 		testedDependencies.add( getDefaultName() );
 
@@ -384,17 +384,23 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		}
 		catch( StackOverflowError x )
 		{
-			StringBuilder message = new StringBuilder();
-			message.append( "FiledDocumentDescriptor dependency loop for " + getDefaultName() + ":" );
-			for( DocumentDescriptor<D> documentDescriptor : dependencies )
-			{
-				message.append( ' ' );
-				message.append( documentDescriptor.getDefaultName() );
-			}
-
-			throw new DocumentDependencyLoopException( message.toString() );
+			throwDocumentDependencyLoopException();
 		}
 
 		return true;
+	}
+
+	private void throwDocumentDependencyLoopException() throws DocumentDependencyLoopException
+	{
+		StringBuilder message = new StringBuilder();
+		message.append( "FiledDocumentDescriptor dependency loop for " + getDefaultName() + ":" );
+		for( DocumentDescriptor<D> documentDescriptor : dependencies )
+		{
+			message.append( " \"" );
+			message.append( documentDescriptor.getDefaultName() );
+			message.append( '\"' );
+		}
+
+		throw new DocumentDependencyLoopException( message.toString() );
 	}
 }
