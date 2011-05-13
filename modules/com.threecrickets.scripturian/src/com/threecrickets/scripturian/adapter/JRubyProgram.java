@@ -70,7 +70,6 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	// Program
 	//
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public void prepare() throws PreparationException
 	{
@@ -93,6 +92,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 					// Use cached compiled code
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
 					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+					@SuppressWarnings("unchecked")
 					Class<Script> scriptClass = (Class<Script>) classLoader.defineClass( classname, classByteArray );
 					scriptClassReference.compareAndSet( null, scriptClass );
 				}
@@ -112,6 +112,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 
 					// Load
 					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
+					@SuppressWarnings("unchecked")
 					Class<Script> scriptClass = (Class<Script>) asmCompiler.loadClass( classLoader );
 					scriptClassReference.compareAndSet( null, scriptClass );
 

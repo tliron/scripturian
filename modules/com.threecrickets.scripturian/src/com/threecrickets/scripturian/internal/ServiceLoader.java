@@ -89,7 +89,6 @@ public class ServiceLoader<S> implements Iterable<S>
 	 * @param loader
 	 *        The class loader
 	 */
-	@SuppressWarnings("unchecked")
 	private ServiceLoader( Class<S> service, ClassLoader loader )
 	{
 		String resourceName = "META-INF/services/" + service.getCanonicalName();
@@ -108,7 +107,9 @@ public class ServiceLoader<S> implements Iterable<S>
 					{
 						try
 						{
-							services.add( (S) loader.loadClass( line ).newInstance() );
+							@SuppressWarnings("unchecked")
+							S instance = (S) loader.loadClass( line ).newInstance();
+							services.add( instance );
 						}
 						catch( InstantiationException x )
 						{

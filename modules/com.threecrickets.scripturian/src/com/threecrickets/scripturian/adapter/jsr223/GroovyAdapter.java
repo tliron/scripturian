@@ -44,11 +44,12 @@ public class GroovyAdapter extends Jsr223LanguageAdapter
 	 * 
 	 * @throws LanguageAdapterException
 	 */
-	@SuppressWarnings("unchecked")
 	public GroovyAdapter() throws LanguageAdapterException
 	{
 		super();
-		( (Collection<String>) getAttributes().get( EXTENSIONS ) ).add( "gv" );
+		@SuppressWarnings("unchecked")
+		Collection<String> extensions = (Collection<String>) getAttributes().get( EXTENSIONS );
+		extensions.add( "gv" );
 	}
 
 	//

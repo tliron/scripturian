@@ -69,7 +69,6 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 	//
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void prepare() throws PreparationException
 	{
 		if( scriptClassReference.get() != null )
@@ -88,12 +87,16 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 					byte[] classByteArray = ScripturianUtil.getBytes( mainClassFile );
 					try
 					{
-						scriptClass = adapter.groovyClassLoader.defineClass( classname, classByteArray );
+						@SuppressWarnings("unchecked")
+						Class<Script> definedClass = adapter.groovyClassLoader.defineClass( classname, classByteArray );
+						scriptClass = definedClass;
 					}
 					catch( LinkageError x )
 					{
 						// Class is already defined
-						scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
+						@SuppressWarnings("unchecked")
+						Class<Script> loadedClass = adapter.groovyClassLoader.loadClass( classname, false, true );
+						scriptClass = loadedClass;
 					}
 				}
 				else
@@ -113,7 +116,9 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 					// separately.
 
 					String prefix = mainClassFile.getPath().substring( 0, mainClassFile.getPath().length() - 6 );
-					for( GroovyClass groovyClass : (List<GroovyClass>) compilationUnit.getClasses() )
+					@SuppressWarnings("unchecked")
+					List<GroovyClass> groovyClasses = (List<GroovyClass>) compilationUnit.getClasses();
+					for( GroovyClass groovyClass : groovyClasses )
 					{
 						String postfix = groovyClass.getName().substring( classname.length() );
 						File classFile = new File( prefix + postfix + ".class" );
@@ -136,7 +141,9 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 
 					adapter.groovyClassLoader.addClasspath( adapter.getCacheDir().getPath() );
 
-					scriptClass = adapter.groovyClassLoader.loadClass( classname, false, true );
+					@SuppressWarnings("unchecked")
+					Class<Script> loadedClass = adapter.groovyClassLoader.loadClass( classname, false, true );
+					scriptClass = loadedClass;
 				}
 
 				// What about the auxiliary classes mentioned above, required
@@ -152,7 +159,6 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		Binding binding = adapter.getBinding( executionContext );
@@ -162,7 +168,9 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 			Class<Script> scriptClass = scriptClassReference.get();
 			if( scriptClass == null )
 			{
-				scriptClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
+				@SuppressWarnings("unchecked")
+				Class<Script> parsedClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
+				scriptClass = parsedClass;
 				scriptClassReference.compareAndSet( null, scriptClass );
 			}
 

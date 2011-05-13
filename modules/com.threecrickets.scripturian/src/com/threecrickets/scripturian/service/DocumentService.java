@@ -180,10 +180,10 @@ public class DocumentService
 	 *         if it was already marked as executed
 	 * @see #executeOnce(String)
 	 */
-	@SuppressWarnings("unchecked")
 	public boolean markExecuted( String documentName )
 	{
 		Map<String, Object> attributes = executionContext.getAttributes();
+		@SuppressWarnings("unchecked")
 		Set<String> executed = (Set<String>) attributes.get( EXECUTED_ATTRIBUTE );
 		if( executed == null )
 		{

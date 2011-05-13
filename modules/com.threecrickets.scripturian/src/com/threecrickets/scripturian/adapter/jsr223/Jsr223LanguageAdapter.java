@@ -236,9 +236,9 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * @return The script engine
 	 * @throws ParsingException
 	 */
-	@SuppressWarnings("unchecked")
 	public ScriptEngine getScriptEngine( LanguageAdapter adapter, String scriptEngineName, Executable executable, ExecutionContext executionContext ) throws LanguageAdapterException
 	{
+		@SuppressWarnings("unchecked")
 		Map<String, ScriptEngine> scriptEngines = (Map<String, ScriptEngine>) executionContext.getAttributes().get( JSR223_SCRIPT_ENGINES );
 		if( scriptEngines == null )
 		{

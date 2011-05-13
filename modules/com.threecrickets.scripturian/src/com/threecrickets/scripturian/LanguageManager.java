@@ -235,7 +235,6 @@ public class LanguageManager
 	 * @param adapter
 	 *        The language adapter
 	 */
-	@SuppressWarnings("unchecked")
 	public void addAdapter( LanguageAdapter adapter )
 	{
 		if( adapter.getManager() != null )
@@ -243,10 +242,12 @@ public class LanguageManager
 
 		languageAdapters.add( adapter );
 
+		@SuppressWarnings("unchecked")
 		Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
 		for( String tag : tags )
 			languageAdapterByTag.putIfAbsent( tag, adapter );
 
+		@SuppressWarnings("unchecked")
 		Iterable<String> extensions = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.EXTENSIONS );
 		for( String extension : extensions )
 			languageAdapterByExtension.putIfAbsent( extension, adapter );

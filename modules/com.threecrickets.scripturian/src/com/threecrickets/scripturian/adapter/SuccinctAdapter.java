@@ -92,9 +92,9 @@ public class SuccinctAdapter extends LanguageAdapterBase
 		return filler;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Caster<Object> getCaster( ExecutionContext executionContext )
 	{
+		@SuppressWarnings("unchecked")
 		Caster<Object> caster = (Caster<Object>) executionContext.getAttributes().get( SuccinctAdapter.CASTER );
 		return caster;
 	}
