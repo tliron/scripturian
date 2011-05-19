@@ -167,7 +167,7 @@ public class DocumentService
 	 */
 	public void executeOnce( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
-		if( markExecuted( documentName ) )
+		if( markExecuted( documentName, true ) )
 			execute( documentName );
 	}
 
@@ -176,22 +176,30 @@ public class DocumentService
 	 * 
 	 * @param documentName
 	 *        The document name
-	 * @return True if the document was marked as executed by this call, false
-	 *         if it was already marked as executed
+	 * @param wasExecuted
+	 *        True if marked as executed, false to clear execution flag
+	 * @return True if the document was marked as executed or not by this call,
+	 *         false if it was already marked as such
 	 * @see #executeOnce(String)
 	 */
-	public boolean markExecuted( String documentName )
+	public boolean markExecuted( String documentName, boolean wasExecuted )
 	{
-		Map<String, Object> attributes = executionContext.getAttributes();
-		@SuppressWarnings("unchecked")
-		Set<String> executed = (Set<String>) attributes.get( EXECUTED_ATTRIBUTE );
-		if( executed == null )
+		ExecutionContext executionContext = ExecutionContext.getCurrent();
+		if( executionContext != null )
 		{
-			executed = new HashSet<String>();
-			attributes.put( EXECUTED_ATTRIBUTE, executed );
+			Map<String, Object> attributes = executionContext.getAttributes();
+			@SuppressWarnings("unchecked")
+			Set<String> executed = (Set<String>) attributes.get( EXECUTED_ATTRIBUTE );
+			if( executed == null )
+			{
+				executed = new HashSet<String>();
+				attributes.put( EXECUTED_ATTRIBUTE, executed );
+			}
+
+			return wasExecuted ? executed.add( documentName ) : executed.remove( documentName );
 		}
 
-		return executed.add( documentName );
+		return true;
 	}
 
 	/**
