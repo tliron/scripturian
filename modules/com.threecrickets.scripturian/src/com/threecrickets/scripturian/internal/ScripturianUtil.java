@@ -215,7 +215,7 @@ public abstract class ScripturianUtil
 			partition = partition.replace( '/', File.separatorChar );
 
 		String filename = partition + executable.getDocumentName();
-		filename = filename.replace( '-', '_' ).replace( '.', '$' );
+		filename = filename.replace( '-', '_' ).replace( '.', '$' ).replace( ':', '$' );
 		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
 
 		File file = new File( subdirectory, filename );
@@ -244,12 +244,11 @@ public abstract class ScripturianUtil
 	public static String getClassnameForProgram( Executable executable, int position )
 	{
 		String classname = executable.getPartition() + executable.getDocumentName();
-		classname = classname.replace( '-', '_' ).replace( '.', '$' );
 
 		if( File.separatorChar != '/' )
 			classname = classname.replace( File.separator + File.separator, "." ).replace( File.separatorChar, '.' );
 
-		classname = classname.replace( "//", "." ).replace( '/', '.' ).replace( "..", "." );
+		classname = classname.replace( '-', '_' ).replace( '.', '$' ).replace( ':', '$' ).replace( "//", "." ).replace( '/', '.' ).replace( "..", "." );
 		classname += "$" + position + "$" + executable.getDocumentTimestamp();
 		return classname;
 	}
