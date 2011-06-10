@@ -106,6 +106,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 
 					// Inspector
 					ASTInspector astInspector = new ASTInspector();
+					astInspector.inspect( node );
 
 					// Compile!
 					astCompiler.compileRoot( node, asmCompiler, astInspector, true, false );
@@ -128,7 +129,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 						stream.close();
 					}
 
-					// A variation of: compilerRuntime.tryCompile( node );
+					// A variation of: Ruby.tryCompile( node );
 				}
 			}
 			catch( RaiseException x )
