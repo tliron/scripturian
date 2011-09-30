@@ -209,7 +209,11 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 		threadBindings.put( Compiler.LINE, startLineNumber );
 
 		for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
-			threadBindings.put( Var.intern( ns, Symbol.intern( entry.getKey() ) ), entry.getValue() );
+		{
+			Var var = Var.intern( ns, Symbol.intern( entry.getKey() ) );
+			var.setDynamic();
+			threadBindings.put( var, entry.getValue() );
+		}
 
 		try
 		{
@@ -275,6 +279,10 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 			{
 				throw new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
 			}
+		}
+		catch( Exception x )
+		{
+			x.printStackTrace();
 		}
 		finally
 		{
