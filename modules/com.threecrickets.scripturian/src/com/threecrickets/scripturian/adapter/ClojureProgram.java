@@ -280,10 +280,6 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 				throw new ExecutionException( (String) Compiler.SOURCE.deref(), startLineNumber + (Integer) Compiler.LINE.deref(), -1, x );
 			}
 		}
-		catch( Exception x )
-		{
-			x.printStackTrace();
-		}
 		finally
 		{
 			Var.popThreadBindings();
