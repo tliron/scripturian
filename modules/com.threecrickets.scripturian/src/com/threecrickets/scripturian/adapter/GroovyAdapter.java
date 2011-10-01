@@ -139,7 +139,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 */
 	public GroovyAdapter() throws LanguageAdapterException
 	{
-		super( "Groovy", GroovySystem.getVersion(), null, null, Arrays.asList( "gv" ), null, Arrays.asList( "groovy", "gv" ), null );
+		super( "Groovy", GroovySystem.getVersion(), null, null, Arrays.asList( "groovy", "gv" ), null, Arrays.asList( "groovy", "gv" ), null );
 
 		// This will allow the class loader to load our auxiliary classes (see
 		// GroovyProgram.prepare)
