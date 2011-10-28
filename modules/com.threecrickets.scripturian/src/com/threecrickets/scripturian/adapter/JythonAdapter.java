@@ -152,10 +152,15 @@ public class JythonAdapter extends LanguageAdapterBase
 
 			homePath = new File( homePath ).getAbsolutePath();
 
-			// The packages cache dir is calculated as relative to the home dir,
-			// so we'll have to relativize it back. Note that Jython will add a
-			// "packages" subdirectory underneath.
-			String packagesCacheDirPath = ScripturianUtil.getRelativePath( packagesCacheDir.getAbsolutePath(), homePath );
+			// The packages cache dir must be absolute or relative to the home
+			// dir, so we'll have to relativize it back if it's not absolute.
+			// Also note that Jython will add a "packages" subdirectory
+			// underneath.
+			String packagesCacheDirPath;
+			if( packagesCacheDir.isAbsolute() )
+				packagesCacheDirPath = packagesCacheDir.getPath();
+			else
+				packagesCacheDirPath = ScripturianUtil.getRelativePath( packagesCacheDir.getAbsolutePath(), homePath );
 
 			Properties overridingProperties = new Properties();
 			overridingProperties.put( PYTHON_HOME, homePath );
@@ -205,7 +210,7 @@ public class JythonAdapter extends LanguageAdapterBase
 			pythonInterpreter.setOut( new ExecutionContextPyFileWriter() );
 			pythonInterpreter.setErr( new ExecutionContextPyFileErrorWriter() );
 
-			pythonInterpreter.exec( "import sys" );
+			pythonInterpreter.exec( "import sys,site" );
 
 			executionContext.getAttributes().put( JYTHON_INTERPRETER, pythonInterpreter );
 		}
@@ -222,7 +227,7 @@ public class JythonAdapter extends LanguageAdapterBase
 				String path = new File( uri ).getPath();
 				if( File.separatorChar != '/' )
 					path = path.replace( File.separatorChar, '/' );
-				pythonInterpreter.exec( "sys.path.append('" + path.replace( "'", "\\'" ) + "')" );
+				pythonInterpreter.exec( "site.addsitedir('" + path.replace( "'", "\\'" ) + "')" );
 			}
 			catch( IllegalArgumentException x )
 			{

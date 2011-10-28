@@ -80,6 +80,11 @@ public class ExecutionContextPyFileWriter extends PyFileWriter
 	{
 		getWriter().writelines( a );
 	}
+	
+	public boolean isatty()
+	{
+		return false;
+	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
