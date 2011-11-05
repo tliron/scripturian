@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>threecrickets</groupId>
+	<artifactId>scripturian</artifactId>
+	<version>1.0.0</version>
+	<packaging>pom</packaging>
+
+	<name>Scripturian</name>
+	<description>A scalable replacement for JSR-223.</description>
+	<url>http://threecrickets.com/scripturian/</url>
+
+	<licenses>
+		<license>
+			<name>LGPL 3.0 license</name>
+			<url>http://www.opensource.org/licenses/lgpl-3.0.html</url>
+		</license>
+	</licenses>
+
+	<distributionManagement>
+		<repository>
+			<id>sincerity</id>
+			<url>http://localhost:8081/nexus/content/repositories/sincerity/</url>
+		</repository>
+	</distributionManagement>
+
+	<build>
+		<directory>maven</directory>
+
+		<plugins>
+			<!-- Delegate to the Ant build script -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<phase>generate-resources</phase>
+						<configuration>
+							<tasks>
+								<ant antfile="build.xml" target="jar" />
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>com.sun</groupId>
+						<artifactId>tools</artifactId>
+						<version>1.5.0</version>
+						<scope>system</scope>
+						<systemPath>${java.home}/../lib/tools.jar</systemPath>
+					</dependency>
+				</dependencies>
+			</plugin>
+
+			<!-- Attach the Jar created by the Ant build script -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>attach-artifacts</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attach-artifact</goal>
+						</goals>
+						<configuration>
+							<artifacts>
+								<artifact>
+									<file>distribution/content/lib/com.threecrickets.scripturian.jar</file>
+									<type>jar</type>
+								</artifact>
+							</artifacts>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
