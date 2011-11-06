@@ -447,7 +447,7 @@ public class Executable
 							adapter = languageManager.getAdapterByTag( languageTag );
 							if( adapter == null )
 								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
-							
+
 							segment = plugin.getScriptlet( pluginCode, adapter, segment );
 						}
 						else
@@ -741,19 +741,6 @@ public class Executable
 	//
 
 	/**
-	 * Executes the executable with the current execution context.
-	 * 
-	 * @throws ParsingException
-	 * @throws ExecutionException
-	 * @throws IOException
-	 * @see ExecutionContext#getCurrent()
-	 */
-	public void execute() throws ParsingException, ExecutionException, IOException
-	{
-		execute( ExecutionContext.getCurrent(), null, null );
-	}
-
-	/**
 	 * Executes the executable.
 	 * 
 	 * @param executionContext
@@ -839,6 +826,44 @@ public class Executable
 		}
 
 		lastExecutedTimestamp = System.currentTimeMillis();
+	}
+
+	/**
+	 * Executes the executable with the current execution context.
+	 * 
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 * @see ExecutionContext#getCurrent()
+	 */
+	public void executeInThread() throws ParsingException, ExecutionException, IOException
+	{
+		execute( ExecutionContext.getCurrent(), null, null );
+	}
+
+	/**
+	 * Makes an execution context enterable, in preparation for calling
+	 * {@link ExecutionContext#enter(Executable, String, Object...)}.
+	 * <p>
+	 * Note that this can only be done once per entering key for an executable.
+	 * If it succeeds and returns true, the execution context should be
+	 * considered "consumed" by this executable. At this point it is immutable,
+	 * and can only be released by calling {@link #release()} on the executable.
+	 * 
+	 * @param enteringKey
+	 *        The entering key
+	 * @param executionContext
+	 *        The execution context
+	 * @return False if we're already enterable and the execution context was
+	 *         not consumed, true if the operation succeeded and execution
+	 *         context was consumed
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws IOException
+	 */
+	public boolean makeEnterable( Object enteringKey, ExecutionContext executionContext ) throws ParsingException, ExecutionException, IOException
+	{
+		return makeEnterable( enteringKey, executionContext, null, null );
 	}
 
 	/**

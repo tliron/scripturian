@@ -26,7 +26,7 @@ public interface ScriptletPlugin
 	 * @param code
 	 *        The scriptlet code
 	 * @param languageAdapter
-	 *        The language adapter
+	 *        The last language adapter used
 	 * @param content
 	 *        The scriptlet content
 	 * @return The segment
