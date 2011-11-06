@@ -11,6 +11,10 @@
 	<name>Scripturian</name>
 	<description>A scalable replacement for JSR-223.</description>
 	<url>http://threecrickets.com/scripturian/</url>
+	<scm>
+		<connection>scm:svn:https://scripturian.googlecode.com/svn/trunk/</connection>
+		<url>https://code.google.com/p/scripturian/source/checkout</url>
+	</scm>
 
 	<licenses>
 		<license>
@@ -40,7 +44,7 @@
 						<phase>generate-resources</phase>
 						<configuration>
 							<tasks>
-								<ant antfile="build.xml" target="jar" />
+								<ant antfile="build.xml" target="deploy" />
 							</tasks>
 						</configuration>
 						<goals>
@@ -59,14 +63,14 @@
 				</dependencies>
 			</plugin>
 
-			<!-- Attach the Jar created by the Ant build script -->
+			<!-- jar artifact -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
 				<version>1.7</version>
 				<executions>
 					<execution>
-						<id>attach-artifacts</id>
+						<id>jar</id>
 						<phase>package</phase>
 						<goals>
 							<goal>attach-artifact</goal>
@@ -74,14 +78,48 @@
 						<configuration>
 							<artifacts>
 								<artifact>
-									<file>distribution/content/lib/com.threecrickets.scripturian.jar</file>
 									<type>jar</type>
+									<file>distribution/content/lib/com.threecrickets.scripturian.jar</file>
 								</artifact>
 							</artifacts>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.2</version>
+				<executions>
+					<!-- javadoc artifact -->
+					<execution>
+						<id>javadoc</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>javadoc</classifier>
+							<classesDirectory>distribution/content/doc/api</classesDirectory>
+						</configuration>
+					</execution>
+
+					<!-- sources artifact -->
+					<execution>
+						<id>source</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>sources</classifier>
+							<classesDirectory>distribution/content/src</classesDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 
