@@ -25,9 +25,11 @@ public interface ScriptletPlugin
 	 * 
 	 * @param code
 	 *        The scriptlet code
+	 * @param languageAdapter
+	 *        The language adapter
 	 * @param content
 	 *        The scriptlet content
 	 * @return The segment
 	 */
-	public String getScriptlet( String code, String content );
+	public String getScriptlet( String code, LanguageAdapter languageAdapter, String content );
 }

@@ -441,10 +441,14 @@ public class Executable
 
 						if( plugin != null )
 						{
-							segment = plugin.getScriptlet( pluginCode, segment );
-
 							// Our plugin scriptlet is in the last language
 							languageTag = lastLanguageTag;
+
+							adapter = languageManager.getAdapterByTag( languageTag );
+							if( adapter == null )
+								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
+							
+							segment = plugin.getScriptlet( pluginCode, adapter, segment );
 						}
 						else
 						{
