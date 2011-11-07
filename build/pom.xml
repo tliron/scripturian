@@ -11,17 +11,40 @@
 	<name>Scripturian</name>
 	<description>A scalable replacement for JSR-223.</description>
 	<url>http://threecrickets.com/scripturian/</url>
+	<inceptionYear>2009</inceptionYear>
 	<scm>
 		<connection>scm:svn:https://scripturian.googlecode.com/svn/trunk/</connection>
+		<developerConnection>scm:svn:https://scripturian.googlecode.com/svn/trunk/</developerConnection>
 		<url>https://code.google.com/p/scripturian/source/checkout</url>
 	</scm>
+	<organization>
+		<name>Three Crickets LLC</name>
+		<url>http://threecrickets.com/</url>
+	</organization>
 
 	<licenses>
 		<license>
 			<name>LGPL 3.0 license</name>
 			<url>http://www.opensource.org/licenses/lgpl-3.0.html</url>
+			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
+	<developers>
+		<developer>
+			<id>tal.liron</id>
+			<name>Tal Liron</name>
+			<email>tal.liron@threecrickets.com</email>
+			<timezone>-6</timezone>
+		</developer>
+	</developers>
+
+	<mailingLists>
+		<mailingList>
+			<name>The Scripturian Community</name>
+			<archive>https://groups.google.com/forum/#!forum/scripturian-community</archive>
+		</mailingList>
+	</mailingLists>
 
 	<distributionManagement>
 		<repository>
@@ -29,6 +52,15 @@
 			<url>http://localhost:8081/nexus/content/repositories/sincerity/</url>
 		</repository>
 	</distributionManagement>
+
+	<modules>
+		<module>../libraries/clojure</module>
+		<module>../libraries/groovy</module>
+		<module>../libraries/jruby</module>
+		<module>../libraries/jython</module>
+		<module>../libraries/quercus</module>
+		<module>../libraries/rhino</module>
+	</modules>
 
 	<build>
 		<directory>maven</directory>
