@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.threecrickets</groupId>
-	<artifactId>com.threecrickets.scripturian</artifactId>
+	<artifactId>scripturian</artifactId>
 	<version>1.0.0</version>
 	<packaging>pom</packaging>
 
@@ -56,13 +56,13 @@
 	</distributionManagement>
 
 	<modules>
-		<module>../libraries/clojure</module>
-		<module>../libraries/groovy</module>
-		<module>../libraries/jruby</module>
-		<module>../libraries/jython</module>
+		<!-- <module>../libraries/clojure</module> -->
+		<!-- <module>../libraries/groovy</module> -->
+		<!-- <module>../libraries/jruby</module> -->
+		<!-- <module>../libraries/jython</module> -->
 		<module>../libraries/quercus</module>
-		<module>../libraries/rhino</module>
-		<module>../libraries/velocity</module>
+		<!-- <module>../libraries/rhino</module> -->
+		<!-- <module>../libraries/velocity</module> -->
 	</modules>
 
 	<build>
