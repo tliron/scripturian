@@ -99,35 +99,40 @@ public class ServiceLoader<S> implements Iterable<S>
 			{
 				InputStream stream = resources.nextElement().openStream();
 				BufferedReader reader = new BufferedReader( new InputStreamReader( stream ) );
-				String line = reader.readLine();
-				while( line != null )
+				try
 				{
-					line = line.trim();
-					if( ( line.length() > 0 ) && !line.startsWith( "#" ) )
+					String line = reader.readLine();
+					while( line != null )
 					{
-						try
+						line = line.trim();
+						if( ( line.length() > 0 ) && !line.startsWith( "#" ) )
 						{
-							@SuppressWarnings("unchecked")
-							S instance = (S) loader.loadClass( line ).newInstance();
-							services.add( instance );
+							try
+							{
+								@SuppressWarnings("unchecked")
+								S instance = (S) loader.loadClass( line ).newInstance();
+								services.add( instance );
+							}
+							catch( InstantiationException x )
+							{
+							}
+							catch( IllegalAccessException x )
+							{
+							}
+							catch( ClassNotFoundException x )
+							{
+							}
+							catch( Throwable x )
+							{
+							}
 						}
-						catch( InstantiationException x )
-						{
-						}
-						catch( IllegalAccessException x )
-						{
-						}
-						catch( ClassNotFoundException x )
-						{
-						}
-						catch( Throwable x )
-						{
-						}
+						line = reader.readLine();
 					}
-					line = reader.readLine();
 				}
-				stream.close();
-				reader.close();
+				finally
+				{
+					reader.close();
+				}
 			}
 		}
 		catch( IOException x )

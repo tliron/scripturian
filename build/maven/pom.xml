@@ -15,7 +15,6 @@
 
 	<scm>
 		<connection>scm:svn:https://scripturian.googlecode.com/svn/trunk/</connection>
-		<developerConnection>scm:svn:https://scripturian.googlecode.com/svn/trunk/</developerConnection>
 		<url>https://code.google.com/p/scripturian/source/checkout</url>
 	</scm>
 
@@ -56,17 +55,17 @@
 	</distributionManagement>
 
 	<modules>
-		<!-- <module>../libraries/clojure</module> -->
-		<!-- <module>../libraries/groovy</module> -->
-		<!-- <module>../libraries/jruby</module> -->
-		<!-- <module>../libraries/jython</module> -->
-		<module>../libraries/quercus</module>
-		<!-- <module>../libraries/rhino</module> -->
-		<!-- <module>../libraries/velocity</module> -->
+		<!-- <module>../../libraries/clojure/maven</module> -->
+		<!-- <module>../../libraries/groovy/maven</module> -->
+		<!-- <module>../../libraries/jruby/maven</module> -->
+		<!-- <module>../../libraries/jython/maven</module> -->
+		<module>../../libraries/quercus/maven</module>
+		<!-- <module>../../libraries/rhino/maven</module> -->
+		<!-- <module>../../libraries/velocity/maven</module> -->
 	</modules>
 
 	<build>
-		<directory>maven</directory>
+		<directory>tmp</directory>
 
 		<plugins>
 			<!-- Delegate to the Ant build script -->
@@ -79,7 +78,7 @@
 						<phase>generate-resources</phase>
 						<configuration>
 							<tasks>
-								<ant antfile="build.xml" target="deploy" />
+								<ant dir=".." antfile="build.xml" target="deploy" />
 							</tasks>
 						</configuration>
 						<goals>
@@ -114,7 +113,7 @@
 							<artifacts>
 								<artifact>
 									<type>jar</type>
-									<file>distribution/content/lib/com.threecrickets.scripturian.jar</file>
+									<file>../distribution/content/lib/com.threecrickets.scripturian.jar</file>
 								</artifact>
 							</artifacts>
 						</configuration>
@@ -136,7 +135,7 @@
 						</goals>
 						<configuration>
 							<classifier>javadoc</classifier>
-							<classesDirectory>distribution/content/doc/api</classesDirectory>
+							<classesDirectory>../distribution/content/doc/api</classesDirectory>
 						</configuration>
 					</execution>
 
@@ -149,7 +148,7 @@
 						</goals>
 						<configuration>
 							<classifier>sources</classifier>
-							<classesDirectory>distribution/content/src</classesDirectory>
+							<classesDirectory>../distribution/content/src</classesDirectory>
 						</configuration>
 					</execution>
 				</executions>
