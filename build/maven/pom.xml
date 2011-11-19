@@ -58,12 +58,21 @@
 		<!-- <module>../../libraries/clojure/maven</module> -->
 		<!-- <module>../../libraries/groovy/maven</module> -->
 		<!-- <module>../../libraries/jruby/maven</module> -->
+		<module>../../libraries/jygments/maven</module>
 		<!-- <module>../../libraries/jython/maven</module> -->
 		<module>../../libraries/quercus/maven</module>
 		<!-- <module>../../libraries/rhino/maven</module> -->
 		<module>../../libraries/succinct/maven</module>
 		<!-- <module>../../libraries/velocity/maven</module> -->
 	</modules>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.threecrickets.jygments</groupId>
+			<artifactId>jygments</artifactId>
+			<version>1.0.0-R21</version>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<directory>tmp</directory>
