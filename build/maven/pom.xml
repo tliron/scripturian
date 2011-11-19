@@ -3,9 +3,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.threecrickets</groupId>
+	<groupId>com.threecrickets.scripturian</groupId>
 	<artifactId>scripturian</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.0-R309</version>
 	<packaging>pom</packaging>
 
 	<name>Scripturian</name>
@@ -61,6 +61,7 @@
 		<!-- <module>../../libraries/jython/maven</module> -->
 		<module>../../libraries/quercus/maven</module>
 		<!-- <module>../../libraries/rhino/maven</module> -->
+		<module>../../libraries/succinct/maven</module>
 		<!-- <module>../../libraries/velocity/maven</module> -->
 	</modules>
 
