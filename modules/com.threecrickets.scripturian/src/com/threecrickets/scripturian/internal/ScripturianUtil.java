@@ -245,6 +245,9 @@ public abstract class ScripturianUtil
 	{
 		String classname = executable.getPartition() + executable.getDocumentName();
 
+		if( classname.startsWith( File.separator ) )
+			classname = classname.substring( 1 );
+
 		if( File.separatorChar != '/' )
 			classname = classname.replace( File.separator + File.separator, "." ).replace( File.separatorChar, '.' );
 

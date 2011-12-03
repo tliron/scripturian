@@ -10,7 +10,7 @@
 
 	<target name="compile" description="Compile Scripturian code">
 		<mkdir dir="${tmp}" />
-		<javac srcdir="${src}" destdir="${tmp}" target="1.5" includeAntRuntime="false">
+		<javac srcdir="${src}" destdir="${tmp}" target="1.5" includeAntRuntime="false" debug="true">
 			<classpath>
 				<fileset dir="${lib}/clojure/lib" />
 				<fileset dir="${lib}/commons-daemon/lib" />
