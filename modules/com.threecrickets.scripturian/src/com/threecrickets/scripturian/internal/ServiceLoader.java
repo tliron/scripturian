@@ -94,7 +94,7 @@ public class ServiceLoader<S> implements Iterable<S>
 		String resourceName = "META-INF/services/" + service.getCanonicalName();
 		try
 		{
-			Enumeration<URL> resources = ClassLoader.getSystemResources( resourceName );
+			Enumeration<URL> resources = loader.getResources( resourceName );
 			while( resources.hasMoreElements() )
 			{
 				InputStream stream = resources.nextElement().openStream();
