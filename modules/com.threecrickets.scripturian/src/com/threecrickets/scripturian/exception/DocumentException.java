@@ -12,7 +12,7 @@
 package com.threecrickets.scripturian.exception;
 
 /**
- * Base for all document exception.
+ * Base for all document exceptions.
  * 
  * @author Tal Liron
  */

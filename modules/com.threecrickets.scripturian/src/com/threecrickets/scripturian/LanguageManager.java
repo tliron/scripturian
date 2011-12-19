@@ -92,16 +92,30 @@ public class LanguageManager
 	/**
 	 * Adds all language adapters found in the
 	 * {@code META-INF/services/com.threecrickets.scripturian.LanguageAdapter}
-	 * resource.
+	 * resource using the current thread's context class loader.
 	 * 
 	 * @see ServiceLoader
 	 */
 	public LanguageManager()
 	{
+		this( Thread.currentThread().getContextClassLoader() );
+	}
+
+	/**
+	 * Adds all language adapters found in the
+	 * {@code META-INF/services/com.threecrickets.scripturian.LanguageAdapter}
+	 * resource.
+	 * 
+	 * @param classLoader
+	 *        The class loader
+	 * @see ServiceLoader
+	 */
+	public LanguageManager( ClassLoader classLoader )
+	{
 		attributes.put( CONTAINER_INCLUDE_EXPRESSION_COMMAND, DEFAULT_CONTAINER_INCLUDE_EXPRESSION_COMMAND );
 
 		// Initialize adapters
-		ServiceLoader<LanguageAdapter> adapterLoader = ServiceLoader.load( LanguageAdapter.class );
+		ServiceLoader<LanguageAdapter> adapterLoader = ServiceLoader.load( LanguageAdapter.class, classLoader );
 		for( LanguageAdapter adapter : adapterLoader )
 		{
 			try

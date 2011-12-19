@@ -14,8 +14,8 @@
 	<inceptionYear>2009</inceptionYear>
 
 	<scm>
-		<connection>scm:svn:https://scripturian.googlecode.com/svn/trunk/</connection>
-		<url>https://code.google.com/p/scripturian/source/checkout</url>
+		<connection>scm:git:https://code.google.com/p/scripturian/</connection>
+		<url>http://code.google.com/p/scripturian/source/browse/</url>
 	</scm>
 
 	<organization>
@@ -47,25 +47,6 @@
 		</mailingList>
 	</mailingLists>
 
-	<distributionManagement>
-		<repository>
-			<id>sincerity</id>
-			<url>http://localhost:8081/nexus/content/repositories/sincerity/</url>
-		</repository>
-	</distributionManagement>
-
-	<modules>
-		<!-- <module>../../libraries/clojure/maven</module> -->
-		<!-- <module>../../libraries/groovy/maven</module> -->
-		<!-- <module>../../libraries/jruby/maven</module> -->
-		<module>../../libraries/jygments/maven</module>
-		<!-- <module>../../libraries/jython/maven</module> -->
-		<module>../../libraries/quercus/maven</module>
-		<!-- <module>../../libraries/rhino/maven</module> -->
-		<module>../../libraries/succinct/maven</module>
-		<!-- <module>../../libraries/velocity/maven</module> -->
-	</modules>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.threecrickets.jygments</groupId>
@@ -73,6 +54,10 @@
 			<version>1.0.0-R21</version>
 		</dependency>
 	</dependencies>
+	
+	<modules>
+		<module>../../libraries/jygments/maven</module>
+	</modules>
 
 	<build>
 		<directory>tmp</directory>

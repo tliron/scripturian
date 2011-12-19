@@ -78,7 +78,6 @@ public class Main implements Runnable
 	 */
 	public Main( String[] arguments )
 	{
-		this.arguments = arguments;
 		languageManager = new LanguageManager();
 		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "true" ).equals( "true" );
 		initialDocumentName = ScripturianUtil.getNonSwitchArgument( 0, arguments, "default" );
@@ -90,6 +89,7 @@ public class Main implements Runnable
 		writer = new OutputStreamWriter( System.out );
 		errorWriter = new OutputStreamWriter( System.err );
 		documentSource = new DocumentFileSource<Executable>( new File( basePath ), defaultDocumentName, preferredExtension, -1 );
+		this.arguments = arguments;
 	}
 
 	/**
@@ -97,6 +97,8 @@ public class Main implements Runnable
 	 * 
 	 * @param manager
 	 *        The language manager
+	 * @param basePath
+	 *        The base path for the document source
 	 * @param prepare
 	 *        Whether to prepare the executables
 	 * @param initialDocumentName
@@ -107,21 +109,30 @@ public class Main implements Runnable
 	 * @param preferredExtension
 	 *        An extension to prefer if more than one file with the same name is
 	 *        in a directory
-	 * @param basePath
-	 *        The base path for finding executable documents
+	 * @param documentServiceName
+	 *        The name of the document service exposed to the executable
+	 * @param applicationServiceName
+	 *        The name of the application service exposed to the executable
+	 * @param writer
+	 *        The writer used for {@link ExecutionContext} instances
+	 * @param errorWriter
+	 *        The error used for {@link ExecutionContext} instances
 	 * @param arguments
 	 *        Supplied arguments (usually from a command line)
 	 */
-	public Main( LanguageManager manager, boolean prepare, String initialDocumentName, String defaultDocumentName, String preferredExtension, String basePath, String[] arguments )
+	public Main( LanguageManager manager, File basePath, boolean prepare, String initialDocumentName, String defaultDocumentName, String preferredExtension, String documentServiceName, String applicationServiceName,
+		Writer writer, Writer errorWriter, String[] arguments )
 	{
-		this.arguments = arguments;
 		this.languageManager = manager;
 		this.prepare = prepare;
 		this.initialDocumentName = initialDocumentName;
 		this.defaultDocumentName = defaultDocumentName;
-		writer = new OutputStreamWriter( System.out );
-		errorWriter = new OutputStreamWriter( System.err );
-		documentSource = new DocumentFileSource<Executable>( new File( basePath ), defaultDocumentName, preferredExtension, -1 );
+		this.documentServiceName = documentServiceName;
+		this.applicationServiceName = applicationServiceName;
+		this.writer = writer;
+		this.errorWriter = errorWriter;
+		this.arguments = arguments;
+		documentSource = new DocumentFileSource<Executable>( basePath, defaultDocumentName, preferredExtension, -1 );
 	}
 
 	//
