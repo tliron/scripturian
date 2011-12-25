@@ -18,7 +18,7 @@ import com.threecrickets.scripturian.GlobalScope;
 import com.threecrickets.scripturian.Main;
 
 /**
- * This is the <code>application</code> service exposed by {@link Main}.
+ * This is the <code>application</code> service exposed by a {@link Shell}.
  * 
  * @author Tal Liron
  * @see Main
@@ -32,12 +32,12 @@ public class ApplicationService
 	/**
 	 * Constructor.
 	 * 
-	 * @param main
-	 *        The main instance
+	 * @param shell
+	 *        The shell instance
 	 */
-	public ApplicationService( Main main )
+	public ApplicationService( Shell shell )
 	{
-		this.main = main;
+		this.shell = shell;
 	}
 
 	//
@@ -45,13 +45,13 @@ public class ApplicationService
 	//
 
 	/**
-	 * An array of the string arguments sent to {@link Main#main(String[])}.
+	 * An array of the string arguments sent from the shell.
 	 * 
 	 * @return The arguments
 	 */
 	public String[] getArguments()
 	{
-		return main.getArguments();
+		return shell.getArguments();
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class ApplicationService
 	 */
 	public Logger getLogger()
 	{
-		return main.getLogger();
+		return shell.getLogger();
 	}
 
 	/**
@@ -106,7 +106,7 @@ public class ApplicationService
 	 */
 	public void setLogger( Logger logger )
 	{
-		main.setLogger( logger );
+		shell.setLogger( logger );
 	}
 
 	/**
@@ -120,14 +120,14 @@ public class ApplicationService
 	 */
 	public Logger getSubLogger( String name )
 	{
-		return Logger.getLogger( main.getLogger().getName() + "." + name );
+		return Logger.getLogger( shell.getLogger().getName() + "." + name );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	/**
-	 * The main instance.
+	 * The shell instance.
 	 */
-	private final Main main;
+	private final Shell shell;
 }

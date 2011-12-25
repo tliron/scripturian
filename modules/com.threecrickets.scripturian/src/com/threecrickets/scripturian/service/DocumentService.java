@@ -32,7 +32,7 @@ import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
 
 /**
- * This is the <code>document</code> service exposed by {@link Main}.
+ * This is the <code>document</code> service exposed by a {@link Shell}.
  * 
  * @author Tal Liron
  * @see Main
@@ -46,14 +46,14 @@ public class DocumentService
 	/**
 	 * Constructor.
 	 * 
-	 * @param main
-	 *        The main instance
+	 * @param shell
+	 *        The shell instance
 	 * @param executionContext
 	 *        The execution context
 	 */
-	public DocumentService( Main main, ExecutionContext executionContext )
+	public DocumentService( Shell shell, ExecutionContext executionContext )
 	{
-		this.main = main;
+		this.shell = shell;
 		this.executionContext = executionContext;
 	}
 
@@ -68,7 +68,7 @@ public class DocumentService
 	 */
 	public DocumentSource<Executable> getSource()
 	{
-		return main.getSource();
+		return shell.getSource();
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class DocumentService
 	 */
 	public CopyOnWriteArrayList<DocumentSource<Executable>> getLibrarySources()
 	{
-		return main.getLibrarySources();
+		return shell.getLibrarySources();
 	}
 
 	/**
@@ -113,7 +113,7 @@ public class DocumentService
 	 */
 	public String getPreferredExtension()
 	{
-		DocumentSource<Executable> source = main.getSource();
+		DocumentSource<Executable> source = shell.getSource();
 		if( source instanceof DocumentFileSource<?> )
 			return ( (DocumentFileSource<Executable>) source ).getPreferredExtension();
 		else
@@ -127,7 +127,7 @@ public class DocumentService
 	 */
 	public void setPreferredExtension( String preferredExtension )
 	{
-		DocumentSource<Executable> source = main.getSource();
+		DocumentSource<Executable> source = shell.getSource();
 		if( source instanceof DocumentFileSource<?> )
 			( (DocumentFileSource<Executable>) source ).setPreferredExtension( preferredExtension );
 	}
@@ -151,7 +151,7 @@ public class DocumentService
 	public void execute( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
 		Executable executable = getDocumentDescriptor( documentName, false ).getDocument();
-		executable.execute( executionContext, this, main.getExecutionController() );
+		executable.execute( executionContext, this, shell.getExecutionController() );
 	}
 
 	/**
@@ -217,7 +217,7 @@ public class DocumentService
 	public void include( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
 		Executable executable = getDocumentDescriptor( documentName, true ).getDocument();
-		executable.execute( executionContext, this, main.getExecutionController() );
+		executable.execute( executionContext, this, shell.getExecutionController() );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -231,7 +231,7 @@ public class DocumentService
 	/**
 	 * The main instance.
 	 */
-	private final Main main;
+	private final Shell shell;
 
 	/**
 	 * The execution context.
@@ -260,9 +260,9 @@ public class DocumentService
 		Iterator<DocumentSource<Executable>> iterator = null;
 
 		ParsingContext parsingContext = new ParsingContext();
-		parsingContext.setLanguageManager( main.getLanguageManager() );
+		parsingContext.setLanguageManager( shell.getLanguageManager() );
 		parsingContext.setDefaultLanguageTag( defaultLanguageTag );
-		parsingContext.setPrepare( main.isPrepare() );
+		parsingContext.setPrepare( shell.isPrepare() );
 		parsingContext.setDocumentSource( getSource() );
 
 		while( true )
@@ -275,7 +275,7 @@ public class DocumentService
 			{
 				if( iterator == null )
 				{
-					Iterable<DocumentSource<Executable>> sources = main.getLibrarySources();
+					Iterable<DocumentSource<Executable>> sources = shell.getLibrarySources();
 					iterator = sources != null ? sources.iterator() : null;
 				}
 

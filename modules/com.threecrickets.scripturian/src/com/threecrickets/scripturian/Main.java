@@ -28,6 +28,7 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 import com.threecrickets.scripturian.service.ApplicationService;
 import com.threecrickets.scripturian.service.DocumentService;
 import com.threecrickets.scripturian.service.ExecutableService;
+import com.threecrickets.scripturian.service.Shell;
 
 /**
  * Delegates the main() call to an {@link Executable}, in effect using it as the
@@ -47,7 +48,7 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * 
  * @author Tal Liron
  */
-public class Main implements Runnable
+public class Main implements Shell, Runnable
 {
 	//
 	// Static operations
@@ -140,37 +141,6 @@ public class Main implements Runnable
 	//
 
 	/**
-	 * The arguments sent to {@link Main#main(String[])}.
-	 * 
-	 * @return The arguments
-	 */
-	public String[] getArguments()
-	{
-		return arguments;
-	}
-
-	/**
-	 * The {@link LanguageManager} used to get language adapters for
-	 * executables.
-	 * 
-	 * @return The language manager
-	 */
-	public LanguageManager getLanguageManager()
-	{
-		return languageManager;
-	}
-
-	/**
-	 * Whether or not executables are prepared.
-	 * 
-	 * @return Whether to prepare executables.
-	 */
-	public boolean isPrepare()
-	{
-		return prepare;
-	}
-
-	/**
 	 * If the path to the document to run if not supplied as the first argument
 	 * to {@link #main(String[])}, this is used instead. Defaults to "instance".
 	 * 
@@ -202,18 +172,6 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * An optional {@link ExecutionController} to be used with executables.
-	 * Useful for exposing your own global variables to executables.
-	 * 
-	 * @return The execution controller
-	 * @see #setExecutionController(ExecutionController)
-	 */
-	public ExecutionController getExecutionController()
-	{
-		return executionController;
-	}
-
-	/**
 	 * @param executionController
 	 *        The execution controller
 	 * @see #getExecutionController()
@@ -224,18 +182,6 @@ public class Main implements Runnable
 	}
 
 	/**
-	 * Used to load the executables. Defaults to a {@link DocumentFileSource}
-	 * set for the current directory, with no validity checking.
-	 * 
-	 * @return The document source
-	 * @see #setSource(DocumentSource)
-	 */
-	public DocumentSource<Executable> getSource()
-	{
-		return documentSource;
-	}
-
-	/**
 	 * @param documentSource
 	 *        The document source
 	 * @see #getSource()
@@ -243,16 +189,6 @@ public class Main implements Runnable
 	public void setSource( DocumentSource<Executable> documentSource )
 	{
 		this.documentSource = documentSource;
-	}
-
-	/**
-	 * The additional document sources to use.
-	 * 
-	 * @return The library document sources
-	 */
-	public CopyOnWriteArrayList<DocumentSource<Executable>> getLibrarySources()
-	{
-		return librarySources;
 	}
 
 	/**
@@ -275,27 +211,6 @@ public class Main implements Runnable
 		return applicationServiceName;
 	}
 
-	/**
-	 * The logger.
-	 * 
-	 * @return The logger
-	 * @see #setLogger(Logger)
-	 */
-	public Logger getLogger()
-	{
-		return logger;
-	}
-
-	/**
-	 * @param logger
-	 *        The logger
-	 * @see #getLogger()
-	 */
-	public void setLogger( Logger logger )
-	{
-		this.logger = logger;
-	}
-
 	//
 	// Operations
 	//
@@ -316,6 +231,50 @@ public class Main implements Runnable
 		catch( IOException x )
 		{
 		}
+	}
+
+	//
+	// Shell
+	//
+
+	public String[] getArguments()
+	{
+		return arguments;
+	}
+
+	public Logger getLogger()
+	{
+		return logger;
+	}
+
+	public void setLogger( Logger logger )
+	{
+		this.logger = logger;
+	}
+
+	public LanguageManager getLanguageManager()
+	{
+		return languageManager;
+	}
+
+	public boolean isPrepare()
+	{
+		return prepare;
+	}
+
+	public DocumentSource<Executable> getSource()
+	{
+		return documentSource;
+	}
+
+	public CopyOnWriteArrayList<DocumentSource<Executable>> getLibrarySources()
+	{
+		return librarySources;
+	}
+
+	public ExecutionController getExecutionController()
+	{
+		return executionController;
 	}
 
 	//
