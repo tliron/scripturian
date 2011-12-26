@@ -50,7 +50,7 @@
 	</target>
 
 	<target name="javadocs" description="Create API documentation if not present">
-		<available file="${content}/doc/api" property="javadocs-present" />
+		<available file="${distribution.api}" property="javadocs-present" />
 		<antcall target="javadocs-overwrite" />
 	</target>
 
