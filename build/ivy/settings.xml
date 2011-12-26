@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<ivysettings>
+	<property name="ivy.cache.dir" value="${ivy.settings.dir}/../cache/ivy" override="false" />
+
+	<caches default="default">
+		<cache name="default"
+			dataFilePattern="configuration/[organisation]/[module](/[branch])/[revision]/resolution.conf"
+			ivyPattern="configuration/[organisation]/[module](/[branch])/[revision]/package.conf"
+			artifactPattern="artifacts/[type]/[organisation]/[module]/[revision](/[branch])/[artifact](.[ext])">
+		</cache>
+	</caches>
+
+	<settings defaultResolver="default" />
+	<resolvers>
+		<chain name="default">
+			<ibiblio name="local" root="file:///Depot/Repository" m2compatible="true" />
+			<ibiblio name="three-crickets" root="http://repository.threecrickets.com/maven/" m2compatible="true" />
+			<ibiblio name="maven-central" m2compatible="true" />
+		</chain>
+	</resolvers>
+</ivysettings>

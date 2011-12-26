@@ -1,120 +1,96 @@
 <?xml version="1.0"?>
-<project name="Scripturian" default="build">
+<project name="Scripturian" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<!--
+	A straightforward Ant build file that can build a distribution for single-component projects,
+	using Ivy to pull in dependencies.
 	
-	<property name="src" value="../modules/com.threecrickets.scripturian/src" />
-	<property name="lib" value="../libraries" />
-	<property name="deploy" value="../modules/com.threecrickets.scripturian/deploy" />
-	<property name="dist" value="./distribution" />
-	<property name="content" value="${dist}/content" />
-	<property name="tmp" value="./tmp" />
+	The distribution's directory structure is compatible with Sincerity containers.
+	See: http://threecrickets.com/sincerity/
+	
+	Version: 1.0
+	-->
 
-	<target name="compile" description="Compile Scripturian code">
-		<mkdir dir="${tmp}" />
-		<javac srcdir="${src}" destdir="${tmp}" target="1.5" includeAntRuntime="false" debug="true">
-			<classpath>
-				<fileset dir="${lib}/clojure/lib" />
-				<fileset dir="${lib}/commons-daemon/lib" />
-				<fileset dir="${lib}/groovy/lib" />
-				<fileset dir="${lib}/jepp/lib" />
-				<fileset dir="${lib}/jruby/lib" />
-				<fileset dir="${lib}/jsr223/lib" />
-				<fileset dir="${lib}/jygments/lib" />
-				<fileset dir="${lib}/jython/lib" />
-				<fileset dir="${lib}/quercus/lib" />
-				<fileset dir="${lib}/rhino/lib" />
-				<fileset dir="${lib}/succinct/lib" />
-				<fileset dir="${lib}/velocity/lib" />
-			</classpath>
+	<property file="component.properties" />
+	
+	<property name="component.source" value="../components/${component}/source" />
+	<property name="component.resources" value="../components/${component}/resources" />
+	<property name="component.notices" value="../components/notices" />
+	
+	<property name="dependencies" value="../dependencies" />
+
+	<property name="cache" value="./cache" />
+	<property name="cache.classes" value="${cache}/classes" />
+	<property name="cache.jars" value="${cache}/jars" />
+
+	<property name="distribution" value="./distribution" />
+	<property name="distribution.content" value="${distribution}/content" />
+	<property name="distribution.libraries" value="${distribution.content}/libraries" />
+	<property name="distribution.jars" value="${distribution.libraries}/jars" />
+	<property name="distribution.reference" value="${distribution.content}/reference" />
+	<property name="distribution.api" value="${distribution.reference}/documentation/api" />
+	<property name="distribution.source" value="${distribution.content}/reference/source" />
+
+	<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpath="${dependencies}/libraries/jars/org.apache.ivy/ivy/${ivy.version}/ivy.jar" />
+
+	<target name="ivy" description="Settings for Ivy">
+		<ivy:settings file="ivy/settings.xml" />
+	</target>
+
+	<target name="dependencies" depends="ivy" description="Resolve dependencies">
+		<ivy:resolve file="ivy/${component}.xml" type="jar" log="download-only" resolveId="${component}" />
+		<ivy:cachepath pathid="dependencies" type="jar" resolveId="${component}" />
+	</target>
+
+	<target name="classes" depends="dependencies" description="Compile Java code">
+		<mkdir dir="${cache.classes}" />
+		<javac srcdir="${component.source}" destdir="${cache.classes}" target="${jvm.version}" includeAntRuntime="false" debug="${compile.debug}">
+			<classpath refid="dependencies" />
 		</javac>
-		<copy todir="${tmp}/META-INF">
-			<fileset dir="${src}/META-INF" excludes="**/.svn/" />
-		</copy>
 	</target>
 
-	<target name="javadoc" description="Create Scripturian API docs">
-		<available file="${content}/doc/api" property="javadoc-present" />
-		<antcall target="javadoc-unless" />
+	<target name="javadocs" description="Create API documentation if not present">
+		<available file="${content}/doc/api" property="javadocs-present" />
+		<antcall target="javadocs-unless" />
 	</target>
 
-	<target name="javadoc-unless" description="Create Scripturian API docs" unless="javadoc-present">
-		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${content}/doc/api" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.5" sourcepath="${src}" splitindex="true" use="true" version="true" windowtitle="Scripturian 1.0" doctitle="Scipturian 1.0"  verbose="true">
-			<link href="http://download.oracle.com/javase/1.5.0/docs/api/" />
-			<link href="http://download.oracle.com/javase/6/docs/api/" />
-			<link href="http://groovy.codehaus.org/api/" />
-			<link href="http://jepp.sourceforge.net/javadoc/" />
-			<link href="http://jruby-embed.kenai.com/docs/" />
-			<link href="http://www.jython.org/javadoc/" />
-			<link href="http://www.caucho.com/resin-javadoc/" />
-			<link href="http://www.mozilla.org/rhino/apidocs/" />
-			<link href="http://threecrickets.com/succinct/api/" />
-			<link href="http://velocity.apache.org/engine/releases/velocity-1.7/api/" />
-			<link href="http://commons.apache.org/daemon/apidocs/" />
-			<classpath>
-				<fileset dir="${lib}/clojure/lib" />
-				<fileset dir="${lib}/commons-daemon/lib" />
-				<fileset dir="${lib}/groovy/lib" />
-				<fileset dir="${lib}/jepp/lib" />
-				<fileset dir="${lib}/jruby/lib" />
-				<fileset dir="${lib}/jsr223/lib" />
-				<fileset dir="${lib}/jygments/lib" />
-				<fileset dir="${lib}/jython/lib" />
-				<fileset dir="${lib}/quercus/lib" />
-				<fileset dir="${lib}/rhino/lib" />
-				<fileset dir="${lib}/succinct/lib" />
-				<fileset dir="${lib}/velocity/lib" />
-			</classpath>
+	<target name="javadocs-unless" depends="dependencies" description="Create API documentation" unless="javadocs-present">
+		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${distribution.api}" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="${jvm.version}" sourcepath="${component.source}" splitindex="true" use="true" version="true" windowtitle="${documentation.title} ${version}" doctitle="${documentation.title} ${version}">
+			<link href="${jvm.docs}" />
+			<classpath refid="dependencies" />
 			<bottom>
-				<![CDATA[<i>Copyright &#169; 2009-2011 <a target="_top" href="http://threecrickets.com/">Three Crickets LLC</a>.</i>]]>
+				<![CDATA[<i>${documentation.copyright}</i>]]>
 			</bottom>
 		</javadoc>
 	</target>
 	
-	<target name="jar" depends="compile" description="Create Scripturian jar">
-		<mkdir dir="${content}/lib" />
-		<jar destfile="${content}/lib/com.threecrickets.scripturian.jar" basedir="${tmp}" />
-	</target>
-	
-	<target name="licenses" description="Fetch licences">
-		<copy todir="${content}/licenses/jsr223">
-			<fileset dir="${lib}/jsr223/license" excludes="**/.svn/" />
-		</copy>
-		<copy todir="${content}/licenses/jygments">
-			<fileset dir="${lib}/jygments/license" excludes="**/.svn/" />
-		</copy>
-	</target>
-	
-	<target name="libraries" depends="jar" description="Fetch libraries">
-		<copy todir="${content}/lib">
-			<fileset dir="${lib}/jsr223/lib" excludes="**/.svn/" />
-		</copy>
-		<copy todir="${content}/lib">
-			<fileset dir="${lib}/jygments/lib" excludes="**/.svn/" />
-		</copy>
-	</target>
-	
-	<target name="src" description="Fetch Scripturian source">
-		<copy todir="${content}/src">
-			<fileset dir="${src}" excludes="**/.svn/" />
-		</copy>
+	<target name="libraries" depends="classes" description="Create jar">
+		<mkdir dir="${distribution.jars}" />
+		<jar destfile="${distribution.jars}/${maven.group}/${maven.artifact}/${version}/${maven.artifact}.jar" basedir="${cache.classes}" />
 	</target>
 
-	<target name="deploy" depends="src, javadoc" description="Fetch deployment">
-		<copy todir="${content}">
-			<fileset dir="${deploy}" excludes="**/.svn/" />
+	<target name="distribution" depends="libraries, javadocs" description="Assemble distribution">
+		<copy todir="${distribution.source}/${maven.group}/${maven.artifact}/${version}">
+			<fileset dir="${component.source}" excludes="**/.svn/" />
+		</copy>
+		<copy todir="${distribution.content}">
+			<fileset dir="${component.notices}" excludes="**/.svn/" />
 		</copy>
 	</target>
 	
-	<target name="package" depends="libraries, licenses, deploy" description="Create Scripturian zip">
-		<zip destfile="scripturian.zip" basedir="${content}" includes="**/*" />
+	<target name="package" depends="distribution" description="Create distribution package">
+		<zip destfile="${distribution}/${component}-${version}.zip">
+			<fileset dir="${distribution.content}" excludes="src/" />
+		</zip>
 	</target>
 	
 	<target name="build" depends="package" description="Build distribution" />
 	
 	<target name="clean" description="Clean">
-		<delete dir="${tmp}" />
-		<delete dir="${dist}" />
+		<delete dir="${cache}" />
+		<delete dir="${distribution}" />
 	</target>
 	
-	<target name="rebuild" depends="clean, build" description="Clean and build distribution" />
-
+	<target name="rebuild" depends="clean, build" description="First clean and then build distribution" />
+	
 </project>

@@ -71,7 +71,6 @@ public interface Shell
 	 * set for the current directory, with no validity checking.
 	 * 
 	 * @return The document source
-	 * @see #setSource(DocumentSource)
 	 */
 	public DocumentSource<Executable> getSource();
 
@@ -87,7 +86,6 @@ public interface Shell
 	 * Useful for exposing your own global variables to executables.
 	 * 
 	 * @return The execution controller
-	 * @see #setExecutionController(ExecutionController)
 	 */
 	public ExecutionController getExecutionController();
 }
