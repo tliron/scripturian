@@ -88,16 +88,16 @@
 
 	<target name="distribution" depends="libraries, javadocs" description="Assemble distribution">
 		<copy todir="${distribution.source}/${maven.group}/${maven.artifact}/${version}">
-			<fileset dir="${component.source}" excludes="**/.svn/" />
+			<fileset dir="${component.source}" />
 		</copy>
 		<copy todir="${distribution.content}">
-			<fileset dir="${component.notices}" excludes="**/.svn/" />
+			<fileset dir="${component.notices}" />
 		</copy>
 	</target>
 	
 	<target name="package" depends="distribution" description="Create distribution package">
 		<zip destfile="${distribution}/${component}-${version}.zip">
-			<fileset dir="${distribution.content}" excludes="src/" />
+			<fileset dir="${distribution.content}" />
 		</zip>
 	</target>
 	
