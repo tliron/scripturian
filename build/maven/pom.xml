@@ -9,7 +9,7 @@
 	<packaging>pom</packaging>
 
 	<name>Scripturian</name>
-	<description>A scalabale alternative to JSR-223.</description>
+	<description>A scalable alternative to JSR-223.</description>
 	<url>http://threecrickets.com/scripturian/</url>
 	<inceptionYear>2009</inceptionYear>
 
