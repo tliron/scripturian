@@ -3,19 +3,19 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.threecrickets.succinct</groupId>
-	<artifactId>succinct</artifactId>
+	<groupId>com.threecrickets.scripturian</groupId>
+	<artifactId>scripturian</artifactId>
 	<version>1.0.1</version>
 	<packaging>pom</packaging>
 
 	<name>Succinct</name>
 	<description>A scalabale templating engine for the JVM.</description>
-	<url>http://threecrickets.com/succinct/</url>
+	<url>http://threecrickets.com/scripturian/</url>
 	<inceptionYear>2009</inceptionYear>
 
 	<scm>
-		<connection>scm:git:https://code.google.com/p/succinct/</connection>
-		<url>http://code.google.com/p/succinct/source/browse/</url>
+		<connection>scm:git:https://code.google.com/p/scripturian/</connection>
+		<url>http://code.google.com/p/scripturian/source/browse/</url>
 	</scm>
 
 	<organization>
@@ -89,7 +89,7 @@
 							<artifacts>
 								<artifact>
 									<type>jar</type>
-									<file>../distribution/content/libraries/jars/${project.groupId}/${project.artifactId}/${project.version}/succinct.jar</file>
+									<file>../distribution/content/libraries/jars/${project.groupId}/${project.artifactId}/${project.version}/${project.artifactId}.jar</file>
 								</artifact>
 							</artifacts>
 						</configuration>

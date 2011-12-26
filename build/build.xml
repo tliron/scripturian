@@ -57,6 +57,18 @@
 	<target name="javadocs-unless" depends="dependencies" description="Create API documentation" unless="javadocs-present">
 		<javadoc access="protected" author="true" excludepackagenames="**.internal.*" destdir="${distribution.api}" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="${jvm.version}" sourcepath="${component.source}" splitindex="true" use="true" version="true" windowtitle="${documentation.title} ${version}" doctitle="${documentation.title} ${version}">
 			<link href="${jvm.docs}" />
+			<!-- Clojure has no online javadocs -->
+			<link href="http://commons.apache.org/daemon/apidocs/" />
+			<link href="http://groovy.codehaus.org/api/" />
+			<link href="http://jepp.sourceforge.net/javadoc/" />
+			<link href="http://jruby-embed.kenai.com/docs/" />
+			<link href="http://docs.oracle.com/javase/6/docs/api/" /><!-- for javax.script -->
+			<!-- Jygments as no online javadocs -->
+			<link href="http://www.jython.org/javadoc/" />
+			<link href="http://www.caucho.com/resin-javadoc/" />
+			<link href="http://www.mozilla.org/rhino/apidocs/" />
+			<link href="http://threecrickets.com/succinct/api/" />
+			<link href="http://velocity.apache.org/engine/releases/velocity-1.7/apidocs/" />
 			<classpath refid="dependencies" />
 			<bottom>
 				<![CDATA[<i>${documentation.copyright}</i>]]>
