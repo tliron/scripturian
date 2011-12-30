@@ -47,6 +47,9 @@
 		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${jvm.version}" target="${jvm.version}" includeAntRuntime="false" debug="${compile.debug}">
 			<classpath refid="dependencies" />
 		</javac>
+		<copy todir="${cache.classes}">
+			<fileset dir="${component.resources}" />
+		</copy>
 	</target>
 
 	<target name="javadocs" description="Create API documentation if not present">

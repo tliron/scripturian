@@ -130,12 +130,39 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentFileSource( String identifier, File basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
 	{
+		this( identifier, basePath, defaultName, preferredExtension, null, minimumTimeBetweenValidityChecks );
+	}
+
+	/**
+	 * Constructs a document file source.
+	 * 
+	 * @param identifier
+	 *        The identifier
+	 * @param basePath
+	 *        The base path
+	 * @param defaultName
+	 *        If the name used in {@link #getDocument(String)} points to a
+	 *        directory, then this file name in that directory will be used
+	 *        instead; note that if an extension is not specified, then the
+	 *        first file in the directory with this name, with any extension,
+	 *        will be used
+	 * @param preferredExtension
+	 *        An extension to prefer if more than one file with the same name is
+	 *        in a directory
+	 * @param preExtension
+	 *        An optional magic "pre-extension" to require for all documents
+	 * @param minimumTimeBetweenValidityChecks
+	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
+	 */
+	public DocumentFileSource( String identifier, File basePath, String defaultName, String preferredExtension, String preExtension, long minimumTimeBetweenValidityChecks )
+	{
 		this.identifier = identifier;
 		this.basePath = ScripturianUtil.getNormalizedFile( basePath );
 		this.defaultName = defaultName;
 		this.preferredExtension = preferredExtension;
+		this.preExtension = preExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
-		defaultNameFilter = new ExtensionInsensitiveFilter( defaultName );
+		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
 	}
 
 	//
@@ -173,6 +200,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public void setDefaultName( String defaultName )
 	{
 		this.defaultName = defaultName;
+		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
 	}
 
 	/**
@@ -198,6 +226,28 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			this.preferredExtension = "." + preferredExtension;
 		else
 			this.preferredExtension = null;
+	}
+
+	/**
+	 * An optional magic "pre-extension" to require for all documents.
+	 * 
+	 * @return The pre-extension
+	 * @see #setPreExtension(String)
+	 */
+	public String getPreExtension()
+	{
+		return preExtension;
+	}
+
+	/**
+	 * @param preExtension
+	 *        The pre-extension
+	 * @see #getPreExtension()
+	 */
+	public void setPreExtension( String preExtension )
+	{
+		this.preExtension = preExtension;
+		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
 	}
 
 	/**
@@ -405,6 +455,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	private volatile String preferredExtension;
 
 	/**
+	 * An optional magic "pre-extension" to require for all documents.
+	 */
+	private volatile String preExtension;
+
+	/**
 	 * See {@link #getMinimumTimeBetweenValidityChecks()}
 	 */
 	private volatile long minimumTimeBetweenValidityChecks;
@@ -458,20 +513,21 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
-	 * Filters all filenames while ignoring their extension.
+	 * Filters all filenames while ignoring their extension, and optionally
+	 * requiring a magic "pre-extension".
 	 * 
 	 * @author Tal Liron
 	 */
-	private static class ExtensionInsensitiveFilter implements FilenameFilter
+	private static class DocumentFilter implements FilenameFilter
 	{
 		private final String nameWithoutExtension;
 
 		private final int nameWithoutExtensionLength;
 
-		private ExtensionInsensitiveFilter( String nameWithoutExtension )
+		private DocumentFilter( String nameWithoutExtension, String preExtension )
 		{
-			this.nameWithoutExtension = nameWithoutExtension;
-			nameWithoutExtensionLength = nameWithoutExtension.length();
+			this.nameWithoutExtension = preExtension == null ? nameWithoutExtension : nameWithoutExtension + '.' + preExtension;
+			nameWithoutExtensionLength = this.nameWithoutExtension.length();
 		}
 
 		public boolean accept( File dir, String name )
@@ -489,7 +545,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	/**
 	 * Filters all filenames while ignoring their extension.
 	 */
-	private final ExtensionInsensitiveFilter defaultNameFilter;
+	private volatile DocumentFilter defaultNameFilter;
 
 	/**
 	 * Returns a non-directory file, treating the document name as if it were a
@@ -530,7 +586,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			// Return a file with our name
 
 			File directory = ScripturianUtil.getNormalizedFile( file.getParentFile() );
-			File[] filesWithName = directory.listFiles( new ExtensionInsensitiveFilter( file.getName() ) );
+			File[] filesWithName = directory.listFiles( new DocumentFilter( file.getName(), preExtension ) );
 			if( ( filesWithName != null ) && ( filesWithName.length > 0 ) )
 			{
 				// Look for preferred extension

@@ -241,7 +241,7 @@ public class DocumentService
 	/**
 	 * The default language tag.
 	 */
-	private String defaultLanguageTag = "js";
+	private String defaultLanguageTag = "javascript";
 
 	/**
 	 * Fetches a document descriptor from the main source or one of the library
