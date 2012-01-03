@@ -71,7 +71,7 @@
 			<link href="http://jepp.sourceforge.net/javadoc/" />
 			<link href="http://jruby-embed.kenai.com/docs/" />
 			<link href="http://docs.oracle.com/javase/6/docs/api/" /><!-- for javax.script -->
-			<!-- Jygments as no online javadocs -->
+			<!-- Jygments has no online javadocs -->
 			<link href="http://www.jython.org/javadoc/" />
 			<link href="http://www.caucho.com/resin-javadoc/" />
 			<link href="http://www.mozilla.org/rhino/apidocs/" />

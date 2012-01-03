@@ -128,4 +128,10 @@ public class VelocityAdapter extends LanguageAdapterBase
 	{
 		"\\${_d}", "\\${_h}"
 	};
+
+	static
+	{
+		// This makes sure class loading will fail if Velocity is not present
+		new RuntimeInstance();
+	}
 }
