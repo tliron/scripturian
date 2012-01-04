@@ -46,6 +46,7 @@
 		<mkdir dir="${cache.classes}" />
 		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${jvm.version}" target="${jvm.version}" includeAntRuntime="false" debug="${compile.debug}">
 			<classpath refid="dependencies" />
+			<exclude name="com/threecrickets/scripturian/adapter/jsr223/**" />
 		</javac>
 		<copy todir="${cache.classes}">
 			<fileset dir="${component.resources}" />

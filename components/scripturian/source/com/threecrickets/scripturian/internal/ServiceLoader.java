@@ -55,13 +55,13 @@ public class ServiceLoader<S> implements Iterable<S>
 	 *        The service class
 	 * @param service
 	 *        The service
-	 * @param loader
+	 * @param classLoader
 	 *        The class loader
 	 * @return The service loader
 	 */
-	public static <S> ServiceLoader<S> load( Class<S> service, ClassLoader loader )
+	public static <S> ServiceLoader<S> load( Class<S> service, ClassLoader classLoader )
 	{
-		return new ServiceLoader<S>( service, loader );
+		return new ServiceLoader<S>( service, classLoader );
 	}
 
 	//
@@ -86,15 +86,15 @@ public class ServiceLoader<S> implements Iterable<S>
 	 * 
 	 * @param service
 	 *        The service class
-	 * @param loader
+	 * @param classLoader
 	 *        The class loader
 	 */
-	private ServiceLoader( Class<S> service, ClassLoader loader )
+	private ServiceLoader( Class<S> service, ClassLoader classLoader )
 	{
 		String resourceName = "META-INF/services/" + service.getCanonicalName();
 		try
 		{
-			Enumeration<URL> resources = loader.getResources( resourceName );
+			Enumeration<URL> resources = classLoader.getResources( resourceName );
 			while( resources.hasMoreElements() )
 			{
 				InputStream stream = resources.nextElement().openStream();
@@ -109,18 +109,9 @@ public class ServiceLoader<S> implements Iterable<S>
 						{
 							try
 							{
-								@SuppressWarnings("unchecked")
-								S instance = (S) loader.loadClass( line ).newInstance();
+								Class<?> clazz = Class.forName( line, true, classLoader );
+								S instance = service.cast( clazz.newInstance() );
 								services.add( instance );
-							}
-							catch( InstantiationException x )
-							{
-							}
-							catch( IllegalAccessException x )
-							{
-							}
-							catch( ClassNotFoundException x )
-							{
 							}
 							catch( Throwable x )
 							{

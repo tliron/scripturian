@@ -126,7 +126,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
 		compilerEnvirons.setOptimizationLevel( OPTIMIZATION_LEVEL );
 		classCompiler = new ClassCompiler( compilerEnvirons );
-		generatedClassLoader = Context.getCurrentContext().createClassLoader( ClassLoader.getSystemClassLoader() );
+		generatedClassLoader = Context.getCurrentContext().createClassLoader( RhinoAdapter.class.getClassLoader() );
 		Context.exit();
 	}
 
@@ -301,7 +301,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	private Context enterContext()
 	{
 		Context context = contextFactory.enterContext();
-		context.setLanguageVersion( Context.VERSION_1_7 );
+		context.setLanguageVersion( Context.VERSION_1_8 );
 		context.setOptimizationLevel( OPTIMIZATION_LEVEL );
 		return context;
 	}

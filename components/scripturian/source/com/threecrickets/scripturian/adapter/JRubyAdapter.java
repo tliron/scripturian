@@ -170,7 +170,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 		ClassCache<Script> classCache = (ClassCache<Script>) getAttributes().get( JRUBY_CLASS_CACHE );
 		if( classCache == null )
 		{
-			classCache = new ClassCache<Script>( ClassLoader.getSystemClassLoader(), 4096 );
+			classCache = new ClassCache<Script>( JRubyAdapter.class.getClassLoader(), 4096 );
 			@SuppressWarnings("unchecked")
 			ClassCache<Script> existing = (ClassCache<Script>) getAttributes().put( JRUBY_CLASS_CACHE, classCache );
 			if( existing != null )
