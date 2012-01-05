@@ -20,6 +20,7 @@ import java.util.Properties;
 import org.python.Version;
 import org.python.compiler.LegacyCompiler;
 import org.python.core.CompilerFlags;
+import org.python.core.Options;
 import org.python.core.Py;
 import org.python.core.PyBaseException;
 import org.python.core.PyException;
@@ -165,6 +166,10 @@ public class JythonAdapter extends LanguageAdapterBase
 			Properties overridingProperties = new Properties();
 			overridingProperties.put( PYTHON_HOME, homePath );
 			overridingProperties.put( PySystemState.PYTHON_CACHEDIR, packagesCacheDirPath );
+
+			// Reduce default verbosity (otherwise we get annoying
+			// "processing new jar" messages)
+			Options.verbose = Py.WARNING;
 
 			PySystemState.initialize( System.getProperties(), overridingProperties );
 		}
