@@ -214,7 +214,7 @@ public class Executable
 		if( executable == null )
 		{
 			String defaultLanguageTag = parsingContext.getLanguageManager().getLanguageTagByExtension( documentDescriptor.getDefaultName(), documentDescriptor.getTag(), parsingContext.getDefaultLanguageTag() );
-			if( ( defaultLanguageTag != null ) && defaultLanguageTag.equals( parsingContext.getDefaultLanguageTag() ) )
+			if( ( defaultLanguageTag != null ) && !defaultLanguageTag.equals( parsingContext.getDefaultLanguageTag() ) )
 			{
 				parsingContext = new ParsingContext( parsingContext );
 				parsingContext.setDefaultLanguageTag( defaultLanguageTag );
