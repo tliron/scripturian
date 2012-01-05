@@ -59,8 +59,9 @@ public class VelocityAdapter extends LanguageAdapterBase
 	 * it if it doesn't exist.
 	 * 
 	 * @return The runtime instance
+	 * @throws LanguageAdapterException
 	 */
-	public RuntimeInstance getRuntimeInstance()
+	public RuntimeInstance getRuntimeInstance() throws LanguageAdapterException
 	{
 		RuntimeInstance runtimeInstance = runtimeInstanceReference.get();
 		if( runtimeInstance == null )
@@ -77,7 +78,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 			}
 			catch( Exception x )
 			{
-				x.printStackTrace();
+				throw new LanguageAdapterException( VelocityAdapter.class, x );
 			}
 
 			if( !runtimeInstanceReference.compareAndSet( null, runtimeInstance ) )

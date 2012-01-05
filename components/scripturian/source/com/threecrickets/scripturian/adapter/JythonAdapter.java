@@ -142,16 +142,15 @@ public class JythonAdapter extends LanguageAdapterBase
 	{
 		super( "Jython", Version.getBuildInfo(), "Python", Version.PY_VERSION, Arrays.asList( "py" ), null, Arrays.asList( "python", "py", "jython" ), null );
 
-		File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );
-
-		// Initialize Jython registry (can only happen once per VM)
 		if( PySystemState.registry == null )
 		{
 			String homePath = System.getProperty( PYTHON_HOME );
 			if( homePath == null )
-				throw new LanguageAdapterException( this.getClass(), "Must define " + PYTHON_HOME + " to use Jython adapter" );
+				throw new LanguageAdapterException( this.getClass(), "Must define " + PYTHON_HOME + " system property in order to use Jython adapter" );
 
 			homePath = new File( homePath ).getAbsolutePath();
+
+			File packagesCacheDir = new File( LanguageManager.getCachePath(), PYTHON_PACKAGES_CACHE_DIR );
 
 			// The packages cache dir must be absolute or relative to the home
 			// dir, so we'll have to relativize it back if it's not absolute.
@@ -196,7 +195,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	 *        The executable
 	 * @return The Python interpreter
 	 */
-	public PythonInterpreter getPythonInterpreter( ExecutionContext executionContext, Executable executable )
+	public PythonInterpreter getPythonInterpreter( ExecutionContext executionContext, Executable executable ) throws LanguageAdapterException
 	{
 		PythonInterpreter pythonInterpreter = (PythonInterpreter) executionContext.getAttributes().get( JYTHON_INTERPRETER );
 

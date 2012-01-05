@@ -14,7 +14,6 @@ package com.threecrickets.scripturian.adapter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -89,13 +88,9 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
 					pythonCodeReference.compareAndSet( null, BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() ) );
 				}
-				catch( IOException x )
-				{
-					x.printStackTrace();
-				}
 				catch( Exception x )
 				{
-					x.printStackTrace();
+					throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
 				}
 			}
 			else
@@ -120,7 +115,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 				}
 				catch( Exception x )
 				{
-					x.printStackTrace();
+					throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
 				}
 			}
 		}

@@ -113,7 +113,7 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 			}
 			catch( Exception x )
 			{
-				x.printStackTrace();
+				throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
 			}
 		}
 	}
