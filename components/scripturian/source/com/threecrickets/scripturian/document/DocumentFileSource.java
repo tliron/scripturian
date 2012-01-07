@@ -413,7 +413,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	@Override
 	public String toString()
 	{
-		return "DocumentFileSource: " + identifier + ", " + basePath + ", " + defaultName + ", " + preferredExtension + ", " + ", " + preExtension + ", " + minimumTimeBetweenValidityChecks;
+		return "DocumentFileSource: " + identifier + ", " + basePath + ", " + defaultName + ", " + preferredExtension + ", " + preExtension + ", " + minimumTimeBetweenValidityChecks;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
