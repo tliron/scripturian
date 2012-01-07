@@ -186,10 +186,13 @@ public class RhinoAdapter extends LanguageAdapterBase
 			classChache.associate( scope );
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 
-			String printSource = "function print(s){" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName()
-				+ ".context.writerOrDefault.flush();};";
+			String printSource = "function print(s){" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName() + ".context.writerOrDefault.flush()}";
 			Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
 			scope.defineProperty( "print", printFunction, 0 );
+
+			printSource = "function println(s){print(s);if(undefined===println.separator){println.separator=String(java.lang.System.getProperty('line.separator'))}print(println.separator)}";
+			printFunction = context.compileFunction( scope, printSource, null, 0, null );
+			scope.defineProperty( "println", printFunction, 0 );
 		}
 
 		// Define services as properties in scope
