@@ -160,7 +160,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		this.basePath = ScripturianUtil.getNormalizedFile( basePath );
 		this.defaultName = defaultName;
 		this.preferredExtension = preferredExtension;
-		this.preExtension = preExtension;
+		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : preExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
 		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
 	}
@@ -246,7 +246,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public void setPreExtension( String preExtension )
 	{
-		this.preExtension = preExtension;
+		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : preExtension;
 		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
 	}
 
