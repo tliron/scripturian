@@ -116,12 +116,18 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 					// separately.
 
 					String prefix = mainClassFile.getPath().substring( 0, mainClassFile.getPath().length() - 6 );
+
 					@SuppressWarnings("unchecked")
 					List<GroovyClass> groovyClasses = (List<GroovyClass>) compilationUnit.getClasses();
 					for( GroovyClass groovyClass : groovyClasses )
 					{
-						String postfix = groovyClass.getName().substring( classname.length() );
-						File classFile = new File( prefix + postfix + ".class" );
+						String name = groovyClass.getName();
+						File classFile;
+						if( name.startsWith( classname ) )
+							classFile = new File( prefix + name.substring( classname.length() ) + ".class" );
+						else
+							// This must be an explicit class
+							classFile = new File( adapter.getCacheDir(), name + ".class" );
 
 						// Cache it!
 						classFile.getParentFile().mkdirs();
