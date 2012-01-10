@@ -119,14 +119,19 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 
 					@SuppressWarnings("unchecked")
 					List<GroovyClass> groovyClasses = (List<GroovyClass>) compilationUnit.getClasses();
+					boolean hasMainClass = false;
 					for( GroovyClass groovyClass : groovyClasses )
 					{
 						String name = groovyClass.getName();
 						File classFile;
 						if( name.startsWith( classname ) )
+						{
+							// This must be our main class
 							classFile = new File( prefix + name.substring( classname.length() ) + ".class" );
+							hasMainClass = true;
+						}
 						else
-							// This must be an explicit class
+							// This must be an auxiliary class
 							classFile = new File( adapter.getCacheDir(), name + ".class" );
 
 						// Cache it!
@@ -147,6 +152,12 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 
 					adapter.groovyClassLoader.addClasspath( adapter.getCacheDir().getPath() );
 
+					if( !hasMainClass )
+					{
+						scriptClassReference.set( null );
+						return;
+					}
+
 					@SuppressWarnings("unchecked")
 					Class<Script> loadedClass = adapter.groovyClassLoader.loadClass( classname, false, true );
 					scriptClass = loadedClass;
@@ -165,6 +176,7 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		Binding binding = adapter.getBinding( executionContext );
@@ -174,15 +186,21 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 			Class<Script> scriptClass = scriptClassReference.get();
 			if( scriptClass == null )
 			{
-				@SuppressWarnings("unchecked")
-				Class<Script> parsedClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
-				scriptClass = parsedClass;
-				scriptClassReference.compareAndSet( null, scriptClass );
+				Class<?> parsedClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
+				if( parsedClass.isAssignableFrom( Script.class ) )
+				{
+					// Not all .groovy files have executable code!
+					scriptClass = (Class<Script>) parsedClass;
+					scriptClassReference.compareAndSet( null, scriptClass );
+				}
 			}
 
-			Script script = scriptClass.newInstance();
-			script.setBinding( binding );
-			script.run();
+			if( scriptClass != null )
+			{
+				Script script = scriptClass.newInstance();
+				script.setBinding( binding );
+				script.run();
+			}
 		}
 		catch( InstantiationException x )
 		{
