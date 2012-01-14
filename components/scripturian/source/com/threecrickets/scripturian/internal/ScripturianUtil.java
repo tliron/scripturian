@@ -11,15 +11,14 @@
 
 package com.threecrickets.scripturian.internal;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
@@ -36,11 +35,6 @@ import com.threecrickets.scripturian.LanguageManager;
  */
 public abstract class ScripturianUtil
 {
-	/**
-	 * Size (in bytes) of the buffer used by {@link #getString(File)}.
-	 */
-	public static final int BUFFER_SIZE = 1024 * 1024;
-
 	/**
 	 * Gets the filename extension (whatever is after the period), or null if it
 	 * doesn't have one.
@@ -60,55 +54,29 @@ public abstract class ScripturianUtil
 	}
 
 	/**
-	 * Reads a reader into a string.
-	 * 
-	 * @param reader
-	 *        The reader
-	 * @return The string read from the reader
-	 * @throws IOException
-	 */
-	public static String getString( Reader reader ) throws IOException
-	{
-		StringWriter writer = new StringWriter( BUFFER_SIZE );
-		int c;
-		while( true )
-		{
-			c = reader.read();
-			if( c == -1 )
-				break;
-
-			writer.write( c );
-		}
-
-		return writer.toString();
-	}
-
-	/**
-	 * Reads a file into a string. Buffer size is {@link #BUFFER_SIZE}.
+	 * Reads a file into a string.
 	 * 
 	 * @param file
 	 *        The file
+	 * @param charset
+	 *        The charset (null to use default JVM charset; not recommended!)
 	 * @return The string read from the file
 	 * @throws IOException
 	 */
-	public static String getString( File file ) throws IOException
+	public static String getString( File file, Charset charset ) throws IOException
 	{
-		FileReader fileReader = new FileReader( file );
+		FileInputStream stream = new FileInputStream( file );
+		FileChannel channel = stream.getChannel();
 		try
 		{
-			BufferedReader reader = new BufferedReader( fileReader, BUFFER_SIZE );
-			try
-			{
-				return getString( reader );
-			}
-			finally
-			{
-				reader.close();
-			}
+			MappedByteBuffer buffer = channel.map( FileChannel.MapMode.READ_ONLY, 0, channel.size() );
+			if( charset == null )
+				charset = Charset.defaultCharset();
+			return charset.decode( buffer ).toString();
 		}
 		finally
 		{
-			fileReader.close();
+			channel.close();
 		}
 	}
 

@@ -14,6 +14,7 @@ package com.threecrickets.scripturian.internal;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -71,9 +72,11 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 *        The file
 	 * @param read
 	 *        Whether to read the source code from the file
+	 * @param charset
+	 *        The charset to use for reading source code from the file
 	 * @throws DocumentException
 	 */
-	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file, boolean read ) throws DocumentException
+	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file, boolean read, Charset charset ) throws DocumentException
 	{
 		this.documentSource = documentSource;
 		this.file = file;
@@ -85,7 +88,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		{
 			try
 			{
-				sourceCode = ScripturianUtil.getString( file );
+				sourceCode = ScripturianUtil.getString( file, charset );
 			}
 			catch( FileNotFoundException x )
 			{

@@ -13,6 +13,7 @@ package com.threecrickets.scripturian.document;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,52 +62,6 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	public DocumentFileSource( File basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
 	{
 		this( basePath.getPath(), basePath, defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
-	}
-
-	/**
-	 * Constructs a document file source. The identifier will be the base path.
-	 * 
-	 * @param basePath
-	 *        The base path
-	 * @param defaultName
-	 *        If the name used in {@link #getDocument(String)} points to a
-	 *        directory, then this file name in that directory will be used
-	 *        instead; note that if an extension is not specified, then the
-	 *        first file in the directory with this name, with any extension,
-	 *        will be used
-	 * @param preferredExtension
-	 *        An extension to prefer if more than one file with the same name is
-	 *        in a directory
-	 * @param minimumTimeBetweenValidityChecks
-	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
-	 */
-	public DocumentFileSource( String basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
-	{
-		this( basePath, basePath, defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
-	}
-
-	/**
-	 * Constructs a document file source.
-	 * 
-	 * @param identifier
-	 *        The identifier
-	 * @param basePath
-	 *        The base path
-	 * @param defaultName
-	 *        If the name used in {@link #getDocument(String)} points to a
-	 *        directory, then this file name in that directory will be used
-	 *        instead; note that if an extension is not specified, then the
-	 *        first file in the directory with this name, with any extension,
-	 *        will be used
-	 * @param preferredExtension
-	 *        An extension to prefer if more than one file with the same name is
-	 *        in a directory
-	 * @param minimumTimeBetweenValidityChecks
-	 *        See {@link #getMinimumTimeBetweenValidityChecks()}
-	 */
-	public DocumentFileSource( String identifier, String basePath, String defaultName, String preferredExtension, long minimumTimeBetweenValidityChecks )
-	{
-		this( identifier, new File( basePath ), defaultName, preferredExtension, minimumTimeBetweenValidityChecks );
 	}
 
 	/**
@@ -274,6 +229,30 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	}
 
 	/**
+	 * The charset to use for reading files.
+	 * <p>
+	 * Note that the default is <i>always</i> UTF-8, <i>not</i> the underlying
+	 * JVM's default charset, which may be inconsistently set across diverse
+	 * runtime environments.
+	 * 
+	 * @return The charset
+	 * @see #setCharset(Charset)
+	 */
+	public Charset getCharset()
+	{
+		return charset;
+	}
+
+	/**
+	 * @param charset
+	 * @see #getCharset()
+	 */
+	public void setCharset( Charset charset )
+	{
+		this.charset = charset;
+	}
+
+	/**
 	 * Gets the file's path relative to the base path.
 	 * 
 	 * @param file
@@ -345,7 +324,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			if( filedDocumentDescriptor == null )
 			{
 				// Create a new descriptor
-				filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file, read );
+				filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file, read, charset );
 				FiledDocumentDescriptor<D> existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
 				if( existing != null )
 					filedDocumentDescriptor = existing;
@@ -440,6 +419,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	private final String identifier;
 
 	/**
+	 * The charset to use for reading files.
+	 */
+	private volatile Charset charset = Charset.forName( "UTF-8" );
+
+	/**
 	 * If the name used in {@link #getDocument(String)} points to a directory,
 	 * then this file name in that directory will be used instead. If an
 	 * extension is not specified, then the preferred extension will be used.
@@ -494,7 +478,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 					{
 						try
 						{
-							filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file, true );
+							filedDocumentDescriptor = new FiledDocumentDescriptor<D>( this, file, true, charset );
 							FiledDocumentDescriptor<D> existing = filedDocumentDescriptorsByFile.putIfAbsent( file, filedDocumentDescriptor );
 							if( existing != null )
 								filedDocumentDescriptor = existing;
