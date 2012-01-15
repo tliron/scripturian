@@ -186,7 +186,8 @@ public class RhinoAdapter extends LanguageAdapterBase
 			classChache.associate( scope );
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 
-			String printSource = "function print(s){" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName() + ".context.writerOrDefault.flush()}";
+			String printSource = "function print(s){if(undefined===s){return}" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName()
+				+ ".context.writerOrDefault.flush()}";
 			Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
 			scope.defineProperty( "print", printFunction, 0 );
 
