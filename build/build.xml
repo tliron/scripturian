@@ -44,7 +44,7 @@
 
 	<target name="classes" depends="dependencies" description="Compile Java code">
 		<mkdir dir="${cache.classes}" />
-		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${jvm.version}" target="${jvm.version}" includeAntRuntime="false" debug="${compile.debug}">
+		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${jvm.version}" target="${jvm.version}" includeAntRuntime="no" debug="${compile.debug}">
 			<classpath refid="dependencies" />
 			<exclude name="com/threecrickets/scripturian/adapter/jsr223/**" />
 		</javac>
