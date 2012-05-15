@@ -47,7 +47,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 	 */
 	public VelocityAdapter() throws LanguageAdapterException
 	{
-		super( "Velocity", "", null, null, Arrays.asList( "vm" ), null, Arrays.asList( "velocity", "vm" ), null );
+		super( "Velocity", "", "Velocity", "", Arrays.asList( "vm" ), "vm", Arrays.asList( "velocity", "vm" ), "velocity" );
 	}
 
 	//
@@ -91,19 +91,21 @@ public class VelocityAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		// Dark magicks to allow us to easily escape Velocity tokens
 		// (see VelocityProgram.execute)
-		literal = ScripturianUtil.replace( literal, LITERAL_ESCAPE_PATTERNS, LITERAL_ESCAPE_REPLACEMENTS );
-		return literal;
+		return ScripturianUtil.replace( literal, LITERAL_ESCAPE_PATTERNS, LITERAL_ESCAPE_REPLACEMENTS );
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "${" + expression.trim() + "}";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

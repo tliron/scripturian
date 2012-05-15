@@ -139,7 +139,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 */
 	public GroovyAdapter() throws LanguageAdapterException
 	{
-		super( "Groovy", GroovySystem.getVersion(), null, null, Arrays.asList( "groovy", "gv" ), null, Arrays.asList( "groovy", "gv" ), null );
+		super( "Groovy", GroovySystem.getVersion(), "Groovy", GroovySystem.getVersion(), Arrays.asList( "groovy", "gv" ), "groovy", Arrays.asList( "groovy", "gv" ), "groovy" );
 
 		// This will allow the class loader to load our auxiliary classes (see
 		// GroovyProgram.prepare)
@@ -195,17 +195,20 @@ public class GroovyAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = ScripturianUtil.doubleQuotedLiteral( literal );
 		return "print(" + literal + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "print(" + expression + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

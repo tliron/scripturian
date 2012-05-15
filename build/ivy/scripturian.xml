@@ -22,5 +22,7 @@
 		<dependency org="org.mozilla" name="rhino" rev="1.7R3" transitive="false" />
 		<dependency org="com.threecrickets.succinct" name="succinct" rev="1.0.1" transitive="false" /> 
 		<dependency org="org.apache.velocity" name="velocity" rev="1.7" transitive="false" />
+		<dependency org="org.eclipse.mylyn" name="wikitext" rev="1.5.0" transitive="false" />
+		<dependency org="org.pegdown" name="pegdown" rev="1.1.0" transitive="false" />
 	</dependencies>
 </ivy-module>

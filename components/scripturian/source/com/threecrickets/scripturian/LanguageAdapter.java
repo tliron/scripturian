@@ -98,6 +98,15 @@ public interface LanguageAdapter
 	public boolean isThreadSafe();
 
 	/**
+	 * Some languages are meant for use in one segment only. Return true here
+	 * makes sure that Scripturian will not change the current language tag
+	 * after each segment parsed by this adapter.
+	 * 
+	 * @return True if the current language tag should not change
+	 */
+	public boolean isEphemeral();
+
+	/**
 	 * Used when {@link #isThreadSafe()} returns false.
 	 * 
 	 * @return The lock

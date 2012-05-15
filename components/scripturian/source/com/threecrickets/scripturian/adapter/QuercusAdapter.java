@@ -170,7 +170,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 	 */
 	public QuercusAdapter() throws LanguageAdapterException
 	{
-		super( "Quercus", staticQuercusRuntime.getVersion(), "PHP", staticQuercusRuntime.getPhpVersion(), Arrays.asList( "php" ), null, Arrays.asList( "php", "quercus" ), null );
+		super( "Quercus", staticQuercusRuntime.getVersion(), "PHP", staticQuercusRuntime.getPhpVersion(), Arrays.asList( "php" ), "php", Arrays.asList( "php", "quercus" ), "quercus" );
 
 		quercusRuntime = new Quercus();
 		quercusRuntime.init();
@@ -276,17 +276,20 @@ public class QuercusAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = ScripturianUtil.doubleQuotedLiteral( literal );
 		return "print(" + literal + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "print(" + expression + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

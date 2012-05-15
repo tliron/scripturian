@@ -140,7 +140,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	 */
 	public JythonAdapter() throws LanguageAdapterException
 	{
-		super( "Jython", Version.getBuildInfo(), "Python", Version.PY_VERSION, Arrays.asList( "py" ), null, Arrays.asList( "python", "py", "jython" ), null );
+		super( "Jython", Version.getBuildInfo(), "Python", Version.PY_VERSION, Arrays.asList( "py" ), "py", Arrays.asList( "python", "py", "jython" ), "jython" );
 
 		if( PySystemState.registry == null )
 		{
@@ -260,6 +260,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = ScripturianUtil.doubleQuotedLiteral( literal );
@@ -268,6 +269,7 @@ public class JythonAdapter extends LanguageAdapterBase
 		return "sys.stdout.write(" + literal + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		// return executable.getExposedExecutableName() +
@@ -275,6 +277,7 @@ public class JythonAdapter extends LanguageAdapterBase
 		return "sys.stdout.write(str(" + expression + "));";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

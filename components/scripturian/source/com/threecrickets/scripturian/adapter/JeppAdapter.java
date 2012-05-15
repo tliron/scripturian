@@ -117,7 +117,7 @@ public class JeppAdapter extends LanguageAdapterBase
 	 */
 	public JeppAdapter() throws LanguageAdapterException
 	{
-		super( "Jepp", "", "Python", null, Arrays.asList( "py", "jepp" ), null, Arrays.asList( "jepp", "py" ), null );
+		super( "Jepp", "", "Python", "", Arrays.asList( "py", "jepp" ), "py", Arrays.asList( "jepp", "py" ), "jepp" );
 	}
 
 	//
@@ -138,17 +138,20 @@ public class JeppAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = ScripturianUtil.doubleQuotedLiteral( literal );
 		return "sys.stdout.write(" + literal + "),;";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "sys.stdout.write(str(" + expression + "));";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

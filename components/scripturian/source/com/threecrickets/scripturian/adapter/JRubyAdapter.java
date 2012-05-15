@@ -147,7 +147,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 	 */
 	public JRubyAdapter() throws LanguageAdapterException
 	{
-		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), null, Arrays.asList( "ruby", "rb", "jruby" ), null );
+		super( "JRuby", Constants.VERSION, "Ruby", Constants.RUBY_VERSION, Arrays.asList( "rb" ), "rb", Arrays.asList( "ruby", "rb", "jruby" ), "jruby" );
 
 		RubyInstanceConfig config = new RubyInstanceConfig();
 		config.setClassCache( getRubyClassCache() );
@@ -274,17 +274,20 @@ public class JRubyAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = ScripturianUtil.doubleQuotedLiteral( literal );
 		return "print(" + literal + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "print(" + expression + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

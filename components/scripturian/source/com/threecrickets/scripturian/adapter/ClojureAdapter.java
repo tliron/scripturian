@@ -222,24 +222,27 @@ public class ClojureAdapter extends LanguageAdapterBase
 	 */
 	public ClojureAdapter() throws LanguageAdapterException
 	{
-		super( "Clojure", "", null, null, Arrays.asList( "clj" ), null, Arrays.asList( "clojure", "clj" ), null );
+		super( "Clojure", "", "Clojure", "", Arrays.asList( "clj" ), "clj", Arrays.asList( "clojure", "clj" ), "clojure" );
 	}
 
 	//
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = ScripturianUtil.doubleQuotedLiteral( literal );
 		return "(print " + literal + ")";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "(print " + expression + ")";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

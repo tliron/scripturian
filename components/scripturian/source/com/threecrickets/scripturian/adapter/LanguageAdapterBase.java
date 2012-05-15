@@ -95,6 +95,11 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 		return true;
 	}
 
+	public boolean isEphemeral()
+	{
+		return false;
+	}
+
 	public Lock getLock()
 	{
 		return lock;
@@ -107,6 +112,21 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 
 	public void releaseContext( ExecutionContext executionContext )
 	{
+	}
+
+	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
+	{
+		return null;
+	}
+
+	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
+	{
+		return null;
+	}
+
+	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
+	{
+		return null;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

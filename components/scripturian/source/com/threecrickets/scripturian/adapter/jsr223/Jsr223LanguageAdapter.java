@@ -496,6 +496,11 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 		return true;
 	}
 
+	public boolean isEphemeral()
+	{
+		return false;
+	}
+
 	public Lock getLock()
 	{
 		return lock;

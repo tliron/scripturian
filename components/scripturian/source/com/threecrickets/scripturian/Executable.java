@@ -369,6 +369,7 @@ public class Executable
 					boolean isExpression = false;
 					boolean isInclude = false;
 					boolean isInFlow = false;
+					boolean isEphemeral = false;
 					String pluginCode = null;
 					ScriptletPlugin plugin = null;
 
@@ -477,12 +478,15 @@ public class Executable
 								languageTag = lastLanguageTag;
 								segment = lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", this );
 							}
+							
+							isEphemeral = adapter.isEphemeral();
 						}
 
-						segments.add( new ExecutableSegment( segment, startLineNumber, startColumnNumber, true, true, languageTag ) );
+						if( segment != null )
+							segments.add( new ExecutableSegment( segment, startLineNumber, startColumnNumber, true, true, languageTag ) );
 					}
 
-					if( !isInFlow )
+					if( !isInFlow && !isEphemeral )
 					{
 						lastLanguageTag = languageTag;
 						lastAdapter = adapter;
@@ -549,19 +553,28 @@ public class Executable
 			{
 				if( previous.languageTag.equals( current.languageTag ) )
 				{
-					// Collapse current into previous
-					// (converting to program if necessary)
-					i.remove();
-
 					if( current.isProgram )
+					{
 						previous.sourceCode += current.sourceCode;
+
+						// Collapse current into previous
+						i.remove();
+					}
 					else
 					{
+						// Converting to program if necessary
 						LanguageAdapter adapter = languageManager.getAdapterByTag( current.languageTag );
 						if( adapter == null )
 							throw ParsingException.adapterNotFound( documentName, current.startLineNumber, current.startColumnNumber, current.languageTag );
 
-						previous.sourceCode += adapter.getSourceCodeForLiteralOutput( current.sourceCode, this );
+						String literalOutput = adapter.getSourceCodeForLiteralOutput( current.sourceCode, this );
+						if( literalOutput != null )
+						{
+							previous.sourceCode += literalOutput;
+
+							// Collapse current into previous
+							i.remove();
+						}
 					}
 
 					current = previous;

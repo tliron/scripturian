@@ -121,7 +121,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 */
 	public RhinoAdapter() throws LanguageAdapterException
 	{
-		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", "", Arrays.asList( "js", "javascript" ), null, Arrays.asList( "javascript", "js", "rhino" ), null );
+		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", "", Arrays.asList( "js", "javascript" ), "js", Arrays.asList( "javascript", "js", "rhino" ), "rhino" );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
 		compilerEnvirons.setOptimizationLevel( OPTIMIZATION_LEVEL );
@@ -217,17 +217,20 @@ public class RhinoAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
 		literal = ScripturianUtil.doubleQuotedLiteral( literal );
 		return "print(" + literal + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return "print(" + expression + ");";
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
 		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );

@@ -62,7 +62,7 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	 */
 	public SuccinctAdapter() throws LanguageAdapterException
 	{
-		super( "Succinct", "", null, null, Arrays.asList( "succint", "template" ), null, Arrays.asList( "succinct" ), null );
+		super( "Succinct", "", "Succinct", "", Arrays.asList( "succint", "template" ), "succinct", Arrays.asList( "succinct" ), "succinct" );
 	}
 
 	//
@@ -109,19 +109,24 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
 	{
-		return literal;
+		// TODO: this breaks nesting; we should escape tags and keep it in
+		// Succinct
+		return null;
 	}
 
+	@Override
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
 	{
 		return Tag.BEGIN + expression + Tag.END;
 	}
 
+	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		// We are handling inclusiong via a special Succinct cast.
+		// We are handling inclusion via a special Succinct cast.
 		// See: ScripturianSuccinctFiller
 
 		return Tag.BEGIN + Cast.MARK + INCLUSION_KEY + expression + Tag.END;
