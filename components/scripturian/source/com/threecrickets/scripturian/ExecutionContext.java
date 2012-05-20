@@ -237,7 +237,7 @@ public class ExecutionContext
 			throw new IllegalStateException( "Cannot modify an immutable execution context" );
 
 		Writer old = this.writer;
-		this.writer = new PrintWriter( writer, true );
+		this.writer = writer instanceof PrintWriter ? (PrintWriter) writer : new PrintWriter( writer, true );
 		return old;
 	}
 
