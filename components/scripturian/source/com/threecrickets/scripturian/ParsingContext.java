@@ -79,9 +79,9 @@ public class ParsingContext
 	public static final String DEFAULT_EXECUTABLE_SERVICE_NAME = "executable";
 
 	/**
-	 * Prefix prepended to in-flow scriptlets stores in the document source.
+	 * Prefix prepended to on-the-fly scriptlets stored in the document source.
 	 */
-	public static final String IN_FLOW_PREFIX = "_IN_FLOW_";
+	public static final String ON_THE_FLY_PREFIX = "_ON_THE_FLY_";
 
 	//
 	// Construction

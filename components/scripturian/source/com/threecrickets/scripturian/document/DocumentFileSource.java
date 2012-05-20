@@ -335,7 +335,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 			}
 		}
 
-		if( ( filedDocumentDescriptor.file == null ) || !filedDocumentDescriptor.file.exists() )
+		if( filedDocumentDescriptor.validate && ( ( filedDocumentDescriptor.file == null ) || !filedDocumentDescriptor.file.exists() ) )
 			throw new DocumentNotFoundException( "Document descriptor's file does not exist: " + documentName );
 
 		return filedDocumentDescriptor;
@@ -358,7 +358,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document ) throws DocumentException
 	{
-		return filedDocumentDescriptorsByAlias.put( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
+		return filedDocumentDescriptorsByAlias.put( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document, false ) );
 	}
 
 	/**
@@ -366,7 +366,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document ) throws DocumentException
 	{
-		return filedDocumentDescriptorsByAlias.putIfAbsent( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document ) );
+		return filedDocumentDescriptorsByAlias.putIfAbsent( documentName, new FiledDocumentDescriptor<D>( this, documentName, sourceCode, tag, document, false ) );
 	}
 
 	/**

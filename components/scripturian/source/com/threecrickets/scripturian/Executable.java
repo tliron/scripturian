@@ -228,6 +228,11 @@ public class Executable
 		return executable;
 	}
 
+	public static String createOnTheFlyName()
+	{
+		return ParsingContext.ON_THE_FLY_PREFIX + onTheFlyCounter.getAndIncrement();
+	}
+
 	//
 	// Construction
 	//
@@ -464,7 +469,7 @@ public class Executable
 							else if( isInFlow && ( documentSource != null ) )
 							{
 								String inFlowCode = delimiterStart + languageTag + " " + segment + delimiterEnd;
-								String inFlowName = ParsingContext.IN_FLOW_PREFIX + inFlowCounter.getAndIncrement();
+								String inFlowName = createOnTheFlyName();
 
 								// Note that the in-flow executable is a single
 								// segment, so we can optimize parsing a bit
@@ -478,7 +483,7 @@ public class Executable
 								languageTag = lastLanguageTag;
 								segment = lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", this );
 							}
-							
+
 							isEphemeral = adapter.isEphemeral();
 						}
 
@@ -987,9 +992,9 @@ public class Executable
 	// Private
 
 	/**
-	 * Used to ensure unique names for in-flow scriptlets.
+	 * Used to ensure unique names for on-the-fly scriptlets.
 	 */
-	private static final AtomicInteger inFlowCounter = new AtomicInteger();
+	private static final AtomicInteger onTheFlyCounter = new AtomicInteger();
 
 	/**
 	 * The executable's partition.

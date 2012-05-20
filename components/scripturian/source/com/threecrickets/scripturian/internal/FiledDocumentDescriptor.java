@@ -51,8 +51,10 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 *        The descriptor tag
 	 * @param document
 	 *        The document
+	 * @param validate
+	 *        Whether to validate the document
 	 */
-	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, String defaultName, String sourceCode, String tag, D document )
+	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, String defaultName, String sourceCode, String tag, D document, boolean validate )
 	{
 		this.documentSource = documentSource;
 		this.defaultName = defaultName;
@@ -61,6 +63,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		this.sourceCode = sourceCode;
 		this.tag = tag;
 		this.document = document;
+		this.validate = validate;
 	}
 
 	/**
@@ -82,6 +85,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 		this.file = file;
 		defaultName = documentSource.getRelativeFilePath( file );
 		timestamp = file.lastModified();
+		validate = true;
 
 		String sourceCode = null;
 		if( read && file.exists() )
@@ -113,6 +117,11 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	public final File file;
 
 	/**
+	 * Whether to validate the document.
+	 */
+	public final boolean validate;
+
+	/**
 	 * Whether the document is valid. Calling this method will sometimes cause a
 	 * validity check.
 	 * <p>
@@ -125,7 +134,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 */
 	public boolean isValid() throws DocumentDependencyLoopException
 	{
-		return isValid( new HashSet<String>() );
+		return validate ? isValid( new HashSet<String>() ) : true;
 	}
 
 	//
@@ -233,7 +242,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	@Override
 	public String toString()
 	{
-		return "FiledDocumentDescriptor: " + defaultName + ", " + tag + ", " + timestamp;
+		return "FiledDocumentDescriptor: " + defaultName + ", " + tag + ", " + timestamp + ", " + validate;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
