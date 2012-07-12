@@ -66,17 +66,24 @@ public abstract class ScripturianUtil
 	public static String getString( File file, Charset charset ) throws IOException
 	{
 		FileInputStream stream = new FileInputStream( file );
-		FileChannel channel = stream.getChannel();
 		try
 		{
-			MappedByteBuffer buffer = channel.map( FileChannel.MapMode.READ_ONLY, 0, channel.size() );
-			if( charset == null )
-				charset = Charset.defaultCharset();
-			return charset.decode( buffer ).toString();
+			FileChannel channel = stream.getChannel();
+			try
+			{
+				MappedByteBuffer buffer = channel.map( FileChannel.MapMode.READ_ONLY, 0, channel.size() );
+				if( charset == null )
+					charset = Charset.defaultCharset();
+				return charset.decode( buffer ).toString();
+			}
+			finally
+			{
+				channel.close();
+			}
 		}
 		finally
 		{
-			channel.close();
+			stream.close();
 		}
 	}
 
