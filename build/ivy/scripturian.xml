@@ -18,7 +18,7 @@
 		<dependency org="org.scala-lang" name="scala-compiler" rev="2.9.1" transitive="false" />
 		<dependency org="org.scala-lang" name="scala-library" rev="2.9.1" transitive="false" />
 		<dependency org="javax.script" name="script-api" rev="1" transitive="false" />
-		<dependency org="com.threecrickets.jygments" name="jygments" rev="1.0.1" transitive="false" />
+		<dependency org="com.threecrickets.jygments" name="jygments" rev="0.9.0" transitive="false" />
 		<dependency org="org.python" name="jython-standalone" rev="2.5.2" transitive="false" />
 		<dependency org="com.caucho" name="quercus" rev="4.0.25" transitive="true" />
 		<dependency org="org.mozilla" name="rhino" rev="1.7R3" transitive="false" />
