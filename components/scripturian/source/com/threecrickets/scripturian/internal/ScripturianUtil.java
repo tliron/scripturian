@@ -223,10 +223,9 @@ public abstract class ScripturianUtil
 		if( classname.startsWith( File.separator ) )
 			classname = classname.substring( 1 );
 
+		classname = classname.replace( '-', '_' ).replace( '.', '$' ).replace( ':', '$' ).replace( ' ', '$' ).replace( "//", "." ).replace( '/', '.' ).replace( "..", "." );
 		if( File.separatorChar != '/' )
 			classname = classname.replace( File.separator + File.separator, "." ).replace( File.separatorChar, '.' );
-
-		classname = classname.replace( '-', '_' ).replace( '.', '$' ).replace( ':', '$' ).replace( ' ', '$' ).replace( "//", "." ).replace( '/', '.' ).replace( "..", "." );
 		classname += "$" + position + "$" + executable.getDocumentTimestamp();
 		return classname;
 	}
