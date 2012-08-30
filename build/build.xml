@@ -1,29 +1,23 @@
 <?xml version="1.0"?>
 <project name="Scripturian" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
 
-	<!--
-	A straightforward Ant build file that can build a distribution for single-component projects,
-	using Ivy to pull in dependencies.
+	<property file="custom.properties" />
+	<property file="private.properties" />
 	
-	The distribution's directory structure is compatible with Sincerity containers.
-	See: http://threecrickets.com/sincerity/
+	<property name="root" location=".." />
+	<property name="component.source" value="${root}/components/${component}/source" />
+	<property name="component.resources" value="${root}/components/${component}/resources" />
+	<property name="component.notices" value="${root}/components/notices" />
 	
-	Version: 1.0
-	-->
+	<property name="dependencies" value="${root}/dependencies" />
 
-	<property file="component.properties" />
-	
-	<property name="component.source" value="../components/${component}/source" />
-	<property name="component.resources" value="../components/${component}/resources" />
-	<property name="component.notices" value="../components/notices" />
-	
-	<property name="dependencies" value="../dependencies" />
-
-	<property name="cache" value="./cache" />
+	<property name="cache" value="${root}/build/cache" />
 	<property name="cache.classes" value="${cache}/classes" />
 	<property name="cache.jars" value="${cache}/jars" />
+	<property name="cache.maven.pom" location="${cache}/maven/pom" />
+	<property name="cache.maven.build" location="${cache}/maven/build" />
 
-	<property name="distribution" value="./distribution" />
+	<property name="distribution" value="${root}/build/distribution" />
 	<property name="distribution.content" value="${distribution}/content" />
 	<property name="distribution.libraries" value="${distribution.content}/libraries" />
 	<property name="distribution.jars" value="${distribution.libraries}/jars" />
@@ -32,6 +26,22 @@
 	<property name="distribution.source" value="${distribution.content}/reference/source" />
 
 	<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpath="${dependencies}/libraries/jars/org.apache.ivy/ivy/${ivy.version}/ivy.jar" />
+
+	<property name="googlecode" location="${dependencies}/libraries/python/googlecode_upload.py" />
+	<macrodef name="googlecode">
+		<attribute name="description" />
+		<attribute name="suffix" />
+		<sequential>
+			<exec executable="${googlecode}">
+				<arg value="--project=sincerity" />
+				<arg value="--user=${googlecode.username}" />
+				<arg value="--password=${googlecode.password}" />
+				<arg value="--summary=@{description} for version ${version}" />
+				<arg value="--labels=${version.short}" />
+				<arg value="${distribution}/${component}-${version}@{suffix}" />
+			</exec>
+		</sequential>
+	</macrodef>
 
 	<target name="ivy" description="Settings for Ivy">
 		<ivy:settings file="ivy/settings.xml" />
@@ -44,7 +54,7 @@
 
 	<target name="classes" depends="dependencies" description="Compile Java code">
 		<mkdir dir="${cache.classes}" />
-		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${jvm.version}" target="${jvm.version}" includeAntRuntime="no" debug="${compile.debug}">
+		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${compile.version}" target="${compile.version}" includeAntRuntime="no" debug="${compile.debug}">
 			<classpath refid="dependencies" />
 			<exclude name="com/threecrickets/scripturian/adapter/jsr223/**" />
 		</javac>
@@ -61,11 +71,11 @@
 	<target name="javadocs-overwrite" depends="dependencies" description="Create API documentation" unless="javadocs-present">
 		<javadoc
 			destdir="${distribution.api}" sourcepath="${component.source}" excludepackagenames="**.internal.*"
-			access="protected" source="${jvm.version}"
+			access="protected" source="${compile.version}"
 			windowtitle="${documentation.title} ${version}" doctitle="${documentation.title} ${version}"
 			author="true" splitindex="true" use="true" version="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false">
 
-			<link href="${jvm.docs}" />
+			<link href="${documentation.jvm}" />
 			<!-- Clojure has no online javadocs -->
 			<link href="http://commons.apache.org/daemon/apidocs/" />
 			<link href="http://groovy.codehaus.org/api/" />
@@ -103,6 +113,27 @@
 		<zip destfile="${distribution}/${component}-${version}.zip">
 			<fileset dir="${distribution.content}" />
 		</zip>
+	</target>
+
+	<target name="deploy-maven" if="maven" depends="distribution" description="Deploy to Maven repository">
+		<copy todir="${cache.maven.pom}">
+			<fileset dir="maven" excludes="*~" />
+			<filterchain>
+				<replacetokens>
+					<token key="VERSION" value="${version}" />
+					<token key="CACHE" value="${cache.maven.build}" />
+					<token key="CONTENT" value="${distribution.content}" />
+				</replacetokens>
+			</filterchain>
+		</copy>
+		<exec executable="${maven}" dir="${cache.maven.pom}">
+			<arg value="deploy" />
+			<arg value="-DaltDeploymentRepository=${maven.repo}" />
+		</exec>
+	</target>
+
+	<target name="deploy-googlecode" if="googlecode.password" description="Deploy to Google Code">
+		<googlecode description="Zip distribution" suffix=".zip" />
 	</target>
 	
 	<target name="build" depends="package" description="Build distribution" />
