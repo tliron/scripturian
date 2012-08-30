@@ -33,11 +33,11 @@
 		<attribute name="suffix" />
 		<sequential>
 			<exec executable="${googlecode}">
-				<arg value="--project=sincerity" />
+				<arg value="--project=${component}" />
 				<arg value="--user=${googlecode.username}" />
 				<arg value="--password=${googlecode.password}" />
 				<arg value="--summary=@{description} for version ${version}" />
-				<arg value="--labels=${version.short}" />
+				<arg value="--labels=${version}" />
 				<arg value="${distribution}/${component}-${version}@{suffix}" />
 			</exec>
 		</sequential>
