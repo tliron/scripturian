@@ -66,6 +66,11 @@ public class RhinoAdapter extends LanguageAdapterBase
 	public static final String JAVASCRIPT_CACHE_DIR = "javascript";
 
 	/**
+	 * JavaScript language version.
+	 */
+	public static final int LANGUAGE_VERSION = Context.VERSION_1_8;
+
+	/**
 	 * The Rhino optimization level.
 	 */
 	public static int OPTIMIZATION_LEVEL = 9; // -1 = interpreted mode;
@@ -121,13 +126,20 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 */
 	public RhinoAdapter() throws LanguageAdapterException
 	{
-		super( "Rhino", new ContextFactory().enterContext().getImplementationVersion(), "JavaScript", "", Arrays.asList( "js", "javascript" ), "js", Arrays.asList( "javascript", "js", "rhino" ), "rhino" );
+		super( "Rhino", getImplementationVersion(), "JavaScript", getLanguageVersion(), Arrays.asList( "js", "javascript" ), "js", Arrays.asList( "javascript", "js", "rhino" ), "rhino" );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
 		compilerEnvirons.setOptimizationLevel( OPTIMIZATION_LEVEL );
 		classCompiler = new ClassCompiler( compilerEnvirons );
-		generatedClassLoader = Context.getCurrentContext().createClassLoader( RhinoAdapter.class.getClassLoader() );
-		Context.exit();
+		Context context = enterContext();
+		try
+		{
+			generatedClassLoader = context.createClassLoader( RhinoAdapter.class.getClassLoader() );
+		}
+		finally
+		{
+			Context.exit();
+		}
 	}
 
 	//
@@ -308,8 +320,36 @@ public class RhinoAdapter extends LanguageAdapterBase
 	private Context enterContext()
 	{
 		Context context = contextFactory.enterContext();
-		context.setLanguageVersion( Context.VERSION_1_8 );
+		context.setLanguageVersion( LANGUAGE_VERSION );
 		context.setOptimizationLevel( OPTIMIZATION_LEVEL );
 		return context;
+	}
+
+	/**
+	 * Rhino implementation version.
+	 * 
+	 * @return Rhino implementation version
+	 */
+	private static String getImplementationVersion()
+	{
+		Context context = new ContextFactory().enterContext();
+		try
+		{
+			return context.getImplementationVersion();
+		}
+		finally
+		{
+			Context.exit();
+		}
+	}
+
+	/**
+	 * JavaScript language version.
+	 * 
+	 * @return JavaScript language version
+	 */
+	private static String getLanguageVersion()
+	{
+		return "" + LANGUAGE_VERSION / 100.0;
 	}
 }
