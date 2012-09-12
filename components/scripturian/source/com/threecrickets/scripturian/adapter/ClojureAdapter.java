@@ -11,10 +11,13 @@
 
 package com.threecrickets.scripturian.adapter;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
 import clojure.lang.Compiler;
@@ -222,7 +225,7 @@ public class ClojureAdapter extends LanguageAdapterBase
 	 */
 	public ClojureAdapter() throws LanguageAdapterException
 	{
-		super( "Clojure", "", "Clojure", "", Arrays.asList( "clj" ), "clj", Arrays.asList( "clojure", "clj" ), "clojure" );
+		super( "Clojure", getVersion(), "Clojure", getVersion(), Arrays.asList( "clj" ), "clj", Arrays.asList( "clojure", "clj" ), "clojure" );
 	}
 
 	//
@@ -326,4 +329,48 @@ public class ClojureAdapter extends LanguageAdapterBase
 	 * Counter for generating unique namespace names.
 	 */
 	private static final AtomicLong namespaceCounter = new AtomicLong();
+
+	/**
+	 * The Clojure version.
+	 */
+	private static volatile String version;
+
+	/**
+	 * Get Clojure version.
+	 * 
+	 * @return The version or an empty string
+	 */
+	private static String getVersion()
+	{
+		if( version == null )
+		{
+			version = "";
+
+			InputStream stream = ClojureAdapter.class.getClassLoader().getResourceAsStream( "clojure/version.properties" );
+			if( stream != null )
+			{
+				try
+				{
+					Properties properties = new Properties();
+					properties.load( stream );
+					version = properties.getProperty( "version" );
+				}
+				catch( IOException x )
+				{
+				}
+				finally
+				{
+					try
+					{
+						stream.close();
+					}
+					catch( IOException x )
+					{
+					}
+				}
+			}
+		}
+
+		return version;
+	}
 }
