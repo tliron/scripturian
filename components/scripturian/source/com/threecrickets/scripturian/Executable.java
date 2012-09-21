@@ -162,6 +162,15 @@ import com.threecrickets.scripturian.service.ExecutableService;
 public class Executable
 {
 	//
+	// Constants
+	//
+
+	/**
+	 * Prefix prepended to on-the-fly scriptlets stored in the document source.
+	 */
+	public static final String ON_THE_FLY_PREFIX = "_ON_THE_FLY_";
+
+	//
 	// Static operations
 	//
 
@@ -228,9 +237,14 @@ public class Executable
 		return executable;
 	}
 
-	public static String createOnTheFlyName()
+	/**
+	 * Atomically creates a unique on-the-fly document name.
+	 * 
+	 * @return
+	 */
+	public static String createOnTheFlyDocumentName()
 	{
-		return ParsingContext.ON_THE_FLY_PREFIX + onTheFlyCounter.getAndIncrement();
+		return ON_THE_FLY_PREFIX + onTheFlyCounter.getAndIncrement();
 	}
 
 	//
@@ -469,7 +483,7 @@ public class Executable
 							else if( isInFlow && ( documentSource != null ) )
 							{
 								String inFlowCode = delimiterStart + languageTag + " " + segment + delimiterEnd;
-								String inFlowName = createOnTheFlyName();
+								String inFlowName = createOnTheFlyDocumentName();
 
 								// Note that the in-flow executable is a single
 								// segment, so we can optimize parsing a bit
