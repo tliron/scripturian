@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <project name="Scripturian" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
 
-	<property file="custom.properties" />
-	<property file="private.properties" />
-	
-	<property name="root" location=".." />
+	<property name="root" location="${basedir}/.." />
+
+	<property file="${root}/build/private.properties" />
+	<property file="${root}/build/custom.properties" />
+
 	<property name="component.source" value="${root}/components/${component}/source" />
 	<property name="component.resources" value="${root}/components/${component}/resources" />
 	<property name="component.notices" value="${root}/components/notices" />
@@ -36,19 +37,19 @@
 				<arg value="--project=${component}" />
 				<arg value="--user=${googlecode.username}" />
 				<arg value="--password=${googlecode.password}" />
-				<arg value="--summary=@{description} for version ${version}" />
-				<arg value="--labels=${version}" />
-				<arg value="${distribution}/${component}-${version}@{suffix}" />
+				<arg value="--summary=@{description} for version ${component.version}${component.version.postfix}" />
+				<arg value="--labels=${component.version}${component.version.postfix}" />
+				<arg value="${distribution}/${component}-${component.version}${component.version.postfix}@{suffix}" />
 			</exec>
 		</sequential>
 	</macrodef>
 
 	<target name="ivy" description="Settings for Ivy">
-		<ivy:settings file="ivy/settings.xml" />
+		<ivy:settings file="${root}/build/ivy/settings.xml" />
 	</target>
 
 	<target name="dependencies" depends="ivy" description="Resolve dependencies">
-		<ivy:resolve file="ivy/${component}.xml" type="jar" log="download-only" resolveId="${component}" />
+		<ivy:resolve file="${root}/build/ivy/${component}.xml" type="jar" log="download-only" resolveId="${component}" />
 		<ivy:cachepath pathid="dependencies" type="jar" resolveId="${component}" />
 	</target>
 
@@ -72,7 +73,7 @@
 		<javadoc
 			destdir="${distribution.api}" sourcepath="${component.source}" excludepackagenames="**.internal.*"
 			access="protected" source="${compile.version}"
-			windowtitle="${documentation.title} ${version}" doctitle="${documentation.title} ${version}"
+			windowtitle="${documentation.title} ${component.version}${component.version.postfix}" doctitle="${documentation.title} ${component.version}${component.version.postfix}"
 			author="true" splitindex="true" use="true" version="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false">
 
 			<link href="${documentation.jvm}" />
@@ -97,11 +98,11 @@
 	
 	<target name="libraries" depends="classes" description="Create jar">
 		<mkdir dir="${distribution.jars}" />
-		<jar destfile="${distribution.jars}/${maven.group}/${maven.artifact}/${version}/${maven.artifact}.jar" basedir="${cache.classes}" />
+		<jar destfile="${distribution.jars}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}/${component.artifact}.jar" basedir="${cache.classes}" />
 	</target>
 
 	<target name="distribution" depends="libraries, javadocs" description="Assemble distribution">
-		<copy todir="${distribution.source}/${maven.group}/${maven.artifact}/${version}">
+		<copy todir="${distribution.source}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}">
 			<fileset dir="${component.source}" />
 		</copy>
 		<copy todir="${distribution.content}">
@@ -110,17 +111,20 @@
 	</target>
 	
 	<target name="package" depends="distribution" description="Create distribution package">
-		<zip destfile="${distribution}/${component}-${version}.zip">
+		<zip destfile="${distribution}/${component}-${component.version}${component.version.postfix}.zip">
 			<fileset dir="${distribution.content}" />
 		</zip>
 	</target>
 
 	<target name="deploy-maven" if="maven" depends="distribution" description="Deploy to Maven repository">
+		<delete dir="${cache.maven.pom}" />
+		<delete dir="${cache.maven.build}" />
 		<copy todir="${cache.maven.pom}">
 			<fileset dir="maven" excludes="*~" />
 			<filterchain>
 				<replacetokens>
-					<token key="VERSION" value="${version}" />
+					<token key="VERSION" value="${component.version}${component.version.postfix}" />
+					<token key="DEPENDENCIES" value="${dependencies.repo}" />
 					<token key="CACHE" value="${cache.maven.build}" />
 					<token key="CONTENT" value="${distribution.content}" />
 				</replacetokens>
@@ -128,7 +132,7 @@
 		</copy>
 		<exec executable="${maven}" dir="${cache.maven.pom}">
 			<arg value="deploy" />
-			<arg value="-DaltDeploymentRepository=${maven.repo}" />
+			<arg value="-DaltDeploymentRepository=default::default::${distribution.repo}" />
 		</exec>
 	</target>
 

@@ -13,9 +13,7 @@
 	<settings defaultResolver="default" />
 	<resolvers>
 		<chain name="default">
-			<ibiblio name="local" root="file:///Depot/Repository" m2compatible="true" />
-			<ibiblio name="three-crickets" root="http://repository.threecrickets.com/maven/" m2compatible="true" />
-			<ibiblio name="maven-central" m2compatible="true" />
+			<ibiblio name="local" root="${dependencies.repo}" m2compatible="true" />
 		</chain>
 	</resolvers>
 </ivysettings>
