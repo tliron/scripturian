@@ -1,5 +1,5 @@
 /**
- * Copyright 2009-2012 Three Crickets LLC.
+ * Copyright 2009-2013 Three Crickets LLC.
  * <p>
  * The contents of this file are subject to the terms of the LGPL version 3.0:
  * http://www.gnu.org/copyleft/lesser.html
@@ -61,6 +61,11 @@ public class RhinoAdapter extends LanguageAdapterBase
 	public static final String RHINO_SCOPE = "rhino.scope";
 
 	/**
+	 * The Rhino optimization level language manager attribute.
+	 */
+	public static final String RHINO_OPTIMIZATION_LEVEL = "rhino.optimizationLevel";
+
+	/**
 	 * The default base directory for cached executables.
 	 */
 	public static final String JAVASCRIPT_CACHE_DIR = "javascript";
@@ -71,9 +76,9 @@ public class RhinoAdapter extends LanguageAdapterBase
 	public static final int LANGUAGE_VERSION = Context.VERSION_1_8;
 
 	/**
-	 * The Rhino optimization level.
+	 * The Rhino default optimization level.
 	 */
-	public static int OPTIMIZATION_LEVEL = 9; // -1 = interpreted mode;
+	public static int DEFAULT_OPTIMIZATION_LEVEL = 9; // -1 = interpreted mode;
 
 	//
 	// Static operations
@@ -129,7 +134,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 		super( "Rhino", getImplementationVersion(), "JavaScript", getLanguageVersion(), Arrays.asList( "js", "javascript" ), "js", Arrays.asList( "javascript", "js", "rhino" ), "rhino" );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
-		compilerEnvirons.setOptimizationLevel( OPTIMIZATION_LEVEL );
+		compilerEnvirons.setOptimizationLevel( getOptimizationLevel() );
 		classCompiler = new ClassCompiler( compilerEnvirons );
 		Context context = enterContext();
 		try
@@ -321,8 +326,20 @@ public class RhinoAdapter extends LanguageAdapterBase
 	{
 		Context context = contextFactory.enterContext();
 		context.setLanguageVersion( LANGUAGE_VERSION );
-		context.setOptimizationLevel( OPTIMIZATION_LEVEL );
+		context.setOptimizationLevel( getOptimizationLevel() );
 		return context;
+	}
+
+	/**
+	 * Rhino optimization level if configured, otherwise uses the default.
+	 * 
+	 * @return The optimization level.
+	 */
+	private int getOptimizationLevel()
+	{
+		LanguageManager languageManager = getManager();
+		Object level = languageManager != null ? languageManager.getAttributes().get( RHINO_OPTIMIZATION_LEVEL ) : null;
+		return level != null ? ( (Number) level ).intValue() : DEFAULT_OPTIMIZATION_LEVEL;
 	}
 
 	/**

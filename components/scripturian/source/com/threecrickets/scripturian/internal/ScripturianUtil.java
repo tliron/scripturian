@@ -1,5 +1,5 @@
 /**
- * Copyright 2009-2012 Three Crickets LLC.
+ * Copyright 2009-2013 Three Crickets LLC.
  * <p>
  * The contents of this file are subject to the terms of the LGPL version 3.0:
  * http://www.gnu.org/copyleft/lesser.html
@@ -11,11 +11,15 @@
 
 package com.threecrickets.scripturian.internal;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -35,6 +39,16 @@ import com.threecrickets.scripturian.LanguageManager;
  */
 public abstract class ScripturianUtil
 {
+	/**
+	 * True if we are in a Windows operating system.
+	 */
+	public static boolean IS_WINDOWS = System.getProperty( "os.name" ).startsWith( "Windows" );
+
+	/**
+	 * The line separator.
+	 */
+	public static String LINE_SEPARATOR = System.getProperty( "line.separator" );
+
 	/**
 	 * Gets the filename extension (whatever is after the period), or null if it
 	 * doesn't have one.
@@ -65,25 +79,67 @@ public abstract class ScripturianUtil
 	 */
 	public static String getString( File file, Charset charset ) throws IOException
 	{
-		FileInputStream stream = new FileInputStream( file );
-		try
+		if( IS_WINDOWS )
 		{
-			FileChannel channel = stream.getChannel();
+			// Note: There is no way to force the release of a MappedByteBuffer.
+			// Unfortunately, under Windows this causes the file to remain
+			// locked against writing. Since this is very annoying during
+			// development, we will avoid using NIO for Windows. :(
+			//
+			// See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4724038
+
+			FileInputStream stream = new FileInputStream( file );
 			try
 			{
-				MappedByteBuffer buffer = channel.map( FileChannel.MapMode.READ_ONLY, 0, channel.size() );
 				if( charset == null )
 					charset = Charset.defaultCharset();
-				return charset.decode( buffer ).toString();
+				BufferedReader reader = new BufferedReader( new InputStreamReader( stream, charset ) );
+				try
+				{
+					long length = file.length();
+					if( length > Integer.MAX_VALUE )
+						throw new IOException( "File too big: " + file.getName() );
+					StringWriter contents = new StringWriter( (int) length );
+					String line;
+					while( ( line = reader.readLine() ) != null )
+					{
+						contents.append( line );
+						contents.append( LINE_SEPARATOR );
+					}
+					return contents.toString();
+				}
+				finally
+				{
+					reader.close();
+				}
 			}
 			finally
 			{
-				channel.close();
+				stream.close();
 			}
 		}
-		finally
+		else
 		{
-			stream.close();
+			FileInputStream stream = new FileInputStream( file );
+			try
+			{
+				FileChannel channel = stream.getChannel();
+				try
+				{
+					MappedByteBuffer buffer = channel.map( FileChannel.MapMode.READ_ONLY, 0, channel.size() );
+					if( charset == null )
+						charset = Charset.defaultCharset();
+					return charset.decode( buffer ).toString();
+				}
+				finally
+				{
+					channel.close();
+				}
+			}
+			finally
+			{
+				stream.close();
+			}
 		}
 	}
 
@@ -98,7 +154,6 @@ public abstract class ScripturianUtil
 	public static byte[] getBytes( File file ) throws IOException
 	{
 		FileInputStream stream = new FileInputStream( file );
-
 		try
 		{
 			long length = file.length();
@@ -106,14 +161,19 @@ public abstract class ScripturianUtil
 			if( length > Integer.MAX_VALUE )
 				throw new IOException( "File too big: " + file.getName() );
 
-			int ilength = (int) length;
-			byte[] bytes = new byte[ilength];
-			int alength = stream.read( bytes );
+			byte[] bytes = new byte[(int) length];
+			ByteBuffer buffer = ByteBuffer.wrap( bytes );
 
-			if( alength != ilength )
-				throw new IOException( "Only " + alength + " of " + ilength + " bytes read: " + file.getName() );
-
-			return bytes;
+			FileChannel channel = stream.getChannel();
+			try
+			{
+				channel.read( buffer );
+				return bytes;
+			}
+			finally
+			{
+				channel.close();
+			}
 		}
 		finally
 		{
