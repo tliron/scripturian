@@ -87,7 +87,7 @@
 			<link href="http://www.jython.org/javadoc/" />
 			<link href="http://www.caucho.com/resin-javadoc/" />
 			<link href="http://www.mozilla.org/rhino/apidocs/" />
-			<link href="http://threecrickets.com/succinct/api/" />
+			<link href="http://threecrickets.com/api/java/succinct/" />
 			<link href="http://velocity.apache.org/engine/releases/velocity-1.7/apidocs/" />
 			<classpath refid="dependencies" />
 			<bottom>

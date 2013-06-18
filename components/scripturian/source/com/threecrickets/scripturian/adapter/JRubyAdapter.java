@@ -26,6 +26,7 @@ import org.jruby.RubyInstanceConfig.CompileMode;
 import org.jruby.ast.executable.Script;
 import org.jruby.embed.io.WriterOutputStream;
 import org.jruby.exceptions.RaiseException;
+import org.jruby.internal.runtime.GlobalVariable.Scope;
 import org.jruby.javasupport.JavaUtil;
 import org.jruby.runtime.Constants;
 import org.jruby.runtime.backtrace.RubyStackTraceElement;
@@ -235,7 +236,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 			try
 			{
 				File file = new File( uri );
-				rubyRuntime.getJRubyClassLoader().addURL( file.toURL() );
+				rubyRuntime.getJRubyClassLoader().addURL( file.toURI().toURL() );
 			}
 			catch( IllegalArgumentException x )
 			{
@@ -254,7 +255,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 			// slow if we have to generate them on the fly every time!
 
 			IRubyObject value = JavaUtil.convertJavaToRuby( compilerRuntime, entry.getValue() );
-			rubyRuntime.defineReadonlyVariable( "$" + entry.getKey(), value );
+			rubyRuntime.defineReadonlyVariable( "$" + entry.getKey(), value, Scope.GLOBAL );
 		}
 
 		return rubyRuntime;

@@ -240,7 +240,7 @@ public class Executable
 	/**
 	 * Atomically creates a unique on-the-fly document name.
 	 * 
-	 * @return
+	 * @return An on-the-fly document name
 	 */
 	public static String createOnTheFlyDocumentName()
 	{
