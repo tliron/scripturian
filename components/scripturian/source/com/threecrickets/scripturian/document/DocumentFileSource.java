@@ -177,10 +177,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public void setPreferredExtension( String preferredExtension )
 	{
-		if( preferredExtension != null )
-			this.preferredExtension = "." + preferredExtension;
-		else
-			this.preferredExtension = null;
+		this.preferredExtension = preferredExtension == null || preferredExtension.length() == 0 ? null : "." + preferredExtension;
 	}
 
 	/**
@@ -518,7 +515,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		{
 			if( name.startsWith( nameWithoutExtension ) )
 			{
-				int lastPeriod = name.lastIndexOf( '.' );
+				int lastPeriod = name.lastIndexOf( '.', nameWithoutExtensionLength );
 				if( ( lastPeriod == -1 ) || ( lastPeriod == nameWithoutExtensionLength ) )
 					return true;
 			}
