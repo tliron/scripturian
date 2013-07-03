@@ -120,7 +120,7 @@
 		<delete dir="${cache.maven.pom}" />
 		<delete dir="${cache.maven.build}" />
 		<copy todir="${cache.maven.pom}">
-			<fileset dir="maven" excludes="*~" />
+			<fileset dir="maven" excludes="**/*~" />
 			<filterchain>
 				<replacetokens>
 					<token key="VERSION" value="${component.version}${component.version.postfix}" />

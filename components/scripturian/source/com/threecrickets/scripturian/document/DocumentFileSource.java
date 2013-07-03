@@ -114,8 +114,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		this.identifier = identifier;
 		this.basePath = ScripturianUtil.getNormalizedFile( basePath );
 		this.defaultName = defaultName;
-		this.preferredExtension = preferredExtension;
-		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : preExtension;
+		this.preferredExtension = preferredExtension == null || preferredExtension.length() == 0 ? null : '.' + preferredExtension;
+		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : '.' + preExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
 		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
 	}
@@ -177,7 +177,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public void setPreferredExtension( String preferredExtension )
 	{
-		this.preferredExtension = preferredExtension == null || preferredExtension.length() == 0 ? null : "." + preferredExtension;
+		this.preferredExtension = preferredExtension == null || preferredExtension.length() == 0 ? null : '.' + preferredExtension;
 	}
 
 	/**
@@ -188,7 +188,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public String getPreExtension()
 	{
-		return preExtension;
+		return preExtension != null ? preExtension.substring( 1 ) : null;
 	}
 
 	/**
@@ -198,7 +198,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	public void setPreExtension( String preExtension )
 	{
-		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : preExtension;
+		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : '.' + preExtension;
 		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
 	}
 
@@ -501,22 +501,27 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 */
 	private static class DocumentFilter implements FilenameFilter
 	{
-		private final String nameWithoutExtension;
+		private final String name;
 
-		private final int nameWithoutExtensionLength;
+		private final String namePrefix;
 
-		private DocumentFilter( String nameWithoutExtension, String preExtension )
+		private final int namePrefixPeriod;
+
+		private DocumentFilter( String name, String preExtension )
 		{
-			this.nameWithoutExtension = preExtension == null ? nameWithoutExtension : nameWithoutExtension + '.' + preExtension;
-			nameWithoutExtensionLength = this.nameWithoutExtension.length();
+			this.name = name;
+			namePrefix = preExtension == null ? name + '.' : name + preExtension + '.';
+			namePrefixPeriod = this.namePrefix.length() - 1;
 		}
 
 		public boolean accept( File dir, String name )
 		{
-			if( name.startsWith( nameWithoutExtension ) )
+			if( name == this.name )
+				return true;
+			else if( name.startsWith( namePrefix ) )
 			{
-				int lastPeriod = name.lastIndexOf( '.', nameWithoutExtensionLength );
-				if( ( lastPeriod == -1 ) || ( lastPeriod == nameWithoutExtensionLength ) )
+				int lastPeriod = name.lastIndexOf( '.', namePrefixPeriod );
+				if( ( lastPeriod == -1 ) || ( lastPeriod == namePrefixPeriod ) )
 					return true;
 			}
 			return false;
