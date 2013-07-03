@@ -117,7 +117,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		this.preferredExtension = preferredExtension == null || preferredExtension.length() == 0 ? null : '.' + preferredExtension;
 		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : '.' + preExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
-		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
+		defaultNameFilter = new DocumentFilter( defaultName, this.preExtension );
 	}
 
 	//
@@ -505,26 +505,15 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		private final String namePrefix;
 
-		private final int namePrefixPeriod;
-
 		private DocumentFilter( String name, String preExtension )
 		{
 			this.name = name;
 			namePrefix = preExtension == null ? name + '.' : name + preExtension + '.';
-			namePrefixPeriod = this.namePrefix.length() - 1;
 		}
 
 		public boolean accept( File dir, String name )
 		{
-			if( name == this.name )
-				return true;
-			else if( name.startsWith( namePrefix ) )
-			{
-				int lastPeriod = name.lastIndexOf( '.', namePrefixPeriod );
-				if( ( lastPeriod == -1 ) || ( lastPeriod == namePrefixPeriod ) )
-					return true;
-			}
-			return false;
+			return ( name == this.name ) || ( name.startsWith( namePrefix ) );
 		}
 	}
 
@@ -565,7 +554,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 				return filesWithDefaultName[0];
 			}
 			else
-				return new File( file, defaultName );
+				throw new DocumentNotFoundException( "No default file in directory: " + file.getPath() );
 		}
 		else if( !file.exists() )
 		{
