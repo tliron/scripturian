@@ -40,7 +40,7 @@ public class ExecutableSegment
 	 *        The line number in the document for where the segment begins
 	 * @param startColumnNumber
 	 *        The column number in the document for where the segment begins
-	 * @param isScriptlet
+	 * @param isProgram
 	 *        Whether this segment is a program
 	 * @param isScriptlet
 	 *        Whether this program is a scriptlet

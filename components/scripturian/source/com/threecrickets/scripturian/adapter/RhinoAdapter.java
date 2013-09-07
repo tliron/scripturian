@@ -24,6 +24,7 @@ import org.mozilla.javascript.GeneratedClassLoader;
 import org.mozilla.javascript.ImporterTopLevel;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.WrappedException;
 import org.mozilla.javascript.Wrapper;
 import org.mozilla.javascript.optimizer.ClassCompiler;
 
@@ -98,7 +99,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 		if( x instanceof RhinoException )
 		{
 			RhinoException rhinoException = (RhinoException) x;
-			Throwable cause = rhinoException.getCause();
+			Throwable cause = rhinoException instanceof WrappedException ? ( (WrappedException) rhinoException ).getWrappedException() : rhinoException.getCause();
 			if( cause instanceof ExecutionException )
 			{
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause.getCause() );
@@ -113,6 +114,8 @@ public class RhinoAdapter extends LanguageAdapterBase
 				executionException.getStack().add( new StackFrame( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber() ) );
 				return executionException;
 			}
+			else if( cause != null )
+				return new ExecutionException( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber(), rhinoException.getMessage(), cause );
 			else
 				return new ExecutionException( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber(), rhinoException.getMessage(), x );
 		}
