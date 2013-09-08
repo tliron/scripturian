@@ -155,30 +155,6 @@ public class RhinoAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Enters a Rhino context stored in the execution context, creating it if it
-	 * doesn't exist. Each execution context is guaranteed to have its own Rhino
-	 * context. Make sure to exit the context when done with it!
-	 * 
-	 * @param executionContext
-	 *        The execution context
-	 * @return The Rhino context
-	 */
-	public Context enterContext( ExecutionContext executionContext )
-	{
-		Context context = (Context) executionContext.getAttributes().get( RHINO_CONTEXT );
-
-		if( context == null )
-		{
-			context = enterContext();
-			executionContext.getAttributes().put( RHINO_CONTEXT, context );
-		}
-		else
-			contextFactory.enterContext( context );
-
-		return context;
-	}
-
-	/**
 	 * Gets the Rhino scope associated with the Rhino context of the execution
 	 * context, creating it if it doesn't exist. Each execution context is
 	 * guaranteed to have its own Rhino scope. The scope is updated to match the
@@ -231,6 +207,34 @@ public class RhinoAdapter extends LanguageAdapterBase
 	public File getCacheDir()
 	{
 		return new File( LanguageManager.getCachePath(), JAVASCRIPT_CACHE_DIR );
+	}
+
+	//
+	// Operations
+	//
+
+	/**
+	 * Enters a Rhino context stored in the execution context, creating it if it
+	 * doesn't exist. Each execution context is guaranteed to have its own Rhino
+	 * context. Make sure to exit the context when done with it!
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @return The Rhino context
+	 */
+	public Context enterContext( ExecutionContext executionContext )
+	{
+		Context context = (Context) executionContext.getAttributes().get( RHINO_CONTEXT );
+
+		if( context == null )
+		{
+			context = enterContext();
+			executionContext.getAttributes().put( RHINO_CONTEXT, context );
+		}
+		else
+			contextFactory.enterContext( context );
+
+		return context;
 	}
 
 	//

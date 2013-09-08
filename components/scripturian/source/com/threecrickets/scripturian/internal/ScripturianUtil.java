@@ -226,7 +226,7 @@ public abstract class ScripturianUtil
 	}
 
 	/**
-	 * Calculates a file for a JVM class based on executable partition,
+	 * Calculates a JVM class file for aprogram based on executable partition,
 	 * executable document name and program position. <i>You must synchronize
 	 * access to this file</i> via the <code>synchronize</code> keyword, in
 	 * order to guarantee that another thread will not be writing to the file at
@@ -244,6 +244,30 @@ public abstract class ScripturianUtil
 	 */
 	public static File getFileForProgramClass( File subdirectory, Executable executable, int position )
 	{
+		return getFileForProgram( subdirectory, executable, position, CLASS_SUFFIX );
+	}
+
+	/**
+	 * Calculates a file for a program based on executable partition, executable
+	 * document name and program position. <i>You must synchronize access to
+	 * this file</i> via the <code>synchronize</code> keyword, in order to
+	 * guarantee that another thread will not be writing to the file at the same
+	 * time. For this to work, File instances are guaranteed to be unique in
+	 * this VM per combination of executable partition, document name and
+	 * program position are the same.
+	 * 
+	 * @param subdirectory
+	 *        The cache subdirectory
+	 * @param executable
+	 *        The executable
+	 * @param position
+	 *        The program's position in the executable
+	 * @param suffix
+	 *        The file's suffix
+	 * @return The file
+	 */
+	public static File getFileForProgram( File subdirectory, Executable executable, int position, String suffix )
+	{
 		String partition = executable.getPartition();
 
 		if( File.separatorChar != '/' )
@@ -251,15 +275,15 @@ public abstract class ScripturianUtil
 
 		String filename = partition + executable.getDocumentName();
 		filename = filename.replace( '-', '_' ).replace( '.', '$' ).replace( ':', '$' ).replace( ' ', '$' );
-		filename += "$" + position + "$" + executable.getDocumentTimestamp() + ".class";
+		filename += "$" + position + "$" + executable.getDocumentTimestamp() + suffix;
 
 		File file = new File( subdirectory, filename );
-		File existing = programClassFiles.get( file.getPath() );
+		File existing = programFiles.get( file.getPath() );
 		if( existing != null )
 			file = existing;
 		else
 		{
-			existing = programClassFiles.putIfAbsent( file.getPath(), file );
+			existing = programFiles.putIfAbsent( file.getPath(), file );
 			if( existing != null )
 				file = existing;
 		}
@@ -456,6 +480,8 @@ public abstract class ScripturianUtil
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	private static final String CLASS_SUFFIX = ".class";
+
 	private static Pattern[] PRINT_ESCAPE_PATTERNS = new Pattern[]
 	{
 		Pattern.compile( "\\\\" ), Pattern.compile( "\\n" ), Pattern.compile( "\\r" ), Pattern.compile( "\\t" ), Pattern.compile( "\\f" ), Pattern.compile( "\\\"" )
@@ -470,7 +496,7 @@ public abstract class ScripturianUtil
 	 * Used by {@link #getFileForProgramClass(File, Executable, int)} to
 	 * guarantee uniqueness.
 	 */
-	private static final ConcurrentMap<String, File> programClassFiles = new ConcurrentHashMap<String, File>();
+	private static final ConcurrentMap<String, File> programFiles = new ConcurrentHashMap<String, File>();
 
 	/**
 	 * Cache of container include methods.

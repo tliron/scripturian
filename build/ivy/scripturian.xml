@@ -26,5 +26,6 @@
 		<dependency org="org.apache.velocity" name="velocity" rev="1.7" transitive="false" />
 		<dependency org="org.eclipse.mylyn" name="wikitext" rev="1.5.0" transitive="false" />
 		<dependency org="org.pegdown" name="pegdown" rev="1.1.0" transitive="false" />
+		<dependency org="org.luaj" name="luaj-jse" rev="3.0-beta1" transitive="false" />
 	</dependencies>
 </ivy-module>
