@@ -13,10 +13,12 @@ package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.Arrays;
 
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.Lua;
+import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
@@ -28,8 +30,10 @@ import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Program;
+import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 import com.threecrickets.scripturian.internal.WriterOutputStream;
 
 /**
@@ -96,6 +100,25 @@ public class LuajAdapter extends LanguageAdapterBase
 		globals.STDOUT = new PrintStream( new WriterOutputStream( executionContext.getWriterOrDefault() ), true );
 		globals.STDERR = new PrintStream( new WriterOutputStream( executionContext.getErrorWriterOrDefault() ), true );
 
+		// Append library locations to the Ruby class loader
+		StringBuilder path = new StringBuilder();
+		for( URI uri : executionContext.getLibraryLocations() )
+		{
+			try
+			{
+				File file = new File( uri );
+				if( path.length() > 0 )
+					path.append( ';' );
+				path.append( file.getPath() );
+				path.append( "/?.lua" );
+			}
+			catch( IllegalArgumentException x )
+			{
+				// URI is not a file
+			}
+		}
+		globals.package_.setLuaPath( path.toString() );
+
 		// Define services as entries in metatable
 		LuaTable metatable = new LuaTable();
 		metatable.rawset( LuaValue.INDEX, new GetService( executionContext ) );
@@ -118,9 +141,57 @@ public class LuajAdapter extends LanguageAdapterBase
 	// LanguageAdapter
 	//
 
+	@Override
+	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException
+	{
+		literal = ScripturianUtil.doubleQuotedLiteral( literal );
+		return "io.write(" + literal + ");";
+	}
+
+	@Override
+	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException
+	{
+		return "io.write(" + expression + ");";
+	}
+
+	@Override
+	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
+	{
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		return executable.getExecutableServiceName() + ":getContainer():" + containerIncludeExpressionCommand + "(" + expression + ");";
+	}
+
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
 	{
 		return new LuajProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable, this );
+	}
+
+	@Override
+	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
+	{
+		entryPointName = toLuaStyle( entryPointName );
+		Globals globals = getGlobals( executionContext );
+
+		LuaValue entryPoint = globals.get( entryPointName );
+		if( entryPoint == LuaValue.NIL )
+			throw new NoSuchMethodException( entryPointName );
+
+		LuaValue[] luaArguments = new LuaValue[arguments.length];
+		for( int i = arguments.length - 1; i >= 0; i-- )
+			luaArguments[i] = CoerceJavaToLua.coerce( arguments[i] );
+		try
+		{
+			LuaValue r = entryPoint.invoke( luaArguments ).arg1();
+			if( r == LuaValue.NIL )
+				r = null;
+
+			return r;
+		}
+		catch( LuaError x )
+		{
+			throw new ExecutionException( executable.getDocumentName(), x );
+		}
+
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -145,5 +216,34 @@ public class LuajAdapter extends LanguageAdapterBase
 		}
 
 		private final ExecutionContext executionContext;
+	}
+
+	/**
+	 * From somethingLikeThis to something_like_this.
+	 * 
+	 * @param camelCase
+	 *        somethingLikeThis
+	 * @return something_like_this
+	 */
+	private static String toLuaStyle( String camelCase )
+	{
+		StringBuilder r = new StringBuilder();
+		char c = camelCase.charAt( 0 );
+		if( Character.isUpperCase( c ) )
+			r.append( Character.toLowerCase( c ) );
+		else
+			r.append( c );
+		for( int i = 1, length = camelCase.length(); i < length; i++ )
+		{
+			c = camelCase.charAt( i );
+			if( Character.isUpperCase( c ) )
+			{
+				r.append( '_' );
+				r.append( Character.toLowerCase( c ) );
+			}
+			else
+				r.append( c );
+		}
+		return r.toString();
 	}
 }
