@@ -34,7 +34,7 @@ import com.threecrickets.scripturian.internal.WriterOutputStream;
 
 /**
  * A {@link LanguageAdapter} that supports the Lua language as implemented by <a
- * href="http://luaj.org/luaj.html">LuaJ</a>.
+ * href="http://luaj.org/luaj.html">Luaj</a>.
  * 
  * @author Tal Liron
  */
