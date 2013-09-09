@@ -186,6 +186,11 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 		{
 			throw LuajAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
+		finally
+		{
+			globals.STDOUT.flush();
+			globals.STDERR.flush();
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

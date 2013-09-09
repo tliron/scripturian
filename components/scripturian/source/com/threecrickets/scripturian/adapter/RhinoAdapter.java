@@ -134,7 +134,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 */
 	public RhinoAdapter() throws LanguageAdapterException
 	{
-		super( "Rhino", getImplementationVersion(), "JavaScript", getLanguageVersion(), Arrays.asList( "js", "javascript" ), "js", Arrays.asList( "javascript", "js", "rhino" ), "rhino" );
+		super( "Rhino", getImplementationVersion(), "JavaScript", getLanguageVersion(), Arrays.asList( "js", "javascript", "rhino" ), "js", Arrays.asList( "javascript", "js", "rhino" ), "rhino" );
 
 		CompilerEnvirons compilerEnvirons = new CompilerEnvirons();
 		compilerEnvirons.setOptimizationLevel( getOptimizationLevel() );

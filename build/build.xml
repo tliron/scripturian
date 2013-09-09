@@ -50,7 +50,11 @@
 
 	<target name="dependencies" depends="ivy" description="Resolve dependencies">
 		<ivy:resolve file="${root}/build/ivy/${component}.xml" type="jar" log="download-only" resolveId="${component}" />
-		<ivy:cachepath pathid="dependencies" type="jar" resolveId="${component}" />
+		<ivy:cachepath pathid="dependencies-ivy" type="jar" resolveId="${component}" />
+		<path id="dependencies">
+			<path refid="dependencies-ivy" />
+			<file file="${dependencies.nashorn}" />
+		</path>
 	</target>
 
 	<target name="classes" depends="dependencies" description="Compile Java code">
@@ -58,6 +62,7 @@
 		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${compile.version}" target="${compile.version}" includeAntRuntime="no" debug="${compile.debug}">
 			<classpath refid="dependencies" />
 			<exclude name="com/threecrickets/scripturian/adapter/jsr223/**" />
+			<exclude name="${compile.exclude.nashorn}" />
 		</javac>
 		<copy todir="${cache.classes}">
 			<fileset dir="${component.resources}" />

@@ -49,7 +49,7 @@ public class LuajAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * The LuaJ instance context attribute.
+	 * The Luaj instance context attribute.
 	 */
 	public static final String LUAJ_GLOBALS = "luaj.globals";
 
@@ -98,14 +98,14 @@ public class LuajAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * Gets the LuaJ globals instance associated with the execution context,
+	 * Gets the Luaj globals instance associated with the execution context,
 	 * creating it if it doesn't exist. Each execution context is guaranteed to
-	 * have its own LuaJ globals instance. The globals instance is updated to
+	 * have its own Luaj globals instance. The globals instance is updated to
 	 * match the writers and services in the execution context.
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @return The LuaJ globals
+	 * @return The Luaj globals
 	 */
 	public Globals getGlobals( ExecutionContext executionContext )
 	{
@@ -210,16 +210,20 @@ public class LuajAdapter extends LanguageAdapterBase
 		}
 		catch( LuaError x )
 		{
-			throw new ExecutionException( executable.getDocumentName(), x );
+			throw createExecutionException( executable.getDocumentName(), x );
 		}
-
+		finally
+		{
+			globals.STDOUT.flush();
+			globals.STDERR.flush();
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	/**
-	 * A LuaJ function that retrieves an execution context service from a table.
+	 * A Luaj function that retrieves an execution context service from a table.
 	 */
 	private static class GetService extends TwoArgFunction
 	{

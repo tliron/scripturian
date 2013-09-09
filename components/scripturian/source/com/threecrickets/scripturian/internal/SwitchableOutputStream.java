@@ -36,6 +36,7 @@ public class SwitchableOutputStream extends OutputStream
 	 */
 	public SwitchableOutputStream( OutputStream outputStream )
 	{
+		super();
 		use( outputStream );
 	}
 
