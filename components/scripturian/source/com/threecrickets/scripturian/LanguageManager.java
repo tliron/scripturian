@@ -13,6 +13,7 @@ package com.threecrickets.scripturian;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -55,7 +56,12 @@ public class LanguageManager
 	/**
 	 * The attribute name for the container include expression command.
 	 */
-	public static final String CONTAINER_INCLUDE_EXPRESSION_COMMAND = "containerIncludeExpressionCommand";
+	public static final String CONTAINER_INCLUDE_EXPRESSION_COMMAND = "scripturian.containerIncludeExpressionCommand";
+
+	/**
+	 * The attribute prefix for adapter priorities.
+	 */
+	public static final String ADAPTER_PRIORITY = "scripturian.priority.";
 
 	/**
 	 * The default container include expression command.
@@ -169,14 +175,28 @@ public class LanguageManager
 	 */
 	public Set<LanguageAdapter> getAdapters()
 	{
-		return Collections.unmodifiableSet( languageAdapters );
+		return Collections.unmodifiableSet( new HashSet<LanguageAdapter>( adapters.values() ) );
+	}
+
+	/**
+	 * Gets an adapter by its name.
+	 * 
+	 * @param name
+	 *        The name
+	 * @return The language adapter
+	 * @throws ParsingException
+	 * @see LanguageAdapter#NAME
+	 */
+	public LanguageAdapter getAdapterByName( String name ) throws ParsingException
+	{
+		return adapters.get( name );
 	}
 
 	/**
 	 * A language adapter for a scriptlet tag.
 	 * 
 	 * @param tag
-	 *        The scriptlet adapter
+	 *        The scriptlet tag
 	 * @return The language adapter or null if not found
 	 * @throws ParsingException
 	 */
@@ -184,7 +204,18 @@ public class LanguageManager
 	{
 		if( tag == null )
 			return null;
-		return languageAdapterByTag.get( tag );
+
+		Set<LanguageAdapter> adaptersForTag = adaptersByTag.get( tag );
+		if( adaptersForTag == null )
+			return null;
+
+		adaptersForTag = new HashSet<LanguageAdapter>( adaptersForTag );
+		if( adaptersForTag.isEmpty() )
+			return null;
+		else if( adaptersForTag.size() == 1 )
+			return adaptersForTag.iterator().next();
+		else
+			return getHighestPriorityAdapter( adaptersForTag );
 	}
 
 	/**
@@ -208,9 +239,19 @@ public class LanguageManager
 		int dot = documentName.lastIndexOf( '.' );
 		String extension = dot != -1 ? documentName.substring( dot + 1 ) : defaultExtension;
 		if( extension == null )
-			throw new ParsingException( documentName, -1, -1, "Name must have an extension" );
+			throw new ParsingException( documentName, "Document name must have an extension" );
 
-		return languageAdapterByExtension.get( extension );
+		Set<LanguageAdapter> adaptersForExtension = adaptersByExtension.get( extension );
+		if( adaptersForExtension == null )
+			return null;
+
+		adaptersForExtension = new HashSet<LanguageAdapter>( adaptersForExtension );
+		if( adaptersForExtension.isEmpty() )
+			return null;
+		else if( adaptersForExtension.size() == 1 )
+			return adaptersForExtension.iterator().next();
+		else
+			return getHighestPriorityAdapter( adaptersForExtension );
 	}
 
 	/**
@@ -254,17 +295,37 @@ public class LanguageManager
 		if( adapter.getManager() != null )
 			throw new RuntimeException( "Can't add language adapter instance to more than one language manager" );
 
-		languageAdapters.add( adapter );
+		adapters.put( (String) adapter.getAttributes().get( LanguageAdapter.NAME ), adapter );
 
 		@SuppressWarnings("unchecked")
 		Iterable<String> tags = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.TAGS );
 		for( String tag : tags )
-			languageAdapterByTag.putIfAbsent( tag, adapter );
+		{
+			Set<LanguageAdapter> adaptersForTag = adaptersByTag.get( tag );
+			if( adaptersForTag == null )
+			{
+				adaptersForTag = new CopyOnWriteArraySet<LanguageAdapter>();
+				Set<LanguageAdapter> existing = adaptersByTag.putIfAbsent( tag, adaptersForTag );
+				if( existing != null )
+					adaptersForTag = existing;
+			}
+			adaptersForTag.add( adapter );
+		}
 
 		@SuppressWarnings("unchecked")
 		Iterable<String> extensions = (Iterable<String>) adapter.getAttributes().get( LanguageAdapter.EXTENSIONS );
 		for( String extension : extensions )
-			languageAdapterByExtension.putIfAbsent( extension, adapter );
+		{
+			Set<LanguageAdapter> adaptersForExtension = adaptersByExtension.get( extension );
+			if( adaptersForExtension == null )
+			{
+				adaptersForExtension = new CopyOnWriteArraySet<LanguageAdapter>();
+				Set<LanguageAdapter> existing = adaptersByExtension.putIfAbsent( extension, adaptersForExtension );
+				if( existing != null )
+					adaptersForExtension = existing;
+			}
+			adaptersForExtension.add( adapter );
+		}
 
 		adapter.setManager( this );
 	}
@@ -295,15 +356,68 @@ public class LanguageManager
 	/**
 	 * The language adapters.
 	 */
-	private final CopyOnWriteArraySet<LanguageAdapter> languageAdapters = new CopyOnWriteArraySet<LanguageAdapter>();
+	private final ConcurrentMap<String, LanguageAdapter> adapters = new ConcurrentHashMap<String, LanguageAdapter>();
 
 	/**
 	 * A map of language tags to their {@link LanguageAdapter} instances.
 	 */
-	private final ConcurrentMap<String, LanguageAdapter> languageAdapterByTag = new ConcurrentHashMap<String, LanguageAdapter>();
+	private final ConcurrentMap<String, Set<LanguageAdapter>> adaptersByTag = new ConcurrentHashMap<String, Set<LanguageAdapter>>();
 
 	/**
 	 * A map of filename extensions to their {@link LanguageAdapter} instances.
 	 */
-	private final ConcurrentMap<String, LanguageAdapter> languageAdapterByExtension = new ConcurrentHashMap<String, LanguageAdapter>();
+	private final ConcurrentMap<String, Set<LanguageAdapter>> adaptersByExtension = new ConcurrentHashMap<String, Set<LanguageAdapter>>();
+
+	/**
+	 * Finds the highest priority adapter in a set.
+	 * <p>
+	 * The last adapter used in the current execution context always has the
+	 * highest priority.
+	 * 
+	 * @param adapters
+	 *        The adapters
+	 * @return The highest priority adapter
+	 */
+	private LanguageAdapter getHighestPriorityAdapter( Set<LanguageAdapter> adapters )
+	{
+		ExecutionContext executionContext = ExecutionContext.getCurrent();
+		if( executionContext != null )
+		{
+			LanguageAdapter lastAdapter = executionContext.getAdapter();
+			if( adapters.contains( lastAdapter ) )
+				return lastAdapter;
+		}
+
+		int highestPriority = Integer.MIN_VALUE;
+		LanguageAdapter highestPriorityAdapter = null;
+
+		for( LanguageAdapter adapter : adapters )
+		{
+			String attribute = ADAPTER_PRIORITY + adapter.getAttributes().get( LanguageAdapter.NAME );
+
+			int priority = 0;
+			Object priorityObject = attributes.get( attribute );
+			if( priorityObject instanceof Number )
+				priority = ( (Number) priorityObject ).intValue();
+			else if( priorityObject != null )
+			{
+				try
+				{
+					priority = Integer.parseInt( priorityObject.toString() );
+					attributes.put( attribute, priority );
+				}
+				catch( NumberFormatException x )
+				{
+				}
+			}
+
+			if( priority > highestPriority )
+			{
+				highestPriority = priority;
+				highestPriorityAdapter = adapter;
+			}
+		}
+
+		return highestPriorityAdapter;
+	}
 }

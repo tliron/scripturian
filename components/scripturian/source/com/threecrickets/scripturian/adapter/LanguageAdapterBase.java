@@ -61,7 +61,7 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 	public LanguageAdapterBase( String name, String version, String languageName, String languageVersion, Collection<String> extensions, String defaultExtension, Collection<String> tags, String defaultTag )
 		throws LanguageAdapterException
 	{
-		attributes.put( NAME, "Scripturian/" + name );
+		attributes.put( NAME, name );
 		attributes.put( VERSION, version );
 		attributes.put( LANGUAGE_NAME, languageName != null ? languageName : name );
 		attributes.put( LANGUAGE_VERSION, languageVersion != null ? languageVersion : version );

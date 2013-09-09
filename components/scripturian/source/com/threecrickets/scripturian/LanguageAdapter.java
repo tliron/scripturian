@@ -33,37 +33,37 @@ public interface LanguageAdapter
 	//
 
 	/**
-	 * The name of the language adapter implementation.
+	 * Attribute for the name of the language adapter implementation.
 	 */
 	public static final String NAME = "name";
 
 	/**
-	 * The version of the language adapter implementation.
+	 * Attribute for the version of the language adapter implementation.
 	 */
 	public static final String VERSION = "version";
 
 	/**
-	 * The name of the implemented language.
+	 * Attribute for the name of the implemented language.
 	 */
 	public static final String LANGUAGE_NAME = "language.name";
 
 	/**
-	 * The version of the implemented language.
+	 * Attribute for the version of the implemented language.
 	 */
 	public static final String LANGUAGE_VERSION = "language.version";
 
 	/**
-	 * Standard source code filename extensions.
+	 * Attribute for standard source code filename extensions.
 	 */
 	public static final String EXTENSIONS = "extensions";
 
 	/**
-	 * Default source code filename extension.
+	 * Attribute for default source code filename extension.
 	 */
 	public static final String DEFAULT_EXTENSION = "extension.default";
 
 	/**
-	 * Language tags supported for scriptlets.
+	 * Attribute for language tags supported for scriptlets.
 	 */
 	public static final String TAGS = "tags";
 
@@ -76,8 +76,19 @@ public interface LanguageAdapter
 	// Attributes
 	//
 
+	/**
+	 * The language manager.
+	 * 
+	 * @return The language manager
+	 */
 	public LanguageManager getManager();
 
+	/**
+	 * The language manager.
+	 * 
+	 * @param manager
+	 *        The manager
+	 */
 	public void setManager( LanguageManager manager );
 
 	/**
