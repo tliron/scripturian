@@ -173,6 +173,8 @@ public class NashornAdapter extends LanguageAdapterBase
 		// Define services as properties in scope
 		globalScope.putAll( executionContext.getServices() );
 
+		Context.setGlobal( globalScope );
+
 		return globalScope;
 	}
 
