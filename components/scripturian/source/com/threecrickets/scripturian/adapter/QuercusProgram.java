@@ -12,7 +12,6 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.caucho.quercus.QuercusExitException;
 import com.caucho.quercus.env.Env;
@@ -69,7 +68,7 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	{
 		Env environment = adapter.getEnvironment( executionContext );
 
-		com.caucho.quercus.program.QuercusProgram program = programReference.get();
+		com.caucho.quercus.program.QuercusProgram program = this.program;
 		if( program == null )
 		{
 			try
@@ -79,7 +78,7 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 				parser.setLocation( executable.getDocumentName(), startLineNumber );
 				program = parser.parse();
 
-				programReference.compareAndSet( null, program );
+				this.program = program;
 			}
 			catch( QuercusParseException x )
 			{
@@ -124,5 +123,5 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 	/**
 	 * The cached parsed program.
 	 */
-	private final AtomicReference<com.caucho.quercus.program.QuercusProgram> programReference = new AtomicReference<com.caucho.quercus.program.QuercusProgram>();
+	private volatile com.caucho.quercus.program.QuercusProgram program;
 }

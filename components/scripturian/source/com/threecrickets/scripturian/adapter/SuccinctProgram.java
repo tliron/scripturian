@@ -65,8 +65,7 @@ class SuccinctProgram extends ProgramBase<SuccinctAdapter>
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		Template template = templateReference.get();
-
+		Template template = this.templateReference.get();
 		if( template == null )
 		{
 			try
@@ -75,7 +74,8 @@ class SuccinctProgram extends ProgramBase<SuccinctAdapter>
 
 				// We're caching the resulting template for the future. Might
 				// as well!
-				templateReference.compareAndSet( null, template );
+				if( !this.templateReference.compareAndSet( null, template ) )
+					template = this.templateReference.get();
 			}
 			catch( TemplateSourceException x )
 			{
@@ -112,5 +112,5 @@ class SuccinctProgram extends ProgramBase<SuccinctAdapter>
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final AtomicReference<Template> templateReference = new AtomicReference<Template>();
+	private AtomicReference<Template> templateReference = new AtomicReference<Template>();
 }

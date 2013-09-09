@@ -21,19 +21,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import clojure.lang.Compiler;
+import clojure.lang.Compiler.CompilerException;
 import clojure.lang.DynamicClassLoader;
 import clojure.lang.LineNumberingPushbackReader;
 import clojure.lang.LispReader;
+import clojure.lang.LispReader.ReaderException;
 import clojure.lang.Namespace;
 import clojure.lang.PersistentArrayMap;
 import clojure.lang.RT;
 import clojure.lang.Symbol;
 import clojure.lang.Var;
-import clojure.lang.Compiler.CompilerException;
-import clojure.lang.LispReader.ReaderException;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
@@ -82,7 +81,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 	@Override
 	public void prepare() throws PreparationException
 	{
-		if( formsReference.get() != null )
+		if( forms != null )
 			return;
 
 		ArrayList<ClojureProgram.Form> forms = new ArrayList<ClojureProgram.Form>();
@@ -97,7 +96,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 			for( Object form = LispReader.read( pushbackReader, false, EOF, false ); form != EOF; form = LispReader.read( pushbackReader, false, EOF, false ) )
 				forms.add( new Form( form, startLineNumber + pushbackReader.getLineNumber() ) );
 
-			formsReference.compareAndSet( null, forms );
+			this.forms = forms;
 		}
 		catch( ReaderException x )
 		{
@@ -231,7 +230,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 				for( Map.Entry<String, Object> entry : executionContext.getServices().entrySet() )
 					Var.intern( ns, Symbol.intern( entry.getKey() ), entry.getValue() );
 
-				Collection<ClojureProgram.Form> forms = formsReference.get();
+				Collection<ClojureProgram.Form> forms = this.forms;
 				if( forms != null )
 				{
 					// This code is mostly identical to Compiler.load().
@@ -292,7 +291,7 @@ public class ClojureProgram extends ProgramBase<ClojureAdapter>
 	/**
 	 * The cached parsed forms.
 	 */
-	private final AtomicReference<Collection<ClojureProgram.Form>> formsReference = new AtomicReference<Collection<ClojureProgram.Form>>();
+	private volatile Collection<ClojureProgram.Form> forms;
 
 	/**
 	 * A simple wrapper for parsed Clojure forms that adds line number

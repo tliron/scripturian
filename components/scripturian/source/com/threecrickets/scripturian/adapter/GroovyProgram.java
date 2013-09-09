@@ -171,7 +171,7 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 			}
 			catch( Exception x )
 			{
-				throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
+				throw new PreparationException( executable.getDocumentName(), x );
 			}
 		}
 	}
@@ -191,7 +191,8 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 				{
 					// Not all .groovy files have executable code!
 					scriptClass = (Class<Script>) parsedClass;
-					scriptClassReference.compareAndSet( null, scriptClass );
+					if( !scriptClassReference.compareAndSet( null, scriptClass ) )
+						scriptClass = scriptClassReference.get();
 				}
 			}
 

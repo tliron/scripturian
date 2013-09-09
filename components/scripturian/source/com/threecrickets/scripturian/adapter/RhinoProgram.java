@@ -13,7 +13,6 @@ package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Script;
@@ -67,7 +66,7 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 	@Override
 	public void prepare() throws PreparationException
 	{
-		if( scriptReference.get() != null )
+		if( script != null )
 			return;
 
 		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
@@ -109,11 +108,11 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 					script = (Script) ( (ClassLoader) adapter.generatedClassLoader ).loadClass( classname ).newInstance();
 				}
 
-				scriptReference.compareAndSet( null, script );
+				this.script = script;
 			}
 			catch( Exception x )
 			{
-				throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
+				throw new PreparationException( executable.getDocumentName(), x );
 			}
 		}
 	}
@@ -124,7 +123,7 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 		try
 		{
 			ScriptableObject scope = adapter.getScope( executable, executionContext, context, startLineNumber );
-			Script script = scriptReference.get();
+			Script script = this.script;
 			if( script != null )
 				script.exec( context, scope );
 			else
@@ -146,5 +145,5 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 	/**
 	 * The cached compiled script.
 	 */
-	private final AtomicReference<Script> scriptReference = new AtomicReference<Script>();
+	private volatile Script script;
 }

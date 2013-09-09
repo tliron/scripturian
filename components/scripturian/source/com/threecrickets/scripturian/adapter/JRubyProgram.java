@@ -14,7 +14,6 @@ package com.threecrickets.scripturian.adapter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.jruby.Ruby;
 import org.jruby.ast.Node;
@@ -73,7 +72,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	@Override
 	public void prepare() throws PreparationException
 	{
-		if( scriptClassReference.get() != null )
+		if( scriptClass != null )
 			return;
 
 		// Note that we parse the node for a different runtime than the
@@ -94,7 +93,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 					@SuppressWarnings("unchecked")
 					Class<Script> scriptClass = (Class<Script>) classLoader.defineClass( classname, classByteArray );
-					scriptClassReference.compareAndSet( null, scriptClass );
+					this.scriptClass = scriptClass;
 				}
 				else
 				{
@@ -115,7 +114,6 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 					@SuppressWarnings("unchecked")
 					Class<Script> scriptClass = (Class<Script>) asmCompiler.loadClass( classLoader );
-					scriptClassReference.compareAndSet( null, scriptClass );
 
 					// Cache it!
 					classFile.getParentFile().mkdirs();
@@ -128,6 +126,8 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 					{
 						stream.close();
 					}
+
+					this.scriptClass = scriptClass;
 
 					// A variation of: Ruby.tryCompile( node );
 				}
@@ -151,7 +151,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	{
 		Ruby rubyRuntime = adapter.getRubyRuntime( executionContext );
 
-		Class<Script> scriptClass = scriptClassReference.get();
+		Class<Script> scriptClass = this.scriptClass;
 		try
 		{
 			if( scriptClass != null )
@@ -190,5 +190,5 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 	/**
 	 * The cached compiled script.
 	 */
-	private final AtomicReference<Class<Script>> scriptClassReference = new AtomicReference<Class<Script>>();
+	private volatile Class<Script> scriptClass;
 }

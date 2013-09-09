@@ -15,7 +15,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.StringReader;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.python.antlr.base.mod;
 import org.python.core.BytecodeLoader;
@@ -72,7 +71,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	@Override
 	public void prepare() throws PreparationException
 	{
-		if( pythonCodeReference.get() != null )
+		if( pythonCode != null )
 			return;
 
 		File classFile = ScripturianUtil.getFileForProgramClass( adapter.getCacheDir(), executable, position );
@@ -86,11 +85,11 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 				try
 				{
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
-					pythonCodeReference.compareAndSet( null, BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() ) );
+					pythonCode = BytecodeLoader.makeCode( classname, classByteArray, executable.getDocumentName() );
 				}
 				catch( Exception x )
 				{
-					throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
+					throw new PreparationException( executable.getDocumentName(), x );
 				}
 			}
 			else
@@ -99,7 +98,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 				try
 				{
 					PythonCodeBundle bundle = adapter.compiler.compile( node, classname, executable.getDocumentName(), true, false, adapter.compilerFlags );
-					pythonCodeReference.compareAndSet( null, bundle.loadCode() );
+					PyCode pythonCode = bundle.loadCode();
 
 					// Cache it!
 					classFile.getParentFile().mkdirs();
@@ -112,10 +111,12 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 					{
 						stream.close();
 					}
+
+					this.pythonCode = pythonCode;
 				}
 				catch( Exception x )
 				{
-					throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
+					throw new PreparationException( executable.getDocumentName(), x );
 				}
 			}
 		}
@@ -130,7 +131,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 
 		try
 		{
-			PyCode pythonCode = pythonCodeReference.get();
+			PyCode pythonCode = this.pythonCode;
 			if( pythonCode != null )
 				pythonInterpreter.exec( pythonCode );
 			else
@@ -154,5 +155,5 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 	/**
 	 * The cached compiled code.
 	 */
-	private final AtomicReference<PyCode> pythonCodeReference = new AtomicReference<PyCode>();
+	private volatile PyCode pythonCode;
 }

@@ -126,7 +126,7 @@ public class JythonAdapter extends LanguageAdapterBase
 			return executionException;
 		}
 		else
-			return new ExecutionException( documentName, x.getMessage(), x );
+			return new ExecutionException( documentName, x );
 	}
 
 	//

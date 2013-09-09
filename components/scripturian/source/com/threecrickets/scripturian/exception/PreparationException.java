@@ -51,6 +51,11 @@ public class PreparationException extends ParsingException
 		super( documentName, message );
 	}
 
+	public PreparationException( String message, Throwable cause )
+	{
+		super( message != null ? message : cause.getClass().getName(), cause );
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

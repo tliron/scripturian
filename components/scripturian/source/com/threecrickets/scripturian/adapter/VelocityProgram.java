@@ -81,8 +81,8 @@ class VelocityProgram extends ProgramBase<VelocityAdapter>
 
 				// We're caching the resulting node tree for the future. Might
 				// as well!
-				nodeTreeReference.compareAndSet( null, nodeTree );
-
+				if( !nodeTreeReference.compareAndSet( null, nodeTree ) )
+					nodeTree = nodeTreeReference.get();
 			}
 			catch( ParseException x )
 			{

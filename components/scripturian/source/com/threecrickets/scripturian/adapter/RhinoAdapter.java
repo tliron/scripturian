@@ -120,7 +120,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 				return new ExecutionException( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber(), rhinoException.getMessage(), x );
 		}
 		else
-			return new ExecutionException( documentName, x.getMessage(), x );
+			return new ExecutionException( documentName, x );
 	}
 
 	//
