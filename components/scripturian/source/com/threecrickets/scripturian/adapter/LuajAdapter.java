@@ -38,7 +38,7 @@ import com.threecrickets.scripturian.internal.WriterOutputStream;
 
 /**
  * A {@link LanguageAdapter} that supports the Lua language as implemented by <a
- * href="http://luaj.org/luaj.html">Luaj</a>.
+ * href="http://luaj.org/luaj/README.html">Luaj</a>.
  * 
  * @author Tal Liron
  */
@@ -57,6 +57,27 @@ public class LuajAdapter extends LanguageAdapterBase
 	 * The default base directory for cached executables.
 	 */
 	public static final String LUAJ_CACHE_DIR = "lua";
+
+	//
+	// Static operations
+	//
+
+	/**
+	 * Creates an execution exception.
+	 * 
+	 * @param documentName
+	 *        The document name
+	 * @param x
+	 *        The exception
+	 * @return The execution exception
+	 */
+	public static ExecutionException createExecutionException( String documentName, LuaError x )
+	{
+		if( x.getCause() != null )
+			return new ExecutionException( documentName, x.getCause() );
+		else
+			return new ExecutionException( documentName, x );
+	}
 
 	//
 	// Construction

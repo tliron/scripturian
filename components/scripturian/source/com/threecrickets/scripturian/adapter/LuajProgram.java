@@ -89,6 +89,10 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 				{
 					byte[] bytes = ScripturianUtil.getBytes( dumpFile );
 					bytesReference.compareAndSet( null, bytes );
+
+					// We can't compile the bytes now, because we don't have an
+					// execution context. So we'll finish preparing in
+					// execute().
 				}
 				else
 				{
@@ -109,7 +113,7 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 			}
 			catch( Exception x )
 			{
-				throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
+				throw new PreparationException( executable.getDocumentName(), x );
 			}
 		}
 	}
@@ -126,14 +130,16 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 			byte[] bytes = bytesReference.get();
 			if( bytes != null )
 			{
+				// Finish preparation
 				try
 				{
 					prototype = LuaC.compile( new ByteArrayInputStream( bytes ), executable.getDocumentName() );
-					prototypeReference.compareAndSet( null, prototype );
+					if( !prototypeReference.compareAndSet( null, prototype ) )
+						prototype = prototypeReference.get();
 				}
 				catch( IOException x )
 				{
-					throw new PreparationException( executable.getDocumentName(), x.getMessage(), x );
+					throw new PreparationException( executable.getDocumentName(), x );
 				}
 			}
 		}
@@ -155,15 +161,7 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 					function.initupvalue1( globals );
 				}
 			}
-			catch( IOException x )
-			{
-				throw new ParsingException( executable.getDocumentName(), x );
-			}
-			catch( InstantiationException x )
-			{
-				throw new ParsingException( executable.getDocumentName(), x );
-			}
-			catch( IllegalAccessException x )
+			catch( Exception x )
 			{
 				throw new ParsingException( executable.getDocumentName(), x );
 			}
@@ -186,7 +184,7 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 		}
 		catch( LuaError x )
 		{
-			throw new ExecutionException( executable.getDocumentName(), x );
+			throw LuajAdapter.createExecutionException( executable.getDocumentName(), x );
 		}
 	}
 
