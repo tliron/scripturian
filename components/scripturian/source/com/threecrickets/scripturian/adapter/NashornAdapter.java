@@ -137,6 +137,7 @@ public class NashornAdapter extends LanguageAdapterBase
 			PrintWriter err = new PrintWriter( switchableErr, true );
 
 			Options options = new Options( "nashorn", err );
+			options.set( "print.no.newline", true );
 			ErrorManager errors = new ErrorManager( err );
 
 			context = new Context( options, errors, out, err, Thread.currentThread().getContextClassLoader() );
