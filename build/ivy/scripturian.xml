@@ -27,5 +27,6 @@
 		<dependency org="org.eclipse.mylyn" name="wikitext" rev="1.5.0" transitive="false" />
 		<dependency org="org.pegdown" name="pegdown" rev="1.1.0" transitive="false" />
 		<dependency org="org.luaj" name="luaj-jse" rev="3.0-beta1" transitive="false" />
+		<dependency org="jdk.nashorn" name="nashorn-backport" rev="0.0-7a639347ecf0" transitive="false" />
 	</dependencies>
 </ivy-module>

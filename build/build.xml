@@ -50,11 +50,7 @@
 
 	<target name="dependencies" depends="ivy" description="Resolve dependencies">
 		<ivy:resolve file="${root}/build/ivy/${component}.xml" type="jar" log="download-only" resolveId="${component}" />
-		<ivy:cachepath pathid="dependencies-ivy" type="jar" resolveId="${component}" />
-		<path id="dependencies">
-			<path refid="dependencies-ivy" />
-			<file file="${dependencies.nashorn}" />
-		</path>
+		<ivy:cachepath pathid="dependencies" type="jar" resolveId="${component}" />
 	</target>
 
 	<target name="classes" depends="dependencies" description="Compile Java code">
