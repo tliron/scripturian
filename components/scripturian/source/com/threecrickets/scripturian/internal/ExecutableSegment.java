@@ -11,6 +11,10 @@
 
 package com.threecrickets.scripturian.internal;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageAdapter;
 import com.threecrickets.scripturian.LanguageManager;
@@ -27,6 +31,17 @@ import com.threecrickets.scripturian.exception.ParsingException;
  */
 public class ExecutableSegment
 {
+	//
+	// Constants
+	//
+
+	/**
+	 * The default base directory for cached executables.
+	 */
+	public static final String CACHE_DIR = "scripturian";
+
+	private static final String TXT_SUFFIX = ".txt";
+
 	//
 	// Construction
 	//
@@ -117,13 +132,51 @@ public class ExecutableSegment
 	 *        The language manager
 	 * @param prepare
 	 *        Whether to prepare the program
+	 * @param debug
+	 *        Whether to debug the source code
 	 * @throws ParsingException
 	 * @see #isScriptlet
 	 * @see #languageTag
 	 * @see #program
 	 */
-	public void createProgram( Executable executable, LanguageManager manager, boolean prepare ) throws ParsingException
+	public void createProgram( Executable executable, LanguageManager manager, boolean prepare, boolean debug ) throws ParsingException
 	{
+		if( debug )
+		{
+			File cacheDir = new File( LanguageManager.getCachePath(), CACHE_DIR );
+			File dumpFile = ScripturianUtil.getFileForProgram( cacheDir, executable, position, TXT_SUFFIX );
+			synchronized( dumpFile )
+			{
+				FileWriter writer = null;
+				try
+				{
+					dumpFile.getParentFile().mkdirs();
+					writer = new FileWriter( dumpFile );
+					try
+					{
+						writer.write( sourceCode );
+					}
+					finally
+					{
+						writer.close();
+					}
+				}
+				catch( IOException x )
+				{
+					if( writer != null )
+					{
+						try
+						{
+							writer.close();
+						}
+						catch( IOException xx )
+						{
+						}
+					}
+				}
+			}
+		}
+
 		LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
 		if( adapter == null )
 			throw ParsingException.adapterNotFound( executable.getDocumentName(), startLineNumber, startColumnNumber, languageTag );

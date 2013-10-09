@@ -16,11 +16,15 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 
 import jdk.nashorn.api.scripting.NashornException;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.internal.objects.NativeArray;
+import jdk.nashorn.internal.objects.NativeJava;
 import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.ErrorManager;
 import jdk.nashorn.internal.runtime.ScriptFunction;
 import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
+import jdk.nashorn.internal.runtime.Source;
 import jdk.nashorn.internal.runtime.Version;
 import jdk.nashorn.internal.runtime.options.Options;
 
@@ -165,16 +169,25 @@ public class NashornAdapter extends LanguageAdapterBase
 	{
 		ScriptObject globalScope = (ScriptObject) executionContext.getAttributes().get( NASHORN_GLOBAL_SCOPE );
 
+		boolean init = false;
 		if( globalScope == null )
 		{
 			globalScope = context.createGlobal();
 			executionContext.getAttributes().put( NASHORN_GLOBAL_SCOPE, globalScope );
+			init = true;
 		}
 
 		// Define services as properties in scope
-		globalScope.putAll( executionContext.getServices() );
+		( (ScriptObjectMirror) ScriptObjectMirror.wrap( globalScope, globalScope ) ).putAll( executionContext.getServices() );
+		// globalScope.putAll( executionContext.getServices() );
 
 		Context.setGlobal( globalScope );
+
+		if( init )
+		{
+			ScriptFunction script = context.compileScript( new Source( getClass().getCanonicalName() + ".getGlobalScope", INIT_SOURCE ), globalScope );
+			ScriptRuntime.apply( script, globalScope );
+		}
 
 		return globalScope;
 	}
@@ -209,7 +222,7 @@ public class NashornAdapter extends LanguageAdapterBase
 	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
 		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
@@ -232,15 +245,28 @@ public class NashornAdapter extends LanguageAdapterBase
 		try
 		{
 			Object r = ScriptRuntime.apply( function, null, arguments );
+			if( r instanceof NativeArray )
+				r = NativeJava.to( null, r, "java.util.List" );
 			return r;
 		}
 		catch( NashornException x )
 		{
 			throw createExecutionException( executable.getDocumentName(), x );
 		}
+		catch( ClassNotFoundException x )
+		{
+			throw new ExecutionException( executable.getDocumentName(), x );
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
+	private static final String MOZILLA_COMPAT_SOURCE = "load('nashorn:mozilla_compat.js')";
+
+	private static final String PRINTLN_SOURCE = "function println(s){print(s);if(undefined===println.separator){println.separator=String(java.lang.System.getProperty('line.separator'))}print(println.separator)}";
+
+	private static final String IMPORT_CLASS_SOURCE = "Object.defineProperty(this,'importClass',{configurable:true,enumerable:false,writable:true,value:function(){for(var a in arguments){var clazz=arguments[a];if(Java.isType(clazz)){var className=Java.typeName(clazz);var simpleName=className.substring(className.lastIndexOf('.')+1);this[simpleName]=clazz}else{throw new TypeError(clazz + ' is not a Java class')}}}})";
+
+	private static final String INIT_SOURCE = MOZILLA_COMPAT_SOURCE + ";" + PRINTLN_SOURCE + ";" + IMPORT_CLASS_SOURCE;
 }

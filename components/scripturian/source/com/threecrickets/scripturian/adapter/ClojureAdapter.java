@@ -248,7 +248,7 @@ public class ClojureAdapter extends LanguageAdapterBase
 	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
 		return "(.. " + executable.getExecutableServiceName() + " getContainer (" + containerIncludeExpressionCommand + " " + expression + "))";
 	}
 

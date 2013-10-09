@@ -50,16 +50,18 @@ public class DefrostTask implements Callable<Executable>
 	 *        Whether the executables are "text-with-scriptlets"
 	 * @param prepare
 	 *        Whether to prepare executables
+	 * @param debug
+	 *        Whether to debug the source code parsing
 	 * @return An array of tasks
 	 * @see DocumentSource#getDocument(String)
 	 */
-	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets, boolean prepare )
+	public static DefrostTask[] forDocumentSource( DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets, boolean prepare, boolean debug )
 	{
 		Collection<DocumentDescriptor<Executable>> documentDescriptors = documentSource.getDocuments();
 		DefrostTask[] defrostTasks = new DefrostTask[documentDescriptors.size()];
 		int i = 0;
 		for( DocumentDescriptor<Executable> documentDescriptor : documentDescriptors )
-			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, languageManager, defaultLanguageTag, isTextWithScriptlets, prepare );
+			defrostTasks[i++] = new DefrostTask( documentDescriptor, documentSource, languageManager, defaultLanguageTag, isTextWithScriptlets, prepare, debug );
 
 		return defrostTasks;
 	}
@@ -84,9 +86,11 @@ public class DefrostTask implements Callable<Executable>
 	 *        Whether the executable is "text-with-scriptlets"
 	 * @param prepare
 	 *        Whether to prepare executables
+	 * @param debug
+	 *        Whether to debug the source code parsing
 	 */
 	public DefrostTask( DocumentDescriptor<Executable> documentDescriptor, DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets,
-		boolean prepare )
+		boolean prepare, boolean debug )
 	{
 		this.documentDescriptor = documentDescriptor;
 		this.documentSource = documentSource;
@@ -94,6 +98,7 @@ public class DefrostTask implements Callable<Executable>
 		this.defaultLanguageTag = defaultLanguageTag;
 		this.isTextWithScriptlets = isTextWithScriptlets;
 		this.prepare = prepare;
+		this.debug = debug;
 	}
 
 	//
@@ -111,6 +116,7 @@ public class DefrostTask implements Callable<Executable>
 			parsingContext.setLanguageManager( languageManager );
 			parsingContext.setDefaultLanguageTag( adapter != null ? (String) adapter.getAttributes().get( LanguageAdapter.DEFAULT_TAG ) : defaultLanguageTag );
 			parsingContext.setPrepare( prepare );
+			parsingContext.setDebug( debug );
 			parsingContext.setDocumentSource( documentSource );
 			executable = Executable.createOnce( documentDescriptor, isTextWithScriptlets, parsingContext );
 		}
@@ -161,4 +167,9 @@ public class DefrostTask implements Callable<Executable>
 	 * Whether to prepare executables.
 	 */
 	private final boolean prepare;
+
+	/**
+	 * Whether to debug the source code parsing.
+	 */
+	private final boolean debug;
 }

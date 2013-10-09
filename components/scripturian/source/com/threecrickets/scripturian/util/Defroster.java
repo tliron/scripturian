@@ -50,8 +50,10 @@ public class Defroster
 	 *        Whether the executables are "text-with-scriptlets"
 	 * @param prepare
 	 *        Whether to prepare executables
+	 * @param debug
+	 *        Whether to debug the source code parsing
 	 */
-	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets, boolean prepare )
+	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets, boolean prepare, boolean debug )
 	{
 		super();
 		this.documentSource = documentSource;
@@ -59,6 +61,7 @@ public class Defroster
 		this.defaultLanguageTag = defaultLanguageTag;
 		this.isTextWithScriptlets = isTextWithScriptlets;
 		this.prepare = prepare;
+		this.debug = debug;
 	}
 
 	//
@@ -198,6 +201,11 @@ public class Defroster
 	private final boolean prepare;
 
 	/**
+	 * Whether to debug the source code parsing.
+	 */
+	private final boolean debug;
+
+	/**
 	 * Whether defrosting was interrupted.
 	 */
 	private volatile boolean wasInterrupted;
@@ -226,7 +234,7 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, defaultLanguageTag, isTextWithScriptlets, prepare );
+			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, defaultLanguageTag, isTextWithScriptlets, prepare, debug );
 			List<Future<Executable>> futures;
 			try
 			{

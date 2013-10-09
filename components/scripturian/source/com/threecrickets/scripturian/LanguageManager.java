@@ -44,7 +44,7 @@ public class LanguageManager
 	 * 
 	 * @see #getCachePath()
 	 */
-	public static final String SCRIPTURIAN_CACHE_PATH = "scripturian.cache";
+	public static final String SCRIPTURIAN_CACHE_PATH_PROPERTY = "scripturian.cache";
 
 	/**
 	 * The default Scripturian cache path.
@@ -56,12 +56,12 @@ public class LanguageManager
 	/**
 	 * The attribute name for the container include expression command.
 	 */
-	public static final String CONTAINER_INCLUDE_EXPRESSION_COMMAND = "scripturian.containerIncludeExpressionCommand";
+	public static final String CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE = "scripturian.containerIncludeExpressionCommand";
 
 	/**
 	 * The attribute prefix for adapter priorities.
 	 */
-	public static final String ADAPTER_PRIORITY = "scripturian.priority.";
+	public static final String ADAPTER_PRIORITY_ATTRIBUTE = "scripturian.priority.";
 
 	/**
 	 * The default container include expression command.
@@ -83,7 +83,7 @@ public class LanguageManager
 		if( cachePath == null )
 		{
 			// Parse properties
-			String cachePathProperty = System.getProperty( SCRIPTURIAN_CACHE_PATH );
+			String cachePathProperty = System.getProperty( SCRIPTURIAN_CACHE_PATH_PROPERTY );
 			cachePath = new File( cachePathProperty != null ? cachePathProperty : SCRIPTURIAN_CACHE_PATH_DEFAULT );
 			if( !LanguageManager.cachePath.compareAndSet( null, cachePath ) )
 				cachePath = LanguageManager.cachePath.get();
@@ -118,7 +118,7 @@ public class LanguageManager
 	 */
 	public LanguageManager( ClassLoader classLoader )
 	{
-		attributes.put( CONTAINER_INCLUDE_EXPRESSION_COMMAND, DEFAULT_CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		attributes.put( CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE, DEFAULT_CONTAINER_INCLUDE_EXPRESSION_COMMAND );
 
 		// Initialize adapters
 		ServiceLoader<LanguageAdapter> adapterLoader = ServiceLoader.load( LanguageAdapter.class, classLoader );
@@ -393,7 +393,7 @@ public class LanguageManager
 
 		for( LanguageAdapter adapter : adapters )
 		{
-			String attribute = ADAPTER_PRIORITY + adapter.getAttributes().get( LanguageAdapter.NAME );
+			String attribute = ADAPTER_PRIORITY_ATTRIBUTE + adapter.getAttributes().get( LanguageAdapter.NAME );
 
 			int priority = 0;
 			Object priorityObject = attributes.get( attribute );

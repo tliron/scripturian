@@ -101,6 +101,7 @@ public class ParsingContext
 		partition = parsingContext.getPartition();
 		defaultLanguageTag = parsingContext.getDefaultLanguageTag();
 		prepare = parsingContext.isPrepare();
+		debug = parsingContext.isDebug();
 		delimiter1Start = parsingContext.getDelimiter1Start();
 		delimiter1End = parsingContext.getDelimiter1End();
 		delimiter2Start = parsingContext.getDelimiter2Start();
@@ -200,6 +201,26 @@ public class ParsingContext
 	public void setPrepare( boolean prepare )
 	{
 		this.prepare = prepare;
+	}
+
+	/**
+	 * Whether to debug the source code parsing.
+	 * 
+	 * @return The debug flag
+	 */
+	public boolean isDebug()
+	{
+		return debug;
+	}
+
+	/**
+	 * @param debug
+	 *        The debug flag
+	 * @see #isDebug()
+	 */
+	public void setDebug( boolean debug )
+	{
+		this.debug = debug;
 	}
 
 	/**
@@ -448,6 +469,11 @@ public class ParsingContext
 	 * preparation as a separate operation.
 	 */
 	private boolean prepare;
+
+	/**
+	 * Whether to debug source code parsing.
+	 */
+	private boolean debug;
 
 	/**
 	 * The start delimiter (first option).

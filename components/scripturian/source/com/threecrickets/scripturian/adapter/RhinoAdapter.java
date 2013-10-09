@@ -182,13 +182,11 @@ public class RhinoAdapter extends LanguageAdapterBase
 			classChache.associate( scope );
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 
-			String printSource = "function print(s){if(undefined===s){return}" + executable.getExecutableServiceName() + ".context.writerOrDefault.write(String(s));" + executable.getExecutableServiceName()
-				+ ".context.writerOrDefault.flush()}";
+			String printSource = PRINT_SOURCE1 + executable.getExecutableServiceName() + PRINT_SOURCE2 + executable.getExecutableServiceName() + PRINT_SOURCE3;
 			Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
 			scope.defineProperty( "print", printFunction, 0 );
 
-			printSource = "function println(s){print(s);if(undefined===println.separator){println.separator=String(java.lang.System.getProperty('line.separator'))}print(println.separator)}";
-			printFunction = context.compileFunction( scope, printSource, null, 0, null );
+			printFunction = context.compileFunction( scope, PRINTLN_SOURCE, null, 0, null );
 			scope.defineProperty( "println", printFunction, 0 );
 		}
 
@@ -257,7 +255,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
 		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
 	}
 
@@ -313,6 +311,14 @@ public class RhinoAdapter extends LanguageAdapterBase
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private static final String PRINT_SOURCE1 = "function print(s){if(undefined===s){return}";
+
+	private static final String PRINT_SOURCE2 = ".context.writerOrDefault.write(String(s));";
+
+	private static final String PRINT_SOURCE3 = ".context.writerOrDefault.flush()}";
+
+	private static final String PRINTLN_SOURCE = "function println(s){print(s);if(undefined===println.separator){println.separator=String(java.lang.System.getProperty('line.separator'))}print(println.separator)}";
 
 	/**
 	 * Used to generate and enter Rhino contexts.

@@ -288,6 +288,7 @@ public class Executable
 		this.languageManager = parsingContext.getLanguageManager();
 
 		boolean prepare = parsingContext.isPrepare();
+		boolean debug = parsingContext.isDebug();
 		String lastLanguageTag = parsingContext.getDefaultLanguageTag();
 
 		if( !isTextWithScriptlets )
@@ -297,7 +298,7 @@ public class Executable
 			{
 				segment
 			};
-			segment.createProgram( this, languageManager, prepare );
+			segment.createProgram( this, languageManager, prepare, debug );
 			delimiterStart = null;
 			delimiterEnd = null;
 			return;
@@ -609,7 +610,7 @@ public class Executable
 		{
 			segment.position = position++;
 			if( segment.isProgram )
-				segment.createProgram( this, languageManager, prepare );
+				segment.createProgram( this, languageManager, prepare, debug );
 		}
 
 		// Flatten list into array

@@ -122,7 +122,7 @@ public class JRubyAdapter extends Jsr223LanguageAdapter
 	{
 		// return "require $" + executable.getDocumentVariableName() +
 		// ".container.source.basePath.toString + '/' + " + content + ";";
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
 		return "$" + executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + content + ");";
 	}
 
