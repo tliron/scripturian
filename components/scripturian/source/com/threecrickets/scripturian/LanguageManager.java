@@ -54,9 +54,9 @@ public class LanguageManager
 	public static final String SCRIPTURIAN_CACHE_PATH_DEFAULT = "scripturian/cache";
 
 	/**
-	 * The attribute name for the container include expression command.
+	 * The attribute name for the container include command.
 	 */
-	public static final String CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE = "scripturian.containerIncludeExpressionCommand";
+	public static final String CONTAINER_INCLUDE_COMMAND_ATTRIBUTE = "scripturian.containerIncludeCommand";
 
 	/**
 	 * The attribute prefix for adapter priorities.
@@ -64,9 +64,9 @@ public class LanguageManager
 	public static final String ADAPTER_PRIORITY_ATTRIBUTE = "scripturian.priority.";
 
 	/**
-	 * The default container include expression command.
+	 * The default container include command.
 	 */
-	public static final String DEFAULT_CONTAINER_INCLUDE_EXPRESSION_COMMAND = "include";
+	public static final String DEFAULT_CONTAINER_INCLUDE_COMMAND = "include";
 
 	//
 	// Static attributes
@@ -118,7 +118,7 @@ public class LanguageManager
 	 */
 	public LanguageManager( ClassLoader classLoader )
 	{
-		attributes.put( CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE, DEFAULT_CONTAINER_INCLUDE_EXPRESSION_COMMAND );
+		attributes.put( CONTAINER_INCLUDE_COMMAND_ATTRIBUTE, DEFAULT_CONTAINER_INCLUDE_COMMAND );
 
 		// Initialize adapters
 		ServiceLoader<LanguageAdapter> adapterLoader = ServiceLoader.load( LanguageAdapter.class, classLoader );

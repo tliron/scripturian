@@ -156,7 +156,7 @@ public interface LanguageAdapter
 	 * For this to work, the executable must have been created with a container
 	 * that supports an inclusion command named according to the language
 	 * manager attribute
-	 * {@link LanguageManager#CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE}.
+	 * {@link LanguageManager#CONTAINER_INCLUDE_COMMAND_ATTRIBUTE}.
 	 * 
 	 * @param expression
 	 *        The source code expression

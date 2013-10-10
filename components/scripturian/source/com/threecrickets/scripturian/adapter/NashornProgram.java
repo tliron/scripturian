@@ -71,7 +71,7 @@ public class NashornProgram extends ProgramBase<NashornAdapter>
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
 		Context context = adapter.getContext( executionContext );
-		ScriptObject globalScope = adapter.getGlobalScope( executionContext, context );
+		ScriptObject globalScope = adapter.getGlobalScope( executable, executionContext, context );
 		ErrorManager errorManager = context.getErrorManager();
 
 		ScriptFunction script = context.compileScript( new Source( executable.getDocumentName(), sourceCode ), globalScope );

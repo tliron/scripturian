@@ -165,7 +165,7 @@ public class NashornAdapter extends LanguageAdapterBase
 		return context;
 	}
 
-	public ScriptObject getGlobalScope( ExecutionContext executionContext, Context context )
+	public ScriptObject getGlobalScope( Executable executable, ExecutionContext executionContext, Context context )
 	{
 		ScriptObject globalScope = (ScriptObject) executionContext.getAttributes().get( NASHORN_GLOBAL_SCOPE );
 
@@ -222,8 +222,8 @@ public class NashornAdapter extends LanguageAdapterBase
 	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
-		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
+		String containerIncludeCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_COMMAND_ATTRIBUTE );
+		return executable.getExecutableServiceName() + ".container." + containerIncludeCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException
@@ -235,7 +235,7 @@ public class NashornAdapter extends LanguageAdapterBase
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		Context context = getContext( executionContext );
-		ScriptObject globalScope = getGlobalScope( executionContext, context );
+		ScriptObject globalScope = getGlobalScope( executable, executionContext, context );
 
 		Object entryPoint = globalScope.get( entryPointName );
 		if( !( entryPoint instanceof ScriptFunction ) )
@@ -264,7 +264,7 @@ public class NashornAdapter extends LanguageAdapterBase
 
 	private static final String MOZILLA_COMPAT_SOURCE = "load('nashorn:mozilla_compat.js')";
 
-	private static final String PRINTLN_SOURCE = "function println(s){print(s);if(undefined===println.separator){println.separator=String(java.lang.System.getProperty('line.separator'))}print(println.separator)}";
+	private static final String PRINTLN_SOURCE = "function println(s){if(undefined!==s){print(s)};if(undefined===println.separator){println.separator=String(java.lang.System.getProperty('line.separator'))}print(println.separator)}";
 
 	private static final String IMPORT_CLASS_SOURCE = "Object.defineProperty(this,'importClass',{configurable:true,enumerable:false,writable:true,value:function(){for(var a in arguments){var clazz=arguments[a];if(Java.isType(clazz)){var className=Java.typeName(clazz);var simpleName=className.substring(className.lastIndexOf('.')+1);this[simpleName]=clazz}else{throw new TypeError(clazz + ' is not a Java class')}}}})";
 

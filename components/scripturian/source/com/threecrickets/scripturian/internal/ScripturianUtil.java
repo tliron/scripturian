@@ -413,10 +413,10 @@ public abstract class ScripturianUtil
 			Method includeMethod = includeMethods.get( containerClass );
 			if( includeMethod == null )
 			{
-				String containerIncludeExpressionCommand = (String) manager.getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
+				String containerIncludeCommand = (String) manager.getAttributes().get( LanguageManager.CONTAINER_INCLUDE_COMMAND_ATTRIBUTE );
 				try
 				{
-					includeMethod = containerClass.getMethod( containerIncludeExpressionCommand, new Class[]
+					includeMethod = containerClass.getMethod( containerIncludeCommand, new Class[]
 					{
 						String.class
 					} );

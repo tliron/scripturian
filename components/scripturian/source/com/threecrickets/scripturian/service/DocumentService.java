@@ -172,6 +172,22 @@ public class DocumentService
 	}
 
 	/**
+	 * As {@link #executeOnce(String)}.
+	 * 
+	 * @param documentNames
+	 *        The document names
+	 * @throws ParsingException
+	 * @throws ExecutionException
+	 * @throws DocumentException
+	 * @throws IOException
+	 */
+	public void require( String... documentNames ) throws ParsingException, ExecutionException, DocumentException, IOException
+	{
+		for( String documentName : documentNames )
+			executeOnce( documentName );
+	}
+
+	/**
 	 * Marks a document as executed for this thread's {@link ExecutionContext}.
 	 * 
 	 * @param documentName

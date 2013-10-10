@@ -182,12 +182,12 @@ public class RhinoAdapter extends LanguageAdapterBase
 			classChache.associate( scope );
 			executionContext.getAttributes().put( RHINO_SCOPE, scope );
 
-			String printSource = PRINT_SOURCE1 + executable.getExecutableServiceName() + PRINT_SOURCE2 + executable.getExecutableServiceName() + PRINT_SOURCE3;
-			Function printFunction = context.compileFunction( scope, printSource, null, 0, null );
-			scope.defineProperty( "print", printFunction, 0 );
+			String source = PRINT_SOURCE1 + executable.getExecutableServiceName() + PRINT_SOURCE2 + executable.getExecutableServiceName() + PRINT_SOURCE3;
+			Function function = context.compileFunction( scope, source, null, 0, null );
+			scope.defineProperty( "print", function, 0 );
 
-			printFunction = context.compileFunction( scope, PRINTLN_SOURCE, null, 0, null );
-			scope.defineProperty( "println", printFunction, 0 );
+			function = context.compileFunction( scope, PRINTLN_SOURCE, null, 0, null );
+			scope.defineProperty( "println", function, 0 );
 		}
 
 		// Define services as properties in scope
@@ -255,8 +255,8 @@ public class RhinoAdapter extends LanguageAdapterBase
 	@Override
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
-		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + expression + ");";
+		String containerIncludeCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_COMMAND_ATTRIBUTE );
+		return executable.getExecutableServiceName() + ".container." + containerIncludeCommand + "(" + expression + ");";
 	}
 
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException

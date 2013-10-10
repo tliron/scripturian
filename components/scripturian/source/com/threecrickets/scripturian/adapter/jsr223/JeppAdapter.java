@@ -102,7 +102,7 @@ public class JeppAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
-		return executable.getExecutableServiceName() + ".getContainer()." + containerIncludeExpressionCommand + "(" + content + ");";
+		String containerIncludeCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_COMMAND_ATTRIBUTE );
+		return executable.getExecutableServiceName() + ".getContainer()." + containerIncludeCommand + "(" + content + ");";
 	}
 }

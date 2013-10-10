@@ -110,8 +110,8 @@ public class JythonAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getSourceCodeForExpressionInclude( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		String containerIncludeExpressionCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_EXPRESSION_COMMAND_ATTRIBUTE );
-		return executable.getExecutableServiceName() + ".container." + containerIncludeExpressionCommand + "(" + content + ");";
+		String containerIncludeCommand = (String) getManager().getAttributes().get( LanguageManager.CONTAINER_INCLUDE_COMMAND_ATTRIBUTE );
+		return executable.getExecutableServiceName() + ".container." + containerIncludeCommand + "(" + content + ");";
 	}
 
 	@Override
