@@ -811,6 +811,10 @@ public class Executable
 		if( !executionContext.isImmutable() && executionController != null )
 			executionController.initialize( executionContext );
 
+		Object oldExecutableService = null;
+		if( !executionContext.isImmutable() )
+			oldExecutableService = executionContext.getServices().put( executableServiceName, new ExecutableService( executionContext, languageManager, containerService ) );
+
 		try
 		{
 			for( ExecutableSegment segment : segments )
@@ -830,19 +834,12 @@ public class Executable
 					if( !adapter.isThreadSafe() )
 						adapter.getLock().lock();
 
-					Object oldExecutableService = null;
-					if( !executionContext.isImmutable() )
-						oldExecutableService = executionContext.getServices().put( executableServiceName, new ExecutableService( executionContext, languageManager, containerService ) );
-
 					try
 					{
 						segment.program.execute( executionContext );
 					}
 					finally
 					{
-						if( !executionContext.isImmutable() && oldExecutableService != null )
-							executionContext.getServices().put( executableServiceName, oldExecutableService );
-
 						if( !adapter.isThreadSafe() )
 							adapter.getLock().unlock();
 					}
@@ -854,6 +851,9 @@ public class Executable
 		}
 		finally
 		{
+			if( !executionContext.isImmutable() && oldExecutableService != null )
+				executionContext.getServices().put( executableServiceName, oldExecutableService );
+
 			if( !executionContext.isImmutable() && executionController != null )
 				executionController.release( executionContext );
 		}
@@ -864,14 +864,19 @@ public class Executable
 	/**
 	 * Executes the executable with the current execution context.
 	 * 
+	 * @param containerService
+	 *        The optional container service
+	 * @param executionController
+	 *        The optional {@link ExecutionController} to be applied to the
+	 *        execution context
 	 * @throws ParsingException
 	 * @throws ExecutionException
 	 * @throws IOException
 	 * @see ExecutionContext#getCurrent()
 	 */
-	public void executeInThread() throws ParsingException, ExecutionException, IOException
+	public void executeInThread( Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
-		execute( ExecutionContext.getCurrent(), null, null );
+		execute( ExecutionContext.getCurrent(), containerService, executionController );
 	}
 
 	/**

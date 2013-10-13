@@ -141,10 +141,17 @@ public class ExecutableSegment
 	 */
 	public void createProgram( Executable executable, LanguageManager manager, boolean prepare, boolean debug ) throws ParsingException
 	{
-		if( debug )
+		LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
+		if( adapter == null )
+			throw ParsingException.adapterNotFound( executable.getDocumentName(), startLineNumber, startColumnNumber, languageTag );
+
+		if( debug && isScriptlet )
 		{
+			String extension = (String) adapter.getAttributes().get( LanguageAdapter.DEFAULT_EXTENSION );
+			extension = extension != null ? "." + extension : TXT_SUFFIX;
+
 			File cacheDir = new File( LanguageManager.getCachePath(), CACHE_DIR );
-			File dumpFile = ScripturianUtil.getFileForProgram( cacheDir, executable, position, TXT_SUFFIX );
+			File dumpFile = ScripturianUtil.getFileForProgram( cacheDir, executable, position, extension );
 			synchronized( dumpFile )
 			{
 				FileWriter writer = null;
@@ -176,10 +183,6 @@ public class ExecutableSegment
 				}
 			}
 		}
-
-		LanguageAdapter adapter = manager.getAdapterByTag( languageTag );
-		if( adapter == null )
-			throw ParsingException.adapterNotFound( executable.getDocumentName(), startLineNumber, startColumnNumber, languageTag );
 
 		program = adapter.createProgram( sourceCode, isScriptlet, position, startLineNumber, startColumnNumber, executable );
 

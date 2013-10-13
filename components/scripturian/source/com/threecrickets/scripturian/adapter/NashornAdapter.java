@@ -16,7 +16,6 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 
 import jdk.nashorn.api.scripting.NashornException;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.internal.objects.NativeArray;
 import jdk.nashorn.internal.objects.NativeJava;
 import jdk.nashorn.internal.runtime.Context;
@@ -87,15 +86,20 @@ public class NashornAdapter extends LanguageAdapterBase
 	 * @param documentName
 	 *        The document name
 	 * @param x
-	 *        The exception
+	 *        The Nashorn exception
 	 * @return The execution exception
 	 */
 	public static ExecutionException createExecutionException( String documentName, NashornException x )
 	{
-		if( x.getCause() != null )
-			return new ExecutionException( documentName, x.getCause() );
+		Throwable cause = x.getCause();
+		if( cause != null )
+		{
+			if( cause instanceof ExecutionException )
+				return (ExecutionException) cause;
+			return new ExecutionException( x.getFileName(), x.getLineNumber(), x.getColumnNumber(), x.getMessage(), cause );
+		}
 		else
-			return new ExecutionException( documentName, x );
+			return new ExecutionException( x.getFileName(), x.getLineNumber(), x.getColumnNumber(), x.getMessage(), x );
 	}
 
 	//
@@ -165,7 +169,18 @@ public class NashornAdapter extends LanguageAdapterBase
 		return context;
 	}
 
-	public ScriptObject getGlobalScope( Executable executable, ExecutionContext executionContext, Context context )
+	/**
+	 * Gets the Nashorn global scope associated with the execution context,
+	 * creating it if it doesn't exist. Each execution context is guaranteed to
+	 * have its own global scope.
+	 * 
+	 * @param executionContext
+	 *        The execution context
+	 * @param context
+	 *        The Nashorn context
+	 * @return The global scope
+	 */
+	public ScriptObject getGlobalScope( ExecutionContext executionContext, Context context )
 	{
 		ScriptObject globalScope = (ScriptObject) executionContext.getAttributes().get( NASHORN_GLOBAL_SCOPE );
 
@@ -177,11 +192,10 @@ public class NashornAdapter extends LanguageAdapterBase
 			init = true;
 		}
 
-		// Define services as properties in scope
-		( (ScriptObjectMirror) ScriptObjectMirror.wrap( globalScope, globalScope ) ).putAll( executionContext.getServices() );
-		// globalScope.putAll( executionContext.getServices() );
-
 		Context.setGlobal( globalScope );
+
+		// Define services as properties in scope
+		globalScope.putAll( executionContext.getServices(), false );
 
 		if( init )
 		{
@@ -235,7 +249,7 @@ public class NashornAdapter extends LanguageAdapterBase
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		Context context = getContext( executionContext );
-		ScriptObject globalScope = getGlobalScope( executable, executionContext, context );
+		ScriptObject globalScope = getGlobalScope( executionContext, context );
 
 		Object entryPoint = globalScope.get( entryPointName );
 		if( !( entryPoint instanceof ScriptFunction ) )
@@ -266,7 +280,5 @@ public class NashornAdapter extends LanguageAdapterBase
 
 	private static final String PRINTLN_SOURCE = "function println(s){if(undefined!==s){print(s)};if(undefined===println.separator){println.separator=String(java.lang.System.getProperty('line.separator'))}print(println.separator)}";
 
-	private static final String IMPORT_CLASS_SOURCE = "Object.defineProperty(this,'importClass',{configurable:true,enumerable:false,writable:true,value:function(){for(var a in arguments){var clazz=arguments[a];if(Java.isType(clazz)){var className=Java.typeName(clazz);var simpleName=className.substring(className.lastIndexOf('.')+1);this[simpleName]=clazz}else{throw new TypeError(clazz + ' is not a Java class')}}}})";
-
-	private static final String INIT_SOURCE = MOZILLA_COMPAT_SOURCE + ";" + PRINTLN_SOURCE + ";" + IMPORT_CLASS_SOURCE;
+	private static final String INIT_SOURCE = MOZILLA_COMPAT_SOURCE + ";" + PRINTLN_SOURCE;
 }
