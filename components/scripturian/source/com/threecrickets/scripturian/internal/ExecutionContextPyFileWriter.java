@@ -80,7 +80,7 @@ public class ExecutionContextPyFileWriter extends PyFileWriter
 	{
 		getWriter().writelines( a );
 	}
-	
+
 	public boolean isatty()
 	{
 		return false;
@@ -102,7 +102,14 @@ public class ExecutionContextPyFileWriter extends PyFileWriter
 		if( writer == null )
 		{
 			writer = new PyFileWriter( executionContext.getWriterOrDefault() );
-			executionContext.getAttributes().put( WRITER, writer );
+			try
+			{
+				executionContext.getAttributes().put( WRITER, writer );
+			}
+			catch( UnsupportedOperationException x )
+			{
+				// Immutable
+			}
 		}
 		return writer;
 	}

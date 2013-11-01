@@ -43,7 +43,14 @@ public class ExecutionContextPyFileErrorWriter extends ExecutionContextPyFileWri
 		if( writer == null )
 		{
 			writer = new PyFileWriter( executionContext.getErrorWriterOrDefault() );
-			executionContext.getAttributes().put( WRITER, writer );
+			try
+			{
+				executionContext.getAttributes().put( WRITER, writer );
+			}
+			catch( UnsupportedOperationException x )
+			{
+				// Immutable
+			}
 		}
 		return writer;
 	}
