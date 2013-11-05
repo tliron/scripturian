@@ -227,14 +227,12 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 * if it doesn't exist. Each execution context is guaranteed to have at most
 	 * one script engine instance per script engine.
 	 * 
+	 * @param adapter
 	 * @param scriptEngineName
-	 *        The script engine name
 	 * @param executable
-	 *        The executable
 	 * @param executionContext
-	 *        The execution context
-	 * @return The script engine
-	 * @throws ParsingException
+	 * @return
+	 * @throws LanguageAdapterException
 	 */
 	public ScriptEngine getScriptEngine( LanguageAdapter adapter, String scriptEngineName, Executable executable, ExecutionContext executionContext ) throws LanguageAdapterException
 	{

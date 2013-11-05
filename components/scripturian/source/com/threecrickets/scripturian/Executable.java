@@ -140,13 +140,13 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * <li><b>PHP-style delimiters</b>: <code>&lt;? document.cacheDuration.set 5000
  * ?&gt;</code></li>
  * <li><b>Specifying a language tag</b>:
- * <code>&lt;%groovy print myVariable %&gt; &lt;?php $executable->container->include(lib_name); ?&gt;</code>
+ * <code>&lt;%groovy print myVariable %&gt; &lt;?php $executable-&gt;container-&gt;include(lib_name); ?&gt;</code>
  * </li>
  * <li><b>Output expression</b>: <code>&lt;?= 15 * 6 ?&gt;</code></li>
  * <li><b>Output expression with specifying a language tag</b>:
  * <code>&lt;?=js sqrt(myVariable) ?&gt;</code></li>
  * <li><b>Include</b>:
- * <code>&lt;%& 'library.js' %&gt; &lt;?& 'language-' + myObject.getLang + '-support.py' ?&gt;</code>
+ * <code>&lt;%&amp; 'library.js' %&gt; &lt;?&amp; 'language-' + myObject.getLang + '-support.py' ?&gt;</code>
  * </li>
  * <li><b>Comment</b>: <code>&lt;%# This is ignored. %&gt;</code></li>
  * <li><b>In-flow</b>:

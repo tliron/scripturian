@@ -63,7 +63,7 @@ public class ParsingContext
 
 	/**
 	 * The default addition to the start delimiter to specify an include
-	 * scriptlet: &
+	 * scriptlet: &amp;
 	 */
 	public static final String DEFAULT_DELIMITER_INCLUDE = "&";
 
