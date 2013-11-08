@@ -365,7 +365,10 @@ public class RhinoAdapter extends LanguageAdapterBase
 		Context context = new ContextFactory().enterContext();
 		try
 		{
-			return context.getImplementationVersion();
+			String version = context.getImplementationVersion();
+			if( ( version != null ) && version.startsWith( "Rhino " ) )
+				version = version.substring( 6 );
+			return version;
 		}
 		finally
 		{
