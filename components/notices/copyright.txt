@@ -1,19 +1,8 @@
 
-================
-Copyright notice
-================
+Scripturian is Copyright 2009-2013 Three Crickets LLC:
 
-Version 1.1, January 2010
-
-This software distribution is covered by this copyright notice.
+http://threecrickets.com/
   
 All third-party libraries redistributed with this software remain the property 
 of their respective copyright owners and are subject to separate license 
-agreements. For questions, please contact the copyright holder:
-   
-    Three Crickets LLC
-    3021 W. Wilson Ave. #3
-    Chicago, IL 60625
-    USA
-	http://threecrickets.com/
-    mailto:legal@threecrickets.com
+agreements.
