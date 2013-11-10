@@ -15,7 +15,7 @@ http://threecrickets.com/scripturian/
 Having Trouble?
 ---------------
 
-Join the Prudence Community, and tell us where you're stuck! We're very happy to help
+Join the Scripturian Community, and tell us where you're stuck! We're very happy to help
 newcomers get up and running:
 
-http://groups.google.com/group/prudence-community
+http://groups.google.com/group/scripturian-community
