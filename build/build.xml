@@ -76,7 +76,7 @@
 			<!-- Clojure has no online javadocs -->
 			<link href="http://groovy.codehaus.org/api/" />
 			<link href="http://jepp.sourceforge.net/javadoc/" />
-			<link href="http://jruby-embed.kenai.com/docs/" />
+			<link href="http://jruby.org/apidocs/" /> <!-- doesn't seem to have a package-list -->
 			<link href="http://www.jython.org/javadoc/" />
 			<link href="http://www.caucho.com/resin-javadoc/" />
 			<link href="http://www-archive.mozilla.org/rhino/apidocs/" />
