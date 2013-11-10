@@ -80,17 +80,18 @@
 
 			<link href="${documentation.jvm}" />
 			<!-- Clojure has no online javadocs -->
-			<link href="http://commons.apache.org/daemon/apidocs/" />
 			<link href="http://groovy.codehaus.org/api/" />
 			<link href="http://jepp.sourceforge.net/javadoc/" />
 			<link href="http://jruby-embed.kenai.com/docs/" />
-			<link href="http://docs.oracle.com/javase/6/docs/api/" /><!-- for javax.script -->
-			<!-- Jygments has no online javadocs -->
 			<link href="http://www.jython.org/javadoc/" />
 			<link href="http://www.caucho.com/resin-javadoc/" />
-			<link href="http://www.mozilla.org/rhino/apidocs/" />
+			<link href="http://www-archive.mozilla.org/rhino/apidocs/" />
+			<link href="http://luaj.sourceforge.net/api/3.0/" />
 			<link href="http://threecrickets.com/api/java/succinct/" />
 			<link href="http://velocity.apache.org/engine/releases/velocity-1.7/apidocs/" />
+			<link href="http://commons.apache.org/daemon/apidocs/" />
+			<link href="http://threecrickets.com/api/java/jygments/" />
+			<link href="http://docs.oracle.com/javase/6/docs/api/" /><!-- for javax.script -->
 			<classpath refid="dependencies" />
 			<bottom>
 				<![CDATA[<i>${documentation.copyright}</i>]]>

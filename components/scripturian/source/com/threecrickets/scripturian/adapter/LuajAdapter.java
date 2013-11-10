@@ -90,7 +90,7 @@ public class LuajAdapter extends LanguageAdapterBase
 	 */
 	public LuajAdapter() throws LanguageAdapterException
 	{
-		super( "Luaj", Lua._VERSION, "Lua", "", Arrays.asList( "lua" ), "lua", Arrays.asList( "lua", "luaj" ), "luaj" );
+		super( "Luaj", getImplementationVersion(), "Lua", "", Arrays.asList( "lua" ), "lua", Arrays.asList( "lua", "luaj" ), "luaj" );
 	}
 
 	//
@@ -221,6 +221,19 @@ public class LuajAdapter extends LanguageAdapterBase
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	/**
+	 * Luaj implementation version.
+	 * 
+	 * @return Luaj implementation version
+	 */
+	private static String getImplementationVersion()
+	{
+		String version = Lua._VERSION;
+		if( version.startsWith( "Luaj-" ) )
+			version = version.substring( 5 );
+		return version;
+	}
 
 	/**
 	 * A Luaj function that retrieves an execution context service from a table.
