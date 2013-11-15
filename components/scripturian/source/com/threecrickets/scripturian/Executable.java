@@ -829,7 +829,7 @@ public class Executable
 						throw ParsingException.adapterNotFound( documentName, segment.startLineNumber, segment.startColumnNumber, segment.languageTag );
 
 					if( !executionContext.isImmutable() )
-						executionContext.setAdapter( adapter );
+						executionContext.addAdapter( adapter );
 
 					if( !adapter.isThreadSafe() )
 						adapter.getLock().lock();
@@ -838,6 +838,16 @@ public class Executable
 					{
 						segment.program.execute( executionContext );
 					}
+					catch( ParsingException x )
+					{
+						x.setExectable( this );
+						throw x;
+					}
+					catch( ExecutionException x )
+					{
+						x.setExectable( this );
+						throw x;
+					}
 					finally
 					{
 						if( !adapter.isThreadSafe() )
@@ -845,7 +855,7 @@ public class Executable
 					}
 
 					if( !executionContext.isImmutable() )
-						executionContext.setAdapter( adapter );
+						executionContext.addAdapter( adapter );
 				}
 			}
 		}

@@ -167,7 +167,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 		}
 		catch( RaiseException x )
 		{
-			throw JRubyAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw JRubyAdapter.createExecutionException( x );
 		}
 		catch( InstantiationException x )
 		{

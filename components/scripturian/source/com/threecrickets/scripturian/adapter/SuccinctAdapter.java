@@ -39,15 +39,15 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	// Constants
 	//
 
-	public static final String SOURCE = "succinct.templateSource";
+	public static final String SOURCE_ATTRIBUTE = SuccinctAdapter.class.getCanonicalName() + ".templateSource";
 
-	public static final String FORMATTER = "succinct.formatter";
+	public static final String FORMATTER_ATTRIBUTE = SuccinctAdapter.class.getCanonicalName() + ".formatter";
 
-	public static final String FILLER = "succinct.filler";
+	public static final String FILLER_ATTRIBUTE = SuccinctAdapter.class.getCanonicalName() + ".filler";
 
-	public static final String CASTER = "succinct.caster";
+	public static final String CASTER_ATTRIBUTE = SuccinctAdapter.class.getCanonicalName() + ".caster";
 
-	public static final String CASTER_CONTEXT = "succinct.casterContext";
+	public static final String CASTER_CONTEXT_ATTRIBUTE = SuccinctAdapter.class.getCanonicalName() + ".casterContext";
 
 	public static final String INCLUSION_KEY = "scripturian.include ";
 
@@ -71,23 +71,23 @@ public class SuccinctAdapter extends LanguageAdapterBase
 
 	public TemplateSource getTemplateSource( ExecutionContext executionContext )
 	{
-		TemplateSource templateSource = (TemplateSource) executionContext.getAttributes().get( SuccinctAdapter.SOURCE );
+		TemplateSource templateSource = (TemplateSource) executionContext.getAttributes().get( SuccinctAdapter.SOURCE_ATTRIBUTE );
 		return templateSource;
 	}
 
 	public Formatter getFormatter( ExecutionContext executionContext )
 	{
-		Formatter formatter = (Formatter) executionContext.getAttributes().get( SuccinctAdapter.FORMATTER );
+		Formatter formatter = (Formatter) executionContext.getAttributes().get( SuccinctAdapter.FORMATTER_ATTRIBUTE );
 		return formatter;
 	}
 
 	public Filler getFiller( Executable executable, ExecutionContext executionContext )
 	{
-		Filler filler = (Filler) executionContext.getAttributes().get( SuccinctAdapter.FILLER );
+		Filler filler = (Filler) executionContext.getAttributes().get( SuccinctAdapter.FILLER_ATTRIBUTE );
 		if( filler == null )
 		{
 			filler = new ScripturianSuccinctFiller( getManager(), executable, executionContext );
-			executionContext.getAttributes().put( SuccinctAdapter.FILLER, filler );
+			executionContext.getAttributes().put( SuccinctAdapter.FILLER_ATTRIBUTE, filler );
 		}
 		return filler;
 	}
@@ -95,13 +95,13 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	public Caster<Object> getCaster( ExecutionContext executionContext )
 	{
 		@SuppressWarnings("unchecked")
-		Caster<Object> caster = (Caster<Object>) executionContext.getAttributes().get( SuccinctAdapter.CASTER );
+		Caster<Object> caster = (Caster<Object>) executionContext.getAttributes().get( SuccinctAdapter.CASTER_ATTRIBUTE );
 		return caster;
 	}
 
 	public Object getCasterContext( ExecutionContext executionContext )
 	{
-		Object casterContext = executionContext.getAttributes().get( SuccinctAdapter.CASTER_CONTEXT );
+		Object casterContext = executionContext.getAttributes().get( SuccinctAdapter.CASTER_CONTEXT_ATTRIBUTE );
 		return casterContext;
 	}
 

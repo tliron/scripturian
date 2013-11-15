@@ -52,7 +52,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	/**
 	 * The Groovy binding attribute.
 	 */
-	public static final String GROOVY_BINDING = "groovy.binding";
+	public static final String GROOVY_BINDING = GroovyAdapter.class.getCanonicalName() + ".binding";
 
 	/**
 	 * The default base directory for cached executables.
@@ -75,7 +75,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 *        The exception
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, int startLineNumber, Exception x )
+	public static ExecutionException createExecutionException( Executable executable, int startLineNumber, Exception x )
 	{
 		if( x instanceof ExecutionException )
 			return (ExecutionException) x;
@@ -107,7 +107,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ExecutionException) cause ).getStack() );
 				executionException.getStack().add(
-					new StackFrame( documentName, groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
+					new StackFrame( executable.getDocumentName(), groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
 						groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1 ) );
 				return executionException;
 			}
@@ -116,16 +116,16 @@ public class GroovyAdapter extends LanguageAdapterBase
 				ExecutionException executionException = new ExecutionException( cause.getMessage(), cause );
 				executionException.getStack().addAll( ( (ParsingException) cause ).getStack() );
 				executionException.getStack().add(
-					new StackFrame( documentName, groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
+					new StackFrame( executable.getDocumentName(), groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
 						groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1 ) );
 				return executionException;
 			}
 			else
-				return new ExecutionException( documentName, groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
+				return new ExecutionException( executable.getDocumentName(), groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getLineNumber() : startLineNumber,
 					groovyRuntimeException.getNode() != null ? groovyRuntimeException.getNode().getColumnNumber() : -1, groovyRuntimeException.getMessage(), x );
 		}
 		else
-			return new ExecutionException( documentName, x );
+			return new ExecutionException( executable.getDocumentName(), x );
 	}
 
 	//
@@ -234,7 +234,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 		}
 		catch( Exception x )
 		{
-			throw GroovyAdapter.createExecutionException( executable.getDocumentName(), 0, x );
+			throw GroovyAdapter.createExecutionException( executable, 0, x );
 		}
 	}
 

@@ -20,6 +20,27 @@ import com.threecrickets.scripturian.exception.ParsingException;
  */
 public abstract class WikiTextAdapterBase extends LanguageAdapterBase
 {
+	//
+	// Constructor
+	//
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param name
+	 *        The name of the language adapter implementation
+	 * @param version
+	 *        The version of the language adapter implementation
+	 * @param extensions
+	 *        Standard source code filename extensions
+	 * @param defaultExtension
+	 *        Default source code filename extension
+	 * @param tags
+	 *        Language tags supported for scriptlets
+	 * @param defaultTag
+	 *        Default language tag used for scriptlets
+	 * @throws LanguageAdapterException
+	 */
 	public WikiTextAdapterBase( String name, String version, Collection<String> extensions, String defaultExtension, Collection<String> tags, String defaultTag ) throws LanguageAdapterException
 	{
 		super( "WikiText " + name, version, name, version, extensions, defaultExtension, tags, defaultTag );

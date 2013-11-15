@@ -82,11 +82,11 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 			}
 			catch( QuercusParseException x )
 			{
-				throw QuercusAdapter.createParsingException( executable.getDocumentName(), x );
+				throw QuercusAdapter.createParsingException( executable, x );
 			}
 			catch( Exception x )
 			{
-				throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
+				throw QuercusAdapter.createExecutionException( executable, x );
 			}
 		}
 
@@ -102,7 +102,7 @@ class QuercusProgram extends ProgramBase<QuercusAdapter>
 		}
 		catch( Exception x )
 		{
-			throw QuercusAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw QuercusAdapter.createExecutionException( executable, x );
 		}
 		finally
 		{

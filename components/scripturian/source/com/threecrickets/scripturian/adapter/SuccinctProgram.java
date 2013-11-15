@@ -98,7 +98,7 @@ class SuccinctProgram extends ProgramBase<SuccinctAdapter>
 			{
 				Caster<Object> caster = adapter.getCaster( executionContext );
 				if( caster == null )
-					throw new ExecutionException( executable.getDocumentName(), "Execution context must contain either a \"" + SuccinctAdapter.FILLER + "\" or a \"" + SuccinctAdapter.CASTER + "\" attribute" );
+					throw new ExecutionException( executable.getDocumentName(), "Execution context must contain either a \"" + SuccinctAdapter.FILLER_ATTRIBUTE + "\" or a \"" + SuccinctAdapter.CASTER_ATTRIBUTE + "\" attribute" );
 
 				caster.cast( template, null, executionContext.getWriter(), adapter.getCasterContext( executionContext ) );
 			}

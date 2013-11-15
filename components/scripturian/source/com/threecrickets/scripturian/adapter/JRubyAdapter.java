@@ -60,22 +60,22 @@ public class JRubyAdapter extends LanguageAdapterBase
 	/**
 	 * The Ruby runtime instance attribute.
 	 */
-	public static final String JRUBY_RUNTIME = "jruby.runtime";
+	public static final String JRUBY_RUNTIME = JRubyAdapter.class.getCanonicalName() + ".runtime";
 
 	/**
 	 * The Ruby class cache attribute.
 	 */
-	public static final String JRUBY_CLASS_CACHE = "jruby.classCache";
+	public static final String JRUBY_CLASS_CACHE = JRubyAdapter.class.getCanonicalName() + ".classCache";
 
 	/**
 	 * The switchable standard output attribute for the Ruby runtime.
 	 */
-	public static final String JRUBY_OUT = "jruby.out";
+	public static final String JRUBY_OUT = JRubyAdapter.class.getCanonicalName() + ".out";
 
 	/**
 	 * The switchable standard error attribute for the Ruby runtime.
 	 */
-	public static final String JRUBY_ERR = "jruby.err";
+	public static final String JRUBY_ERR = JRubyAdapter.class.getCanonicalName() + ".err";
 
 	/**
 	 * The default base directory for cached executables.
@@ -89,13 +89,11 @@ public class JRubyAdapter extends LanguageAdapterBase
 	/**
 	 * Creates an execution exception with a full stack.
 	 * 
-	 * @param documentName
-	 *        The document name
 	 * @param x
 	 *        The Ruby exception
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, RaiseException x )
+	public static ExecutionException createExecutionException( RaiseException x )
 	{
 		RubyException rubyException = x.getException();
 		if( rubyException instanceof NativeException )
@@ -319,7 +317,7 @@ public class JRubyAdapter extends LanguageAdapterBase
 		}
 		catch( RaiseException x )
 		{
-			throw createExecutionException( executable.getDocumentName(), x );
+			throw createExecutionException( x );
 		}
 		finally
 		{

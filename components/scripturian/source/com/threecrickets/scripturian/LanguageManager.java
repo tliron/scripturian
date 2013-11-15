@@ -44,7 +44,7 @@ public class LanguageManager
 	 * 
 	 * @see #getCachePath()
 	 */
-	public static final String SCRIPTURIAN_CACHE_PATH_PROPERTY = "scripturian.cache";
+	public static final String SCRIPTURIAN_CACHE_PATH_PROPERTY = "com.threecrickets.scripturian.cache";
 
 	/**
 	 * The default Scripturian cache path.
@@ -56,12 +56,12 @@ public class LanguageManager
 	/**
 	 * The attribute name for the container include command.
 	 */
-	public static final String CONTAINER_INCLUDE_COMMAND_ATTRIBUTE = "scripturian.containerIncludeCommand";
+	public static final String CONTAINER_INCLUDE_COMMAND_ATTRIBUTE = "com.threecrickets.scripturian.containerIncludeCommand";
 
 	/**
 	 * The attribute prefix for adapter priorities.
 	 */
-	public static final String ADAPTER_PRIORITY_ATTRIBUTE = "scripturian.priority.";
+	public static final String ADAPTER_PRIORITY_ATTRIBUTE = "com.threecrickets.scripturian.priority.";
 
 	/**
 	 * The default container include command.

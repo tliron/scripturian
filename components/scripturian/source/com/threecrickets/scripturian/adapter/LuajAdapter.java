@@ -51,7 +51,7 @@ public class LuajAdapter extends LanguageAdapterBase
 	/**
 	 * The Luaj instance context attribute.
 	 */
-	public static final String LUAJ_GLOBALS = "luaj.globals";
+	public static final String LUAJ_GLOBALS = LuajAdapter.class.getCanonicalName() + ".globals";
 
 	/**
 	 * The default base directory for cached executables.

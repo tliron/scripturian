@@ -53,7 +53,7 @@ public class PreparationException extends ParsingException
 
 	public PreparationException( String message, Throwable cause )
 	{
-		super( message != null ? message : cause.getClass().getName(), cause );
+		super( message != null ? message : cause.getClass().getCanonicalName(), cause );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

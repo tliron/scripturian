@@ -59,12 +59,12 @@ public class QuercusAdapter extends LanguageAdapterBase
 	/**
 	 * The Quercus environment attribute.
 	 */
-	public static final String QUERCUS_ENVIRONMENT = "quercus.environment";
+	public static final String QUERCUS_ENVIRONMENT = QuercusAdapter.class.getCanonicalName() + ".environment";
 
 	/**
 	 * The Quercus writer stream attribute.
 	 */
-	public static final String QUERCUS_WRITER_STREAM = "quercus.writerStream";
+	public static final String QUERCUS_WRITER_STREAM = QuercusAdapter.class.getCanonicalName() + "quercus.writerStream";
 
 	/**
 	 * The default base directory for cached executables.
@@ -75,7 +75,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 	// Static operations
 	//
 
-	public static ParsingException createParsingException( String documentName, QuercusParseException x )
+	public static ParsingException createParsingException( Executable executable, QuercusParseException x )
 	{
 		ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
 		Throwable cause = x.getCause();
@@ -94,19 +94,19 @@ public class QuercusAdapter extends LanguageAdapterBase
 			return parsingException;
 		}
 		else
-			return new ParsingException( documentName, message, x );
+			return new ParsingException( executable.getDocumentName(), message, x );
 	}
 
 	/**
 	 * Creates an execution exception with a full stack.
 	 * 
-	 * @param documentName
-	 *        The document name
+	 * @param executable
+	 *        The exeuctable
 	 * @param x
 	 *        The exception
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, Exception x )
+	public static ExecutionException createExecutionException( Executable executable, Exception x )
 	{
 		ArrayList<StackFrame> stack = new ArrayList<StackFrame>();
 		Throwable cause = x.getCause();
@@ -128,7 +128,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 			return executionException;
 		}
 		else
-			return new ExecutionException( documentName, message, x );
+			return new ExecutionException( executable.getDocumentName(), message, x );
 	}
 
 	public static String extractExceptionStackFromMessage( String message, Collection<StackFrame> stack )
@@ -322,7 +322,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 		}
 		catch( Exception x )
 		{
-			throw createExecutionException( executable.getDocumentName(), x );
+			throw createExecutionException( executable, x );
 		}
 		finally
 		{

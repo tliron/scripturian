@@ -59,7 +59,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	/**
 	 * The Python interpreter attribute.
 	 */
-	public static final String JYTHON_INTERPRETER = "jython.interpreter";
+	public static final String JYTHON_INTERPRETER = JythonAdapter.class.getCanonicalName() + ".interpreter";
 
 	/**
 	 * The Python home property.

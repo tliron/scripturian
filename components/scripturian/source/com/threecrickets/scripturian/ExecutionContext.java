@@ -300,13 +300,13 @@ public class ExecutionContext
 
 	/**
 	 * Sets a language adapter as a user of this context. The adapter will then
-	 * get a change to release contextual state when {@link #release()} is
+	 * get a chance to release contextual state when {@link #release()} is
 	 * called.
 	 * 
 	 * @param languageAdapter
 	 * @see LanguageAdapter#releaseContext(ExecutionContext)
 	 */
-	public void setAdapter( LanguageAdapter languageAdapter )
+	public void addAdapter( LanguageAdapter languageAdapter )
 	{
 		if( released )
 			throw new IllegalStateException( "Cannot access released execution context" );
@@ -387,6 +387,16 @@ public class ExecutionContext
 		try
 		{
 			return languageAdapter.enter( entryPointName, executable, this, arguments );
+		}
+		catch( ParsingException x )
+		{
+			x.setExectable( executable );
+			throw x;
+		}
+		catch( ExecutionException x )
+		{
+			x.setExectable( executable );
+			throw x;
 		}
 		finally
 		{

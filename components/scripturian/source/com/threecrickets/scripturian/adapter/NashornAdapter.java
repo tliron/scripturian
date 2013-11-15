@@ -54,22 +54,22 @@ public class NashornAdapter extends LanguageAdapterBase
 	/**
 	 * The Nashorn context attribute.
 	 */
-	public static final String NASHORN_CONTEXT = "nashorn.context";
+	public static final String NASHORN_CONTEXT = NashornAdapter.class.getCanonicalName() + ".context";
 
 	/**
 	 * The Nashorn global scope attribute.
 	 */
-	public static final String NASHORN_GLOBAL_SCOPE = "nashorn.globalScope";
+	public static final String NASHORN_GLOBAL_SCOPE = NashornAdapter.class.getCanonicalName() + ".globalScope";
 
 	/**
 	 * The switchable standard output attribute for the Nashorn context.
 	 */
-	public static final String NASHORN_OUT = "nashorn.out";
+	public static final String NASHORN_OUT = NashornAdapter.class.getCanonicalName() + ".out";
 
 	/**
 	 * The switchable standard error attribute for the Nashorn context.
 	 */
-	public static final String NASHORN_ERR = "nashorn.err";
+	public static final String NASHORN_ERR = NashornAdapter.class.getCanonicalName() + ".err";
 
 	/**
 	 * The default base directory for cached executables.
@@ -83,13 +83,11 @@ public class NashornAdapter extends LanguageAdapterBase
 	/**
 	 * Creates an execution exception.
 	 * 
-	 * @param documentName
-	 *        The document name
 	 * @param x
 	 *        The Nashorn exception
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, NashornException x )
+	public static ExecutionException createExecutionException( NashornException x )
 	{
 		Throwable cause = x.getCause();
 		if( cause != null )
@@ -265,7 +263,7 @@ public class NashornAdapter extends LanguageAdapterBase
 		}
 		catch( NashornException x )
 		{
-			throw createExecutionException( executable.getDocumentName(), x );
+			throw createExecutionException( x );
 		}
 		catch( ClassNotFoundException x )
 		{

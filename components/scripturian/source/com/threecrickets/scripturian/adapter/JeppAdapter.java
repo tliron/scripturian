@@ -44,7 +44,7 @@ public class JeppAdapter extends LanguageAdapterBase
 	/**
 	 * The Jepp runtime attribute.
 	 */
-	public static final String JEPP_RUNTIME = "jepp.runtime";
+	public static final String JEPP_RUNTIME = JeppAdapter.class.getCanonicalName() + ".runtime";
 
 	/**
 	 * The default base directory for cached executables.

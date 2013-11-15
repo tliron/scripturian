@@ -131,7 +131,7 @@ class RhinoProgram extends ProgramBase<RhinoAdapter>
 		}
 		catch( Exception x )
 		{
-			throw RhinoAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw RhinoAdapter.createExecutionException( executable, x );
 		}
 		finally
 		{

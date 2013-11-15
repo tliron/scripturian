@@ -54,17 +54,17 @@ public class RhinoAdapter extends LanguageAdapterBase
 	/**
 	 * The Rhino context attribute.
 	 */
-	public static final String RHINO_CONTEXT = "rhino.context";
+	public static final String RHINO_CONTEXT = RhinoAdapter.class.getCanonicalName() + ".context";
 
 	/**
 	 * The Rhino scope attribute.
 	 */
-	public static final String RHINO_SCOPE = "rhino.scope";
+	public static final String RHINO_SCOPE = RhinoAdapter.class.getCanonicalName() + ".scope";
 
 	/**
 	 * The Rhino optimization level language manager attribute.
 	 */
-	public static final String RHINO_OPTIMIZATION_LEVEL = "rhino.optimizationLevel";
+	public static final String RHINO_OPTIMIZATION_LEVEL = RhinoAdapter.class.getCanonicalName() + ".optimizationLevel";
 
 	/**
 	 * The default base directory for cached executables.
@@ -88,13 +88,13 @@ public class RhinoAdapter extends LanguageAdapterBase
 	/**
 	 * Creates an execution exception with a full stack.
 	 * 
-	 * @param documentName
-	 *        The document name
+	 * @param executable
+	 *        The executable
 	 * @param x
 	 *        The exception
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( String documentName, Exception x )
+	public static ExecutionException createExecutionException( Executable executable, Exception x )
 	{
 		if( x instanceof RhinoException )
 		{
@@ -120,7 +120,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 				return new ExecutionException( rhinoException.sourceName(), rhinoException.lineNumber(), rhinoException.columnNumber(), rhinoException.getMessage(), x );
 		}
 		else
-			return new ExecutionException( documentName, x );
+			return new ExecutionException( executable.getDocumentName(), x );
 	}
 
 	//
@@ -288,7 +288,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 		}
 		catch( Exception x )
 		{
-			throw RhinoAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw RhinoAdapter.createExecutionException( executable, x );
 		}
 		finally
 		{

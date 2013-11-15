@@ -37,7 +37,7 @@ public class ExecutionException extends Exception
 
 	public ExecutionException( String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
 	{
-		super( message != null ? message : cause.getClass().getName(), cause );
+		super( message != null ? message : cause.getClass().getCanonicalName(), cause );
 		stack.add( new StackFrame( documentName, lineNumber, columnNumber ) );
 	}
 
@@ -49,7 +49,7 @@ public class ExecutionException extends Exception
 
 	public ExecutionException( String documentName, String message, Throwable cause )
 	{
-		super( message != null ? message : cause.getClass().getName(), cause );
+		super( message != null ? message : cause.getClass().getCanonicalName(), cause );
 		stack.add( new StackFrame( documentName ) );
 	}
 
@@ -61,7 +61,7 @@ public class ExecutionException extends Exception
 
 	public ExecutionException( String message, Throwable cause )
 	{
-		super( message != null ? message : cause.getClass().getName(), cause );
+		super( message != null ? message : cause.getClass().getCanonicalName(), cause );
 	}
 
 	public ExecutionException( ParsingException parsingException )
@@ -73,6 +73,26 @@ public class ExecutionException extends Exception
 	//
 	// Attributes
 	//
+
+	/**
+	 * The associated executable.
+	 * 
+	 * @return The associated executable
+	 * @see #setExectable(Executable)
+	 */
+	public Executable getExecutable()
+	{
+		return executable;
+	}
+
+	/**
+	 * @param executable
+	 * @see #getExecutable()
+	 */
+	public void setExectable( Executable executable )
+	{
+		this.executable = executable;
+	}
 
 	/**
 	 * The call stack.
@@ -88,6 +108,11 @@ public class ExecutionException extends Exception
 	// Private
 
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * The associated executable.
+	 */
+	private Executable executable;
 
 	/**
 	 * The call stack.

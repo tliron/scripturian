@@ -174,13 +174,13 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	{
 		ScriptEngines scriptEngineNames = getClass().getAnnotation( ScriptEngines.class );
 		if( scriptEngineNames == null )
-			throw new LanguageAdapterException( getClass(), getClass().getName() + " does not have a ScriptEngines annotation" );
+			throw new LanguageAdapterException( getClass(), getClass().getCanonicalName() + " does not have a ScriptEngines annotation" );
 
 		String scriptEngineName = scriptEngineNames.value()[0];
 		ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
 		scriptEngine = scriptEngineManager.getEngineByName( scriptEngineName );
 		if( scriptEngine == null )
-			throw new LanguageAdapterException( getClass(), getClass().getName() + " could not load ScriptEngine " + scriptEngineName );
+			throw new LanguageAdapterException( getClass(), getClass().getCanonicalName() + " could not load ScriptEngine " + scriptEngineName );
 
 		ScriptEngineFactory factory = scriptEngine.getFactory();
 

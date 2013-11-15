@@ -84,7 +84,7 @@ public class NashornProgram extends ProgramBase<NashornAdapter>
 		}
 		catch( NashornException x )
 		{
-			throw NashornAdapter.createExecutionException( executable.getDocumentName(), x );
+			throw NashornAdapter.createExecutionException( x );
 		}
 		finally
 		{

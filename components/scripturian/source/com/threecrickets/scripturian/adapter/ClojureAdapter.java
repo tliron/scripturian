@@ -66,7 +66,7 @@ public class ClojureAdapter extends LanguageAdapterBase
 	/**
 	 * Namespace attribute.
 	 */
-	public static final String CLOJURE_NAMESPACE = "clojure.namespace";
+	public static final String CLOJURE_NAMESPACE = ClojureAdapter.class.getCanonicalName() + ".namespace";
 
 	/**
 	 * Prefix prepended to all namespace names created by this adapter.
