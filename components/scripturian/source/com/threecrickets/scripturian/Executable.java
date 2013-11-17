@@ -707,14 +707,14 @@ public class Executable
 	}
 
 	/**
-	 * Timestamp of when the executable last finished executing successfully, or
-	 * 0 if it was never executed.
+	 * Timestamp of when the executable last finished executing or entering
+	 * successfully, or 0 if it was never executed or entered.
 	 * 
 	 * @return The timestamp or 0
 	 */
-	public long getLastExecutedTimestamp()
+	public long getLastUsedTimestamp()
 	{
-		return lastExecutedTimestamp;
+		return lastUsedTimestamp;
 	}
 
 	/**
@@ -868,7 +868,7 @@ public class Executable
 				executionController.release( executionContext );
 		}
 
-		lastExecutedTimestamp = System.currentTimeMillis();
+		lastUsedTimestamp = System.currentTimeMillis();
 	}
 
 	/**
@@ -979,7 +979,9 @@ public class Executable
 		if( enterableExecutionContext == null )
 			throw new IllegalStateException( "Executable does not have an enterable execution context for key: " + enteringKey );
 
-		return enterableExecutionContext.enter( this, entryPointName, arguments );
+		Object r = enterableExecutionContext.enter( this, entryPointName, arguments );
+		lastUsedTimestamp = System.currentTimeMillis();
+		return r;
 	}
 
 	/**
@@ -1072,10 +1074,10 @@ public class Executable
 	private final String executableServiceName;
 
 	/**
-	 * Timestamp of when the executable last finished executing successfully, or
-	 * 0 if it was never executed.
+	 * Timestamp of when the executable last finished executing or entering
+	 * successfully, or 0 if it was never executed or entered.
 	 */
-	private volatile long lastExecutedTimestamp = 0;
+	private volatile long lastUsedTimestamp = 0;
 
 	/**
 	 * The execution contexts to be used for calls to
