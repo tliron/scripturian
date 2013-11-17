@@ -28,8 +28,11 @@ public class StackFrame
 	 * Constructor.
 	 * 
 	 * @param documentName
+	 *        The document name or -1
 	 * @param lineNumber
+	 *        The line number or -1
 	 * @param columnNumber
+	 *        The colum number or -1
 	 */
 	public StackFrame( String documentName, int lineNumber, int columnNumber )
 	{
@@ -39,7 +42,10 @@ public class StackFrame
 	}
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param documentName
+	 *        The document name
 	 */
 	public StackFrame( String documentName )
 	{
@@ -47,7 +53,10 @@ public class StackFrame
 	}
 
 	/**
+	 * Constructor.
+	 * 
 	 * @param stackTraceElement
+	 *        The stack trace element
 	 */
 	public StackFrame( StackTraceElement stackTraceElement )
 	{

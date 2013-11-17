@@ -153,6 +153,8 @@ public class LanguageManager
 	/**
 	 * Find only those attributes with this prefix.
 	 * 
+	 * @param prefix
+	 *        The attribute prefix
 	 * @return The attributes with the prefix
 	 */
 	public Properties getAttributesAsProperties( String prefix )

@@ -218,6 +218,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	/**
 	 * @param minimumTimeBetweenValidityChecks
+	 *        The minimum time between validity checks in milliseconds
 	 * @see #getMinimumTimeBetweenValidityChecks()
 	 */
 	public void setMinimumTimeBetweenValidityChecks( long minimumTimeBetweenValidityChecks )
@@ -242,6 +243,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	/**
 	 * @param charset
+	 *        The charset
 	 * @see #getCharset()
 	 */
 	public void setCharset( Charset charset )

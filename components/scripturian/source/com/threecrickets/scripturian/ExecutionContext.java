@@ -166,6 +166,7 @@ public class ExecutionContext
 	 * Immutable contexts will return an unmodifiable list.
 	 * 
 	 * @see File#toURI()
+	 * @return The library locations
 	 */
 	public List<URI> getLibraryLocations()
 	{
@@ -227,6 +228,7 @@ public class ExecutionContext
 	 * The standard output set for executables using this context.
 	 * 
 	 * @param writer
+	 *        The writer
 	 * @return The previous writer or null
 	 */
 	public Writer setWriter( Writer writer )
@@ -271,6 +273,7 @@ public class ExecutionContext
 	 * The standard error set for executables using this context.
 	 * 
 	 * @param writer
+	 *        The writer
 	 * @return The previous error writer or null
 	 */
 	public Writer setErrorWriter( Writer writer )
@@ -304,6 +307,7 @@ public class ExecutionContext
 	 * called.
 	 * 
 	 * @param languageAdapter
+	 *        The language adapter
 	 * @see LanguageAdapter#releaseContext(ExecutionContext)
 	 */
 	public void addAdapter( LanguageAdapter languageAdapter )

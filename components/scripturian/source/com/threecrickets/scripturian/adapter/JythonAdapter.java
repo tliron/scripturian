@@ -194,6 +194,7 @@ public class JythonAdapter extends LanguageAdapterBase
 	 * @param executable
 	 *        The executable
 	 * @return The Python interpreter
+	 * @throws LanguageAdapterException
 	 */
 	public PythonInterpreter getPythonInterpreter( ExecutionContext executionContext, Executable executable ) throws LanguageAdapterException
 	{

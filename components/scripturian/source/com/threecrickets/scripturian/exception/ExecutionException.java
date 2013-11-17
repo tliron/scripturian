@@ -87,6 +87,7 @@ public class ExecutionException extends Exception
 
 	/**
 	 * @param executable
+	 *        The executable
 	 * @see #getExecutable()
 	 */
 	public void setExectable( Executable executable )

@@ -66,8 +66,8 @@ public class GroovyAdapter extends LanguageAdapterBase
 	/**
 	 * Creates an execution exception with a full stack.
 	 * 
-	 * @param documentName
-	 *        The document name
+	 * @param executable
+	 *        The executable
 	 * @param startLineNumber
 	 *        The line number in the document for where the program's source
 	 *        code begins

@@ -100,6 +100,7 @@ public class ParsingException extends Exception
 
 	/**
 	 * @param executable
+	 *        The executable
 	 * @see #getExecutable()
 	 */
 	public void setExectable( Executable executable )

@@ -129,6 +129,9 @@ public class Defroster
 	//
 
 	/**
+	 * Defrosts using a new thread pool with 1 thread per available processor
+	 * without blocking.
+	 * 
 	 * @throws InterruptedException
 	 */
 	public void defrost() throws InterruptedException
@@ -138,7 +141,10 @@ public class Defroster
 	}
 
 	/**
+	 * Defrosts using a new thread pool without blocking.
+	 * 
 	 * @param threads
+	 *        The number of threads to use
 	 * @throws InterruptedException
 	 */
 	public void defrost( int threads ) throws InterruptedException
@@ -150,7 +156,10 @@ public class Defroster
 	}
 
 	/**
+	 * Defrosts using an executor service without blocking.
+	 * 
 	 * @param executorService
+	 *        The executor service to use
 	 * @throws InterruptedException
 	 */
 	public void defrost( ExecutorService executorService ) throws InterruptedException
@@ -159,8 +168,12 @@ public class Defroster
 	}
 
 	/**
+	 * Defrosts using an executor service.
+	 * 
 	 * @param executorService
+	 *        The executor service to use
 	 * @param block
+	 *        Whether to block until done
 	 * @throws InterruptedException
 	 */
 	public void defrost( ExecutorService executorService, boolean block ) throws InterruptedException

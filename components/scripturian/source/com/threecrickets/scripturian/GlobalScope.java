@@ -39,6 +39,8 @@ public final class GlobalScope
 
 	/**
 	 * Any object can be stored here.
+	 * 
+	 * @return The attributes
 	 */
 	public ConcurrentMap<String, Object> getAttributes()
 	{

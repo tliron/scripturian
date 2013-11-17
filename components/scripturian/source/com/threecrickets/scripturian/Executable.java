@@ -690,6 +690,8 @@ public class Executable
 
 	/**
 	 * The default name for the {@link ExecutableService} instance.
+	 * 
+	 * @return The default executable service name
 	 */
 	public String getExecutableServiceName()
 	{
