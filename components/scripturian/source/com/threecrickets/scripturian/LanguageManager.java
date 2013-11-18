@@ -187,6 +187,7 @@ public class LanguageManager
 	 *        The name
 	 * @return The language adapter
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @see LanguageAdapter#NAME
 	 */
 	public LanguageAdapter getAdapterByName( String name ) throws ParsingException
@@ -201,6 +202,7 @@ public class LanguageManager
 	 *        The scriptlet tag
 	 * @return The language adapter or null if not found
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 */
 	public LanguageAdapter getAdapterByTag( String tag ) throws ParsingException
 	{
@@ -231,6 +233,7 @@ public class LanguageManager
 	 *        have one
 	 * @return The language adapter or null if not found
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 */
 	public LanguageAdapter getAdapterByExtension( String documentName, String defaultExtension ) throws ParsingException
 	{
@@ -270,6 +273,7 @@ public class LanguageManager
 	 *        according to the extension
 	 * @return The default language adapter tag or null if not found
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 */
 	public String getLanguageTagByExtension( String documentName, String defaultExtension, String defaultTag ) throws ParsingException
 	{

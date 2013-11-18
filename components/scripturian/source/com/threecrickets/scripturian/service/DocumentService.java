@@ -143,9 +143,13 @@ public class DocumentService
 	 * @param documentName
 	 *        The document name
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 * @throws IOException
+	 *         In case of a writing error
 	 * @see LanguageManager#getAdapterByExtension(String, String)
 	 */
 	public void execute( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
@@ -160,9 +164,13 @@ public class DocumentService
 	 * @param documentName
 	 *        The document name
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 * @throws IOException
+	 *         In case of a writing error
 	 * @see #markExecuted(String, boolean)
 	 */
 	public void executeOnce( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
@@ -177,9 +185,13 @@ public class DocumentService
 	 * @param documentNames
 	 *        The document names
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 * @throws IOException
+	 *         In case of a writing error
 	 */
 	public void require( String... documentNames ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
@@ -226,9 +238,13 @@ public class DocumentService
 	 * @param documentName
 	 *        The document name
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 * @throws IOException
+	 *         In case of a writing error
 	 */
 	public void include( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
@@ -242,7 +258,7 @@ public class DocumentService
 	/**
 	 * Executed attribute for an {@link ExecutionContext}.
 	 */
-	private static final String EXECUTED_ATTRIBUTE = "com.threecrickets.scripturian.service.DocumentService.executed";
+	private static final String EXECUTED_ATTRIBUTE = DocumentService.class.getCanonicalName() + ".executed";
 
 	/**
 	 * The main instance.
@@ -269,7 +285,9 @@ public class DocumentService
 	 *        Whether the document is text-with-scriptlets
 	 * @return The document descriptor
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 */
 	private DocumentDescriptor<Executable> getDocumentDescriptor( String documentName, boolean isTextWithScriplets ) throws ParsingException, DocumentException
 	{

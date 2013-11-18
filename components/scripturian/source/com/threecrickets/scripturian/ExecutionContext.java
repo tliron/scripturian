@@ -372,8 +372,11 @@ public class ExecutionContext
 	 *        Optional state to pass to the entry point
 	 * @return State returned from the entry point or null
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws NoSuchMethodException
+	 *         In case the entry point does not exist
 	 * @see #isEnterable()
 	 * @see #getAdapter()
 	 */

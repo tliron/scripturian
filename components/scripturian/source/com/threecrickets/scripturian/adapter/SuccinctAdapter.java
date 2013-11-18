@@ -59,6 +59,7 @@ public class SuccinctAdapter extends LanguageAdapterBase
 	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public SuccinctAdapter() throws LanguageAdapterException
 	{

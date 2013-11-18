@@ -135,6 +135,7 @@ public class ExecutableSegment
 	 * @param debug
 	 *        Whether to debug the source code
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @see #isScriptlet
 	 * @see #languageTag
 	 * @see #program

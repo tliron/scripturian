@@ -29,7 +29,8 @@ public interface ExecutionController
 	 * @param executionContext
 	 *        The execution context
 	 * @throws ExecutionException
-	 *         If you throw an exception here the executable will not run
+	 *         In case of an execution error If you throw an exception here the
+	 *         executable will not run
 	 */
 	public void initialize( ExecutionContext executionContext ) throws ExecutionException;
 

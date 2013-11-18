@@ -57,6 +57,7 @@ public abstract class LanguageAdapterBase implements LanguageAdapter
 	 * @param defaultTag
 	 *        Default language tag used for scriptlets
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public LanguageAdapterBase( String name, String version, String languageName, String languageVersion, Collection<String> extensions, String defaultExtension, Collection<String> tags, String defaultTag )
 		throws LanguageAdapterException

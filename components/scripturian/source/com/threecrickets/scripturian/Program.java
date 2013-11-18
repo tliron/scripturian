@@ -57,6 +57,7 @@ public interface Program
 	 * possibly caching the results on disk.
 	 * 
 	 * @throws PreparationException
+	 *         In case of a preparation error
 	 */
 	public void prepare() throws PreparationException;
 
@@ -66,7 +67,9 @@ public interface Program
 	 * @param executionContext
 	 *        The execution context
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 */
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException;
 }

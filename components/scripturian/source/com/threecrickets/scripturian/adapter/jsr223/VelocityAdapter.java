@@ -58,7 +58,7 @@ public class VelocityAdapter extends Jsr223LanguageAdapter
 	@Override
 	public String getSourceCodeForLiteralOutput( Executable executable, ScriptEngine scriptEngine, String content )
 	{
-		// 
+		//
 		// content = content.replaceAll( "\\#", "\\\\#" );
 		// content = content.replaceAll( "\\$", "\\\\\\$" );
 

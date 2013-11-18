@@ -188,9 +188,10 @@ public class Executable
 	 *        The parsing context
 	 * @return A document descriptor with a valid executable as its document
 	 * @throws ParsingException
-	 *         In case of a parsing error
+	 *         In case of a parsing error In case of a parsing error
 	 * @throws DocumentException
-	 *         In case of a document source error
+	 *         In case of a document retrieval error In case of a document
+	 *         source error
 	 */
 	public static DocumentDescriptor<Executable> createOnce( String documentName, boolean isTextWithScriptlets, ParsingContext parsingContext ) throws ParsingException, DocumentException
 	{
@@ -213,9 +214,10 @@ public class Executable
 	 *        The parsing context
 	 * @return A new executable or the existing one
 	 * @throws ParsingException
-	 *         In case of a parsing error
+	 *         In case of a parsing error In case of a parsing error
 	 * @throws DocumentException
-	 *         In case of a problem accessing the document source
+	 *         In case of a document retrieval error In case of a problem
+	 *         accessing the document source
 	 */
 	public static Executable createOnce( DocumentDescriptor<Executable> documentDescriptor, boolean isTextWithScriptlets, ParsingContext parsingContext ) throws ParsingException, DocumentException
 	{
@@ -270,9 +272,11 @@ public class Executable
 	 * @param parsingContext
 	 *        The parsing context
 	 * @throws ParsingException
-	 *         In case of a parsing or compilation error
+	 *         In case of a parsing error In case of a parsing or compilation
+	 *         error
 	 * @throws DocumentException
-	 *         In case of a problem accessing the document source
+	 *         In case of a document retrieval error In case of a problem
+	 *         accessing the document source
 	 * @see LanguageAdapter
 	 */
 	public Executable( String documentName, long documentTimestamp, String sourceCode, boolean isTextWithScriptlets, ParsingContext parsingContext ) throws ParsingException, DocumentException
@@ -781,8 +785,11 @@ public class Executable
 	 * @param executionContext
 	 *        The execution context
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws IOException
+	 *         In case of a writing error
 	 */
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException, IOException
 	{
@@ -800,8 +807,11 @@ public class Executable
 	 *        The optional {@link ExecutionController} to be applied to the
 	 *        execution context
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws IOException
+	 *         In case of a writing error
 	 */
 	public void execute( ExecutionContext executionContext, Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
@@ -882,8 +892,11 @@ public class Executable
 	 *        The optional {@link ExecutionController} to be applied to the
 	 *        execution context
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws IOException
+	 *         In case of a writing error
 	 * @see ExecutionContext#getCurrent()
 	 */
 	public void executeInThread( Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
@@ -908,8 +921,11 @@ public class Executable
 	 *         not consumed, true if the operation succeeded and execution
 	 *         context was consumed
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws IOException
+	 *         In case of a writing error
 	 */
 	public boolean makeEnterable( Object enteringKey, ExecutionContext executionContext ) throws ParsingException, ExecutionException, IOException
 	{
@@ -938,8 +954,11 @@ public class Executable
 	 *         not consumed, true if the operation succeeded and execution
 	 *         context was consumed
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws IOException
+	 *         In case of a writing error
 	 */
 	public boolean makeEnterable( Object enteringKey, ExecutionContext executionContext, Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
@@ -971,8 +990,11 @@ public class Executable
 	 *        Optional state to pass to the entry point
 	 * @return State returned from the entry point or null
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 * @throws NoSuchMethodException
+	 *         In case the entry point does not exist
 	 * @see ExecutionContext#enter(Executable, String, Object...)
 	 */
 	public Object enter( Object enteringKey, String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException

@@ -303,6 +303,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 *        Whether to read the source code from the file
 	 * @return The document descriptor
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 */
 	public DocumentDescriptor<D> getDocument( String documentName, boolean read ) throws DocumentException
 	{

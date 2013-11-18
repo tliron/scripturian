@@ -67,6 +67,7 @@ public class JeppAdapter extends LanguageAdapterBase
 	 *        The execution context
 	 * @return The Jepp runtime
 	 * @throws JepException
+	 *         In case of a Jepp error
 	 */
 	public static Jep getJeppRuntime( Executable executable, ExecutionContext executionContext ) throws JepException
 	{
@@ -114,6 +115,7 @@ public class JeppAdapter extends LanguageAdapterBase
 	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public JeppAdapter() throws LanguageAdapterException
 	{

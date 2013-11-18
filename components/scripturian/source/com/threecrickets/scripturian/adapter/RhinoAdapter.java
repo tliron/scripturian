@@ -131,6 +131,7 @@ public class RhinoAdapter extends LanguageAdapterBase
 	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public RhinoAdapter() throws LanguageAdapterException
 	{

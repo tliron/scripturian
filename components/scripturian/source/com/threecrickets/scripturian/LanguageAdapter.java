@@ -133,6 +133,7 @@ public interface LanguageAdapter
 	 *        The executable
 	 * @return Source code
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 */
 	public String getSourceCodeForLiteralOutput( String literal, Executable executable ) throws ParsingException;
 
@@ -146,6 +147,7 @@ public interface LanguageAdapter
 	 *        The executable
 	 * @return Source code
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 */
 	public String getSourceCodeForExpressionOutput( String expression, Executable executable ) throws ParsingException;
 
@@ -164,6 +166,7 @@ public interface LanguageAdapter
 	 *        The executable
 	 * @return Source code
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @see LanguageManager#getAttributes()
 	 */
 	public String getSourceCodeForExpressionInclude( String expression, Executable executable ) throws ParsingException;
@@ -194,6 +197,7 @@ public interface LanguageAdapter
 	 *        The executable
 	 * @return A program
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 */
 	public Program createProgram( String sourceCode, boolean isScriptlet, int position, int startLineNumber, int startColumnNumber, Executable executable ) throws ParsingException;
 
@@ -212,9 +216,11 @@ public interface LanguageAdapter
 	 *        Optional state to pass to the entry point
 	 * @return State returned from to the entry point or null
 	 * @throws NoSuchMethodException
-	 *         If the entry point doesn't exist
+	 *         In case the entry point does not exist
 	 * @throws ParsingException
+	 *         In case of a parsing error
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 */
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException;
 

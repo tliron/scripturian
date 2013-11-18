@@ -274,6 +274,7 @@ public abstract class Jsr223LanguageAdapter implements LanguageAdapter
 	 *        The execution context
 	 * @return The script engine
 	 * @throws ExecutionException
+	 *         In case of an execution error
 	 */
 	public ScriptEngine getScriptEngine( Executable executable, ExecutionContext executionContext ) throws ExecutionException
 	{

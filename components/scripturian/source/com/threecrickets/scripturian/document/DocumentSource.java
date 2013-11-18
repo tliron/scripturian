@@ -36,6 +36,7 @@ public interface DocumentSource<D>
 	 *        The document's name
 	 * @return The document's descriptor
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 */
 	public DocumentDescriptor<D> getDocument( String documentName ) throws DocumentException;
 
@@ -52,6 +53,7 @@ public interface DocumentSource<D>
 	 *        The document
 	 * @return The existing document descriptor before we changed it
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 */
 	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document ) throws DocumentException;
 
@@ -68,6 +70,7 @@ public interface DocumentSource<D>
 	 *        The document instance
 	 * @return The existing document descriptor before we changed it
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 */
 	public DocumentDescriptor<D> setDocumentIfAbsent( String documentName, String sourceCode, String tag, D document ) throws DocumentException;
 
@@ -78,6 +81,7 @@ public interface DocumentSource<D>
 	 * 
 	 * @return A collection of document descriptors
 	 * @throws UnsupportedOperationException
+	 *         In case this document source doesn't support this operation
 	 */
 	public Collection<DocumentDescriptor<D>> getDocuments();
 

@@ -39,6 +39,7 @@ public class PegdownAdapter extends LanguageAdapterBase
 	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public PegdownAdapter() throws LanguageAdapterException
 	{

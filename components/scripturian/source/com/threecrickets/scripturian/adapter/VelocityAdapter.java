@@ -44,6 +44,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public VelocityAdapter() throws LanguageAdapterException
 	{
@@ -60,6 +61,7 @@ public class VelocityAdapter extends LanguageAdapterBase
 	 * 
 	 * @return The runtime instance
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public RuntimeInstance getRuntimeInstance() throws LanguageAdapterException
 	{

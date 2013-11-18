@@ -40,6 +40,7 @@ public abstract class WikiTextAdapterBase extends LanguageAdapterBase
 	 * @param defaultTag
 	 *        Default language tag used for scriptlets
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public WikiTextAdapterBase( String name, String version, Collection<String> extensions, String defaultExtension, Collection<String> tags, String defaultTag ) throws LanguageAdapterException
 	{

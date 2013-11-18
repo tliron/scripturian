@@ -78,6 +78,7 @@ public class FiledDocumentDescriptor<D> implements DocumentDescriptor<D>
 	 * @param charset
 	 *        The charset to use for reading source code from the file
 	 * @throws DocumentException
+	 *         In case of a document retrieval error
 	 */
 	public FiledDocumentDescriptor( DocumentFileSource<D> documentSource, File file, boolean read, Charset charset ) throws DocumentException
 	{

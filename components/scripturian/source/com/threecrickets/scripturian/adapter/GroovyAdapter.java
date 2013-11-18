@@ -136,6 +136,7 @@ public class GroovyAdapter extends LanguageAdapterBase
 	 * Constructor.
 	 * 
 	 * @throws LanguageAdapterException
+	 *         In case of an initialization error
 	 */
 	public GroovyAdapter() throws LanguageAdapterException
 	{
