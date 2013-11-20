@@ -66,7 +66,7 @@
 
 	<target name="javadocs-overwrite" depends="dependencies" description="Create API documentation" unless="javadocs-present">
 		<javadoc
-			destdir="${distribution.api}" sourcepath="${component.source}" excludepackagenames="**.internal.*"
+			destdir="${distribution.api}" sourcepath="${component.source}" excludepackagenames="**.internal.*, com.threecrickets.scripturian.adapter.jsr223.*"
 			access="protected" source="${compile.version}"
 			windowtitle="${documentation.title} ${component.version}${component.version.postfix}" doctitle="${documentation.title} ${component.version}${component.version.postfix}"
 			author="true" splitindex="true" use="true" version="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false"
