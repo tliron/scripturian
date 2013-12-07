@@ -18,6 +18,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionController;
 import com.threecrickets.scripturian.LanguageManager;
 import com.threecrickets.scripturian.Main;
+import com.threecrickets.scripturian.ParserManager;
 import com.threecrickets.scripturian.document.DocumentFileSource;
 import com.threecrickets.scripturian.document.DocumentSource;
 
@@ -58,6 +59,13 @@ public interface Shell
 	 * @return The language manager
 	 */
 	public LanguageManager getLanguageManager();
+
+	/**
+	 * The {@link ParserManager} used to get parsers for executables.
+	 * 
+	 * @return The parser manager
+	 */
+	public ParserManager getParserManager();
 
 	/**
 	 * Whether or not executables are prepared.

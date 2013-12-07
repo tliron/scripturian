@@ -18,6 +18,7 @@ import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.ExecutionContext;
 import com.threecrickets.scripturian.GlobalScope;
 import com.threecrickets.scripturian.LanguageManager;
+import com.threecrickets.scripturian.ParserManager;
 
 /**
  * This is the <code>executable</code> service exposed to the executable. The
@@ -37,16 +38,19 @@ public class ExecutableService
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @param manager
+	 * @param languageManager
 	 *        The language manager used to parse, prepare and execute the
 	 *        executable
+	 * @param parserManager
+	 *        The parser manager used to parse the executable
 	 * @param container
 	 *        The container or null
 	 */
-	public ExecutableService( ExecutionContext executionContext, LanguageManager manager, Object container )
+	public ExecutableService( ExecutionContext executionContext, LanguageManager languageManager, ParserManager parserManager, Object container )
 	{
 		this.executionContext = executionContext;
-		this.manager = manager;
+		this.languageManager = languageManager;
+		this.parserManager = parserManager;
 		this.container = container;
 	}
 
@@ -71,9 +75,19 @@ public class ExecutableService
 	 * 
 	 * @return The language manager
 	 */
-	public LanguageManager getManager()
+	public LanguageManager getLanguageManager()
 	{
-		return manager;
+		return languageManager;
+	}
+
+	/**
+	 * The parser manager used to parse the executable.
+	 * 
+	 * @return The parser manager
+	 */
+	public ParserManager getParserManager()
+	{
+		return parserManager;
 	}
 
 	/**
@@ -131,7 +145,12 @@ public class ExecutableService
 	/**
 	 * The language manager used to parse, prepare and execute the executable.
 	 */
-	private final LanguageManager manager;
+	private final LanguageManager languageManager;
+
+	/**
+	 * The language manager used to parse the executable.
+	 */
+	private final ParserManager parserManager;
 
 	/**
 	 * The container.

@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 
 import com.threecrickets.scripturian.Executable;
 import com.threecrickets.scripturian.LanguageManager;
+import com.threecrickets.scripturian.ParserManager;
 import com.threecrickets.scripturian.document.DocumentSource;
 
 /**
@@ -44,22 +45,25 @@ public class Defroster
 	 *        The document source for executables
 	 * @param languageManager
 	 *        The language manager for executable initialization
+	 * @param parserManager
+	 *        The parser manager for executable initialization
 	 * @param defaultLanguageTag
 	 *        The language tag to used if none is specified
-	 * @param isTextWithScriptlets
-	 *        Whether the executables are "text-with-scriptlets"
+	 * @param parserName
+	 *        The parser to use, or null for the default parser
 	 * @param prepare
 	 *        Whether to prepare executables
 	 * @param debug
 	 *        Whether to debug the source code parsing
 	 */
-	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, String defaultLanguageTag, boolean isTextWithScriptlets, boolean prepare, boolean debug )
+	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, ParserManager parserManager, String defaultLanguageTag, String parserName, boolean prepare, boolean debug )
 	{
 		super();
 		this.documentSource = documentSource;
 		this.languageManager = languageManager;
+		this.parserManager = parserManager;
 		this.defaultLanguageTag = defaultLanguageTag;
-		this.isTextWithScriptlets = isTextWithScriptlets;
+		this.parserName = parserName;
 		this.prepare = prepare;
 		this.debug = debug;
 	}
@@ -203,14 +207,19 @@ public class Defroster
 	private final LanguageManager languageManager;
 
 	/**
+	 * The parser manager for executable initialization.
+	 */
+	private final ParserManager parserManager;
+
+	/**
 	 * The language tag to used if none is specified.
 	 */
 	private final String defaultLanguageTag;
 
 	/**
-	 * Whether the executables are "text-with-scriptlets".
+	 * The parser to use, or null for the default parser.
 	 */
-	private final boolean isTextWithScriptlets;
+	private final String parserName;
 
 	/**
 	 * Whether to prepare executables.
@@ -251,7 +260,7 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, defaultLanguageTag, isTextWithScriptlets, prepare, debug );
+			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, parserManager, defaultLanguageTag, parserName, prepare, debug );
 			List<Future<Executable>> futures;
 			try
 			{

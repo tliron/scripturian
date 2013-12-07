@@ -9,17 +9,14 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian.internal;
+package com.threecrickets.scripturian;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import com.threecrickets.scripturian.Executable;
-import com.threecrickets.scripturian.LanguageAdapter;
-import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A segment within an executable. "Text-with-scriptlets" executables can have
@@ -114,7 +111,7 @@ public class ExecutableSegment
 	/**
 	 * The program.
 	 * 
-	 * @see #createProgram(Executable, LanguageManager, boolean)
+	 * @see #createProgram(Executable, LanguageManager, boolean, boolean)
 	 */
 	public Program program;
 

@@ -80,6 +80,7 @@ public class Main implements Shell, Runnable
 	public Main( String[] arguments )
 	{
 		languageManager = new LanguageManager();
+		parserManager = new ParserManager();
 		prepare = ScripturianUtil.getSwitchArgument( "prepare", arguments, "true" ).equals( "true" );
 		initialDocumentName = ScripturianUtil.getNonSwitchArgument( 0, arguments, "default" );
 		defaultDocumentName = ScripturianUtil.getSwitchArgument( "default-document-name", arguments, "default" );
@@ -96,8 +97,10 @@ public class Main implements Shell, Runnable
 	/**
 	 * Constructor.
 	 * 
-	 * @param manager
+	 * @param languageManager
 	 *        The language manager
+	 * @param parserManager
+	 *        The parser manager
 	 * @param basePath
 	 *        The base path for the document source
 	 * @param prepare
@@ -121,10 +124,11 @@ public class Main implements Shell, Runnable
 	 * @param arguments
 	 *        Supplied arguments (usually from a command line)
 	 */
-	public Main( LanguageManager manager, File basePath, boolean prepare, String initialDocumentName, String defaultDocumentName, String preferredExtension, String documentServiceName, String applicationServiceName,
-		Writer writer, Writer errorWriter, String[] arguments )
+	public Main( LanguageManager languageManager, ParserManager parserManager, File basePath, boolean prepare, String initialDocumentName, String defaultDocumentName, String preferredExtension,
+		String documentServiceName, String applicationServiceName, Writer writer, Writer errorWriter, String[] arguments )
 	{
-		this.languageManager = manager;
+		this.languageManager = languageManager;
+		this.parserManager = parserManager;
 		this.prepare = prepare;
 		this.initialDocumentName = initialDocumentName;
 		this.defaultDocumentName = defaultDocumentName;
@@ -257,6 +261,11 @@ public class Main implements Shell, Runnable
 		return languageManager;
 	}
 
+	public ParserManager getParserManager()
+	{
+		return parserManager;
+	}
+
 	public boolean isPrepare()
 	{
 		return prepare;
@@ -351,6 +360,11 @@ public class Main implements Shell, Runnable
 	 * executables.
 	 */
 	private final LanguageManager languageManager;
+
+	/**
+	 * The {@link ParserManager} used to get parsers for executables.
+	 */
+	private final ParserManager parserManager;
 
 	/**
 	 * Whether to prepare executables.

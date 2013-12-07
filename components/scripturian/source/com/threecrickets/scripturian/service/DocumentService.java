@@ -30,6 +30,8 @@ import com.threecrickets.scripturian.exception.DocumentException;
 import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.parser.ProgramParser;
+import com.threecrickets.scripturian.parser.ScriptletsParser;
 
 /**
  * This is the <code>document</code> service exposed by a {@link Shell}.
@@ -154,7 +156,7 @@ public class DocumentService
 	 */
 	public void execute( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
-		Executable executable = getDocumentDescriptor( documentName, false ).getDocument();
+		Executable executable = getDocumentDescriptor( documentName, ProgramParser.NAME ).getDocument();
 		executable.execute( executionContext, this, shell.getExecutionController() );
 	}
 
@@ -248,7 +250,7 @@ public class DocumentService
 	 */
 	public void include( String documentName ) throws ParsingException, ExecutionException, DocumentException, IOException
 	{
-		Executable executable = getDocumentDescriptor( documentName, true ).getDocument();
+		Executable executable = getDocumentDescriptor( documentName, ScriptletsParser.NAME ).getDocument();
 		executable.execute( executionContext, this, shell.getExecutionController() );
 	}
 
@@ -281,20 +283,21 @@ public class DocumentService
 	 * 
 	 * @param documentName
 	 *        The document name
-	 * @param isTextWithScriplets
-	 *        Whether the document is text-with-scriptlets
+	 * @param parserName
+	 *        The parser to use, or null for the default parser
 	 * @return The document descriptor
 	 * @throws ParsingException
 	 *         In case of a parsing error
 	 * @throws DocumentException
 	 *         In case of a document retrieval error
 	 */
-	private DocumentDescriptor<Executable> getDocumentDescriptor( String documentName, boolean isTextWithScriplets ) throws ParsingException, DocumentException
+	private DocumentDescriptor<Executable> getDocumentDescriptor( String documentName, String parserName ) throws ParsingException, DocumentException
 	{
 		Iterator<DocumentSource<Executable>> iterator = null;
 
 		ParsingContext parsingContext = new ParsingContext();
 		parsingContext.setLanguageManager( shell.getLanguageManager() );
+		parsingContext.setParserManager( shell.getParserManager() );
 		parsingContext.setDefaultLanguageTag( defaultLanguageTag );
 		parsingContext.setPrepare( shell.isPrepare() );
 		parsingContext.setDocumentSource( getSource() );
@@ -303,7 +306,7 @@ public class DocumentService
 		{
 			try
 			{
-				return Executable.createOnce( documentName, isTextWithScriplets, parsingContext );
+				return Executable.createOnce( documentName, parserName, parsingContext );
 			}
 			catch( DocumentNotFoundException x )
 			{

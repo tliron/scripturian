@@ -137,8 +137,8 @@ public class ExecutionContext
 
 	/**
 	 * General-purpose attributes. Useful for configuring special language
-	 * features not supports by the context. Additionally, language adapters and
-	 * other components along the execution chain might use this to store
+	 * features not supported by the context. Additionally, language adapters
+	 * and other components along the execution chain might use this to store
 	 * contextual state.
 	 * <p>
 	 * Immutable contexts will return an unmodifiable map.
@@ -485,8 +485,8 @@ public class ExecutionContext
 
 	/**
 	 * General-purpose attributes. Useful for configuring special language
-	 * features not supports by the context. Additionally, language adapters and
-	 * other components along the execution chain might use this to store
+	 * features not supported by the context. Additionally, language adapters
+	 * and other components along the execution chain might use this to store
 	 * contextual state.
 	 */
 	private final Map<String, Object> attributes = new HashMap<String, Object>();

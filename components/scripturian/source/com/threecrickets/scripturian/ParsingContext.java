@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.threecrickets.scripturian.document.DocumentSource;
+import com.threecrickets.scripturian.parser.ProgramParser;
 
 /**
  * The parsing context is used to construct {@link Executable} instances.
@@ -28,50 +29,6 @@ public class ParsingContext
 	//
 	// Constants
 	//
-
-	/**
-	 * The default start delimiter (first option): &lt;%
-	 */
-	public static final String DEFAULT_DELIMITER1_START = "<%";
-
-	/**
-	 * The default end delimiter (first option): %&gt;
-	 */
-	public static final String DEFAULT_DELIMITER1_END = "%>";
-
-	/**
-	 * The default start delimiter (second option): &lt;?
-	 */
-	public static final String DEFAULT_DELIMITER2_START = "<?";
-
-	/**
-	 * The default end delimiter (second option): ?&gt;
-	 */
-	public static final String DEFAULT_DELIMITER2_END = "?>";
-
-	/**
-	 * The default addition to the start delimiter to specify a comment
-	 * scriptlet: #
-	 */
-	public static final String DEFAULT_DELIMITER_COMMENT = "#";
-
-	/**
-	 * The default addition to the start delimiter to specify an expression
-	 * scriptlet: =
-	 */
-	public static final String DEFAULT_DELIMITER_EXPRESSION = "=";
-
-	/**
-	 * The default addition to the start delimiter to specify an include
-	 * scriptlet: &amp;
-	 */
-	public static final String DEFAULT_DELIMITER_INCLUDE = "&";
-
-	/**
-	 * The default addition to the start delimiter to specify an in-flow
-	 * scriptlet: :
-	 */
-	public static final String DEFAULT_DELIMITER_IN_FLOW = ":";
 
 	/**
 	 * The default executable service name: "executable"
@@ -97,28 +54,31 @@ public class ParsingContext
 	 */
 	public ParsingContext( ParsingContext parsingContext )
 	{
+		attributes.putAll( parsingContext.getAttributes() );
 		languageManager = parsingContext.getLanguageManager();
+		parserManager = parsingContext.getParserManager();
 		partition = parsingContext.getPartition();
 		defaultLanguageTag = parsingContext.getDefaultLanguageTag();
 		prepare = parsingContext.isPrepare();
 		debug = parsingContext.isDebug();
-		delimiter1Start = parsingContext.getDelimiter1Start();
-		delimiter1End = parsingContext.getDelimiter1End();
-		delimiter2Start = parsingContext.getDelimiter2Start();
-		delimiter2End = parsingContext.getDelimiter2End();
-		delimiterComment = parsingContext.getDelimiterComment();
-		delimiterExpression = parsingContext.getDelimiterExpression();
-		delimiterInclude = parsingContext.getDelimiterInclude();
-		delimiterInFlow = parsingContext.getDelimiterInFlow();
 		documentSource = parsingContext.getDocumentSource();
 		exposedExecutableName = parsingContext.getExposedExecutableName();
-		scriptletPlugins.clear();
-		scriptletPlugins.putAll( parsingContext.getScriptletPlugins() );
 	}
 
 	//
 	// Attributes
 	//
+
+	/**
+	 * General-purpose attributes. Useful for configuring special parser
+	 * features not supported by the context.
+	 * 
+	 * @return The attributes
+	 */
+	public Map<String, Object> getAttributes()
+	{
+		return attributes;
+	}
 
 	/**
 	 * The language manager used to parse, prepare and execute the executable.
@@ -138,6 +98,26 @@ public class ParsingContext
 	public void setLanguageManager( LanguageManager languageManager )
 	{
 		this.languageManager = languageManager;
+	}
+
+	/**
+	 * The parser manager used to parse the executable.
+	 * 
+	 * @return The parser manager
+	 */
+	public ParserManager getParserManager()
+	{
+		return parserManager;
+	}
+
+	/**
+	 * @param parserManager
+	 *        The parser manager
+	 * @see #getParserManager()
+	 */
+	public void setParserManager( ParserManager parserManager )
+	{
+		this.parserManager = parserManager;
 	}
 
 	/**
@@ -161,8 +141,7 @@ public class ParsingContext
 	}
 
 	/**
-	 * When {@code isTextWithScriptlets} is true, this is the language used for
-	 * scriptlets if none is specified.
+	 * The language to use if none is specified.
 	 * 
 	 * @return The default language tag
 	 */
@@ -179,6 +158,26 @@ public class ParsingContext
 	public void setDefaultLanguageTag( String defaultLanguageTag )
 	{
 		this.defaultLanguageTag = defaultLanguageTag;
+	}
+
+	/**
+	 * The parser to use if none is specified.
+	 * 
+	 * @return The default language tag
+	 */
+	public String getDefaultParser()
+	{
+		return defaultParser;
+	}
+
+	/**
+	 * @param defaultParser
+	 *        The default language tag
+	 * @see #getDefaultParser()
+	 */
+	public void setDefaultParser( String defaultParser )
+	{
+		this.defaultParser = defaultParser;
 	}
 
 	/**
@@ -224,168 +223,8 @@ public class ParsingContext
 	}
 
 	/**
-	 * The start delimiter (first option).
-	 * 
-	 * @return The start delimiter
-	 */
-	public String getDelimiter1Start()
-	{
-		return delimiter1Start;
-	}
-
-	/**
-	 * @param delimiter1Start
-	 *        The start delimiter
-	 * @see #getDelimiter1Start()
-	 */
-	public void setDelimiter1Start( String delimiter1Start )
-	{
-		this.delimiter1Start = delimiter1Start;
-	}
-
-	/**
-	 * The end delimiter (first option).
-	 * 
-	 * @return The end delimiter
-	 */
-	public String getDelimiter1End()
-	{
-		return delimiter1End;
-	}
-
-	/**
-	 * @param delimiter1End
-	 *        The end delimiter
-	 * @see #getDelimiter1End()
-	 */
-	public void setDelimiter1End( String delimiter1End )
-	{
-		this.delimiter1End = delimiter1End;
-	}
-
-	/**
-	 * The start delimiter (second option).
-	 * 
-	 * @return The start delimiter
-	 */
-	public String getDelimiter2Start()
-	{
-		return delimiter2Start;
-	}
-
-	/**
-	 * @param delimiter2Start
-	 *        The start delimiter
-	 * @see #getDelimiter2Start()
-	 */
-	public void setDelimiter2Start( String delimiter2Start )
-	{
-		this.delimiter2Start = delimiter2Start;
-	}
-
-	/**
-	 * The end delimiter (second option).
-	 * 
-	 * @return The end delimiter
-	 */
-	public String getDelimiter2End()
-	{
-		return delimiter2End;
-	}
-
-	/**
-	 * @param delimiter2End
-	 *        The end delimiter
-	 * @see #getDelimiter2End()
-	 */
-	public void setDelimiter2End( String delimiter2End )
-	{
-		this.delimiter2End = delimiter2End;
-	}
-
-	/**
-	 * The addition to the start delimiter to specify a comment scriptlet.
-	 * 
-	 * @return The comment delimiter
-	 */
-	public String getDelimiterComment()
-	{
-		return delimiterComment;
-	}
-
-	/**
-	 * @param delimiterComment
-	 *        The comment delimiter
-	 * @see #getDelimiterComment()
-	 */
-	public void setDelimiterComment( String delimiterComment )
-	{
-		this.delimiterComment = delimiterComment;
-	}
-
-	/**
-	 * The addition to the start delimiter to specify an expression scriptlet.
-	 * 
-	 * @return The expression delimiter
-	 */
-	public String getDelimiterExpression()
-	{
-		return delimiterExpression;
-	}
-
-	/**
-	 * @param delimiterExpression
-	 *        The expression delimiter
-	 * @see #getDelimiterExpression()
-	 */
-	public void setDelimiterExpression( String delimiterExpression )
-	{
-		this.delimiterExpression = delimiterExpression;
-	}
-
-	/**
-	 * The addition to the start delimiter to specify an include scriptlet.
-	 * 
-	 * @return The include delimiter
-	 */
-	public String getDelimiterInclude()
-	{
-		return delimiterInclude;
-	}
-
-	/**
-	 * @param delimiterInclude
-	 *        The include delimiter
-	 * @see #getDelimiterInclude()
-	 */
-	public void setDelimiterInclude( String delimiterInclude )
-	{
-		this.delimiterInclude = delimiterInclude;
-	}
-
-	/**
-	 * The addition to the start delimiter to specify an in-flow scriptlet.
-	 * 
-	 * @return The in-flow delimiter
-	 */
-	public String getDelimiterInFlow()
-	{
-		return delimiterInFlow;
-	}
-
-	/**
-	 * @param delimiterInFlow
-	 *        The in-flow delimiter
-	 * @see #getDelimiterInFlow()
-	 */
-	public void setDelimiterInFlow( String delimiterInFlow )
-	{
-		this.delimiterInFlow = delimiterInFlow;
-	}
-
-	/**
-	 * A document source used to store in-flow scriptlets; can be null if
-	 * in-flow scriptlets are not used.
+	 * A document source used to store on-the-fly documents created during
+	 * parsing.
 	 * 
 	 * @return The document source
 	 */
@@ -424,16 +263,6 @@ public class ParsingContext
 		this.exposedExecutableName = exposedExecutableName;
 	}
 
-	/**
-	 * The scriptlet plugins.
-	 * 
-	 * @return The scriptlet plugins
-	 */
-	public Map<String, ScriptletPlugin> getScriptletPlugins()
-	{
-		return scriptletPlugins;
-	}
-
 	//
 	// Object
 	//
@@ -448,9 +277,20 @@ public class ParsingContext
 	// Private
 
 	/**
+	 * General-purpose attributes. Useful for configuring special language
+	 * features not supported by the context.
+	 */
+	private final Map<String, Object> attributes = new HashMap<String, Object>();
+
+	/**
 	 * The language manager used to parse, prepare and execute the executable.
 	 */
 	private LanguageManager languageManager;
+
+	/**
+	 * The parser manager used to parse the executable.
+	 */
+	private ParserManager parserManager;
 
 	/**
 	 * The executable partition.
@@ -458,10 +298,14 @@ public class ParsingContext
 	private String partition;
 
 	/**
-	 * When {@code isTextWithScriptlets} is true, this is the language used for
-	 * scriptlets if none is specified.
+	 * The language to use if none is specified.
 	 */
 	private String defaultLanguageTag;
+
+	/**
+	 * The parser to use if none is specified.
+	 */
+	private String defaultParser = ProgramParser.NAME;
 
 	/**
 	 * Whether to prepare the source code: preparation increases initialization
@@ -476,48 +320,8 @@ public class ParsingContext
 	private boolean debug;
 
 	/**
-	 * The start delimiter (first option).
-	 */
-	private String delimiter1Start = DEFAULT_DELIMITER1_START;
-
-	/**
-	 * The end delimiter (first option).
-	 */
-	private String delimiter1End = DEFAULT_DELIMITER1_END;
-
-	/**
-	 * The start delimiter (second option).
-	 */
-	private String delimiter2Start = DEFAULT_DELIMITER2_START;
-
-	/**
-	 * The end delimiter (second option).
-	 */
-	private String delimiter2End = DEFAULT_DELIMITER2_END;
-
-	/**
-	 * The addition to the start delimiter to specify a comment scriptlet.
-	 */
-	private String delimiterComment = DEFAULT_DELIMITER_COMMENT;
-
-	/**
-	 * The addition to the start delimiter to specify an expression scriptlet.
-	 */
-	private String delimiterExpression = DEFAULT_DELIMITER_EXPRESSION;
-
-	/**
-	 * The addition to the start delimiter to specify an include scriptlet.
-	 */
-	private String delimiterInclude = DEFAULT_DELIMITER_INCLUDE;
-
-	/**
-	 * The addition to the start delimiter to specify an in-flow scriptlet.
-	 */
-	private String delimiterInFlow = DEFAULT_DELIMITER_IN_FLOW;
-
-	/**
-	 * A document source used to store in-flow scriptlets; can be null if
-	 * in-flow scriptlets are not used.
+	 * A document source used to store on-the-fly documents created during
+	 * parsing.
 	 */
 	private DocumentSource<Executable> documentSource;
 
@@ -525,9 +329,4 @@ public class ParsingContext
 	 * The <code>executable</code> service name exposed to executables.
 	 */
 	private String exposedExecutableName = DEFAULT_EXECUTABLE_SERVICE_NAME;
-
-	/**
-	 * The scriptlet plugins.
-	 */
-	private final Map<String, ScriptletPlugin> scriptletPlugins = new HashMap<String, ScriptletPlugin>();
 }

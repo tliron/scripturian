@@ -9,19 +9,19 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.scripturian;
+package com.threecrickets.scripturian.parser;
+
+import com.threecrickets.scripturian.LanguageAdapter;
 
 /**
- * Allows the creation of custom scriptlets for text-with-scriptlets
- * {@link Executable} construction.
+ * Allows the creation of custom scriptlets for {@link ScriptletsParser}.
  * 
  * @author Tal Liron
- * @see ParsingContext#getScriptletPlugins()
  */
 public interface ScriptletPlugin
 {
 	/**
-	 * Generates an exectuable segment for a custom scriptlet.
+	 * Generates an executable segment for a custom scriptlet.
 	 * 
 	 * @param code
 	 *        The scriptlet code
