@@ -23,6 +23,7 @@ import java.util.Map;
 import com.caucho.quercus.Quercus;
 import com.caucho.quercus.QuercusErrorException;
 import com.caucho.quercus.QuercusException;
+import com.caucho.quercus.env.ConstStringValue;
 import com.caucho.quercus.env.Env;
 import com.caucho.quercus.env.EnvVar;
 import com.caucho.quercus.env.EnvVarImpl;
@@ -239,7 +240,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 			try
 			{
 				String path = new File( uri ).getPath();
-				environment.evalCode( "set_include_path(get_include_path().PATH_SEPARATOR.'" + path.replace( "'", "\\'" ) + "');" );
+				environment.evalCode( new ConstStringValue( "set_include_path(get_include_path().PATH_SEPARATOR.'" + path.replace( "'", "\\'" ) + "');" ) );
 			}
 			catch( IllegalArgumentException x )
 			{
@@ -314,7 +315,7 @@ public class QuercusAdapter extends LanguageAdapterBase
 			for( int i = arguments.length - 1; i >= 0; i-- )
 				quercusArguments[i] = environment.wrapJava( arguments[i] );
 
-			Value r = environment.call( entryPointName, quercusArguments );
+			Value r = environment.call( new ConstStringValue( entryPointName ), quercusArguments );
 			return r.toJavaObject();
 		}
 		catch( QuercusErrorException x )
