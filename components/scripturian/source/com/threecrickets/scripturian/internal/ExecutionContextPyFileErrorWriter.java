@@ -26,7 +26,7 @@ public class ExecutionContextPyFileErrorWriter extends ExecutionContextPyFileWri
 	// Constants
 	//
 
-	public static final String WRITER = "com.threecrickets.scripturian.internal.ExecutionContextPyFileErrorWriter.writer";
+	public static final String WRITER = ExecutionContextPyFileErrorWriter.class.getCanonicalName() + ".writer";
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected

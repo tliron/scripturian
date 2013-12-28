@@ -221,7 +221,7 @@ public class JythonAdapter extends LanguageAdapterBase
 		}
 		else
 		{
-			flush( pythonInterpreter );
+			flush( pythonInterpreter, executionContext );
 		}
 
 		// Append library locations to sys.path
@@ -311,7 +311,7 @@ public class JythonAdapter extends LanguageAdapterBase
 		}
 		finally
 		{
-			flush( pythonInterpreter );
+			flush( pythonInterpreter, executionContext );
 		}
 	}
 
@@ -333,18 +333,22 @@ public class JythonAdapter extends LanguageAdapterBase
 	 * 
 	 * @param pythonInterpreter
 	 *        The Python interpreter
+	 * @param executionContext
+	 *        The execution context
 	 */
-	protected static void flush( PythonInterpreter pythonInterpreter )
+	protected static void flush( PythonInterpreter pythonInterpreter, ExecutionContext executionContext )
 	{
+		executionContext.makeCurrent();
+
 		PyObject stdout = pythonInterpreter.getSystemState().stdout;
 		if( stdout instanceof PyFileWriter )
-			( (PyFileWriter) pythonInterpreter.getSystemState().stdout ).flush();
+			( (PyFileWriter) stdout ).flush();
 		else
 			pythonInterpreter.exec( "sys.stdout.flush()" );
 
 		PyObject stderr = pythonInterpreter.getSystemState().stderr;
 		if( stderr instanceof PyFileWriter )
-			( (PyFileWriter) pythonInterpreter.getSystemState().stderr ).flush();
+			( (PyFileWriter) stderr ).flush();
 		else
 			pythonInterpreter.exec( "sys.stderr.flush()" );
 	}

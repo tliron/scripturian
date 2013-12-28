@@ -145,7 +145,7 @@ class JythonProgram extends ProgramBase<JythonAdapter>
 		}
 		finally
 		{
-			JythonAdapter.flush( pythonInterpreter );
+			JythonAdapter.flush( pythonInterpreter, executionContext );
 		}
 	}
 

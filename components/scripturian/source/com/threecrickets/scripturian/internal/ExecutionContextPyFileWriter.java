@@ -30,7 +30,7 @@ public class ExecutionContextPyFileWriter extends PyFileWriter
 	// Constants
 	//
 
-	public static final String WRITER = "com.threecrickets.scripturian.internal.ExecutionContextPyFileWriter.writer";
+	public static final String WRITER = ExecutionContextPyFileWriter.class.getCanonicalName() + ".writer";
 
 	//
 	// Construction
@@ -79,11 +79,6 @@ public class ExecutionContextPyFileWriter extends PyFileWriter
 	public void writelines( PyObject a )
 	{
 		getWriter().writelines( a );
-	}
-
-	public boolean isatty()
-	{
-		return false;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
