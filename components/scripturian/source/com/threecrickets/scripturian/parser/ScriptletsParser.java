@@ -252,6 +252,13 @@ public class ScriptletsParser extends MixedParser
 			}
 		}
 
+		if( start == -1 )
+		{
+			// Trivial executable: does not contain scriptlets
+			ExecutableSegment segment = new ExecutableSegment( sourceCode, 1, 1, false, false, null );
+			return Collections.singleton( segment );
+		}
+
 		@SuppressWarnings("unchecked")
 		Map<String, ScriptletPlugin> plugins = (Map<String, ScriptletPlugin>) attributes.get( PLUGINS_ATTRIBUTE );
 
@@ -285,177 +292,167 @@ public class ScriptletsParser extends MixedParser
 		List<ExecutableSegment> segments = new LinkedList<ExecutableSegment>();
 
 		// Parse segments
-		if( start != -1 )
+		int last = 0;
+		while( start != -1 )
 		{
-			int last = 0;
+			// Add previous literal segment
+			if( start != last )
+				segments.add( new ExecutableSegment( sourceCode.substring( last, start ), lastLineNumber, lastColumnNumber, false, false, lastLanguageTag ) );
 
-			while( start != -1 )
+			start += delimiterStartLength;
+
+			int end = sourceCode.indexOf( delimiterEnd, start );
+			if( end == -1 )
+				throw new ParsingException( documentName, startLineNumber, startColumnNumber, "Scriptlet does not have an ending delimiter" );
+
+			if( start != end )
 			{
-				// Add previous literal segment
-				if( start != last )
-					segments.add( new ExecutableSegment( sourceCode.substring( last, start ), lastLineNumber, lastColumnNumber, false, false, lastLanguageTag ) );
+				String languageTag = lastLanguageTag;
+				LanguageAdapter adapter = lastAdapter;
 
-				start += delimiterStartLength;
+				boolean isComment = false;
+				boolean isExpression = false;
+				boolean isInclude = false;
+				boolean isInFlow = false;
+				boolean isEphemeral = false;
+				String pluginCode = null;
+				ScriptletPlugin plugin = null;
 
-				int end = sourceCode.indexOf( delimiterEnd, start );
-				if( end == -1 )
-					throw new ParsingException( documentName, startLineNumber, startColumnNumber, "Scriptlet does not have an ending delimiter" );
-
-				if( start != end )
+				// Check if this is a plugin
+				if( plugins != null )
 				{
-					String languageTag = lastLanguageTag;
-					LanguageAdapter adapter = lastAdapter;
-
-					boolean isComment = false;
-					boolean isExpression = false;
-					boolean isInclude = false;
-					boolean isInFlow = false;
-					boolean isEphemeral = false;
-					String pluginCode = null;
-					ScriptletPlugin plugin = null;
-
-					// Check if this is a plugin
-					if( plugins != null )
+					for( Map.Entry<String, ScriptletPlugin> scriptletPlugin : plugins.entrySet() )
 					{
-						for( Map.Entry<String, ScriptletPlugin> scriptletPlugin : plugins.entrySet() )
+						pluginCode = scriptletPlugin.getKey();
+						int codeLength = pluginCode.length();
+						if( ( start + codeLength <= end ) && sourceCode.substring( start, start + codeLength ).equals( pluginCode ) )
 						{
-							pluginCode = scriptletPlugin.getKey();
-							int codeLength = pluginCode.length();
-							if( ( start + codeLength <= end ) && sourceCode.substring( start, start + codeLength ).equals( pluginCode ) )
-							{
-								plugin = scriptletPlugin.getValue();
-								start += codeLength;
-								break;
-							}
-						}
-					}
-
-					if( plugin == null )
-					{
-						// Check if this is a comment
-						if( ( start + commentLength <= end ) && sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
-						{
-							start += commentLength;
-							isComment = true;
-						}
-						// Check if this is an expression
-						else if( ( start + expressionLength <= end ) && sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
-						{
-							start += expressionLength;
-							isExpression = true;
-						}
-						// Check if this is an include
-						else if( ( start + includeLength <= end ) && sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
-						{
-							start += includeLength;
-							isInclude = true;
-						}
-						// Check if this is an in-flow
-						else if( ( start + inFlowLength <= end ) && sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
-						{
-							start += inFlowLength;
-							isInFlow = true;
-						}
-					}
-
-					// Get language tag if available (ends in whitespace or end
-					// delimiter)
-					int endLanguageTag = start;
-					while( endLanguageTag < end )
-					{
-						if( Character.isWhitespace( sourceCode.charAt( endLanguageTag ) ) )
+							plugin = scriptletPlugin.getValue();
+							start += codeLength;
 							break;
-
-						endLanguageTag++;
-					}
-					if( endLanguageTag > start + 1 )
-					{
-						languageTag = sourceCode.substring( start, endLanguageTag );
-
-						// Optimization: in-flow is unnecessary if we are in the
-						// same language
-						if( isInFlow && lastLanguageTag.equals( languageTag ) )
-							isInFlow = false;
-
-						start = endLanguageTag + 1;
-					}
-
-					if( !isComment )
-					{
-						String segment = end > start + 1 ? sourceCode.substring( start, end ) : "";
-
-						if( plugin != null )
-						{
-							// Our plugin scriptlet is in the last language
-							languageTag = lastLanguageTag;
-
-							adapter = languageManager.getAdapterByTag( languageTag );
-							if( adapter == null )
-								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
-
-							segment = plugin.getScriptlet( pluginCode, adapter, segment );
 						}
-						else
-						{
-							adapter = languageManager.getAdapterByTag( languageTag );
-							if( adapter == null )
-								throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
-
-							if( isExpression )
-								segment = adapter.getSourceCodeForExpressionOutput( segment, executable );
-							else if( isInclude )
-								segment = adapter.getSourceCodeForExpressionInclude( segment, executable );
-							else if( isInFlow && ( documentSource != null ) )
-							{
-								String inFlowCode = delimiterStart + languageTag + " " + segment + delimiterEnd;
-								String inFlowName = Executable.createOnTheFlyDocumentName();
-
-								// Note that the in-flow executable is a single
-								// segment, so we can optimize parsing a bit
-								Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, executable.getDocumentTimestamp(), inFlowCode, NAME, parsingContext );
-								documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
-
-								// TODO: would it ever be possible to remove the
-								// dependent in-flow instances?
-
-								// Our include scriptlet is in the last language
-								languageTag = lastLanguageTag;
-								segment = lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", executable );
-							}
-
-							isEphemeral = adapter.isEphemeral();
-						}
-
-						if( segment != null )
-							segments.add( new ExecutableSegment( segment, startLineNumber, startColumnNumber, true, true, languageTag ) );
-					}
-
-					if( !isInFlow && !isEphemeral )
-					{
-						lastLanguageTag = languageTag;
-						lastAdapter = adapter;
 					}
 				}
 
-				last = end + delimiterEndLength;
-				lastLineNumber = startLineNumber;
-				lastColumnNumber = startColumnNumber;
-				start = sourceCode.indexOf( delimiterStart, last );
-				if( start != -1 )
-					for( int i = sourceCode.indexOf( '\n', last ); i >= 0 && i < start; i = sourceCode.indexOf( '\n', i + 1 ) )
-						startLineNumber++;
+				if( plugin == null )
+				{
+					// Check if this is a comment
+					if( ( start + commentLength <= end ) && sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
+					{
+						start += commentLength;
+						isComment = true;
+					}
+					// Check if this is an expression
+					else if( ( start + expressionLength <= end ) && sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
+					{
+						start += expressionLength;
+						isExpression = true;
+					}
+					// Check if this is an include
+					else if( ( start + includeLength <= end ) && sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
+					{
+						start += includeLength;
+						isInclude = true;
+					}
+					// Check if this is an in-flow
+					else if( ( start + inFlowLength <= end ) && sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
+					{
+						start += inFlowLength;
+						isInFlow = true;
+					}
+				}
+
+				// Get language tag if available (ends in whitespace or end
+				// delimiter)
+				int endLanguageTag = start;
+				while( endLanguageTag < end )
+				{
+					if( Character.isWhitespace( sourceCode.charAt( endLanguageTag ) ) )
+						break;
+
+					endLanguageTag++;
+				}
+				if( endLanguageTag > start + 1 )
+				{
+					languageTag = sourceCode.substring( start, endLanguageTag );
+
+					// Optimization: in-flow is unnecessary if we are in the
+					// same language
+					if( isInFlow && lastLanguageTag.equals( languageTag ) )
+						isInFlow = false;
+
+					start = endLanguageTag + 1;
+				}
+
+				if( !isComment )
+				{
+					String segment = end > start + 1 ? sourceCode.substring( start, end ) : "";
+
+					if( plugin != null )
+					{
+						// Our plugin scriptlet is in the last language
+						languageTag = lastLanguageTag;
+
+						adapter = languageManager.getAdapterByTag( languageTag );
+						if( adapter == null )
+							throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
+
+						segment = plugin.getScriptlet( pluginCode, adapter, segment );
+					}
+					else
+					{
+						adapter = languageManager.getAdapterByTag( languageTag );
+						if( adapter == null )
+							throw ParsingException.adapterNotFound( documentName, startLineNumber, startColumnNumber, languageTag );
+
+						if( isExpression )
+							segment = adapter.getSourceCodeForExpressionOutput( segment, executable );
+						else if( isInclude )
+							segment = adapter.getSourceCodeForExpressionInclude( segment, executable );
+						else if( isInFlow && ( documentSource != null ) )
+						{
+							String inFlowCode = delimiterStart + languageTag + " " + segment + delimiterEnd;
+							String inFlowName = Executable.createOnTheFlyDocumentName();
+
+							// Note that the in-flow executable is a single
+							// segment, so we can optimize parsing a bit
+							Executable inFlowExecutable = new Executable( documentName + "/" + inFlowName, executable.getDocumentTimestamp(), inFlowCode, NAME, parsingContext );
+							documentSource.setDocument( inFlowName, inFlowCode, "", inFlowExecutable );
+
+							// TODO: would it ever be possible to remove the
+							// dependent in-flow instances?
+
+							// Our include scriptlet is in the last language
+							languageTag = lastLanguageTag;
+							segment = lastAdapter.getSourceCodeForExpressionInclude( "\"" + inFlowName + "\"", executable );
+						}
+
+						isEphemeral = adapter.isEphemeral();
+					}
+
+					if( segment != null )
+						segments.add( new ExecutableSegment( segment, startLineNumber, startColumnNumber, true, true, languageTag ) );
+				}
+
+				if( !isInFlow && !isEphemeral )
+				{
+					lastLanguageTag = languageTag;
+					lastAdapter = adapter;
+				}
 			}
 
-			// Add remaining literal segment
-			if( last < length )
-				segments.add( new ExecutableSegment( sourceCode.substring( last ), lastLineNumber, lastColumnNumber, false, false, lastLanguageTag ) );
+			last = end + delimiterEndLength;
+			lastLineNumber = startLineNumber;
+			lastColumnNumber = startColumnNumber;
+			start = sourceCode.indexOf( delimiterStart, last );
+			if( start != -1 )
+				for( int i = sourceCode.indexOf( '\n', last ); i >= 0 && i < start; i = sourceCode.indexOf( '\n', i + 1 ) )
+					startLineNumber++;
 		}
-		else
-		{
-			// Trivial executable: does not contain scriptlets
-			ExecutableSegment segment = new ExecutableSegment( sourceCode, 1, 1, false, false, null );
-			return Collections.singleton( segment );
-		}
+
+		// Add remaining literal segment
+		if( last < length )
+			segments.add( new ExecutableSegment( sourceCode.substring( last ), lastLineNumber, lastColumnNumber, false, false, lastLanguageTag ) );
 
 		return optimize( segments, parsingContext, executable );
 	}

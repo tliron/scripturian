@@ -22,8 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.threecrickets.scripturian.Executable;
-import com.threecrickets.scripturian.LanguageManager;
-import com.threecrickets.scripturian.ParserManager;
+import com.threecrickets.scripturian.ParsingContext;
 import com.threecrickets.scripturian.document.DocumentSource;
 
 /**
@@ -41,31 +40,12 @@ public class Defroster
 	/**
 	 * Constructor.
 	 * 
-	 * @param documentSource
-	 *        The document source for executables
-	 * @param languageManager
-	 *        The language manager for executable initialization
-	 * @param parserManager
-	 *        The parser manager for executable initialization
-	 * @param defaultLanguageTag
-	 *        The language tag to used if none is specified
-	 * @param parserName
-	 *        The parser to use, or null for the default parser
-	 * @param prepare
-	 *        Whether to prepare executables
-	 * @param debug
-	 *        Whether to debug the source code parsing
+	 * @param parsingContext
+	 *        The parsing context
 	 */
-	public Defroster( DocumentSource<Executable> documentSource, LanguageManager languageManager, ParserManager parserManager, String defaultLanguageTag, String parserName, boolean prepare, boolean debug )
+	public Defroster( ParsingContext parsingContext )
 	{
-		super();
-		this.documentSource = documentSource;
-		this.languageManager = languageManager;
-		this.parserManager = parserManager;
-		this.defaultLanguageTag = defaultLanguageTag;
-		this.parserName = parserName;
-		this.prepare = prepare;
-		this.debug = debug;
+		this.parsingContext = parsingContext;
 	}
 
 	//
@@ -73,33 +53,13 @@ public class Defroster
 	//
 
 	/**
-	 * The language manager for executable initialization.
+	 * The parsing context.
 	 * 
-	 * @return A language manager
+	 * @return The parsing context
 	 */
-	public LanguageManager getLanguageManager()
+	public ParsingContext getLanguageManager()
 	{
-		return languageManager;
-	}
-
-	/**
-	 * The document source for executables.
-	 * 
-	 * @return A document source
-	 */
-	public DocumentSource<Executable> getDocumentSource()
-	{
-		return documentSource;
-	}
-
-	/**
-	 * Whether to prepare executables.
-	 * 
-	 * @return Whether to prepare executables
-	 */
-	public boolean isPrepare()
-	{
-		return prepare;
+		return parsingContext;
 	}
 
 	/**
@@ -197,39 +157,9 @@ public class Defroster
 	// Private
 
 	/**
-	 * The document source for executables.
+	 * The parsing context.
 	 */
-	private final DocumentSource<Executable> documentSource;
-
-	/**
-	 * The language manager for executable initialization.
-	 */
-	private final LanguageManager languageManager;
-
-	/**
-	 * The parser manager for executable initialization.
-	 */
-	private final ParserManager parserManager;
-
-	/**
-	 * The language tag to used if none is specified.
-	 */
-	private final String defaultLanguageTag;
-
-	/**
-	 * The parser to use, or null for the default parser.
-	 */
-	private final String parserName;
-
-	/**
-	 * Whether to prepare executables.
-	 */
-	private final boolean prepare;
-
-	/**
-	 * Whether to debug the source code parsing.
-	 */
-	private final boolean debug;
+	private final ParsingContext parsingContext;
 
 	/**
 	 * Whether defrosting was interrupted.
@@ -260,7 +190,7 @@ public class Defroster
 
 		public void run()
 		{
-			Callable<Executable>[] defrostTasks = DefrostTask.forDocumentSource( documentSource, languageManager, parserManager, defaultLanguageTag, parserName, prepare, debug );
+			Callable<Executable>[] defrostTasks = DefrostTask.createMany( parsingContext );
 			List<Future<Executable>> futures;
 			try
 			{
