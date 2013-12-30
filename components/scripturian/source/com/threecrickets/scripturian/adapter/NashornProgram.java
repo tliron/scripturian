@@ -11,7 +11,6 @@
 
 package com.threecrickets.scripturian.adapter;
 
-import jdk.nashorn.api.scripting.NashornException;
 import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.ErrorManager;
 import jdk.nashorn.internal.runtime.ScriptFunction;
@@ -82,9 +81,9 @@ public class NashornProgram extends ProgramBase<NashornAdapter>
 		{
 			ScriptRuntime.apply( script, globalScope );
 		}
-		catch( NashornException x )
+		catch( Throwable x )
 		{
-			throw NashornAdapter.createExecutionException( x );
+			throw NashornAdapter.createExecutionException( x, executable.getDocumentName() );
 		}
 		finally
 		{

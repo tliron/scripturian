@@ -84,20 +84,33 @@ public class NashornAdapter extends LanguageAdapterBase
 	 * Creates an execution exception.
 	 * 
 	 * @param x
-	 *        The Nashorn exception
+	 *        The exception
+	 * @param documentName
+	 *        The document name
 	 * @return The execution exception
 	 */
-	public static ExecutionException createExecutionException( NashornException x )
+	public static ExecutionException createExecutionException( Throwable x, String documentName )
 	{
 		Throwable cause = x.getCause();
 		if( cause != null )
 		{
 			if( cause instanceof ExecutionException )
 				return (ExecutionException) cause;
-			return new ExecutionException( x.getFileName(), x.getLineNumber(), x.getColumnNumber(), x.getMessage(), cause );
+			if( x instanceof NashornException )
+			{
+				NashornException nx = (NashornException) x;
+				return new ExecutionException( nx.getFileName(), nx.getLineNumber(), nx.getColumnNumber(), nx.getMessage(), cause );
+			}
+			else
+				return new ExecutionException( documentName, x );
+		}
+		else if( x instanceof NashornException )
+		{
+			NashornException nx = (NashornException) x;
+			return new ExecutionException( nx.getFileName(), nx.getLineNumber(), nx.getColumnNumber(), nx.getMessage(), cause );
 		}
 		else
-			return new ExecutionException( x.getFileName(), x.getLineNumber(), x.getColumnNumber(), x.getMessage(), x );
+			return new ExecutionException( documentName, x );
 	}
 
 	//
@@ -262,13 +275,13 @@ public class NashornAdapter extends LanguageAdapterBase
 				r = NativeJava.to( null, r, "java.util.List" );
 			return r;
 		}
-		catch( NashornException x )
-		{
-			throw createExecutionException( x );
-		}
 		catch( ClassNotFoundException x )
 		{
 			throw new ExecutionException( executable.getDocumentName(), x );
+		}
+		catch( Throwable x )
+		{
+			throw createExecutionException( x, executable.getDocumentName() );
 		}
 	}
 
