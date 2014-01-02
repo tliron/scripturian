@@ -385,7 +385,7 @@ public class ExecutionContext
 		if( !enterable )
 			throw new IllegalStateException( "This execution context is not enterable" );
 
-		makeCurrent();
+		ExecutionContext oldExecutionContext = makeCurrent();
 
 		LanguageAdapter languageAdapter = this.languageAdapter;
 		if( !languageAdapter.isThreadSafe() )
@@ -409,6 +409,9 @@ public class ExecutionContext
 		{
 			if( !languageAdapter.isThreadSafe() )
 				languageAdapter.getLock().unlock();
+
+			if( oldExecutionContext != null )
+				oldExecutionContext.makeCurrent();
 		}
 	}
 

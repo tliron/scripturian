@@ -260,28 +260,42 @@ public class NashornAdapter extends LanguageAdapterBase
 	@Override
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
-		Context context = getContext( executionContext );
-		ScriptObject globalScope = getGlobalScope( executionContext, context );
-
-		Object entryPoint = globalScope.get( entryPointName );
-		if( !( entryPoint instanceof ScriptFunction ) )
-			throw new NoSuchMethodException( entryPointName );
-
-		ScriptFunction function = (ScriptFunction) entryPoint;
+		ScriptObject oldGlobal = Context.getGlobal();
 		try
 		{
-			Object r = ScriptRuntime.apply( function, null, arguments );
-			if( r instanceof NativeArray )
-				r = NativeJava.to( null, r, "java.util.List" );
-			return r;
+			Context context = getContext( executionContext );
+			ScriptObject globalScope = getGlobalScope( executionContext, context );
+
+			Object entryPoint = globalScope.get( entryPointName );
+			if( !( entryPoint instanceof ScriptFunction ) )
+				throw new NoSuchMethodException( entryPointName );
+
+			try
+			{
+				ScriptFunction function = (ScriptFunction) entryPoint;
+				Object r = ScriptRuntime.apply( function, null, arguments );
+				if( r instanceof NativeArray )
+					r = NativeJava.to( null, r, "java.util.List" );
+				return r;
+			}
+			catch( ClassNotFoundException x )
+			{
+				throw new ExecutionException( executable.getDocumentName(), x );
+			}
+			catch( Throwable x )
+			{
+				throw createExecutionException( x, executable.getDocumentName() );
+			}
+			finally
+			{
+				context.getOut().flush();
+				context.getErr().flush();
+			}
 		}
-		catch( ClassNotFoundException x )
+		finally
 		{
-			throw new ExecutionException( executable.getDocumentName(), x );
-		}
-		catch( Throwable x )
-		{
-			throw createExecutionException( x, executable.getDocumentName() );
+			if( oldGlobal != null )
+				Context.setGlobal( oldGlobal );
 		}
 	}
 

@@ -338,19 +338,26 @@ public class JythonAdapter extends LanguageAdapterBase
 	 */
 	protected static void flush( PythonInterpreter pythonInterpreter, ExecutionContext executionContext )
 	{
-		executionContext.makeCurrent();
+		ExecutionContext oldExecutionContext = executionContext.makeCurrent();
+		try
+		{
+			PyObject stdout = pythonInterpreter.getSystemState().stdout;
+			if( stdout instanceof PyFileWriter )
+				( (PyFileWriter) stdout ).flush();
+			else
+				pythonInterpreter.exec( "sys.stdout.flush()" );
 
-		PyObject stdout = pythonInterpreter.getSystemState().stdout;
-		if( stdout instanceof PyFileWriter )
-			( (PyFileWriter) stdout ).flush();
-		else
-			pythonInterpreter.exec( "sys.stdout.flush()" );
-
-		PyObject stderr = pythonInterpreter.getSystemState().stderr;
-		if( stderr instanceof PyFileWriter )
-			( (PyFileWriter) stderr ).flush();
-		else
-			pythonInterpreter.exec( "sys.stderr.flush()" );
+			PyObject stderr = pythonInterpreter.getSystemState().stderr;
+			if( stderr instanceof PyFileWriter )
+				( (PyFileWriter) stderr ).flush();
+			else
+				pythonInterpreter.exec( "sys.stderr.flush()" );
+		}
+		finally
+		{
+			if( oldExecutionContext != null )
+				oldExecutionContext.makeCurrent();
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

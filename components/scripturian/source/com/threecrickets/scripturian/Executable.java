@@ -450,7 +450,7 @@ public class Executable
 		if( executionContext == null )
 			throw new ExecutionException( documentName, "Execute does not have an execution context" );
 
-		executionContext.makeCurrent();
+		ExecutionContext oldExecutionContext = executionContext.makeCurrent();
 
 		if( !executionContext.isImmutable() && executionController != null )
 			executionController.initialize( executionContext );
@@ -510,6 +510,9 @@ public class Executable
 
 			if( !executionContext.isImmutable() && executionController != null )
 				executionController.release( executionContext );
+
+			if( oldExecutionContext != null )
+				oldExecutionContext.makeCurrent();
 		}
 
 		lastUsedTimestamp = System.currentTimeMillis();

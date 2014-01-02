@@ -69,26 +69,35 @@ public class NashornProgram extends ProgramBase<NashornAdapter>
 
 	public void execute( ExecutionContext executionContext ) throws ParsingException, ExecutionException
 	{
-		Context context = adapter.getContext( executionContext );
-		ScriptObject globalScope = adapter.getGlobalScope( executionContext, context );
-		ErrorManager errorManager = context.getErrorManager();
-
-		ScriptFunction script = context.compileScript( new Source( executable.getDocumentName(), sourceCode ), globalScope );
-		if( ( script == null ) || errorManager.hasErrors() )
-			throw new ParsingException( executable.getDocumentName() );
-
+		ScriptObject oldGlobal = Context.getGlobal();
 		try
 		{
-			ScriptRuntime.apply( script, globalScope );
-		}
-		catch( Throwable x )
-		{
-			throw NashornAdapter.createExecutionException( x, executable.getDocumentName() );
+			Context context = adapter.getContext( executionContext );
+			ScriptObject globalScope = adapter.getGlobalScope( executionContext, context );
+			ErrorManager errorManager = context.getErrorManager();
+
+			ScriptFunction script = context.compileScript( new Source( executable.getDocumentName(), sourceCode ), globalScope );
+			if( ( script == null ) || errorManager.hasErrors() )
+				throw new ParsingException( executable.getDocumentName() );
+
+			try
+			{
+				ScriptRuntime.apply( script, globalScope );
+			}
+			catch( Throwable x )
+			{
+				throw NashornAdapter.createExecutionException( x, executable.getDocumentName() );
+			}
+			finally
+			{
+				context.getOut().flush();
+				context.getErr().flush();
+			}
 		}
 		finally
 		{
-			context.getOut().flush();
-			context.getErr().flush();
+			if( oldGlobal != null )
+				Context.setGlobal( oldGlobal );
 		}
 	}
 
