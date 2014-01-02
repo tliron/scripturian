@@ -87,7 +87,6 @@ import com.threecrickets.scripturian.service.ExecutableService;
  * <p>
  * Depending on the language implementation, entry can involve better
  * performance than execution due to the use of a single execution context.
- * <p>
  * <h3>Parsing and Segments</h3>
  * <p>
  * During the creation phase, the entire source code document is converted into

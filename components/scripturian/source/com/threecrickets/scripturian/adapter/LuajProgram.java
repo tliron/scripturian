@@ -21,7 +21,6 @@ import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.luaj.vm2.Globals;
-import org.luaj.vm2.LoadState;
 import org.luaj.vm2.LuaClosure;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaFunction;
@@ -100,7 +99,7 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 					FileOutputStream out = new FileOutputStream( dumpFile );
 					try
 					{
-						Prototype prototype = LuaC.compile( new Utf8Encoder( new StringReader( sourceCode ) ), documentName );
+						Prototype prototype = LuaC.instance.compile( new Utf8Encoder( new StringReader( sourceCode ) ), documentName );
 						DumpState.dump( prototype, out, STRIP_DEBUG, NUMBER_FORMAT, LITTLE_ENDIAN );
 
 						prototypeReference.compareAndSet( null, prototype );
@@ -133,7 +132,7 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 				// Finish preparation
 				try
 				{
-					prototype = LuaC.compile( new ByteArrayInputStream( bytes ), executable.getDocumentName() );
+					prototype = LuaC.instance.compile( new ByteArrayInputStream( bytes ), executable.getDocumentName() );
 					if( !prototypeReference.compareAndSet( null, prototype ) )
 						prototype = prototypeReference.get();
 				}
@@ -149,10 +148,10 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 
 		if( function == null )
 		{
-			InputStream stream = new Utf8Encoder( new StringReader( sourceCode ) );
+			Reader reader = new StringReader( sourceCode );
 			try
 			{
-				function = LoadState.load( stream, executable.getDocumentName(), "t", globals );
+				function = globals.load( reader, executable.getDocumentName() ).checkfunction();
 				if( function.isclosure() )
 					function = new LuaClosure( function.checkclosure().p, globals );
 				else
@@ -169,7 +168,7 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 			{
 				try
 				{
-					stream.close();
+					reader.close();
 				}
 				catch( IOException x )
 				{
