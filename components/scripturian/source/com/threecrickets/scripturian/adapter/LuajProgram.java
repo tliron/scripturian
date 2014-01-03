@@ -132,7 +132,7 @@ public class LuajProgram extends ProgramBase<LuajAdapter>
 				// Finish preparation
 				try
 				{
-					prototype = LuaC.instance.compile( new ByteArrayInputStream( bytes ), executable.getDocumentName() );
+					prototype = globals.loadPrototype( new ByteArrayInputStream( bytes ), executable.getDocumentName(), "b" );
 					if( !prototypeReference.compareAndSet( null, prototype ) )
 						prototype = prototypeReference.get();
 				}
