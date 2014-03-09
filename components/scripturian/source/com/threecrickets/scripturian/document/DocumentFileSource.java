@@ -43,7 +43,10 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	// Constants
 	//
 
-	public static final String IGNORE_POSTFIXES_ATTRIBUTES = "SCRIPTURIAN_IGNORE_POSTFIXES";
+	/**
+	 * Name of environment variable for ignoring filename postfixes.
+	 */
+	public static final String IGNORE_POSTFIXES_VARIABLE = "SCRIPTURIAN_IGNORE_POSTFIXES";
 
 	//
 	// Construction
@@ -126,7 +129,7 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
 		defaultNameFilter = new DocumentFilter( defaultName, this.preExtension );
 
-		String ignorePostfixes = System.getenv( IGNORE_POSTFIXES_ATTRIBUTES );
+		String ignorePostfixes = System.getenv( IGNORE_POSTFIXES_VARIABLE );
 		if( ignorePostfixes != null )
 		{
 			for( String ignorePostfix : ignorePostfixes.split( "," ) )
