@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.threecrickets.scripturian.exception.DocumentDependencyLoopException;
 import com.threecrickets.scripturian.exception.DocumentException;
@@ -38,6 +39,12 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
  */
 public class DocumentFileSource<D> implements DocumentSource<D>
 {
+	//
+	// Constants
+	//
+
+	public static final String IGNORE_POSTFIXES_ATTRIBUTES = "SCRIPTURIAN_IGNORE_POSTFIXES";
+
 	//
 	// Construction
 	//
@@ -118,6 +125,13 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : '.' + preExtension;
 		this.minimumTimeBetweenValidityChecks = minimumTimeBetweenValidityChecks;
 		defaultNameFilter = new DocumentFilter( defaultName, this.preExtension );
+
+		String ignorePostfixes = System.getenv( IGNORE_POSTFIXES_ATTRIBUTES );
+		if( ignorePostfixes != null )
+		{
+			for( String ignorePostfix : ignorePostfixes.split( "," ) )
+				this.ignorePostfixes.add( ignorePostfix );
+		}
 	}
 
 	//
@@ -200,6 +214,14 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	{
 		this.preExtension = preExtension == null || preExtension.length() == 0 ? null : '.' + preExtension;
 		defaultNameFilter = new DocumentFilter( defaultName, preExtension );
+	}
+
+	/**
+	 * The filename postfixes to ignore.
+	 */
+	public CopyOnWriteArrayList<String> getIgnorePostfixes()
+	{
+		return ignorePostfixes;
 	}
 
 	/**
@@ -409,6 +431,11 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	private final ConcurrentMap<File, FiledDocumentDescriptor<D>> filedDocumentDescriptorsByFile = new ConcurrentHashMap<File, FiledDocumentDescriptor<D>>();
 
 	/**
+	 * The filename postfixes to ignore.
+	 */
+	private final CopyOnWriteArrayList<String> ignorePostfixes = new CopyOnWriteArrayList<String>();
+
+	/**
 	 * The base path.
 	 */
 	private final File basePath;
@@ -502,12 +529,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 	 * 
 	 * @author Tal Liron
 	 */
-	private static class DocumentFilter implements FilenameFilter
+	private class DocumentFilter implements FilenameFilter
 	{
-		private final String name;
-
-		private final String namePrefix;
-
 		private DocumentFilter( String name, String preExtension )
 		{
 			this.name = name;
@@ -516,8 +539,16 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 		public boolean accept( File dir, String name )
 		{
-			return ( name == this.name ) || ( name.startsWith( namePrefix ) );
+			for( String ignorePostix : ignorePostfixes )
+				if( name.endsWith( ignorePostix ) )
+					return false;
+
+			return ( name.equals( this.name ) ) || ( name.startsWith( namePrefix ) );
 		}
+
+		private final String name;
+
+		private final String namePrefix;
 	}
 
 	/**
