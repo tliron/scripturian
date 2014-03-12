@@ -16,6 +16,9 @@ import java.io.Writer;
 import com.threecrickets.scripturian.ExecutionContext;
 
 /**
+ * A wrapper for {@link Writer} that uses
+ * {@link ExecutionContext#getErrorWriterOrDefault()}.
+ * 
  * @author Tal Liron
  */
 public class ExecutionContextErrorWriter extends ExecutionContextWriter

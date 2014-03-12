@@ -35,8 +35,9 @@ import com.threecrickets.scripturian.Program;
 import com.threecrickets.scripturian.exception.ExecutionException;
 import com.threecrickets.scripturian.exception.LanguageAdapterException;
 import com.threecrickets.scripturian.exception.ParsingException;
+import com.threecrickets.scripturian.internal.ExecutionContextErrorWriter;
+import com.threecrickets.scripturian.internal.ExecutionContextWriter;
 import com.threecrickets.scripturian.internal.ScripturianUtil;
-import com.threecrickets.scripturian.internal.SwitchableWriter;
 
 /**
  * A {@link LanguageAdapter} that supports the JavaScript language as
@@ -52,24 +53,9 @@ public class NashornAdapter extends LanguageAdapterBase
 	//
 
 	/**
-	 * The Nashorn context attribute.
-	 */
-	public static final String NASHORN_CONTEXT = NashornAdapter.class.getCanonicalName() + ".context";
-
-	/**
 	 * The Nashorn global scope attribute.
 	 */
 	public static final String NASHORN_GLOBAL_SCOPE = NashornAdapter.class.getCanonicalName() + ".globalScope";
-
-	/**
-	 * The switchable standard output attribute for the Nashorn context.
-	 */
-	public static final String NASHORN_OUT = NashornAdapter.class.getCanonicalName() + ".out";
-
-	/**
-	 * The switchable standard error attribute for the Nashorn context.
-	 */
-	public static final String NASHORN_ERR = NashornAdapter.class.getCanonicalName() + ".err";
 
 	/**
 	 * The default base directory for cached executables.
@@ -126,60 +112,20 @@ public class NashornAdapter extends LanguageAdapterBase
 	public NashornAdapter() throws LanguageAdapterException
 	{
 		super( "Nashorn", Version.version(), "JavaScript", "", Arrays.asList( "js", "javascript", "nashorn" ), "js", Arrays.asList( "javascript", "js", "nashorn" ), "nashorn" );
+
+		PrintWriter out = new PrintWriter( new ExecutionContextWriter(), true );
+		PrintWriter err = new PrintWriter( new ExecutionContextErrorWriter(), true );
+
+		Options options = new Options( "nashorn", err );
+		options.set( "print.no.newline", true );
+		ErrorManager errors = new ErrorManager( err );
+
+		context = new Context( options, errors, out, err, Thread.currentThread().getContextClassLoader() );
 	}
 
 	//
 	// Attributes
 	//
-
-	/**
-	 * Gets the Nashorn context associated with the execution context, creating
-	 * it if it doesn't exist. Each execution context is guaranteed to have its
-	 * own Nashorn context. The globals instance is updated to match the writers
-	 * and services in the execution context.
-	 * 
-	 * @param executionContext
-	 *        The execution context
-	 * @return The Nashorn context
-	 */
-	public Context getContext( ExecutionContext executionContext )
-	{
-		Context context = (Context) executionContext.getAttributes().get( NASHORN_CONTEXT );
-		SwitchableWriter switchableOut = (SwitchableWriter) executionContext.getAttributes().get( NASHORN_OUT );
-		SwitchableWriter switchableErr = (SwitchableWriter) executionContext.getAttributes().get( NASHORN_ERR );
-
-		if( context == null )
-		{
-			switchableOut = new SwitchableWriter( executionContext.getWriterOrDefault() );
-			switchableErr = new SwitchableWriter( executionContext.getErrorWriterOrDefault() );
-
-			PrintWriter out = new PrintWriter( switchableOut, true );
-			PrintWriter err = new PrintWriter( switchableErr, true );
-
-			Options options = new Options( "nashorn", err );
-			options.set( "print.no.newline", true );
-			ErrorManager errors = new ErrorManager( err );
-
-			context = new Context( options, errors, out, err, Thread.currentThread().getContextClassLoader() );
-
-			executionContext.getAttributes().put( NASHORN_CONTEXT, context );
-			executionContext.getAttributes().put( NASHORN_OUT, switchableOut );
-			executionContext.getAttributes().put( NASHORN_ERR, switchableErr );
-		}
-		else
-		{
-			context.getOut().flush();
-			context.getErr().flush();
-
-			// Our switchable writer lets us change the Nashorn context's
-			// standard output/error after it's been created.
-
-			switchableOut.use( executionContext.getWriterOrDefault() );
-			switchableErr.use( executionContext.getErrorWriterOrDefault() );
-		}
-
-		return context;
-	}
 
 	/**
 	 * Gets the Nashorn global scope associated with the execution context,
@@ -188,11 +134,9 @@ public class NashornAdapter extends LanguageAdapterBase
 	 * 
 	 * @param executionContext
 	 *        The execution context
-	 * @param context
-	 *        The Nashorn context
 	 * @return The global scope
 	 */
-	public ScriptObject getGlobalScope( ExecutionContext executionContext, Context context )
+	public ScriptObject getGlobalScope( ExecutionContext executionContext )
 	{
 		ScriptObject globalScope = (ScriptObject) executionContext.getAttributes().get( NASHORN_GLOBAL_SCOPE );
 
@@ -211,6 +155,7 @@ public class NashornAdapter extends LanguageAdapterBase
 
 		if( init )
 		{
+			// TODO: this should be shared (will be available in OpenJDK 8u20)
 			ScriptFunction script = context.compileScript( new Source( getClass().getCanonicalName() + ".getGlobalScope", INIT_SOURCE ), globalScope );
 			ScriptRuntime.apply( script, globalScope );
 		}
@@ -263,8 +208,7 @@ public class NashornAdapter extends LanguageAdapterBase
 		ScriptObject oldGlobal = Context.getGlobal();
 		try
 		{
-			Context context = getContext( executionContext );
-			ScriptObject globalScope = getGlobalScope( executionContext, context );
+			ScriptObject globalScope = getGlobalScope( executionContext );
 
 			Object entryPoint = globalScope.get( entryPointName );
 			if( !( entryPoint instanceof ScriptFunction ) )
@@ -298,6 +242,11 @@ public class NashornAdapter extends LanguageAdapterBase
 				Context.setGlobal( oldGlobal );
 		}
 	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Protected
+
+	protected final Context context;
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private

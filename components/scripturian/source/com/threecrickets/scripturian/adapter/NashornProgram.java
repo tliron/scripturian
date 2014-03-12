@@ -72,17 +72,22 @@ public class NashornProgram extends ProgramBase<NashornAdapter>
 		ScriptObject oldGlobal = Context.getGlobal();
 		try
 		{
-			Context context = adapter.getContext( executionContext );
-			ScriptObject globalScope = adapter.getGlobalScope( executionContext, context );
-			ErrorManager errorManager = context.getErrorManager();
+			ScriptObject globalScope = adapter.getGlobalScope( executionContext );
+			ErrorManager errorManager = adapter.context.getErrorManager();
 
-			ScriptFunction script = context.compileScript( new Source( executable.getDocumentName(), sourceCode ), globalScope );
+			// long s = System.currentTimeMillis();
+			ScriptFunction script = adapter.context.compileScript( new Source( executable.getDocumentName(), sourceCode ), globalScope );
 			if( ( script == null ) || errorManager.hasErrors() )
 				throw new ParsingException( executable.getDocumentName() );
+			// s = System.currentTimeMillis() - s;
+			// System.out.println( "COMPILE: " + s / 1000.0f );
 
 			try
 			{
+				// s = System.currentTimeMillis();
 				ScriptRuntime.apply( script, globalScope );
+				// s = System.currentTimeMillis() - s;
+				// System.out.println( "RUN: " + s / 1000.0f );
 			}
 			catch( Throwable x )
 			{
@@ -90,8 +95,8 @@ public class NashornProgram extends ProgramBase<NashornAdapter>
 			}
 			finally
 			{
-				context.getOut().flush();
-				context.getErr().flush();
+				adapter.context.getOut().flush();
+				adapter.context.getErr().flush();
 			}
 		}
 		finally

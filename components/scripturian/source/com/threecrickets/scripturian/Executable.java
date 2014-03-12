@@ -601,7 +601,8 @@ public class Executable
 		if( enterableExecutionContexts.putIfAbsent( enteringKey, executionContext ) != null )
 			return false;
 
-		executionContext.enterable = true;
+		executionContext.enterableExecutable = this;
+		executionContext.enteringKey = enteringKey;
 		executionContext.makeImmutable();
 		return true;
 	}
@@ -611,7 +612,7 @@ public class Executable
 	 * adapter that used the enterable context. According to the language, the
 	 * entry point can be a function, method, lambda, closure, etc.
 	 * <p>
-	 * The execution context must have been previously made enterable by a call
+	 * An execution context must have been previously made enterable by a call
 	 * to
 	 * {@link #makeEnterable(Object, ExecutionContext, Object, ExecutionController)}
 	 * .
@@ -637,7 +638,10 @@ public class Executable
 		if( enterableExecutionContext == null )
 			throw new IllegalStateException( "Executable does not have an enterable execution context for key: " + enteringKey );
 
-		Object r = enterableExecutionContext.enter( this, entryPointName, arguments );
+		if( enterableExecutionContext.enterableExecutable != this )
+			throw new ExecutionException( documentName, "Attempted to enter executable using an uninitialized execution context" );
+
+		Object r = enterableExecutionContext.enter( entryPointName, arguments );
 		lastUsedTimestamp = System.currentTimeMillis();
 		return r;
 	}
@@ -667,6 +671,15 @@ public class Executable
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
+
+	/**
+	 * The execution contexts to be used for calls to
+	 * {@link #enter(Object, String, Object...)}.
+	 * 
+	 * @see #makeEnterable(Object, ExecutionContext, Object,
+	 *      ExecutionController)
+	 */
+	protected final ConcurrentMap<Object, ExecutionContext> enterableExecutionContexts = new ConcurrentHashMap<Object, ExecutionContext>();
 
 	//
 	// Object
@@ -736,15 +749,6 @@ public class Executable
 	 * successfully, or 0 if it was never executed or entered.
 	 */
 	private volatile long lastUsedTimestamp = 0;
-
-	/**
-	 * The execution contexts to be used for calls to
-	 * {@link #enter(Object, String, Object...)}.
-	 * 
-	 * @see #makeEnterable(Object, ExecutionContext, Object,
-	 *      ExecutionController)
-	 */
-	private final ConcurrentMap<Object, ExecutionContext> enterableExecutionContexts = new ConcurrentHashMap<Object, ExecutionContext>();
 
 	/**
 	 * Get the exposed service for the executable.

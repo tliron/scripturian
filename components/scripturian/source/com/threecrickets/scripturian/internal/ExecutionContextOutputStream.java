@@ -12,45 +12,36 @@
 package com.threecrickets.scripturian.internal;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 
 import com.threecrickets.scripturian.ExecutionContext;
 
 /**
- * A wrapper for {@link Writer} that uses
+ * A wrapper for {@link OutputStream} that uses
  * {@link ExecutionContext#getWriterOrDefault()}.
  * 
  * @author Tal Liron
  */
-public class ExecutionContextWriter extends Writer
+public class ExecutionContextOutputStream extends OutputStream
 {
 	//
-	// Writer
+	// OutputStream
 	//
 
 	@Override
-	public void write( char[] cbuf, int off, int len ) throws IOException
+	public void write( int b ) throws IOException
 	{
-		getWriter().write( cbuf, off, len );
-	}
-
-	@Override
-	public void flush() throws IOException
-	{
-		getWriter().flush();
-	}
-
-	@Override
-	public void close() throws IOException
-	{
-		getWriter().close();
+		getWriter().write( b );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
 	/**
-	 * The underlying writer.
+	 * The underlying writer for the current execution context.
+	 * 
+	 * @return The underlying writer
 	 */
 	protected Writer getWriter()
 	{

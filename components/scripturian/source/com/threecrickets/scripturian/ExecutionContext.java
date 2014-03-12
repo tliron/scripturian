@@ -322,19 +322,19 @@ public class ExecutionContext
 	}
 
 	/**
-	 * Whether this context is enterable.
+	 * Non-null if this context is enterable.
 	 * 
-	 * @return True if enterable
+	 * @return The enterable executable or null
 	 * @see #enter(Executable, String, Object...)
 	 * @see Executable#makeEnterable(Object, ExecutionContext, Object,
 	 *      ExecutionController)
 	 */
-	public boolean isEnterable()
+	public Executable getEnterableExecutable()
 	{
 		if( released )
 			throw new IllegalStateException( "Cannot access released execution context" );
 
-		return enterable;
+		return enterableExecutable;
 	}
 
 	/**
@@ -364,8 +364,6 @@ public class ExecutionContext
 	 * {@link Executable#makeEnterable(Object, ExecutionContext, Object, ExecutionController)}
 	 * .
 	 * 
-	 * @param executable
-	 *        The executable
 	 * @param entryPointName
 	 *        The name of the entry point
 	 * @param arguments
@@ -377,12 +375,12 @@ public class ExecutionContext
 	 *         In case of an execution error
 	 * @throws NoSuchMethodException
 	 *         In case the entry point does not exist
-	 * @see #isEnterable()
+	 * @see #getEnterableExecutable()
 	 * @see #getAdapter()
 	 */
-	public Object enter( Executable executable, String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
+	public Object enter( String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
 	{
-		if( !enterable )
+		if( enterableExecutable == null )
 			throw new IllegalStateException( "This execution context is not enterable" );
 
 		ExecutionContext oldExecutionContext = makeCurrent();
@@ -393,16 +391,16 @@ public class ExecutionContext
 
 		try
 		{
-			return languageAdapter.enter( entryPointName, executable, this, arguments );
+			return languageAdapter.enter( entryPointName, enterableExecutable, this, arguments );
 		}
 		catch( ParsingException x )
 		{
-			x.setExectable( executable );
+			x.setExectable( enterableExecutable );
 			throw x;
 		}
 		catch( ExecutionException x )
 		{
-			x.setExectable( executable );
+			x.setExectable( enterableExecutable );
 			throw x;
 		}
 		finally
@@ -462,6 +460,9 @@ public class ExecutionContext
 		for( LanguageAdapter languageAdapter : languageAdapters )
 			languageAdapter.releaseContext( this );
 
+		if( enterableExecutable != null )
+			enterableExecutable.enterableExecutionContexts.remove( enteringKey );
+
 		released = true;
 	}
 
@@ -472,16 +473,21 @@ public class ExecutionContext
 	@Override
 	public String toString()
 	{
-		return "ExecutionContext: " + ( enterable ? "enterable, " : "non-enterable, " ) + ( immutable ? "immutable, " : "mutable, " ) + ( released ? "released" : "unreleased" );
+		return "ExecutionContext: " + ( enterableExecutable != null ? "enterable, " : "non-enterable, " ) + ( immutable ? "immutable, " : "mutable, " ) + ( released ? "released" : "unreleased" );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
 	/**
-	 * Whether this context is enterable.
+	 * Non-null if this context is enterable.
 	 */
-	protected volatile boolean enterable;
+	protected Executable enterableExecutable;
+
+	/**
+	 * Non-null if this context is enterable.
+	 */
+	protected Object enteringKey;
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
