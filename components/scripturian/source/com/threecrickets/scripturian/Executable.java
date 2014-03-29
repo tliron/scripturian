@@ -596,6 +596,9 @@ public class Executable
 	 */
 	public boolean makeEnterable( Object enteringKey, ExecutionContext executionContext, Object containerService, ExecutionController executionController ) throws ParsingException, ExecutionException, IOException
 	{
+		if( executionContext.enterableExecutable != null )
+			throw new IllegalStateException( "Execution context was already made enterable for another executable" );
+
 		execute( executionContext, containerService, executionController );
 
 		if( enterableExecutionContexts.putIfAbsent( enteringKey, executionContext ) != null )
