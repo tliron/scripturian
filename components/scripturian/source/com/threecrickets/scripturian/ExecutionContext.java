@@ -325,7 +325,7 @@ public class ExecutionContext
 	 * Non-null if this context is enterable.
 	 * 
 	 * @return The enterable executable or null
-	 * @see #enter(Executable, String, Object...)
+	 * @see #enter(String, Object...)
 	 * @see Executable#makeEnterable(Object, ExecutionContext, Object,
 	 *      ExecutionController)
 	 */

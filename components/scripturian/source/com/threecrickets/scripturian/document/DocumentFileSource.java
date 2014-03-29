@@ -221,6 +221,8 @@ public class DocumentFileSource<D> implements DocumentSource<D>
 
 	/**
 	 * The filename postfixes to ignore.
+	 * 
+	 * @return The postfixes
 	 */
 	public CopyOnWriteArrayList<String> getIgnorePostfixes()
 	{

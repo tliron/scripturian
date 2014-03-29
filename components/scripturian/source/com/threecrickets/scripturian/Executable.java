@@ -382,7 +382,7 @@ public class Executable
 	 * @return The execution context
 	 * @see #makeEnterable(Object, ExecutionContext, Object,
 	 *      ExecutionController)
-	 * @see ExecutionContext#enter(Executable, String, Object...)
+	 * @see ExecutionContext#enter(String, Object...)
 	 */
 	public ExecutionContext getEnterableExecutionContext( Object enteringKey )
 	{
@@ -540,7 +540,7 @@ public class Executable
 
 	/**
 	 * Makes an execution context enterable, in preparation for calling
-	 * {@link ExecutionContext#enter(Executable, String, Object...)}.
+	 * {@link ExecutionContext#enter(String, Object...)}.
 	 * <p>
 	 * Note that this can only be done once per entering key for an executable.
 	 * If it succeeds and returns true, the execution context should be
@@ -568,7 +568,7 @@ public class Executable
 
 	/**
 	 * Makes an execution context enterable, in preparation for calling
-	 * {@link ExecutionContext#enter(Executable, String, Object...)}.
+	 * {@link ExecutionContext#enter(String, Object...)}.
 	 * <p>
 	 * Note that this can only be done once per entering key for an executable.
 	 * If it succeeds and returns true, the execution context should be
@@ -633,7 +633,7 @@ public class Executable
 	 *         In case of an execution error
 	 * @throws NoSuchMethodException
 	 *         In case the entry point does not exist
-	 * @see ExecutionContext#enter(Executable, String, Object...)
+	 * @see ExecutionContext#enter(String, Object...)
 	 */
 	public Object enter( Object enteringKey, String entryPointName, Object... arguments ) throws ParsingException, ExecutionException, NoSuchMethodException
 	{
