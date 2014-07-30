@@ -90,6 +90,7 @@ class JRubyProgram extends ProgramBase<JRubyAdapter>
 				{
 					// Use cached compiled code
 					byte[] classByteArray = ScripturianUtil.getBytes( classFile );
+					@SuppressWarnings("resource")
 					JRubyClassLoader classLoader = new JRubyClassLoader( adapter.compilerRuntime.getJRubyClassLoader() );
 					@SuppressWarnings("unchecked")
 					Class<Script> scriptClass = (Class<Script>) classLoader.defineClass( classname, classByteArray );
