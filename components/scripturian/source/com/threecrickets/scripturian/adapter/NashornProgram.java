@@ -76,7 +76,7 @@ public class NashornProgram extends ProgramBase<NashornAdapter>
 			ErrorManager errorManager = adapter.context.getErrorManager();
 
 			// long s = System.currentTimeMillis();
-			ScriptFunction script = adapter.context.compileScript( new Source( executable.getDocumentName(), sourceCode ), globalScope );
+			ScriptFunction script = adapter.context.compileScript( Source.sourceFor( executable.getDocumentName(), sourceCode ), globalScope );
 			if( ( script == null ) || errorManager.hasErrors() )
 				throw new ParsingException( executable.getDocumentName() );
 			// s = System.currentTimeMillis() - s;

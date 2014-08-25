@@ -155,7 +155,7 @@ public class NashornAdapter extends LanguageAdapterBase
 
 		if( init )
 		{
-			ScriptFunction script = context.compileScript( new Source( getClass().getCanonicalName() + ".getGlobalScope", INIT_SOURCE ), globalScope );
+			ScriptFunction script = context.compileScript( Source.sourceFor( getClass().getCanonicalName() + ".getGlobalScope", INIT_SOURCE ), globalScope );
 			ScriptRuntime.apply( script, globalScope );
 		}
 
