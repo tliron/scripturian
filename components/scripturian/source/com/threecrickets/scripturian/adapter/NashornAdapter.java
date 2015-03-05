@@ -1,5 +1,5 @@
 /**
- * Copyright 2009-2014 Three Crickets LLC.
+ * Copyright 2009-2015 Three Crickets LLC.
  * <p>
  * The contents of this file are subject to the terms of the LGPL version 3.0:
  * http://www.gnu.org/copyleft/lesser.html
@@ -12,6 +12,7 @@
 package com.threecrickets.scripturian.adapter;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
@@ -113,11 +114,21 @@ public class NashornAdapter extends LanguageAdapterBase
 	{
 		super( "Nashorn", Version.version(), "JavaScript", "", Arrays.asList( "js", "javascript", "nashorn" ), "js", Arrays.asList( "javascript", "js", "nashorn" ), "nashorn" );
 
+		try
+		{
+			System.setProperty( "nashorn.persistent.code.cache", getCacheDir().getCanonicalPath() );
+		}
+		catch( IOException x )
+		{
+			throw new LanguageAdapterException( NashornAdapter.class, "Could not access cache directory: " + getCacheDir(), x );
+		}
+
 		PrintWriter out = new PrintWriter( new ExecutionContextWriter(), true );
 		PrintWriter err = new PrintWriter( new ExecutionContextErrorWriter(), true );
 
 		Options options = new Options( "nashorn", err );
 		options.set( "print.no.newline", true );
+		options.set( "persistent.code.cache", true );
 		ErrorManager errors = new ErrorManager( err );
 
 		context = new Context( options, errors, out, err, Thread.currentThread().getContextClassLoader() );

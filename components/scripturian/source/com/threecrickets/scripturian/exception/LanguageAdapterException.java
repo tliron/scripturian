@@ -1,5 +1,5 @@
 /**
- * Copyright 2009-2014 Three Crickets LLC.
+ * Copyright 2009-2015 Three Crickets LLC.
  * <p>
  * The contents of this file are subject to the terms of the LGPL version 3.0:
  * http://www.gnu.org/copyleft/lesser.html
@@ -24,52 +24,52 @@ public class LanguageAdapterException extends ParsingException
 	// Construction
 	//
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, int lineNumber, int columnNumber, String message )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, String documentName, int lineNumber, int columnNumber, String message )
 	{
 		super( documentName, lineNumber, columnNumber, message );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, String documentName, int lineNumber, int columnNumber, String message, Throwable cause )
 	{
 		super( documentName, lineNumber, columnNumber, message, cause );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, int lineNumber, int columnNumber, Throwable cause )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, String documentName, int lineNumber, int columnNumber, Throwable cause )
 	{
 		super( documentName, lineNumber, columnNumber, cause );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, String message, Throwable cause )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, String documentName, String message, Throwable cause )
 	{
 		super( documentName, message, cause );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String documentName, String message )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, String documentName, String message )
 	{
 		super( documentName, message );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String message, Throwable cause )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, String message, Throwable cause )
 	{
 		super( message, cause );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, Throwable cause )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, Throwable cause )
 	{
 		super( cause );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
-	public LanguageAdapterException( Class<? extends LanguageAdapter> language, String message )
+	public LanguageAdapterException( Class<? extends LanguageAdapter> adapter, String message )
 	{
 		super( message );
-		this.language = language;
+		this.adapter = adapter;
 	}
 
 	//
@@ -77,13 +77,13 @@ public class LanguageAdapterException extends ParsingException
 	//
 
 	/**
-	 * The language adapter class.
+	 * The adapter adapter class.
 	 * 
-	 * @return The language adapter class
+	 * @return The adapter adapter class
 	 */
 	public Class<? extends LanguageAdapter> getLanguage()
 	{
-		return language;
+		return adapter;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -94,5 +94,5 @@ public class LanguageAdapterException extends ParsingException
 	/**
 	 * The language adapter class.
 	 */
-	private final Class<? extends LanguageAdapter> language;
+	private final Class<? extends LanguageAdapter> adapter;
 }
