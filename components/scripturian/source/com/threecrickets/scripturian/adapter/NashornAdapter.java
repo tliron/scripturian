@@ -17,6 +17,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 
 import jdk.nashorn.api.scripting.NashornException;
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory;
 import jdk.nashorn.internal.objects.NativeArray;
 import jdk.nashorn.internal.objects.NativeJava;
 import jdk.nashorn.internal.runtime.Context;
@@ -112,7 +113,8 @@ public class NashornAdapter extends LanguageAdapterBase
 	 */
 	public NashornAdapter() throws LanguageAdapterException
 	{
-		super( "Nashorn", Version.version(), "JavaScript", "", Arrays.asList( "js", "javascript", "nashorn" ), "js", Arrays.asList( "javascript", "js", "nashorn" ), "nashorn" );
+		super( "Nashorn", Version.version(), "JavaScript", new NashornScriptEngineFactory().getLanguageVersion(), Arrays.asList( "js", "javascript", "nashorn" ), "js", Arrays.asList( "javascript", "js", "nashorn" ),
+			"nashorn" );
 
 		try
 		{
