@@ -12,9 +12,9 @@
 	<dependencies>
 		<dependency org="org.clojure" name="clojure" rev="1.6.0" transitive="false" />
 		<dependency org="org.apache.commons" name="commons-daemon" rev="1.0.10" transitive="false" />
-		<dependency org="org.codehaus.groovy" name="groovy" rev="2.3.6" transitive="false" />
+		<dependency org="org.codehaus.groovy" name="groovy" rev="2.3.9" transitive="false" />
 		<dependency org="net.sourceforge.jepp" name="jepp" rev="2.4" transitive="false" />
-		<dependency org="org.jruby" name="jruby-standalone" rev="1.7.13" transitive="false" />
+		<dependency org="org.jruby" name="jruby-standalone" rev="1.7.17" transitive="false" />
 		<dependency org="org.scala-lang" name="scala-compiler" rev="2.9.1" transitive="false" />
 		<dependency org="org.scala-lang" name="scala-library" rev="2.9.1" transitive="false" />
 		<dependency org="javax.script" name="script-api" rev="1" transitive="false" />
@@ -24,8 +24,8 @@
 		<dependency org="org.mozilla" name="rhino" rev="1.7R4" transitive="false" />
 		<dependency org="com.threecrickets.succinct" name="succinct" rev="1.0.1" transitive="false" /> 
 		<dependency org="org.apache.velocity" name="velocity" rev="1.7" transitive="false" />
-		<dependency org="org.eclipse.mylyn" name="wikitext" rev="1.5.0" transitive="false" />
-		<dependency org="org.pegdown" name="pegdown" rev="1.1.0" transitive="false" />
+		<dependency org="org.eclipse.mylyn" name="wikitext" rev="2.4.0" transitive="false" />
+		<dependency org="org.pegdown" name="pegdown" rev="1.5.0" transitive="false" />
 		<dependency org="org.luaj" name="luaj-jse" rev="3.0" transitive="false" />
 		<dependency org="jdk.nashorn" name="nashorn-backport" rev="0.1+" transitive="false" />
 	</dependencies>

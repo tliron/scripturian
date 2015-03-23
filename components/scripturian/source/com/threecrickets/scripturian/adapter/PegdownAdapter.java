@@ -43,7 +43,7 @@ public class PegdownAdapter extends LanguageAdapterBase
 	 */
 	public PegdownAdapter() throws LanguageAdapterException
 	{
-		super( "pegdown", "", "Markdown", "", Arrays.asList( "md" ), "md", Arrays.asList( "markdown", "md", "pegdown" ), "pegdown" );
+		super( "pegdown", "", "Markdown", "", Arrays.asList( "md", "markdown" ), "md", Arrays.asList( "markdown", "md", "pegdown" ), "pegdown" );
 	}
 
 	//

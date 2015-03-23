@@ -12,6 +12,7 @@ com.threecrickets.scripturian.adapter.SuccinctAdapter
 com.threecrickets.scripturian.adapter.VelocityAdapter
 com.threecrickets.scripturian.adapter.PegdownAdapter
 com.threecrickets.scripturian.adapter.WikiTextConfluenceAdapter
+com.threecrickets.scripturian.adapter.WikiTextMarkdownAdapter
 com.threecrickets.scripturian.adapter.WikiTextMediaWikiAdapter
 com.threecrickets.scripturian.adapter.WikiTextTextileAdapter
 com.threecrickets.scripturian.adapter.WikiTextTracWikiAdapter
