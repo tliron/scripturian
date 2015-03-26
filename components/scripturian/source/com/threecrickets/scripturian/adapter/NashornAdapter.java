@@ -128,6 +128,7 @@ public class NashornAdapter extends LanguageAdapterBase
 		PrintWriter out = new PrintWriter( new ExecutionContextWriter(), true );
 		PrintWriter err = new PrintWriter( new ExecutionContextErrorWriter(), true );
 
+		// See: jdk.nashorn.internal.runtime.ScriptEnvironment
 		Options options = new Options( "nashorn", err );
 		options.set( "print.no.newline", true );
 		options.set( "persistent.code.cache", true );
