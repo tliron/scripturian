@@ -47,6 +47,11 @@ import com.threecrickets.scripturian.exception.ParsingException;
  * regular scriptlets with include scriptlets. "In-flow" scriptlets require the
  * use of a {@link DocumentSource}. Read the FAQ for more information.
  * <p>
+ * If the pound sign appears before the end delimiter, then the rest of the line
+ * -- after the end delimiter, outside of the scriptlet -- is ignored, including
+ * the newline character. This is useful if you do not want a newline character
+ * to appear after the scriplet.
+ * <p>
  * Examples:
  * <ul>
  * <li><b>JSP/ASP-style delimiters</b>:
@@ -66,6 +71,8 @@ import com.threecrickets.scripturian.exception.ParsingException;
  * <li><b>In-flow</b>:
  * <code>&lt;%js if(isDebug) { %&gt; &lt;%:python dumpStack(); %&gt; &lt;% } %&gt;</code>
  * </li>
+ * <li><b>Ignore rest of line</b>:
+ * <code>&lt;% print('hi!') #%&gt; This is ignored.</code></li>
  * </ul>
  * 
  * @author Tal Liron
@@ -124,7 +131,8 @@ public class ScriptletsParser extends MixedParser
 
 	/**
 	 * The default addition to the start delimiter to specify a comment
-	 * scriptlet: #
+	 * scriptlet, or to end delimiter to specify that the rest of the line
+	 * should be ignored: #
 	 */
 	public static final String DEFAULT_DELIMITER_COMMENT = "#";
 
@@ -265,22 +273,22 @@ public class ScriptletsParser extends MixedParser
 		String delimiterComment = (String) attributes.get( DELIMITER_COMMENT_ATTRIBUTE );
 		if( delimiterComment == null )
 			delimiterComment = DEFAULT_DELIMITER_COMMENT;
-		int commentLength = delimiterComment.length();
+		int delimiterCommentLength = delimiterComment.length();
 
 		String delimiterExpression = (String) attributes.get( DELIMITER_EXPRESSION_ATTRIBUTE );
 		if( delimiterExpression == null )
 			delimiterExpression = DEFAULT_DELIMITER_EXPRESSION;
-		int expressionLength = delimiterExpression.length();
+		int delimiterExpressionLength = delimiterExpression.length();
 
 		String delimiterInclude = (String) attributes.get( DELIMITER_INCLUDE_ATTRIBUTE );
 		if( delimiterInclude == null )
 			delimiterInclude = DEFAULT_DELIMITER_INCLUDE;
-		int includeLength = delimiterInclude.length();
+		int delimiterIncludeLength = delimiterInclude.length();
 
 		String delimiterInFlow = (String) attributes.get( DELIMITER_IN_FLOW_ATTRIBUTE );
 		if( delimiterInFlow == null )
 			delimiterInFlow = DEFAULT_DELIMITER_IN_FLOW;
-		int inFlowLength = delimiterInFlow.length();
+		int delimiterInFlowLength = delimiterInFlow.length();
 
 		int length = sourceCode.length();
 
@@ -310,6 +318,7 @@ public class ScriptletsParser extends MixedParser
 				String languageTag = lastLanguageTag;
 				LanguageAdapter adapter = lastAdapter;
 
+				boolean isIgnoreRestOfLine = false;
 				boolean isComment = false;
 				boolean isExpression = false;
 				boolean isInclude = false;
@@ -317,6 +326,13 @@ public class ScriptletsParser extends MixedParser
 				boolean isEphemeral = false;
 				String pluginCode = null;
 				ScriptletPlugin plugin = null;
+
+				// Check if to ignore rest of line
+				if( sourceCode.substring( end - delimiterCommentLength, end ).equals( delimiterComment ) )
+				{
+					isIgnoreRestOfLine = true;
+					end -= delimiterCommentLength;
+				}
 
 				// Check if this is a plugin
 				if( plugins != null )
@@ -337,27 +353,27 @@ public class ScriptletsParser extends MixedParser
 				if( plugin == null )
 				{
 					// Check if this is a comment
-					if( ( start + commentLength <= end ) && sourceCode.substring( start, start + commentLength ).equals( delimiterComment ) )
+					if( ( start + delimiterCommentLength <= end ) && sourceCode.substring( start, start + delimiterCommentLength ).equals( delimiterComment ) )
 					{
-						start += commentLength;
+						start += delimiterCommentLength;
 						isComment = true;
 					}
 					// Check if this is an expression
-					else if( ( start + expressionLength <= end ) && sourceCode.substring( start, start + expressionLength ).equals( delimiterExpression ) )
+					else if( ( start + delimiterExpressionLength <= end ) && sourceCode.substring( start, start + delimiterExpressionLength ).equals( delimiterExpression ) )
 					{
-						start += expressionLength;
+						start += delimiterExpressionLength;
 						isExpression = true;
 					}
 					// Check if this is an include
-					else if( ( start + includeLength <= end ) && sourceCode.substring( start, start + includeLength ).equals( delimiterInclude ) )
+					else if( ( start + delimiterIncludeLength <= end ) && sourceCode.substring( start, start + delimiterIncludeLength ).equals( delimiterInclude ) )
 					{
-						start += includeLength;
+						start += delimiterIncludeLength;
 						isInclude = true;
 					}
 					// Check if this is an in-flow
-					else if( ( start + inFlowLength <= end ) && sourceCode.substring( start, start + inFlowLength ).equals( delimiterInFlow ) )
+					else if( ( start + delimiterInFlowLength <= end ) && sourceCode.substring( start, start + delimiterInFlowLength ).equals( delimiterInFlow ) )
 					{
-						start += inFlowLength;
+						start += delimiterInFlowLength;
 						isInFlow = true;
 					}
 				}
@@ -438,6 +454,16 @@ public class ScriptletsParser extends MixedParser
 				{
 					lastLanguageTag = languageTag;
 					lastAdapter = adapter;
+				}
+
+				if( isIgnoreRestOfLine )
+				{
+					// Ignore rest of line
+					int endOfLine = sourceCode.indexOf( '\n', end + delimiterCommentLength + delimiterEndLength );
+					if( endOfLine == -1 )
+						end = length;
+					else
+						end = endOfLine - delimiterEndLength + 1;
 				}
 			}
 
