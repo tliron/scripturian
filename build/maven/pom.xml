@@ -14,8 +14,8 @@
 	<inceptionYear>2009</inceptionYear>
 
 	<scm>
-		<connection>scm:git:https://code.google.com/p/scripturian/</connection>
-		<url>http://code.google.com/p/scripturian/source/browse/</url>
+		<connection>scm:git:git://github.com/tliron/scripturian.git</connection>
+		<url>https://github.com/tliron/scripturian</url>
 	</scm>
 
 	<organization>
