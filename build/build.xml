@@ -28,12 +28,12 @@
 
 	<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpath="${dependencies}/libraries/jars/org.apache.ivy/ivy/${ivy.version}/ivy.jar" />
 
-	<macrodef name="googledrive">
+	<macrodef name="packages">
 		<attribute name="suffix" />
 		<sequential>
 			<copy
 				file="${distribution}/${component}-${component.version}${component.version.postfix}@{suffix}"
-				todir="${googledrive.repo}/${googledrive.section}/${component.version}${component.version.postfix}"
+				todir="${packages.repo}/${packages.section}/${component.version}${component.version.postfix}"
 				failonerror="false" />
 		</sequential>
 	</macrodef>
@@ -133,8 +133,8 @@
 		</exec>
 	</target>
 
-	<target name="deploy-googledrive" if="googledrive.repo" description="Deploy to Google Drive">
-		<googledrive suffix=".zip" />
+	<target name="deploy-packages" if="packages.repo" description="Deploy to Google Drive">
+		<packages suffix=".zip" />
 	</target>
 	
 	<target name="build" depends="distribution" description="Build distribution" />
