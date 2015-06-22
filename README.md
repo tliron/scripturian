@@ -28,7 +28,7 @@ delete.
 
 To avoid the "bootstrap class path not set" warning during compilation (harmless),
 configure the "compile.boot" setting in "private.properties" to the location of an
-"rt.jar" file belonging to JVM version 5.
+"rt.jar" file belonging to JVM version 6.
 
 
 Configuring the Build
