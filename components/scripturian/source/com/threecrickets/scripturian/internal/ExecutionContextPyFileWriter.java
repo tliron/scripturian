@@ -64,6 +64,12 @@ public class ExecutionContextPyFileWriter extends PyFileWriter
 	}
 
 	@Override
+	public void close()
+	{
+		getWriter().close();
+	}
+
+	@Override
 	public void write( PyObject o )
 	{
 		getWriter().write( o );

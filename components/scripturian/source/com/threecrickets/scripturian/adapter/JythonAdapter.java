@@ -115,7 +115,7 @@ public class JythonAdapter extends LanguageAdapterBase
 			else
 			{
 				if( pyException.value instanceof PyBaseException )
-					executionException = new ExecutionException( ( (PyBaseException) pyException.value ).message.toString(), pyException );
+					executionException = new ExecutionException( ( (PyBaseException) pyException.value ).getMessage().toString(), pyException );
 				else
 					executionException = new ExecutionException( pyException.getMessage(), pyException );
 			}
@@ -178,6 +178,9 @@ public class JythonAdapter extends LanguageAdapterBase
 		compilerFlags = CompilerFlags.getCompilerFlags();
 
 		sharedSystemState = new PySystemState();
+
+		sharedSystemState.stdout = sharedSystemState.__stdout__ = new ExecutionContextPyFileWriter();
+		sharedSystemState.stderr = sharedSystemState.__stderr__ = new ExecutionContextPyFileErrorWriter();
 	}
 
 	//
@@ -204,16 +207,19 @@ public class JythonAdapter extends LanguageAdapterBase
 		{
 			// Note: If we don't explicitly create a new system state here,
 			// Jython will reuse system state found on this thread!
-
-			PySystemState systemState = new PySystemState();
-			systemState.modules = sharedSystemState.modules;
-			systemState.path = sharedSystemState.path;
-
-			pythonInterpreter = new PythonInterpreter( null, systemState );
+			// PySystemState systemState = new PySystemState();
+			// systemState.modules = sharedSystemState.modules;
+			// systemState.path = sharedSystemState.path;
+			// systemState.meta_path = sharedSystemState.meta_path;
 
 			// Writers
-			pythonInterpreter.setOut( new ExecutionContextPyFileWriter() );
-			pythonInterpreter.setErr( new ExecutionContextPyFileErrorWriter() );
+			// systemState.stdout = systemState.__stdout__ = new
+			// ExecutionContextPyFileWriter();
+			// systemState.stderr = systemState.__stderr__ = new
+			// ExecutionContextPyFileErrorWriter();
+
+			pythonInterpreter = new PythonInterpreter( null, sharedSystemState );
+			// pythonInterpreter = new PythonInterpreter( null, systemState );
 
 			pythonInterpreter.exec( "import sys,site" );
 
