@@ -16,6 +16,7 @@ import groovy.lang.Closure;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovySystem;
+import groovy.lang.MissingPropertyException;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -225,7 +226,16 @@ public class GroovyAdapter extends LanguageAdapterBase
 	public Object enter( String entryPointName, Executable executable, ExecutionContext executionContext, Object... arguments ) throws NoSuchMethodException, ParsingException, ExecutionException
 	{
 		Binding binding = getBinding( executionContext );
-		Object o = binding.getVariable( entryPointName );
+		
+		Object o;
+		try
+		{
+			o = binding.getProperty( entryPointName );
+		}
+		catch( MissingPropertyException x )
+		{
+			throw new NoSuchMethodException( entryPointName );
+		}
 		if( !( o instanceof Closure ) )
 			throw new NoSuchMethodException( entryPointName );
 		try

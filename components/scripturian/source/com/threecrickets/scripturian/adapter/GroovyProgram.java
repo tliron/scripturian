@@ -187,7 +187,7 @@ class GroovyProgram extends ProgramBase<GroovyAdapter>
 			if( scriptClass == null )
 			{
 				Class<?> parsedClass = adapter.groovyClassLoader.parseClass( sourceCode, executable.getDocumentName() );
-				if( parsedClass.isAssignableFrom( Script.class ) )
+				if( Script.class.isAssignableFrom( parsedClass ) )
 				{
 					// Not all .groovy files have executable code!
 					scriptClass = (Class<Script>) parsedClass;
