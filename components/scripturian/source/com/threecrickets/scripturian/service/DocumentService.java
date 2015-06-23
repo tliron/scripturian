@@ -57,6 +57,15 @@ public class DocumentService
 	{
 		this.shell = shell;
 		this.executionContext = executionContext;
+
+		Map<String, Object> attributes = executionContext.getAttributes();
+		@SuppressWarnings("unchecked")
+		Set<String> executed = (Set<String>) attributes.get( EXECUTED_ATTRIBUTE );
+		if( executed == null )
+		{
+			executed = new HashSet<String>();
+			attributes.put( EXECUTED_ATTRIBUTE, executed );
+		}
 	}
 
 	//
@@ -217,14 +226,8 @@ public class DocumentService
 		ExecutionContext executionContext = ExecutionContext.getCurrent();
 		if( executionContext != null )
 		{
-			Map<String, Object> attributes = executionContext.getAttributes();
 			@SuppressWarnings("unchecked")
-			Set<String> executed = (Set<String>) attributes.get( EXECUTED_ATTRIBUTE );
-			if( executed == null )
-			{
-				executed = new HashSet<String>();
-				attributes.put( EXECUTED_ATTRIBUTE, executed );
-			}
+			Set<String> executed = (Set<String>) executionContext.getAttributes().get( EXECUTED_ATTRIBUTE );
 
 			return wasExecuted ? executed.add( documentName ) : executed.remove( documentName );
 		}
