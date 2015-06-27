@@ -95,7 +95,13 @@
 	
 	<target name="libraries" depends="classes" description="Create jar">
 		<mkdir dir="${distribution.jars}" />
-		<jar destfile="${distribution.jars}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}/${component.artifact}.jar" basedir="${cache.classes}" />
+		<jar destfile="${distribution.jars}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}/${component.artifact}.jar" basedir="${cache.classes}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${component.group}:${component.artifact}" />
+				<attribute name="Implementation-Version" value="${component.version}${component.version.postfix}" />
+				<attribute name="Implementation-Vendor" value="Three Crickets" />
+			</manifest>
+		</jar>
 	</target>
 
 	<target name="distribution" depends="libraries, javadocs" description="Assemble distribution">
