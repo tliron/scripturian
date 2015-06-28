@@ -43,8 +43,8 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
 
 /**
  * A {@link LanguageAdapter} that supports the JavaScript language as
- * implemented by <a
- * href="http://openjdk.java.net/projects/nashorn/">Nashorn</a>.
+ * implemented by
+ * <a href="http://openjdk.java.net/projects/nashorn/">Nashorn</a>.
  * 
  * @author Tal Liron
  */
@@ -134,7 +134,7 @@ public class NashornAdapter extends LanguageAdapterBase
 		options.set( "persistent.code.cache", true );
 		ErrorManager errors = new ErrorManager( err );
 
-		context = new Context( options, errors, out, err, Thread.currentThread().getContextClassLoader() );
+		context = new Context( options, errors, out, err, getClass().getClassLoader() );
 	}
 
 	//
