@@ -36,6 +36,8 @@ import com.threecrickets.scripturian.internal.ScripturianUtil;
  * saved to a file.
  * 
  * @author Tal Liron
+ * @param <D>
+ *        The document type
  */
 public class DocumentFileSource<D> implements DocumentSource<D>
 {
