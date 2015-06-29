@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.threecrickets.scripturian.exception.DocumentException;
+import com.threecrickets.scripturian.exception.DocumentNotFoundException;
 
 /**
  * Chains one or more document sources in order.
@@ -52,11 +53,15 @@ public class ChainDocumentSource<D> implements DocumentSource<D>
 	{
 		for( DocumentSource<D> documentSource : sources )
 		{
-			DocumentDescriptor<D> descriptor = documentSource.getDocument( documentName );
-			if( descriptor != null )
-				return descriptor;
+			try
+			{
+				return documentSource.getDocument( documentName );
+			}
+			catch( DocumentNotFoundException x )
+			{
+			}
 		}
-		return null;
+		throw new DocumentNotFoundException( documentName );
 	}
 
 	public DocumentDescriptor<D> setDocument( String documentName, String sourceCode, String tag, D document ) throws DocumentException
