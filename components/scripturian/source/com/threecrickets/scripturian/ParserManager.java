@@ -11,10 +11,9 @@
 
 package com.threecrickets.scripturian;
 
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import com.threecrickets.scripturian.internal.ServiceLoader;
 
 /**
  * Provides access to {@link Parser} instances.
