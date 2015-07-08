@@ -12,6 +12,18 @@ for comprehensive documentation. Here we will only explain how to build it.
 
 [![Download](http://threecrickets.com/media/download.png "Download")](http://threecrickets.com/scripturian/download/)
 
+Maven:
+
+    <repository>
+        <id>threecrickets</id>
+        <name>Three Crickets Repository</name>
+        <url>http://repository.threecrickets.com/maven/</url>
+    </repository>
+    <dependency>
+        <groupId>com.threecrickets.scripturian</groupId>
+        <artifactId>scripturian</artifactId>
+    </dependency>
+
 
 Building Scripturian
 --------------------
