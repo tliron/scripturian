@@ -11,6 +11,7 @@
 
 package com.threecrickets.scripturian;
 
+import java.util.Iterator;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,16 +54,19 @@ public class ParserManager
 	{
 		// Initialize parsers
 		ServiceLoader<Parser> parsers = ServiceLoader.load( Parser.class, classLoader );
-		for( Parser parser : parsers )
+		for( Iterator<Parser> i = parsers.iterator(); i.hasNext(); )
 		{
+			Parser parser = null;
 			try
 			{
-				addParser( parser );
+				parser = i.next();
 			}
 			catch( Throwable x )
 			{
-				throw new RuntimeException( "Could not initialize " + parser, x );
+				// Probably a ClassNotFoundException
+				continue;
 			}
+			addParser( parser );
 		}
 	}
 
@@ -81,6 +85,9 @@ public class ParserManager
 
 	public void addParser( Parser parser )
 	{
+		if( parsers.containsKey( parser.getName() ) )
+			throw new RuntimeException( "Can't add more than one parser with the same name to the same parser manager: " + parser );
+
 		parsers.put( parser.getName(), parser );
 	}
 

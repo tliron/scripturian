@@ -21,9 +21,11 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 /**
- * This is a clean-room implementation of the similarly named <a
- * href="http://java.sun.com/javase/6/docs/api/java/util/ServiceLoader.html"
+ * This is a clean-room implementation of the similarly named
+ * <a href="http://java.sun.com/javase/6/docs/api/java/util/ServiceLoader.html"
  * >Java 6 class</a> in order to allow us an easy upgrade path from Java 5.
+ * <p>
+ * Currently unused.
  * 
  * @author Tal Liron
  * @param <S>

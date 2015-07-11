@@ -14,8 +14,10 @@ package com.threecrickets.scripturian;
 import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -23,7 +25,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.threecrickets.scripturian.exception.ParsingException;
-import com.threecrickets.scripturian.internal.ServiceLoader;
 
 /**
  * Provides access to {@link LanguageAdapter} instances.
@@ -122,16 +123,19 @@ public class LanguageManager
 
 		// Initialize adapters
 		ServiceLoader<LanguageAdapter> adapterLoader = ServiceLoader.load( LanguageAdapter.class, classLoader );
-		for( LanguageAdapter adapter : adapterLoader )
+		for( Iterator<LanguageAdapter> i = adapterLoader.iterator(); i.hasNext(); )
 		{
+			LanguageAdapter adapter;
 			try
 			{
-				addAdapter( adapter );
+				adapter = i.next();
 			}
 			catch( Throwable x )
 			{
-				throw new RuntimeException( "Could not initialize " + adapter, x );
+				// Probably a ClassNotFoundException
+				continue;
 			}
+			addAdapter( adapter );
 		}
 	}
 
@@ -299,7 +303,7 @@ public class LanguageManager
 	public void addAdapter( LanguageAdapter adapter )
 	{
 		if( adapter.getManager() != null )
-			throw new RuntimeException( "Can't add language adapter instance to more than one language manager" );
+			throw new RuntimeException( "Can't add language adapter instance to more than one language manager: " + adapter );
 
 		adapters.put( (String) adapter.getAttributes().get( LanguageAdapter.NAME ), adapter );
 
