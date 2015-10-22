@@ -72,7 +72,7 @@ public class ExecutionContext
 		ExecutionContext executionContext = ThreadLocalExecutionContext.current.get();
 		if( ( executionContext != null ) && executionContext.released )
 		{
-			ThreadLocalExecutionContext.current.set( null );
+			disconnect();
 			return null;
 		}
 		else
@@ -440,9 +440,9 @@ public class ExecutionContext
 		if( released )
 			throw new IllegalStateException( "Cannot access released execution context" );
 
-		ExecutionContext old = ThreadLocalExecutionContext.current.get();
+		ExecutionContext oldExecutionContext = getCurrent();
 		ThreadLocalExecutionContext.current.set( this );
-		return old;
+		return oldExecutionContext;
 	}
 
 	/**
