@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="Scripturian" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="Scripturian" default="build" xmlns:creel="antlib:com.threecrickets.creel.ant">
 
 	<property name="root" location="${basedir}/.." />
 
@@ -26,7 +26,7 @@
 	<property name="distribution.api" value="${distribution.reference}/api/${component.group}/${component.artifact}/${component.version}${component.version.postfix}" />
 	<property name="distribution.source" value="${distribution.reference}/source" />
 
-	<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpath="${dependencies}/libraries/jars/org.apache.ivy/ivy/${ivy.version}/ivy.jar" />
+	<taskdef resource="com/threecrickets/creel/ant/antlib.xml" uri="antlib:com.threecrickets.creel.ant" classpath="${dependencies}/libraries/jars/com.threecrickets.creel/creel/${creel.version}/creel.jar" />
 
 	<macrodef name="packages">
 		<attribute name="suffix" />
@@ -38,13 +38,28 @@
 		</sequential>
 	</macrodef>
 
-	<target name="ivy" description="Settings for Ivy">
-		<ivy:settings file="${root}/build/ivy/settings.xml" />
-	</target>
-
-	<target name="dependencies" depends="ivy" description="Resolve dependencies">
-		<ivy:resolve file="${root}/build/ivy/${component}.xml" type="jar" log="download-only" resolveId="${component}" />
-		<ivy:cachepath pathid="dependencies" type="jar" resolveId="${component}" />
+	<target name="dependencies" description="Resolve dependencies">
+		<creel:run ref="dependencies" libraryDir="${cache.jars}" state="${cache.jars}/.creel">
+			<module group="org.clojure" name="clojure" version="1.7.0" />
+			<module group="org.apache.commons" name="commons-daemon" version="1.0.10" />
+			<module group="org.codehaus.groovy" name="groovy" version="2.4.3" />
+			<module group="net.sourceforge.jepp" name="jepp" version="2.4" />
+			<module group="org.jruby" name="jruby-standalone" version="1.7.20.1" />
+			<module group="org.scala-lang" name="scala-compiler" version="2.9.1" />
+			<module group="org.scala-lang" name="scala-library" version="2.9.1" />
+			<module group="javax.script" name="script-api" version="1" />
+			<module group="com.threecrickets.jygments" name="jygments" version="0.9.0" />
+			<module group="org.python" name="jython-standalone" version="2.7.0" />
+			<module group="com.caucho" name="quercus" version="4.0.39" transitive="true" />
+			<module group="org.mozilla" name="rhino" version="1.7.6" />
+			<module group="com.threecrickets.succinct" name="succinct" version="1.0.1" /> 
+			<module group="org.apache.velocity" name="velocity" version="1.7" />
+			<module group="org.eclipse.mylyn" name="wikitext" version="2.4.0" />
+			<module group="org.pegdown" name="pegdown" version="1.5.0" />
+			<module group="org.luaj" name="luaj-jse" version="3.0.1" />
+			<rule type="excludeDependencies" />
+			<repository id="repo" url="${dependencies.repo}" />
+		</creel:run>
 	</target>
 
 	<target name="classes" depends="dependencies" description="Compile Java code">
